@@ -1,0 +1,183 @@
+function [ info , gaze ] = load_behavior_data_SAT( varargin )
+%load_behavior_data_SAT Summary of this function goes here
+%   Detailed explanation goes here
+
+args = getopt(varargin, {{'monkey=','Darwin'}});
+ROOT_DIR = '~/Documents/SAT/';
+
+global TOL_THRESH A_BUTTER B_BUTTER NUM_SAMPLES SAMP_RATE FIELDS_GAZE
+
+%% Initializations
+
+SAMP_RATE = 1000;
+NUM_SAMPLES = 6001;
+TOL_THRESH = 0.01; %used to identify A/D saturation in EyeX_/EyeY_
+
+%Butterworth filter initializations
+[B_BUTTER, A_BUTTER] = butter(3, 2*80/SAMP_RATE, 'low');
+
+FIELDS_GAZE = {'x','y','vx','vy','v'};
+FIELDS_INFO = {'session','num_trials','condition','errors', ...
+  'octant','tgt_octant','tgt_eccen','deadline','resptime','fixtime'};
+
+num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
+
+[sessions,num_trials.SAT] = identify_sessions_SAT(ROOT_DIR, args.monkey, 'type','SEARCH');
+[~,num_trials.MG] = identify_sessions_SAT(ROOT_DIR, args.monkey, 'type','MG');
+% [~,num_trials.DET] = identify_sessions_SAT(ROOT_DIR, args.monkey, 'type','DET');
+% num_trials.DET = [0, num_trials.DET];
+
+NUM_SESSIONS = length(sessions);
+
+%initialize the output structs
+info = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); info = orderfields(info);
+info = struct('DET',info, 'MG',info, 'SAT',info);
+gaze = new_struct(FIELDS_GAZE, 'dim',[1,NUM_SESSIONS]); gaze = orderfields(gaze);
+gaze = struct('DET',gaze, 'MG',gaze, 'SAT',gaze);
+
+for kk = 1:NUM_SESSIONS
+  gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
+  gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
+%   gaze.DET(kk) = populate_struct(gaze.DET(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.DET(kk))));
+end
+
+% info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'type','DET');
+info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'type','MG');
+info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'type','SEARCH');
+
+% gaze.DET = load_gaze_data(info.DAT, gaze.DET, sessions, num_trials.DET, 'type','DET');
+gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, 'type','MG');
+gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, 'type','SEARCH');
+
+end%function:load_behavior_data_SAT
+
+
+function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , monkey , varargin )
+%initialize_behavior_data Summary of this function goes here
+%   Detailed explanation goes here
+
+args = getopt(varargin, {{'type=','SEARCH'}});
+
+%identify all recording sessions
+sessions = dir([root_dir, monkey, '/*_',args.type,'.mat']);
+num_sessions = length(sessions);
+
+if isempty(sessions)
+  error('No %s sessions found', args.type)
+end
+
+%get the number of trials per session
+num_trials = zeros(1,num_sessions);
+for kk = 1:num_sessions
+  session_file = [sessions(kk).folder,'/',sessions(kk).name];
+  session_vars = whos('-file', session_file);
+  num_trials(kk) = session_vars(1).size(1);
+end
+
+end%function:identify_sessions_SAT
+
+function [ info ] = load_task_info( info , sessions , num_trials , varargin )
+
+args = getopt(varargin, {{'type=','SEARCH'}});
+
+num_sessions = length(sessions);
+for kk = 1:num_sessions
+  session_file = [sessions(kk).folder,'/',sessions(kk).name(1:16),args.type,'.mat'];
+  
+  %no DET data recorded for Da/Eu first session
+  if (strcmp(args.type, 'DET') && (kk == 1))
+    info(kk).num_trials = 0;
+    continue
+  end
+  
+  info(kk).session = sessions(kk).name(1:12);
+  info(kk).num_trials = num_trials(kk);
+  
+  load(session_file, 'FixAcqTime_','SAT_','Errors_','Target_','SRT','saccLoc')
+
+  info(kk).condition = transpose(uint8(SAT_(:,1))); %1==accurate, 3==fast
+  info(kk).resptime = SRT(:,1)'; %Rich's estimate of response time
+  info(kk).octant = uint8(saccLoc+1)';
+  
+  info(kk).errors = uint8(zeros(1,size(SAT_,1)));
+  info(kk).errors(Errors_(:,3) == 1) = 1; %latency err -- very rare
+  info(kk).errors(Errors_(:,4) == 1) = 2; %hold err -- uncommon
+  info(kk).errors(Errors_(:,5) == 1) = 3; %direction err -- common
+  info(kk).errors((Errors_(:,6) == 1) | (Errors_(:,7) == 1)) = 4; %timing err
+  
+  info(kk).tgt_eccen = transpose(Target_(:,12)); %target eccentricity
+  
+  deadline = transpose(uint16(SAT_(:,3)));
+  deadline(deadline > 1000) = 0;
+  info(kk).deadline = deadline;
+  info(kk).tgt_octant = transpose(uint8(Target_(:,2) + 1)); %octants from 1->8
+  
+  if exist('FixAcqTime_', 'var')
+    load(session_file, 'FixAcqTime_')
+    FixAcqTime_(FixAcqTime_<-3499 | FixAcqTime_>-750) = NaN;
+    info(kk).fixtime = FixAcqTime_';
+  else %variable FixAcqTime_ does not exist
+    if strcmp(args.type, 'SEARCH')
+      fprintf('Warning -- variable "FixAcqTime_" does not exist -- Session %s\n', info(kk).session)
+    end
+    info(kk).fixtime = NaN(1,num_trials(kk));
+  end
+
+end%for:sessions
+
+end%function:load_task_info
+
+function [ data ] = load_gaze_data( info , data , sessions , num_trials , varargin )
+
+global TOL_THRESH A_BUTTER B_BUTTER NUM_SAMPLES SAMP_RATE FIELDS_GAZE
+
+args = getopt(varargin, {{'type=','SEARCH'}});
+
+num_sessions = length(sessions);
+
+for kk = 1:num_sessions
+  session_file = [sessions(kk).folder,'/',sessions(kk).name(1:16),args.type,'.mat'];
+  
+  if ~exist(session_file, 'file'); continue; end
+  
+  fprintf('Session %d  (%s)\n', kk, [sessions(kk).name(1:16),args.type])
+  load(session_file, 'EyeX_','EyeY_')
+  
+  %identify points of saturation in the raw signal
+  gaze_x = 3*transpose(EyeX_);  gaze_y = -3*transpose(EyeY_);
+  miss_x = (abs(abs(gaze_x)-7.5) < TOL_THRESH) & ([diff(gaze_x,1,1)==0; false(1,num_trials(kk))]);
+  miss_y = (abs(abs(gaze_y)-7.5) < TOL_THRESH) & ([diff(gaze_y,1,1)==0; false(1,num_trials(kk))]);
+
+  %filter gaze data
+  gaze_x = single(filtfilt(B_BUTTER, A_BUTTER, gaze_x));
+  gaze_y = single(filtfilt(B_BUTTER, A_BUTTER, gaze_y));
+
+  %differentiate gaze data
+  vx = diff(gaze_x,1,1) * SAMP_RATE;
+  vy = diff(gaze_y,1,1) * SAMP_RATE;
+
+  data(kk).x = gaze_x;
+  data(kk).y = gaze_y;
+  data(kk).vx = [vx; vx(NUM_SAMPLES-1,:)];
+  data(kk).vy = [vy; vy(NUM_SAMPLES-1,:)];
+  data(kk).v = sqrt(data(kk).vx.*data(kk).vx + data(kk).vy.*data(kk).vy);
+  clear gaze_x gaze_y vx vy vr
+  
+  %remove saturated data points
+  for ff = 1:length(FIELDS_GAZE)
+    data(kk).(FIELDS_GAZE{ff})(miss_x | miss_y) = NaN;
+  end
+  
+  %if monkey Q or S, remove trials with missing data during decision interval
+  if ismember(info(kk).session(1), {'S'})
+    bad_trials = identify_bad_trials_SAT(EyeX_, EyeY_);
+    for ff = 1:length(FIELDS_GAZE)
+      data(kk).(FIELDS_GAZE{ff})(:,bad_trials) = NaN;
+      info(kk).resptime(bad_trials) = NaN;
+      info(kk).octant(bad_trials) = 0;
+    end
+  end
+  
+end%for:sessions(kk)
+
+end%function:load_behavior_data
