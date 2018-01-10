@@ -3,7 +3,7 @@ function [ info , gaze ] = load_behavior_data_SAT( varargin )
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=','Darwin'}});
-ROOT_DIR = '~/Documents/SAT/';
+ROOT_DIR = '/data/search/SAT/';
 
 global TOL_THRESH A_BUTTER B_BUTTER NUM_SAMPLES SAMP_RATE FIELDS_GAZE
 
@@ -18,7 +18,7 @@ TOL_THRESH = 0.01; %used to identify A/D saturation in EyeX_/EyeY_
 
 FIELDS_GAZE = {'x','y','vx','vy','v'};
 FIELDS_INFO = {'session','num_trials','condition','errors', ...
-  'octant','tgt_octant','tgt_eccen','deadline','resptime','fixtime'};
+  'octant','tgt_octant','tgt_eccen','deadline','resptime','fixtime','rewtime'};
 
 num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
 
@@ -46,8 +46,8 @@ info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'type','MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'type','SEARCH');
 
 % gaze.DET = load_gaze_data(info.DAT, gaze.DET, sessions, num_trials.DET, 'type','DET');
-gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, 'type','MG');
-gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, 'type','SEARCH');
+% gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, 'type','MG');
+% gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, 'type','SEARCH');
 
 end%function:load_behavior_data_SAT
 
@@ -93,11 +93,12 @@ for kk = 1:num_sessions
   info(kk).session = sessions(kk).name(1:12);
   info(kk).num_trials = num_trials(kk);
   
-  load(session_file, 'FixAcqTime_','SAT_','Errors_','Target_','SRT','saccLoc')
+  load(session_file, 'FixAcqTime_','SAT_','Errors_','Target_','SRT','saccLoc','JuiceOn_')
 
   info(kk).condition = transpose(uint8(SAT_(:,1))); %1==accurate, 3==fast
   info(kk).resptime = SRT(:,1)'; %Rich's estimate of response time
   info(kk).octant = uint8(saccLoc+1)';
+  info(kk).rewtime = JuiceOn_;
   
   info(kk).errors = uint8(zeros(1,size(SAT_,1)));
   info(kk).errors(Errors_(:,3) == 1) = 1; %latency err -- very rare

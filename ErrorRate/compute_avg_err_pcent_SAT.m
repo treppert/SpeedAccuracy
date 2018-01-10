@@ -8,7 +8,7 @@ function [  ] = compute_avg_err_pcent_SAT( infoDa , movesDa , infoEu , movesEu )
 NUM_SESSIONS_Da = length(movesDa);
 
 %get error information
-movesDa = determine_errors_SAT(movesDa, infoDa);
+movesDa = determine_errors_FEF(movesDa, infoDa);
 
 err_dir_Da = new_struct({'acc','fast'}, 'dim',[1,NUM_SESSIONS_Da]);
 err_time_Da = err_dir_Da;
@@ -44,7 +44,7 @@ fprintf('Da timing err Acc/Fast: %g and %g\n', mean([err_time_Da.acc]), mean([er
 NUM_SESSIONS_Eu = length(movesEu);
 
 %get error information
-movesEu = determine_errors_SAT(movesEu, infoEu);
+movesEu = determine_errors_FEF(movesEu, infoEu);
 
 err_dir_Eu = new_struct({'acc','fast'}, 'dim',[1,NUM_SESSIONS_Eu]);
 err_time_Eu = err_dir_Eu;

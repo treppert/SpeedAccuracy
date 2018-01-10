@@ -1,7 +1,7 @@
 function [] = plot_RT_at_set_change( info , moves )
 
 %find the trials with condition switch
-info = identify_condition_switch(info);
+trial_switch = identify_condition_switch(info);
 
 NUM_SESSION = length(info);
 
@@ -10,19 +10,19 @@ resptime = populate_struct(resptime, {'acc2fast','fast2acc'}, NaN(6,1));
 
 for kk = 1:NUM_SESSION
   
-  NUM_A2F = length(info(kk).acc_to_fast);
+  NUM_A2F = length(trial_switch(kk).A2F);
   RT_A2F = NaN(6,NUM_A2F);
   
   for jj = 1:NUM_A2F
-    RT_A2F(:,jj) = moves(kk).resptime(info(kk).acc_to_fast(jj)-2:info(kk).acc_to_fast(jj)+3);
+    RT_A2F(:,jj) = moves(kk).resptime(trial_switch(kk).A2F(jj)-3 : trial_switch(kk).A2F(jj)+2);
   end
   resptime(kk).acc2fast(:) = nanmean(RT_A2F,2);
   
-  NUM_F2A = length(info(kk).fast_to_acc);
+  NUM_F2A = length(trial_switch(kk).F2A);
   RT_F2A = NaN(6,NUM_F2A);
   
   for jj = 1:NUM_F2A
-    RT_F2A(:,jj) = moves(kk).resptime(info(kk).fast_to_acc(jj)-2:info(kk).fast_to_acc(jj)+3);
+    RT_F2A(:,jj) = moves(kk).resptime(trial_switch(kk).F2A(jj)-3 : trial_switch(kk).F2A(jj)+2);
   end
   resptime(kk).fast2acc(:) = nanmean(RT_F2A,2);
   

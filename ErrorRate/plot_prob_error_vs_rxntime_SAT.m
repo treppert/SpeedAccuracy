@@ -11,7 +11,7 @@ NUM_BIN = length(BIN_LIM) - 1;
 RT_PLOT  = BIN_LIM(1:NUM_BIN) + diff(BIN_LIM)/2;
 
 if (~isfield(moves, 'err_direction'))
-  moves = determine_errors_SAT(moves, info);
+  moves = determine_errors_FEF(moves, info);
 end
 
 %% Get binned vigor for each session
