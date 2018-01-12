@@ -10,6 +10,7 @@ trial_switch = new_struct({'A2F','F2A'}, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
   
+  num_trials = length(binfo(kk).condition);
   condition = int16(binfo(kk).condition);
   
   %identify all trials with condition switch
@@ -17,8 +18,8 @@ for kk = 1:NUM_SESSIONS
   tmp_A2F = find(diff(condition) == (FLAG_FAST - FLAG_ACC)) + 1 ;
   
   %remove those trials closest to session end
-  tmp_F2A(tmp_F2A > (binfo(kk).num_trials-9)) = [];
-  tmp_A2F(tmp_A2F > (binfo(kk).num_trials-9)) = [];
+  tmp_F2A(tmp_F2A > (num_trials-9)) = [];
+  tmp_A2F(tmp_A2F > (num_trials-9)) = [];
   
   trial_switch(kk).F2A = tmp_F2A;
   trial_switch(kk).A2F = tmp_A2F;

@@ -1,4 +1,4 @@
-function [ info ] = determine_errors_SAT( info )
+function [ info ] = determine_errors_SEF( info )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
