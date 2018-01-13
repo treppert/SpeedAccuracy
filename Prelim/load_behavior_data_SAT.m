@@ -17,8 +17,10 @@ num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
 
 [sessions,num_trials.SAT] = identify_sessions_SAT(ROOT_DIR, monkey, 'SEARCH');
 [~,num_trials.MG] = identify_sessions_SAT(ROOT_DIR, monkey, 'MG');
-[~,num_trials.DET] = identify_sessions_SAT(ROOT_DIR, monkey, 'DET');
-num_trials.DET = [0, num_trials.DET];
+if ismember(monkey, {'Darwin','Euler'})
+  [~,num_trials.DET] = identify_sessions_SAT(ROOT_DIR, monkey, 'DET');
+  num_trials.DET = [0, num_trials.DET];
+end
 
 NUM_SESSIONS = length(sessions);
 
@@ -37,12 +39,16 @@ gaze = struct('DET',gaze, 'MG',gaze, 'SAT',gaze);
 for kk = 1:NUM_SESSIONS
   gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
   gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
-  gaze.DET(kk) = populate_struct(gaze.DET(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.DET(kk))));
+  if ismember(monkey, {'Darwin','Euler'})
+    gaze.DET(kk) = populate_struct(gaze.DET(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.DET(kk))));
+  end
 end
 
 %% Load task/TEMPO information
 
-info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
+if ismember(monkey, {'Darwin','Euler'})
+  info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
+end
 info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
@@ -83,7 +89,7 @@ for kk = 1:NUM_SESSIONS
   %no DET data for Da/Eu first session
   if (strcmp(type, 'DET') && (kk == 1));  continue;  end
   
-  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','JuiceOn_')
+  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc')
 
   %Session information
   
@@ -108,7 +114,13 @@ for kk = 1:NUM_SESSIONS
   
   info(kk).octant = uint8(saccLoc+1)';
   info(kk).resptime = SRT(:,1)'; %TEMPO estimate of RT
-  info(kk).rewtime = JuiceOn_';
+  
+  if exist('FixAcqTime_', 'var')
+    load(file_kk, 'JuiceOn_')
+    info(kk).rewtime = JuiceOn_';
+  else
+    info(kk).rewtime = NaN(1,num_trials(kk));
+  end
   
   if exist('FixAcqTime_', 'var')
     load(file_kk, 'FixAcqTime_')
