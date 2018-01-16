@@ -1,4 +1,4 @@
-function [ varargout ] = plot_visresp_cond_switch( ninfo , spikes , binfo )
+function [ varargout ] = plot_visresp_cond_switch( ninfo , spikes , binfo , monkey )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,7 +16,7 @@ NUM_SAMP = length(TIME_PLOT);
 visresp_A2F = cell(NUM_TRIALS,NUM_CELLS);
 visresp_F2A = cell(NUM_TRIALS,NUM_CELLS);
 
-trial_switch = identify_condition_switch( binfo );
+trial_switch = identify_condition_switch( binfo , monkey );
 
 
 %% Initialize visual response

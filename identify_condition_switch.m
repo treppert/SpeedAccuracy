@@ -19,9 +19,9 @@ for kk = 2:NUM_SESSIONS
   tmp_F2A = find(diff(condition) == (FLAG_ACC - FLAG_FAST)) + 1 ;
   tmp_A2F = find(diff(condition) == (FLAG_FAST - FLAG_ACC)) + 1 ;
   if ismember(monkey, {'Quincy','Seymour'})
-    tmp_A2F = [tmp_A2F, (find((condition(1:end-1) == FLAG_NORM) & ...
-      (diff(condition) == (FLAG_FAST - FLAG_NORM)))) + 1 ];
-    tmp_A2F = sort(tmp_A2F);
+%     tmp_A2F = [tmp_A2F, (find((condition(1:end-1) == FLAG_NORM) & ...
+%       (diff(condition) == (FLAG_FAST - FLAG_NORM)))) + 1 ];
+%     tmp_A2F = sort(tmp_A2F);
   end
   
   %remove those trials closest to session end
