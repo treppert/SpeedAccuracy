@@ -1,11 +1,11 @@
 function [ varargout ] = plot_visresp_cond_switch( ninfo , spikes , binfo , monkey )
-%UNTITLED Summary of this function goes here
+%plot_visresp_cond_switch Summary of this function goes here
 %   Detailed explanation goes here
 
 NUM_CELLS = length(ninfo);
-MIN_GRADE = 3; %minimum grade for visual response
+MIN_GRADE = 2; %minimum grade for visual response
 
-TRIAL_PLOT = ( -1 : 1 ) ;
+TRIAL_PLOT = ( -2 : 1 ) ;
 NUM_TRIALS = length(TRIAL_PLOT);
 COLOR_PLOT = linspace(0.6, 0.0, NUM_TRIALS);
 
@@ -90,7 +90,7 @@ else
     print_session_unit(gca, ninfo(kk), 'horizontal')
 
     ppretty('image_size',[4.0,2.0])
-  %   print(['~/Dropbox/tmp/',ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
+%     print(['~/Dropbox/tmp/',ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
 
   end%for:cells(kk)
   
