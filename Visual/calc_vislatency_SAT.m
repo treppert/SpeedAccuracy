@@ -5,7 +5,7 @@ function [ latency ] = calc_vislatency_SAT( ninfo , spikes )
 DEBUG = false;
 
 NUM_CELLS = length(ninfo);
-MIN_GRADE = 2; %minimum grade for visual response
+MIN_GRADE = 3; %minimum grade for visual response
 
 MIN_RISE = 10; %minimum increase from baseline activity (sp/sec)
 MIN_HOLD = 10; %minimum consecutive timepoints above criterion
@@ -62,6 +62,7 @@ for kk = 1:NUM_CELLS
     figure(); hold on
     plot(visresp, 'k-');
     plot(latency(kk), visresp(latency(kk)), 'r*')
+    pause(1.0)
   end
   
 end%for:cells(kk)

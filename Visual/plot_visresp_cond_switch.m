@@ -3,11 +3,11 @@ function [ varargout ] = plot_visresp_cond_switch( ninfo , spikes , binfo , monk
 %   Detailed explanation goes here
 
 NUM_CELLS = length(ninfo);
-MIN_GRADE = 2; %minimum grade for visual response
+MIN_GRADE = 3; %minimum grade for visual response
 
 TRIAL_PLOT = ( -2 : 1 ) ;
 NUM_TRIALS = length(TRIAL_PLOT);
-COLOR_PLOT = linspace(0.6, 0.0, NUM_TRIALS);
+COLOR_PLOT = [0.7 0.5 0.25 0.0];
 
 TIME_STIM = 3500;
 TIME_PLOT = ( -100 : 300 ) ;
@@ -66,30 +66,31 @@ if (nargout)
 else
   
   %% Plotting
+  
   for kk = 1:NUM_CELLS
     if (ninfo(kk).vis < MIN_GRADE); continue; end
 
-    figure()
+    figure(); hold on
 
-    subplot(1,2,1); hold on % ACC 2 FAST
+    subplot(1,2,2); hold on % ACC 2 FAST
     xlim([TIME_PLOT(1)-10, TIME_PLOT(end)+10])
 
     for jj = 1:NUM_TRIALS
       plot(TIME_PLOT, mean(visresp_A2F{jj,kk}), 'Color',COLOR_PLOT(jj)*ones(1,3), 'LineWidth',1.25)
     end
-    print_session_unit(gca, ninfo(kk), 'horizontal')
+    print_session_unit(gca, ninfo(kk))
 
 
-    subplot(1,2,2); hold on % FAST 2 ACC
+    subplot(1,2,1); hold on % FAST 2 ACC
     xlim([TIME_PLOT(1)-10, TIME_PLOT(end)+10])
 
     for jj = 1:NUM_TRIALS
       plot(TIME_PLOT, mean(visresp_F2A{jj,kk}), 'Color',COLOR_PLOT(jj)*ones(1,3), 'LineWidth',1.25)
     end
     yticks([])
-    print_session_unit(gca, ninfo(kk), 'horizontal')
+    print_session_unit(gca, ninfo(kk))
 
-    ppretty('image_size',[4.0,2.0])
+    ppretty('image_size',[2.0,2.0])
 %     print(['~/Dropbox/tmp/',ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
 
   end%for:cells(kk)
