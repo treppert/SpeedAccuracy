@@ -27,7 +27,8 @@ NUM_SESSIONS = length(sessions);
 %% Initialize outputs
 
 FIELDS_GAZE = {'x','y','vx','vy','v'};
-FIELDS_INFO = {'session','condition', 'tgt_octant','tgt_eccen','tgt_dline', ...
+FIELDS_INFO = {'session','num_trials','condition', ...
+  'tgt_octant','tgt_eccen','tgt_dline', ...
   'err_dir','err_time','err_hold','err_nosacc', ...
   'octant','resptime','fixtime','rewtime'};
 
@@ -52,7 +53,7 @@ end
 info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
-% gaze.DET = load_gaze_data(info.DAT, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
+% gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 % gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
@@ -86,14 +87,18 @@ NUM_SESSIONS = length(sessions);
 for kk = 1:NUM_SESSIONS
   file_kk = [sessions(kk).folder,'/',sessions(kk).name(1:16),type,'.mat'];
   
+  info(kk).session = sessions(kk).name(1:12);
+  
   %no DET data for Da/Eu first session
-  if (strcmp(type, 'DET') && (kk == 1));  continue;  end
+  if (strcmp(type, 'DET') && (kk == 1))
+    info(kk).num_trials = 0;
+    continue
+  end
   
   load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc')
 
   %Session information
-  
-  info(kk).session = sessions(kk).name(1:12);
+  info(kk).num_trials = length(SAT_(:,1));
   info(kk).condition = transpose(uint8(SAT_(:,1))); %1==accurate, 3==fast
   
   %Target/stimulus information

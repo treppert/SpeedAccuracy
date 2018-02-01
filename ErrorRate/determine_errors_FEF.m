@@ -1,4 +1,4 @@
-function [ moves ] = determine_errors_SAT( moves , info )
+function [ moves ] = determine_errors_FEF( moves , info )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -10,6 +10,7 @@ for kk = 1:NUM_SESSIONS
   moves(kk).err_timing = false(1,info(kk).num_trials);
   moves(kk).err_x = NaN(1,info(kk).num_trials);
   moves(kk).err_y = NaN(1,info(kk).num_trials);
+  moves(kk).err = NaN(1,info(kk).num_trials);
 end%for:sessions(kk)
 
 
@@ -34,6 +35,8 @@ for kk = 1:NUM_SESSIONS
   moves(kk).err_x(:) = x_err;
   moves(kk).err_y(:) = y_err;
   
+  moves(kk).err(:) = sqrt(x_err.^2 + y_err.^2);
+  
 end%for:sessions(kk)
 
 
@@ -45,8 +48,8 @@ for kk = 1:NUM_SESSIONS
   
   RT_kk = moves(kk).resptime;
   
-  idx_err_acc  = ( idx_acc_kk & (RT_kk < info(kk).deadline) );
-  idx_err_fast = ( idx_fast_kk & (RT_kk > info(kk).deadline) );
+  idx_err_acc  = ( idx_acc_kk & (RT_kk < info(kk).tgt_dline) );
+  idx_err_fast = ( idx_fast_kk & (RT_kk > info(kk).tgt_dline) );
   
   moves(kk).err_timing( idx_err_acc | idx_err_fast ) = true;
   
