@@ -5,9 +5,12 @@ function [ tst ] = compute_TST_MannWhitney( sdf_Tin , sdf_Din )
 
 DEBUG = false;
 
-OFFSET_TEST = 80;
-% IDX_TEST = OFFSET_TEST + (1:350);
-IDX_TEST = OFFSET_TEST + (1:550);
+% ALPHA = 0.01; %Fig. 7 -- correct responses
+ALPHA = 0.10; %Fig. 8 -- error responses
+
+%select time-points to assess
+OFFSET_TEST = 100;
+IDX_TEST = OFFSET_TEST + (1:350);
 NUM_TEST = length(IDX_TEST);
 
 FILT_HALFWIN = 4; %one-sided number of samples to smooth average
@@ -27,7 +30,7 @@ for jj = 1:NUM_TEST
   if (sum(~isnan(sdf_Tin_jj)) < MIN_NUM_TRIALS); continue; end
   if (sum(~isnan(sdf_Din_jj)) < MIN_NUM_TRIALS); continue; end
   
-  [~, h_test(jj)] = ranksum(sdf_Tin_jj, sdf_Din_jj, 'alpha',0.10, 'tail','right');
+  [~, h_test(jj)] = ranksum(sdf_Tin_jj, sdf_Din_jj, 'alpha',ALPHA, 'tail','right');
   
 end%for:samples(jj)
 

@@ -23,13 +23,14 @@ for jj = 1:NUM_MONKEY
   
   for kk = 1:NUM_SESSION
     
-    idx_fast = (info(kk).condition == 3);
+%     idx_condition = (info(kk).condition == 3); %Fast
+    idx_condition = (info(kk).condition == 1); %Acc
     
-    lim_RT_fast = quantile(moves(kk).resptime(idx_fast), [.25 .75]);
+    lim_RT = quantile(moves(kk).resptime(idx_condition), [.25 .75]);
     
     %index by saccade RT
-    idx_early = (idx_fast & (moves(kk).resptime < lim_RT_fast(1)));
-    idx_late = (idx_fast & (moves(kk).resptime > lim_RT_fast(2)));
+    idx_early = (idx_condition & (moves(kk).resptime < lim_RT(1)));
+    idx_late = (idx_condition & (moves(kk).resptime > lim_RT(2)));
     
     %index by displacement
     idx_disp = ( (moves(kk).displacement > DISP_LIM(1)) & (moves(kk).displacement < DISP_LIM(2)) );
@@ -55,18 +56,34 @@ end
 
 %% Plotting
 
-figure(); hold on
+% COLOR_EARLY = [0 .3 0];
+% COLOR_LATE = [0 .7 0];
+COLOR_EARLY = [.6 0 0];
+COLOR_LATE = [1 0 0];
 
-bar([1,3,5,7], peakvel_early(1,:), 'FaceColor',[0 .3 0], 'BarWidth',0.4)
-errorbar_no_caps([1,3,5,7], peakvel_early(1,:), 'err',peakvel_early(2,:), 'linestyle','none')
+figure(); hold on % Q & S
 
-bar([2,4,6,8], peakvel_late(1,:), 'FaceColor',[0 .7 0], 'BarWidth',0.4)
-errorbar_no_caps([2,4,6,8], peakvel_late(1,:), 'err',peakvel_late(2,:), 'linestyle','none')
+bar([1,3], peakvel_early(1,[1,2]), 'FaceColor',COLOR_EARLY, 'BarWidth',0.4)
+errorbar_no_caps([1,3], peakvel_early(1,[1,2]), 'err',peakvel_early(2,[1,2]), 'linestyle','none')
 
-xlim([0 9]); xticks([])
-ylim([300 500]); yticks(300:40:500)
-ppretty('image_size',[2.5,3])
+bar([2,4], peakvel_late(1,[1,2]), 'FaceColor',COLOR_LATE, 'BarWidth',0.4)
+errorbar_no_caps([2,4], peakvel_late(1,[1,2]), 'err',peakvel_late(2,[1,2]), 'linestyle','none')
 
+xlim([0 5]); xticks([])
+ylim([300 460]); yticks(300:40:460)
+ppretty('image_size',[1.5,3])
+
+figure(); hold on % Da & Eu
+
+bar([1,3], peakvel_early(1,[3,4]), 'FaceColor',COLOR_EARLY, 'BarWidth',0.4)
+errorbar_no_caps([1,3], peakvel_early(1,[3,4]), 'err',peakvel_early(2,[3,4]), 'linestyle','none')
+
+bar([2,4], peakvel_late(1,[3,4]), 'FaceColor',COLOR_LATE, 'BarWidth',0.4)
+errorbar_no_caps([2,4], peakvel_late(1,[3,4]), 'err',peakvel_late(2,[3,4]), 'linestyle','none')
+
+xlim([0 5]); xticks([])
+ylim([300 460]); yticks(300:40:460)
+ppretty('image_size',[1.5,3])
 
 end%utility:barplot_avg_peakvel_SAT()
 

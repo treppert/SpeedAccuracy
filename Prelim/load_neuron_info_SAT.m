@@ -92,7 +92,7 @@ for kk = 1:NUM_NEURONS
   monkey{kk} = args.monkey(1);
 end
 
-info = struct('session',session, 'session_num',num2cell(session_num), 'unit',unit, ...
+info = struct('sesh',session, 'session_num',num2cell(session_num), 'unit',unit, ...
   'type',type, 'hemi',hemi, 'move_field',MF, 'resp_field',RF, 'monkey',monkey);
 
 info = orderfields(info);
