@@ -10,7 +10,7 @@ TIME_PLOT = (T_LIM(1):T_LIM(2));
 NUM_CELLS = length(spikes);
 TIME_ARRAY = 3500;
 
-moves = determine_errors_SAT(moves, binfo);
+moves = determine_errors_FEF(moves, binfo);
 
 sdf_Rin = new_struct({'acc','fast'}, 'dim',[1,NUM_CELLS]);
 sdf_Rin = populate_struct(sdf_Rin, {'acc','fast'}, NaN(6001,1));
@@ -25,7 +25,7 @@ for kk = 1:NUM_CELLS
   if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
   
   %get session number corresponding to behavioral data
-  kk_moves = ismember({binfo.session}, ninfo(kk).session);
+  kk_moves = ismember({binfo.session}, ninfo(kk).sesh);
   
   %index by response accuracy
   idx_corr = (~moves(kk_moves).err_direction & ~moves(kk_moves).err_timing);
@@ -59,25 +59,26 @@ end
 
 %% Plotting - individual cells
 
-% for kk = 1:NUM_CELLS
-%   if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
-% %   norm_factor = util_compute_normfactor_buildup(spikes, ninfo, moves, binfo);
-%   norm_factor = ones(1,NUM_CELLS);
-%   
-%   figure(); hold on
-%   
-%   plot(TIME_PLOT, sdf_Rout(kk).acc(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), 'r--', 'LineWidth',1.0)
-%   plot(TIME_PLOT, sdf_Rout(kk).fast(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), '--', 'Color',[0 .7 0], 'LineWidth',1.0)
-%   
-%   plot(TIME_PLOT, sdf_Rin(kk).acc(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), 'r-', 'LineWidth',1.5)
-%   plot(TIME_PLOT, sdf_Rin(kk).fast(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-%   
-%   print_session_unit(gca, ninfo(kk), 'type')
-%   xlim([T_LIM(1)-10, T_LIM(2)+10])
-%   ppretty(); pause(1.5)
-%   
-% end%for:cells(kk)
-% return
+for kk = 1:NUM_CELLS
+  if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
+%   norm_factor = util_compute_normfactor_buildup(spikes, ninfo, moves, binfo);
+  norm_factor = ones(1,NUM_CELLS);
+  
+  figure(); hold on
+  
+  plot(TIME_PLOT, sdf_Rout(kk).acc(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), 'r--', 'LineWidth',1.0)
+  plot(TIME_PLOT, sdf_Rout(kk).fast(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), '--', 'Color',[0 .7 0], 'LineWidth',1.0)
+  
+  plot(TIME_PLOT, sdf_Rin(kk).acc(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), 'r-', 'LineWidth',1.5)
+  plot(TIME_PLOT, sdf_Rin(kk).fast(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+  
+  print_session_unit(gca, ninfo(kk))
+  xlim([T_LIM(1)-10, T_LIM(2)+10])
+  
+  ppretty(); pause(0.25)
+  print(['~/Dropbox/tmp/MV-', ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
+  
+end%for:cells(kk)
 
 %% Plotting - across-cell average
 norm_factor = util_compute_normfactor_buildup(spikes, ninfo, moves, binfo);

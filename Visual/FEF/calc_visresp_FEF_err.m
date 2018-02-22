@@ -56,14 +56,14 @@ for kk = 1:NUM_CELLS
   if (sum(idx_Tout_Sin & idx_acc) >= MIN_NUM_TRIALS)
     VR_Tout_Sin(kk).acc(:) = transpose(nanmean(sdf_kk(idx_Tout_Sin & idx_acc,:)));
     if (nargout > 1)
-      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_acc,:), sdf_kk(idx_Tin_Sout & idx_acc,:));
+      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_acc,:), sdf_kk(idx_Tin_Sout & idx_acc,:), 'error');
     end
   end
   %singleton out RF + response in RF - FAST
   if (sum(idx_Tout_Sin & idx_fast) >= MIN_NUM_TRIALS)
     VR_Tout_Sin(kk).fast(:) = transpose(nanmean(sdf_kk(idx_Tout_Sin & idx_fast,:)));
     if (nargout > 1)
-      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_fast,:), sdf_kk(idx_Tin_Sout & idx_fast,:));
+      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_fast,:), sdf_kk(idx_Tin_Sout & idx_fast,:), 'error');
     end
   end
   

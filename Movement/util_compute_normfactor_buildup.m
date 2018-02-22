@@ -11,7 +11,7 @@ for kk = 1:NUM_CELLS
   if ~ismember(ninfo(kk).type, {'M','VM'}); continue; end
   
   %get session number corresponding to behavioral data
-  kk_moves = ismember({binfo.session}, ninfo(kk).session);
+  kk_moves = ismember({binfo.session}, ninfo(kk).sesh);
   
   %get all trials from SAT task
   idx_SAT = ismember(binfo(kk_moves).condition, [1,3]);

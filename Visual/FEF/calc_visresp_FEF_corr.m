@@ -50,14 +50,14 @@ for kk = 1:NUM_CELLS
   if (sum(idx_Tin & idx_acc) >= MIN_NUM_TRIALS)
     VR_Tin(kk).acc(:) = transpose(nanmean(sdf_kk(idx_Tin & idx_acc,:)));
     if (nargout > 1)
-      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_acc,:), sdf_kk(~idx_Tin & idx_acc,:));
+      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_acc,:), sdf_kk(~idx_Tin & idx_acc,:), 'correct');
     end
   end
   %target in RF - FAST
   if (sum(idx_Tin & idx_fast) >= MIN_NUM_TRIALS)
     VR_Tin(kk).fast(:) = transpose(nanmean(sdf_kk(idx_Tin & idx_fast,:)));
     if (nargout > 1)
-      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_fast,:), sdf_kk(~idx_Tin & idx_fast,:));
+      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_fast,:), sdf_kk(~idx_Tin & idx_fast,:), 'correct');
     end
   end
   

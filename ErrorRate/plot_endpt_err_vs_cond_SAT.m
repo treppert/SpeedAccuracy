@@ -1,4 +1,4 @@
-function [  ] = plot_endpt_err_vs_cond_SAT( info , moves )
+function [ varargout ] = plot_endpt_err_vs_cond_SAT( info , moves )
 %plot_endpt_err_vs_cond_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,31 +16,38 @@ for kk = 1:NUM_SESSION
   
   idx_corr = ~(moves(kk).err_direction | moves(kk).err_timing);
   
-  err(kk).acc = moves(kk).err(idx_acc & idx_corr);
+%   err(kk).acc = moves(kk).err(idx_acc & idx_corr);
+  err(kk).acc = nanstd(moves(kk).err(idx_acc & idx_corr));
   tgt_oct(kk).acc = single(info(kk).tgt_octant(idx_acc & idx_corr));
   
-  err(kk).fast = moves(kk).err(idx_fast & idx_corr);
+%   err(kk).fast = moves(kk).err(idx_fast & idx_corr);
+  err(kk).fast = nanstd(moves(kk).err(idx_fast & idx_corr));
   tgt_oct(kk).fast = single(info(kk).tgt_octant(idx_fast & idx_corr));
   
 end%for:sessions(kk)
 
-
-%% Plotting -- VS direction
-
-% figure(); hold on
-% scatter([tgt_oct.acc]-0.15, [err.acc], 'MarkerFaceColor','r', 'MarkerFaceAlpha',0.5, 'MarkerEdgeColor','none')
-% scatter([tgt_oct.fast]+0.15, [err.fast], 'MarkerFaceColor',[0 .7 0], 'MarkerFaceAlpha',0.5, 'MarkerEdgeColor','none')
-% xlim([0 9]); xticks(1:8); ylim([0 4.5])
-% ppretty('image_size',[2,3])
-
-
-%% Plotting
-
-figure(); hold on
-histogram([err.fast], 'BinWidth',0.1, 'FaceColor',[0 .7 0])
-histogram([err.acc], 'BinWidth',0.1, 'FaceColor','r')
-xlim([0 5])
-ppretty('image_size',[2,3])
+if (nargout > 0)
+  
+  varargout{1} = [err.acc]';
+  varargout{2} = [err.fast]';
+  
+else
+  
+  %% Plotting -- VS direction
+  % figure(); hold on
+  % scatter([tgt_oct.acc]-0.15, [err.acc], 'MarkerFaceColor','r', 'MarkerFaceAlpha',0.5, 'MarkerEdgeColor','none')
+  % scatter([tgt_oct.fast]+0.15, [err.fast], 'MarkerFaceColor',[0 .7 0], 'MarkerFaceAlpha',0.5, 'MarkerEdgeColor','none')
+  % xlim([0 9]); xticks(1:8); ylim([0 4.5])
+  % ppretty('image_size',[2,3])
+  
+  %% Plotting -- All saccades
+  figure(); hold on
+  histogram([err.fast], 'BinWidth',0.2, 'FaceColor',[0 .7 0])
+  histogram([err.acc], 'BinWidth',0.2, 'FaceColor','r')
+  xlim([0 5])
+  ppretty('image_size',[3.2,2])
+  
+end
 
 end%function:plot_endpt_err_vs_cond_SAT()
 

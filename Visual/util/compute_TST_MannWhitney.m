@@ -1,12 +1,19 @@
-function [ tst ] = compute_TST_MannWhitney( sdf_Tin , sdf_Din )
+function [ tst ] = compute_TST_MannWhitney( sdf_Tin , sdf_Din , type )
 %[ tst ] = compute_TST_MannWhitney( sdf , inTrials , outTrials )
 %   Note that we use a one-tailed test to determine if SDF_Tin is greater
 %   than SDF_Din
 
+if ~ismember(type, {'correct','error'})
+  error('Input "type" not recognized')
+end
+
 DEBUG = false;
 
-% ALPHA = 0.01; %Fig. 7 -- correct responses
-ALPHA = 0.10; %Fig. 8 -- error responses
+if strcmp(type, 'correct')
+  ALPHA = 0.01; %Fig. 7 -- correct responses
+else
+  ALPHA = 0.10; %Fig. 8 -- error responses
+end
 
 %select time-points to assess
 OFFSET_TEST = 100;

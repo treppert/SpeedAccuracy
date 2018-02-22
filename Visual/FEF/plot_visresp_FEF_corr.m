@@ -2,7 +2,7 @@ function [  ] = plot_visresp_FEF_corr( visresp , TST , spikes , ninfo , binfo )
 %[ ] = plot_sdf_visual_response( varargin )
 %   Detailed explanation goes here
 
-PLOT_INDIV = false;
+PLOT_INDIV = true;
 
 %specify time limits for plotting
 T_LIM = [0,500];
@@ -17,23 +17,18 @@ if (PLOT_INDIV)
   for kk = 1:NUM_CELLS
     if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
     
-    figure()
+    figure(); hold on
     
-    subplot(2,1,1); hold on
-    plot(TIME_PLOT, visresp.Tin(kk).acc(TIME_PLOT+TIME_ARRAY), 'r-', 'LineWidth',1.25)
-    plot(TIME_PLOT, visresp.Din(kk).acc(TIME_PLOT+TIME_ARRAY), 'r--', 'LineWidth',1.0)
-    plot(TST(kk).acc*ones(1,2), [0 max(visresp.Tin(kk).acc)], 'k--')
-    xlim([T_LIM(1)-10, T_LIM(2)+10]); xticklabels(cell(1,length(get(gca,'xtick'))))
-    print_session_unit(gca, ninfo(kk), 'type')
-    
-    subplot(2,1,2); hold on
     plot(TIME_PLOT, visresp.Tin(kk).fast(TIME_PLOT+TIME_ARRAY), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(TIME_PLOT, visresp.Din(kk).fast(TIME_PLOT+TIME_ARRAY), '--', 'Color',[0 .7 0], 'LineWidth',1.0)
-    plot(TST(kk).fast*ones(1,2), [0 max(visresp.Tin(kk).fast)], 'k--')
-    xlim([T_LIM(1)-10, T_LIM(2)+10])
-    print_session_unit(gca, ninfo(kk), 'type')
+    plot(TIME_PLOT, visresp.Tin(kk).acc(TIME_PLOT+TIME_ARRAY), 'r-', 'LineWidth',1.25)
+    plot(TIME_PLOT, visresp.Din(kk).acc(TIME_PLOT+TIME_ARRAY), 'r--', 'LineWidth',1.0)
     
-    ppretty('image_size',[3.2,5])
+    xlim([T_LIM(1)-10, T_LIM(2)+10])
+    print_session_unit(gca, ninfo(kk))
+    
+    ppretty(); pause(0.25)
+    print(['~/Dropbox/tmp/VR-', ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
     
   end%for:cells(kk)
   

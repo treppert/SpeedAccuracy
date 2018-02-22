@@ -21,13 +21,13 @@ if (PLOT_INDIV)
     figure()
     
     subplot(2,1,1); hold on
-    plot(TIME_PLOT, visresp.Tout_Sin(kk).acc(TIME_PLOT+TIME_ARRAY), 'r:', 'LineWidth',1.25)
+    plot(TIME_PLOT, visresp.Tout_Sin(kk).acc(TIME_PLOT+TIME_ARRAY), 'r-', 'LineWidth',1.25)
     plot(TIME_PLOT, visresp.Tin_Sout(kk).acc(TIME_PLOT+TIME_ARRAY), 'r--', 'LineWidth',1.0)
     xlim([T_LIM(1)-10, T_LIM(2)+10]); xticklabels(cell(1,length(get(gca,'xtick'))))
     print_session_unit(gca, ninfo(kk), 'type')
     
     subplot(2,1,2); hold on
-    plot(TIME_PLOT, visresp.Tout_Sin(kk).fast(TIME_PLOT+TIME_ARRAY), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+    plot(TIME_PLOT, visresp.Tout_Sin(kk).fast(TIME_PLOT+TIME_ARRAY), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(TIME_PLOT, visresp.Tin_Sout(kk).fast(TIME_PLOT+TIME_ARRAY), '--', 'Color',[0 .7 0], 'LineWidth',1.0)
     xlim([T_LIM(1)-10, T_LIM(2)+10])
     print_session_unit(gca, ninfo(kk), 'type')
@@ -66,13 +66,13 @@ else %PLOT_AVG_ACROSS
   figure()
 
   subplot(2,1,1); hold on
-  shaded_error_bar(TIME_PLOT, nanmean(VR_Din_acc,2), nanstd(VR_Din_acc,0,2)/sqrt(NUM_SEM), {'r:', 'LineWidth',1.5})
+  shaded_error_bar(TIME_PLOT, nanmean(VR_Din_acc,2), nanstd(VR_Din_acc,0,2)/sqrt(NUM_SEM), {'r-', 'LineWidth',1.5})
   shaded_error_bar(TIME_PLOT, nanmean(VR_Tin_acc,2), nanstd(VR_Tin_acc,0,2)/sqrt(NUM_SEM), {'r--', 'LineWidth',1.5})
   plot(TST_acc*ones(1,2), [0 1], 'k--')
   xlim([T_LIM(1)-10, T_LIM(2)+10]); xticklabels(cell(1,length(get(gca,'xtick')))); pause(.1)
 
   subplot(2,1,2); hold on
-  shaded_error_bar(TIME_PLOT, nanmean(VR_Din_fast,2), nanstd(VR_Din_fast,0,2)/sqrt(NUM_SEM), {':', 'Color',[0 .7 0], 'LineWidth',1.5})
+  shaded_error_bar(TIME_PLOT, nanmean(VR_Din_fast,2), nanstd(VR_Din_fast,0,2)/sqrt(NUM_SEM), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
   shaded_error_bar(TIME_PLOT, nanmean(VR_Tin_fast,2), nanstd(VR_Tin_fast,0,2)/sqrt(NUM_SEM), {'--', 'Color',[0 .7 0], 'LineWidth',1.5})
   plot(TST_fast*ones(1,2), [0 1], 'k--')
   xlim([T_LIM(1)-10, T_LIM(2)+10])
