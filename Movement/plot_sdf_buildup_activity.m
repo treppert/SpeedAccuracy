@@ -2,7 +2,7 @@ function [ varargout ] = plot_sdf_buildup_activity( spikes , ninfo , moves , bin
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
 
-TYPE_PLOT = {'M','VM'};
+TYPE_PLOT = {'V','VM','M'};
 
 T_LIM = [-400,200];
 TIME_PLOT = (T_LIM(1):T_LIM(2));
@@ -72,11 +72,11 @@ for kk = 1:NUM_CELLS
   plot(TIME_PLOT, sdf_Rin(kk).acc(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), 'r-', 'LineWidth',1.5)
   plot(TIME_PLOT, sdf_Rin(kk).fast(TIME_PLOT+TIME_ARRAY)/norm_factor(kk), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
   
-  print_session_unit(gca, ninfo(kk))
+  print_session_unit(gca, ninfo(kk), 'type')
   xlim([T_LIM(1)-10, T_LIM(2)+10])
   
   ppretty(); pause(0.25)
-  print(['~/Dropbox/tmp/MV-', ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
+  print(['~/Dropbox/tmp/MV-', ninfo(kk).sesh,'-',ninfo(kk).unit,'-',ninfo(kk).type,'.eps'], '-depsc2')
   
 end%for:cells(kk)
 

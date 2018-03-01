@@ -47,8 +47,8 @@ else %PLOT_AVG_ACROSS
   VR_Din_fast = [visresp.Tout_Sin.fast] ./ norm_factor;
   VR_Tin_fast = [visresp.Tin_Sout.fast] ./ norm_factor;
 
-  TST_acc = compute_TST_MannWhitney(VR_Din_acc', VR_Tin_acc');
-  TST_fast = compute_TST_MannWhitney(VR_Din_fast', VR_Tin_fast');
+  TST_acc = compute_TST_MannWhitney(VR_Din_acc', VR_Tin_acc', 'error');
+  TST_fast = compute_TST_MannWhitney(VR_Din_fast', VR_Tin_fast', 'error');
 
   fprintf('TST Acc = %g\n', TST_acc)
   fprintf('TST Fast = %g\n', TST_fast)

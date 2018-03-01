@@ -4,7 +4,7 @@ function [ visresp , varargout ] = calc_visresp_FEF_corr( spikes , ninfo , moves
 
 NUM_CELLS = length(spikes);
 
-TYPE_PLOT = {'V','VM'};
+TYPE_PLOT = {'V','VM','M'};
 MIN_NUM_TRIALS = 5;
 REMOVE_SPIKES_POST_RESP = false;
 
@@ -46,18 +46,17 @@ for kk = 1:NUM_CELLS
     sdf_kk = remove_spikes_post_response(sdf_kk, moves(kk_moves).resptime);
   end
   
-  %target in RF - ACC
-  if (sum(idx_Tin & idx_acc) >= MIN_NUM_TRIALS)
+  %target in RF
+  if ((sum(idx_Tin & idx_acc) >= MIN_NUM_TRIALS) && (sum(idx_Tin & idx_fast) >= MIN_NUM_TRIALS))
     VR_Tin(kk).acc(:) = transpose(nanmean(sdf_kk(idx_Tin & idx_acc,:)));
-    if (nargout > 1)
-      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_acc,:), sdf_kk(~idx_Tin & idx_acc,:), 'correct');
-    end
-  end
-  %target in RF - FAST
-  if (sum(idx_Tin & idx_fast) >= MIN_NUM_TRIALS)
     VR_Tin(kk).fast(:) = transpose(nanmean(sdf_kk(idx_Tin & idx_fast,:)));
     if (nargout > 1)
-      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_fast,:), sdf_kk(~idx_Tin & idx_fast,:), 'correct');
+      TST_acc = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_acc,:), sdf_kk(~idx_Tin & idx_acc,:), 'correct');
+      TST_fast = compute_TST_MannWhitney(sdf_kk(idx_Tin & idx_fast,:), sdf_kk(~idx_Tin & idx_fast,:), 'correct');
+      if ~(isnan(TST_acc) || isnan(TST_fast)) %make sure we have TST for both Acc and Fast conditions
+        TST(kk).acc = TST_acc;
+        TST(kk).fast = TST_fast;
+      end
     end
   end
   

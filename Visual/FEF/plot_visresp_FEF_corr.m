@@ -12,7 +12,7 @@ TIME_ARRAY = 3500;
 if (PLOT_INDIV)
   
   NUM_CELLS = length(ninfo);
-  TYPE_PLOT = {'V','VM'};
+  TYPE_PLOT = {'V','VM','M'};
   
   for kk = 1:NUM_CELLS
     if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
@@ -25,10 +25,10 @@ if (PLOT_INDIV)
     plot(TIME_PLOT, visresp.Din(kk).acc(TIME_PLOT+TIME_ARRAY), 'r--', 'LineWidth',1.0)
     
     xlim([T_LIM(1)-10, T_LIM(2)+10])
-    print_session_unit(gca, ninfo(kk))
+    print_session_unit(gca, ninfo(kk), 'type')
     
     ppretty(); pause(0.25)
-    print(['~/Dropbox/tmp/VR-', ninfo(kk).sesh,'-',ninfo(kk).unit,'.tif'], '-dtiff')
+    print(['~/Dropbox/tmp/VR-', ninfo(kk).sesh,'-',ninfo(kk).unit,'-',ninfo(kk).type,'.eps'], '-depsc2')
     
   end%for:cells(kk)
   

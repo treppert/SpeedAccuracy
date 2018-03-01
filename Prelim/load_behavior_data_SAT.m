@@ -53,6 +53,8 @@ end
 info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
+%% Load saccade data
+
 gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
