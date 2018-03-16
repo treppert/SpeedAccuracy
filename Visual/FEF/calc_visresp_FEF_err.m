@@ -17,8 +17,7 @@ VR_Tin_Sout = populate_struct(VR_Tin_Sout, {'acc','fast'}, NaN(6001,1));
 VR_Tout_Sin = VR_Tin_Sout;
 
 if (nargout > 1)
-  TST = new_struct({'acc','fast'}, 'dim',[1,NUM_CELLS]);
-  TST = populate_struct(TST, {'acc','fast'}, NaN);
+  TST_fast = NaN(NUM_CELLS,1);
 end
 
 %% Compute the SDF corresponding to Target In RF vs. Distractor In RF
@@ -27,7 +26,7 @@ for kk = 1:NUM_CELLS
   %make sure we have vis- or vis-move cell
   if ~ismember(ninfo(kk).type, TYPE_PLOT); continue; end
   
-  %get session number corresponding to behavioral data
+  %get session number corresponding to behavioral dat:qa
   kk_moves = ismember({binfo.session}, ninfo(kk).sesh);
   
   %index by response accuracy -- only responses with *correct* timing
@@ -52,18 +51,16 @@ for kk = 1:NUM_CELLS
     sdf_kk = remove_spikes_post_response(sdf_kk, moves(kk_moves).resptime);
   end
   
-  %singleton out RF + response in RF - ACC
+  %singleton out RF + response in RF - ACC - Not estimating TST here
   if (sum(idx_Tout_Sin & idx_acc) >= MIN_NUM_TRIALS)
     VR_Tout_Sin(kk).acc(:) = transpose(nanmean(sdf_kk(idx_Tout_Sin & idx_acc,:)));
-    if (nargout > 1)
-      TST(kk).acc = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_acc,:), sdf_kk(idx_Tin_Sout & idx_acc,:), 'error');
-    end
   end
+  
   %singleton out RF + response in RF - FAST
   if (sum(idx_Tout_Sin & idx_fast) >= MIN_NUM_TRIALS)
     VR_Tout_Sin(kk).fast(:) = transpose(nanmean(sdf_kk(idx_Tout_Sin & idx_fast,:)));
     if (nargout > 1)
-      TST(kk).fast = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_fast,:), sdf_kk(idx_Tin_Sout & idx_fast,:), 'error');
+      TST_fast(kk) = compute_TST_MannWhitney(sdf_kk(idx_Tout_Sin & idx_fast,:), sdf_kk(idx_Tin_Sout & idx_fast,:), 'error');
     end
   end
   
@@ -76,7 +73,7 @@ end%for:cells(kk)
 visresp = struct('Tin_Sout',VR_Tin_Sout, 'Tout_Sin',VR_Tout_Sin);
 
 if (nargout > 1)
-  varargout{1} = TST;
+  varargout{1} = TST_fast;
 end
 
 end%function:calc_visresp_FEF_err()

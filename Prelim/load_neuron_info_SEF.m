@@ -2,7 +2,7 @@ function [ ninfo ] = load_neuron_info_SEF( monkey )
 %load_neuron_info_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-FILE_XLSX = '~/Dropbox/Speed Accuracy/SEF_SAT/Session_Info_SAT.xlsx';
+FILE_XLSX = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Session_Info_SAT.xlsx';
 
 if strcmp(monkey(1), 'D')
   ninfo = load_info_xlsx_SAT([3, 40], FILE_XLSX, 'Darwin')';

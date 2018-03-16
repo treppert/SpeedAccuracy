@@ -7,13 +7,13 @@ TIME_ARRAY = 3500;
 
 NUM_CELLS = length(ninfo);
 
-moves = determine_errors_SAT(moves, binfo);
+moves = determine_errors_FEF(moves, binfo);
 
 for kk = 1:NUM_CELLS
   if ~ismember(ninfo(kk).type, {'M','VM'}); continue; end
   
   %get session number corresponding to behavioral data
-  kk_moves = ismember({binfo.session}, ninfo(kk).session);
+  kk_moves = ismember({binfo.session}, ninfo(kk).sesh);
 
   %index by response accuracy
 %   idx_err = moves(kk_moves).err_direction;

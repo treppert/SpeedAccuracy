@@ -4,7 +4,7 @@ function [ visresp , varargout ] = calc_visresp_FEF_corr( spikes , ninfo , moves
 
 NUM_CELLS = length(spikes);
 
-TYPE_PLOT = {'V','VM','M'};
+TYPE_PLOT = {'V','VM'};
 MIN_NUM_TRIALS = 5;
 REMOVE_SPIKES_POST_RESP = false;
 
@@ -59,7 +59,7 @@ for kk = 1:NUM_CELLS
       end
     end
   end
-  
+
   %distractor in RF
   VR_Din(kk).acc(:) = transpose(nanmean(sdf_kk(~idx_Tin & idx_acc,:)));
   VR_Din(kk).fast(:) = transpose(nanmean(sdf_kk(~idx_Tin & idx_fast,:)));
@@ -69,7 +69,7 @@ end%for:cells(kk)
 visresp = struct('Tin',VR_Tin, 'Din',VR_Din);
 
 if (nargout > 1)
-  varargout{1} = TST;
+  varargout{1} = [TST.fast]';
 end
 
 end%function:calc_visresp_FEF_corr()

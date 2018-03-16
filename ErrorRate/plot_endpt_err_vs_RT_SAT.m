@@ -4,11 +4,11 @@ function [ varargout ] = plot_endpt_err_vs_RT_SAT( info , moves )
 
 NUM_SESSION = length(info);
 
-MIN_PER_BIN = 5;
+MIN_PER_BIN = 2;
 MIN_NUM_SESSION = 3;
 
 %set up the RT bins to average data
-BIN_LIM = 200 : 50 : 800;
+BIN_LIM = 200 : 100 : 800;
 NUM_BIN = length(BIN_LIM) - 1;
 RT_PLOT  = BIN_LIM(1:NUM_BIN) + diff(BIN_LIM)/2;
 
@@ -48,23 +48,22 @@ for kk = 1:NUM_SESSION
   
 end%for:sessions(kk)
 
-if (nargout > 0)
-  varargout{1} = struct('acc',err_acc, 'fast',err_fast);
-end
-
-%% Plotting
-
 num_sem_acc = sum(~isnan(err_acc),1);
 num_sem_fast = sum(~isnan(err_fast),1);
 
 err_acc(:,num_sem_acc < MIN_NUM_SESSION) = NaN;
 err_fast(:,num_sem_fast < MIN_NUM_SESSION) = NaN;
 
-figure(); hold on
-plot(RT_PLOT, err_fast, 'LineWidth',1.25, 'Color',[0 .7 0])
-plot(RT_PLOT, err_acc, 'LineWidth',1.25, 'Color','r')
-ppretty()
+if (nargout > 0)
+  varargout{1} = struct('acc',err_acc, 'fast',err_fast);
+end
 
+%% Plotting
+
+% figure(); hold on
+% plot(RT_PLOT, err_fast, 'LineWidth',1.25, 'Color',[0 .7 0])
+% plot(RT_PLOT, err_acc, 'LineWidth',1.25, 'Color','r')
+% ppretty()
 
 figure(); hold on
 errorbar_no_caps(RT_PLOT, nanmean(err_fast), 'err',nanstd(err_fast)./sqrt(num_sem_fast), 'color',[0 .7 0])

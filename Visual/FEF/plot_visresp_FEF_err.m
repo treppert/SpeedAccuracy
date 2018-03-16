@@ -1,4 +1,4 @@
-function [  ] = plot_visresp_FEF_err( visresp , TST , spikes , ninfo , binfo )
+function [  ] = plot_visresp_FEF_err( visresp , spikes , ninfo , binfo )
 %[ ] = plot_sdf_visual_response( varargin )
 %   Detailed explanation goes here
 

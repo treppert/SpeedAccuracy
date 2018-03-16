@@ -9,7 +9,7 @@ FLAG_FAST = 3;
 
 trial_switch = new_struct({'A2F','F2A'}, 'dim',[1,NUM_SESSIONS]);
 
-for kk = 2:NUM_SESSIONS
+for kk = 1:NUM_SESSIONS
   
   num_trials = length(binfo(kk).condition);
   condition = double(binfo(kk).condition);

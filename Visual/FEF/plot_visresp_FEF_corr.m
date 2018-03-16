@@ -2,7 +2,7 @@ function [  ] = plot_visresp_FEF_corr( visresp , TST , spikes , ninfo , binfo )
 %[ ] = plot_sdf_visual_response( varargin )
 %   Detailed explanation goes here
 
-PLOT_INDIV = true;
+PLOT_INDIV = false;
 
 %specify time limits for plotting
 T_LIM = [0,500];
@@ -44,8 +44,8 @@ else %PLOT_AVG_ACROSS
   
   figure(); hold on
   plot(TST_acc, TST_fast, 'ko')
-  plot([150 240], [150 240], 'k--')
-  xlim([100 360]); ylim([75 275])
+  plot([150 250], [150 250], 'k--')
+  xlim([100 360]); ylim([99 300])
   ppretty()
   return
   

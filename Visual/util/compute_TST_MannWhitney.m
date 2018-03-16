@@ -9,15 +9,19 @@ end
 
 DEBUG = false;
 
+%time-point to begin assessment
+OFFSET_TEST = 100;
+% OFFSET_TEST = 80;
+
 if strcmp(type, 'correct')
   ALPHA = 0.01; %Fig. 7 -- correct responses
+%   ALPHA = 0.02; %Fig. 8 -- error responses -- comparison
+  IDX_TEST = OFFSET_TEST + (1:550);
 else
   ALPHA = 0.10; %Fig. 8 -- error responses
+  IDX_TEST = OFFSET_TEST + (1:550);
 end
 
-%select time-points to assess
-OFFSET_TEST = 100;
-IDX_TEST = OFFSET_TEST + (1:350);
 NUM_TEST = length(IDX_TEST);
 
 FILT_HALFWIN = 4; %one-sided number of samples to smooth average

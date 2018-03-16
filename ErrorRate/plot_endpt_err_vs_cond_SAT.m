@@ -28,8 +28,7 @@ end%for:sessions(kk)
 
 if (nargout > 0)
   
-  varargout{1} = [err.acc]';
-  varargout{2} = [err.fast]';
+  varargout{1} = err;
   
 else
   
@@ -42,9 +41,9 @@ else
   
   %% Plotting -- All saccades
   figure(); hold on
-  histogram([err.fast], 'BinWidth',0.2, 'FaceColor',[0 .7 0])
-  histogram([err.acc], 'BinWidth',0.2, 'FaceColor','r')
-  xlim([0 5])
+  histogram([err.fast], 'FaceColor',[0 .7 0])
+  histogram([err.acc], 'FaceColor','r')
+%   xlim([0 5])
   ppretty('image_size',[3.2,2])
   
 end
