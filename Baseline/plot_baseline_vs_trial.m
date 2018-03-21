@@ -51,8 +51,8 @@ figure(); hold on
 % plot([-2.5 -2.5], [0.8 1.2], 'k--')
 % plot([1.5 1.5], [0.8 1.2], 'k--')
 
-% plot((-4:-1), bline_F2A, 'LineWidth',1.25)
-% plot( (0:3),  bline_A2F, 'LineWidth',1.25)
+% plot((-4:-1), bline_F2A, 'LineWidth',1.25, 'Color',[.4 .4 .4])
+% plot( (0:3),  bline_A2F, 'LineWidth',1.25, 'Color',[.4 .4 .4])
 errorbar_no_caps((-4:-1), nanmean(bline_F2A), 'err',nanstd(bline_F2A)/sqrt(NUM_SEM), 'color','k')
 errorbar_no_caps( (0:3),  nanmean(bline_A2F), 'err',nanstd(bline_A2F)/sqrt(NUM_SEM), 'color','k')
 

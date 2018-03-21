@@ -97,7 +97,7 @@ for kk = 1:NUM_SESSIONS
     continue
   end
   
-  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc')
+  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','FixAcqTime_')
 
   %Session information
   info(kk).num_trials = length(SAT_(:,1));
@@ -135,7 +135,7 @@ for kk = 1:NUM_SESSIONS
     info(kk).fixtime = FixAcqTime_';
   else %variable FixAcqTime_ does not exist
     if strcmp(type, 'SEARCH')
-%       fprintf('Warning -- "FixAcqTime_" does not exist -- %s\n', info(kk).session)
+      fprintf('Warning -- "FixAcqTime_" does not exist -- %s\n', info(kk).session)
     end
     info(kk).fixtime = NaN(1,num_trials(kk));
   end

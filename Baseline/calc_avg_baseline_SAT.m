@@ -54,5 +54,12 @@ plot([0 70], [0 70], 'k--')
 errorbarxy(bline_Acc, bline_Fast, sd_Acc, sd_Fast, {'k.','k','k'})
 ppretty('image_size',[3,3])
 
+%bar plot
+err = [nanstd(bline_Acc) nanstd(bline_Fast)] / sqrt(sum([ninfo.vis] >= MIN_GRADE));
+figure(); hold on
+bar([1 2], [nanmean(bline_Acc) nanmean(bline_Fast)], 'BarWidth',0.4)
+errorbar_no_caps([1 2], [nanmean(bline_Acc) nanmean(bline_Fast)], 'err',err)
+xlim([0 3]); ppretty('image_size',[2,3])
+
 end%util:calc_avg_baseline_SAT()
 
