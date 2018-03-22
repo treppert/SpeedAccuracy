@@ -29,9 +29,11 @@ mov = num2cell( uint8(xlsread(file, monkey, build_col('L',index(1),index(2)))) )
 rew = num2cell( uint8(xlsread(file, monkey, build_col('N',index(1),index(2)))) );
 sat = num2cell( uint8(xlsread(file, monkey, build_col('R',index(1),index(2)))) );
 vis = num2cell( uint8(xlsread(file, monkey, build_col('K',index(1),index(2)))) );
+errDir = num2cell( (xlsread(file, monkey, build_col('S',index(1),index(2)))) );
+errTime = num2cell( (xlsread(file, monkey, build_col('T',index(1),index(2)))) );
 
 info = struct('sesh',sesh, 'snum',sesh_num, 'unit',unit, 'err',err, 'fix',fix, ...
-  'mov',mov, 'rew',rew, 'sat',sat, 'vis',vis);
+  'mov',mov, 'rew',rew, 'sat',sat, 'vis',vis, 'errDir',errDir, 'errTime',errTime);
 
 info = orderfields(info);
 
