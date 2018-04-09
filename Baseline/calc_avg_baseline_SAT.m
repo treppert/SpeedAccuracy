@@ -17,7 +17,7 @@ sd_Acc = NaN(1,NUM_CELLS);
 sd_Fast = NaN(1,NUM_CELLS);
 
 for kk = 1:NUM_CELLS
-  if (ninfo(kk).vis < MIN_GRADE); continue; end
+%   if (ninfo(kk).vis < MIN_GRADE); continue; end
   
   sdf_kk = compute_spike_density_fxn( spikes(kk).SAT );
   tmp = mean(sdf_kk(:,TIME_STIM + TIME_BASE), 2); %average per trial
