@@ -60,7 +60,8 @@ for cc = 1:NUM_CELLS
   ppretty('image_size',[5,2])
   xlim([-425 825]); xticks(-400:100:800)
   
-%   pause(0.25)
+  print(['~/Dropbox/tmp/sdf-reward-Eu/', ninfo(cc).sesh,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.25)
   
 end
 

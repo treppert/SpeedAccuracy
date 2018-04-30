@@ -17,11 +17,11 @@ for kk = 1:NUM_SESSION
   idx_corr = ~(moves(kk).err_direction | moves(kk).err_timing);
   
 %   err(kk).acc = moves(kk).err(idx_acc & idx_corr);
-  err(kk).acc = nanstd(moves(kk).err(idx_acc & idx_corr));
+  err(kk).acc = nanmean(moves(kk).err(idx_acc & idx_corr));
   tgt_oct(kk).acc = single(info(kk).tgt_octant(idx_acc & idx_corr));
   
 %   err(kk).fast = moves(kk).err(idx_fast & idx_corr);
-  err(kk).fast = nanstd(moves(kk).err(idx_fast & idx_corr));
+  err(kk).fast = nanmean(moves(kk).err(idx_fast & idx_corr));
   tgt_oct(kk).fast = single(info(kk).tgt_octant(idx_fast & idx_corr));
   
 end%for:sessions(kk)
@@ -40,10 +40,13 @@ else
   % ppretty('image_size',[2,3])
   
   %% Plotting -- All saccades
+%   figure(); hold on
+%   histogram([err.fast], 'FaceColor',[0 .7 0], 'BinWidth',0.1)
+%   histogram([err.acc], 'FaceColor','r', 'BinWidth',0.1)
+%   ppretty('image_size',[3.2,2])
+  
   figure(); hold on
-  histogram([err.fast], 'FaceColor',[0 .7 0])
-  histogram([err.acc], 'FaceColor','r')
-%   xlim([0 5])
+  histogram([err.fast]-[err.acc], 'FaceColor','k')
   ppretty('image_size',[3.2,2])
   
 end

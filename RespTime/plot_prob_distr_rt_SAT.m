@@ -1,32 +1,32 @@
-function [  ] = plot_prob_distr_rt_SAT( moves , info , varargin )
+function [  ] = plot_prob_distr_rt_SAT( moves , info )
 
-args = getopt(varargin, {'subplot'});
+%no SEF cells from the first session, so remove behavior
+info(1) = [];
+moves(1) = [];
 
 idx_fast = ([info.condition] == 3);
 idx_acc  = ([info.condition] == 1);
 
+idx_corr = ~([info.err_dir] | [info.err_hold]);
+idx_err = [info.err_dir];
+
 resptime = double([moves.resptime]);
 
-rt_fast = resptime(idx_fast);
-rt_acc  = resptime(idx_acc);
+%% Correct trials
+figure(); hold on
+histogram(resptime(idx_acc & idx_corr), 'BinWidth',25, 'EdgeColor','none', 'FaceColor','r', 'Normalization','count')
+histogram(resptime(idx_fast & idx_corr), 'BinWidth',25, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','count')
+xlim([175 1000])
+ppretty()
 
-if (args.subplot)
-  set(gca,'Ydir','reverse')
-  set(gca, 'XAxisLocation','top')
-  xticklabels(cell(1,length(get(gca, 'xtick'))))
-  xlim([175 800])
-else
-  figure(); hold on
-  xlim([175 1000])
-end
-
-histogram(rt_acc, 'BinWidth',25, 'EdgeColor','none', 'FaceColor','r', 'Normalization','probability')
-histogram(rt_fast, 'BinWidth',25, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','probability')
-
-if (~args.subplot)
-  ppretty()
-end
-% set(gca,'yticklabel',num2str(get(gca,'ytick')','%.2f'))
+%% Error trials
+figure(); hold on
+histogram(resptime(idx_acc & idx_err), 'BinWidth',25, 'EdgeColor','none', 'FaceColor','r', 'Normalization','count')
+histogram(resptime(idx_fast & idx_err), 'BinWidth',25, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','count')
+set(gca,'Ydir','reverse')
+set(gca, 'XAxisLocation','top')
+xticklabels(cell(1,length(get(gca, 'xtick'))))
+xlim([175 1000])
 
 end%function:plot_prob_distr_rt_SAT()
 

@@ -32,7 +32,7 @@ time_rew = determine_time_reward_SAT(binfo, moves);
 
 %% Compute the SDF
 
-for kk = 1:NUM_CELLS
+for kk = 1:5%NUM_CELLS
 %   if (ninfo(kk).vis < MIN_GRADE); continue; end
 %   if (ninfo(kk).errTime ~= -1); continue; end
   
@@ -105,6 +105,7 @@ for kk = 1:NUM_CELLS
 %   pause(0.25)
 %   
 %   subplot(1,3,2); hold on
+%   hold on
 %   plot([0 0], [linmin linmax], 'k--')
 %   plot(-RT_CorrAcc(kk)*ones(1,2), [linmin linmax], 'r-')
 %   plot(-RT_ErrTime(kk)*ones(1,2), [linmin linmax], 'r-.')
@@ -119,12 +120,12 @@ for kk = 1:NUM_CELLS
 %   pause(0.25)
   
 %   subplot(1,3,3); hold on
-  hold on
+%   hold on
 %   plot([0 0], [linmin linmax], 'k--')
-  plot(TIME_REW, sdf_CorrAcc_Rew(kk,:), 'r-', 'LineWidth',1.0)
-  plot(TIME_REW, sdf_ErrTime_Rew(kk,:), 'r:', 'LineWidth',1.0)
-  print_session_unit(gca, ninfo(kk))
-  ppretty('image_size',[4,2])
+%   plot(TIME_REW, sdf_CorrAcc_Rew(kk,:), 'r-', 'LineWidth',1.0)
+%   plot(TIME_REW, sdf_ErrTime_Rew(kk,:), 'r:', 'LineWidth',1.0)
+%   print_session_unit(gca, ninfo(kk))
+%   ppretty('image_size',[4,2])
 %   xlim([-525 525]); xticks(-500:100:500); %yticks([])
   
 %   tmp = get(gca, 'ylim'); %make y-axes consistent

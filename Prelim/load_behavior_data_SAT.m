@@ -60,7 +60,7 @@ info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)
-save('/data/search/SAT/Darwin/gaze_SAT.mat', 'gaze_SAT');
+% save('/data/search/SAT/Euler/gaze_SAT.mat', 'gaze_SAT');
 
 end%function:load_behavior_data_SAT
 

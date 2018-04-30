@@ -4,11 +4,14 @@ function [ varargout ] = plot_endpt_err_vs_RT_SAT( info , moves )
 
 NUM_SESSION = length(info);
 
-MIN_PER_BIN = 2;
+% MIN_PER_BIN = 3;
+% MIN_NUM_SESSION = 4;
+MIN_PER_BIN = 2; %for RM-ANOVA
 MIN_NUM_SESSION = 3;
 
 %set up the RT bins to average data
-BIN_LIM = 200 : 100 : 800;
+% BIN_LIM = 200 : 50 : 800;
+BIN_LIM = 200 : 100 : 800; %for RM-ANOVA
 NUM_BIN = length(BIN_LIM) - 1;
 RT_PLOT  = BIN_LIM(1:NUM_BIN) + diff(BIN_LIM)/2;
 
@@ -36,12 +39,14 @@ for kk = 1:NUM_SESSION
     
     if (sum(idx_acc & idx_jj) >= MIN_PER_BIN)
       Err_Acc{kk,jj} = moves(kk).err(idx_acc & idx_jj);
-      err_acc(kk,jj) = std(moves(kk).err(idx_acc & idx_jj));
+      err_acc(kk,jj) = mean(moves(kk).err(idx_acc & idx_jj));
+%       err_acc(kk,jj) = std(moves(kk).err(idx_acc & idx_jj));
     end
     
     if (sum(idx_fast & idx_jj) >= MIN_PER_BIN)
       Err_Fast{kk,jj} = moves(kk).err(idx_fast & idx_jj);
-      err_fast(kk,jj) = std(moves(kk).err(idx_fast & idx_jj));
+      err_fast(kk,jj) = mean(moves(kk).err(idx_fast & idx_jj));
+%       err_fast(kk,jj) = std(moves(kk).err(idx_fast & idx_jj));
     end
     
   end%for:RT_bins(jj)
