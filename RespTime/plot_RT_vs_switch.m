@@ -2,7 +2,7 @@ function [  ] = plot_RT_vs_switch( info , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_NUM_TRIALS = 10;
+MIN_NUM_TRIALS = 8;
 
 TRIAL_PLOT = ( -2 : 1 );
 NUM_TRIAL = length(TRIAL_PLOT);

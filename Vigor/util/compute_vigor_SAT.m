@@ -1,23 +1,35 @@
-function [ moves ] = compute_vigor_SAT( moves , parm_ms )
+function [ moves ] = compute_vigor_SAT( moves , varargin )
 %compute_vigor_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-tasks = fieldnames(moves);
-NUM_TASKS = length(tasks);
-NUM_SESSION = length(moves.(tasks{1}));
+NUM_SESSION = length(moves);
 
-FXN_DEF_MS = fittype({'x'}); %linear fit
+FXN_DEF_MS = fittype({'x'});
+DEBUG = false;
 
-for jj = 1:NUM_TASKS
+if (nargin > 1)
+  parm_ms = varargin{1};
+end
+
+for kk = 1:NUM_SESSION
+
+  if (nargin == 1)
+    
+    i_nan = isnan(moves(kk).displacement);
+    parm_ms = fit(moves(kk).displacement(~i_nan)', moves(kk).peakvel(~i_nan)', FXN_DEF_MS);
+
+  end
+
+  pv_expected = FXN_DEF_MS(parm_ms.a, moves(kk).displacement);
+
+  moves(kk).vigor(:) = moves(kk).peakvel ./ pv_expected;
   
-  for kk = 1:NUM_SESSION
-
-    pv_actual = moves.(tasks{jj})(kk).peakvel;
-    pv_expected = FXN_DEF_MS(parm_ms.a, moves.(tasks{jj})(kk).displacement);
-
-    moves.(tasks{jj})(kk).vigor(:) = pv_actual ./ pv_expected;
-
-  end%for:sessions(kk)
+  if (DEBUG)
+    figure(); hold on
+    plot(moves(kk).displacement, moves(kk).peakvel, 'ko', 'MarkerSize',3)
+    plot([0, 10], FXN_DEF_MS(parm_ms.a, [0 10]), 'b-')
+  end
   
-end%for:tasks(jj)
+end%for:sessions(kk)
+  
 end%function:compute_vigor_SAT()

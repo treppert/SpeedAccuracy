@@ -2,7 +2,7 @@ function [  ] = plot_RT_distr_switch( info , moves , monkey , cond )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_NUM_TRIALS = 10;
+MIN_NUM_TRIALS = 8;
 NUM_SESSION = length(info);
 
 RT_Start = cell(1,NUM_SESSION);

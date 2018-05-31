@@ -5,7 +5,7 @@ function [ ] = plot_pcent_corr_vs_RT_2( moves , info )
 MIN_PER_BIN = 8; %number of movements per RT bin
 
 %set up the RT bins to average data
-BIN_LIM = 200 : 50 : 850;
+BIN_LIM = 150 : 50 : 850;
 NUM_BIN = length(BIN_LIM) - 1;
 RT_PLOT  = BIN_LIM(1:NUM_BIN) + diff(BIN_LIM)/2;
 
@@ -56,9 +56,14 @@ Pcorr_fast(:,bin_nan_fast) = NaN;
 NUM_SEM_ACC = sum(~isnan(Pcorr_acc),1);
 NUM_SEM_FAST = sum(~isnan(Pcorr_fast),1);
 
+% figure(); hold on
+% shaded_error_bar(RT_PLOT, nanmean(Pcorr_acc), nanstd(Pcorr_acc)./sqrt(NUM_SEM_ACC), {'r-', 'LineWidth',1.5})
+% shaded_error_bar(RT_PLOT, nanmean(Pcorr_fast), nanstd(Pcorr_fast)./sqrt(NUM_SEM_FAST), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
+% ppretty('image_size',[4.8,3])
+
 figure(); hold on
-shaded_error_bar(RT_PLOT, nanmean(Pcorr_acc), nanstd(Pcorr_acc)./sqrt(NUM_SEM_ACC), {'r-', 'LineWidth',1.5})
-shaded_error_bar(RT_PLOT, nanmean(Pcorr_fast), nanstd(Pcorr_fast)./sqrt(NUM_SEM_FAST), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
+errorbar_no_caps(RT_PLOT, nanmean(Pcorr_acc), 'err',nanstd(Pcorr_acc)./sqrt(NUM_SEM_ACC), 'color','r', 'marker','o')
+errorbar_no_caps(RT_PLOT, nanmean(Pcorr_fast), 'err',nanstd(Pcorr_fast)./sqrt(NUM_SEM_FAST), 'color',[0 .7 0], 'marker','o')
 ppretty('image_size',[4.8,3])
 
 % figure(); hold on
