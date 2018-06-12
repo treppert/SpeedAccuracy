@@ -5,7 +5,7 @@ function [  ] = plot_Perr_vs_switch( info , monkey )
 ERROR = 'err_time';
 MIN_NUM_TRIALS = 10;
 
-TRIAL_PLOT = ( -2 : 1 );
+TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
 NUM_SESSION = length(info);
@@ -70,9 +70,7 @@ errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqr
 % plot(-0.5*ones(1,2), [0 .6], 'k--')
 % plot( 3.5*ones(1,2), [0 .6], 'k--')
 
-xlim([TRIAL_PLOT(1)-0.2 , TRIAL_PLOT(end)+4.2])
-xticks(TRIAL_PLOT(1) : TRIAL_PLOT(end)+4)
-xticklabels({'-2','-1','0','+1','-2','-1','0','+1'})
+xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ppretty()
 
 end%function:plot_param_re_switch()

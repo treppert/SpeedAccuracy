@@ -25,8 +25,8 @@ for kk = 1:NUM_SESSIONS
   end
   
   %remove those trials closest to session end
-  tmp_F2A(tmp_F2A > (num_trials-9)) = [];
-  tmp_A2F(tmp_A2F > (num_trials-9)) = [];
+  tmp_F2A(tmp_F2A > (num_trials-4)) = [];
+  tmp_A2F(tmp_A2F > (num_trials-4)) = [];
   
   trial_switch(kk).F2A = tmp_F2A;
   trial_switch(kk).A2F = tmp_A2F;

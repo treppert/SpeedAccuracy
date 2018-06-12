@@ -2,9 +2,9 @@ function [  ] = plot_RT_vs_switch( info , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_NUM_TRIALS = 8;
+MIN_NUM_TRIALS = 10;
 
-TRIAL_PLOT = ( -2 : 1 );
+TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
 NUM_SESSION = length(info);
@@ -29,6 +29,8 @@ for kk = 1:NUM_SESSION
     
     RT_A2F{kk}(tt,:) = moves(kk).resptime(tt_A2F + TRIAL_PLOT(tt));
     RT_F2A{kk}(tt,:) = moves(kk).resptime(tt_F2A + TRIAL_PLOT(tt));
+%     RT_A2F{kk}(tt,:) = moves(kk).resptime(tt_A2F + TRIAL_PLOT(tt)) - info(kk).tgt_dline(tt_A2F + TRIAL_PLOT(tt));
+%     RT_F2A{kk}(tt,:) = moves(kk).resptime(tt_F2A + TRIAL_PLOT(tt)) - info(kk).tgt_dline(tt_F2A + TRIAL_PLOT(tt));
     
   end%for:trials(tt)
   
@@ -36,7 +38,6 @@ end%for:sessions(kk)
 
 
 %% Plotting
-
 mu_A2F = NaN(NUM_TRIAL,NUM_SESSION);
 mu_F2A = NaN(NUM_TRIAL,NUM_SESSION);
 
@@ -48,15 +49,12 @@ for kk = 1:NUM_SESSION
   mu_A2F(:,kk) = nanmean(RT_A2F{kk},2);
   mu_F2A(:,kk) = nanmean(RT_F2A{kk},2);
   
-%   plot(TRIAL_PLOT, mu_F2A(:,kk), '-', 'Color',.4*ones(1,3), 'LineWidth',1.0)
-%   plot(TRIAL_PLOT+NUM_TRIAL, mu_A2F(:,kk), '-', 'Color',.4*ones(1,3), 'LineWidth',1.0)
-  
 end
 
 %remove sessions with no data
-kk_nan = isnan(mu_A2F(1,:));
-mu_A2F(:,kk_nan) = [];
-mu_F2A(:,kk_nan) = [];
+i_nan = isnan(mu_A2F(1,:));
+mu_A2F(:,i_nan) = [];
+mu_F2A(:,i_nan) = [];
 NUM_SESSION = size(mu_A2F,2);
 
 % plot(TRIAL_PLOT, mean(mu_F2A,2), 'k-', 'LineWidth',2.0)
@@ -64,9 +62,7 @@ NUM_SESSION = size(mu_A2F,2);
 errorbar_no_caps(TRIAL_PLOT, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
 errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
 
-xlim([TRIAL_PLOT(1)-0.2 , TRIAL_PLOT(end)+4.2])
-xticks(TRIAL_PLOT(1) : TRIAL_PLOT(end)+4)
-xticklabels({'-2','-1','0','+1','-2','-1','0','+1'})
+xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ppretty()
 
 end%function:plot_param_re_switch()

@@ -16,6 +16,9 @@ for kk = 1:NUM_SESSION
   if (nargin == 1)
     
     i_nan = isnan(moves(kk).displacement);
+    
+    if (sum(~i_nan) < 200); continue; end
+    
     parm_ms = fit(moves(kk).displacement(~i_nan)', moves(kk).peakvel(~i_nan)', FXN_DEF_MS);
 
   end

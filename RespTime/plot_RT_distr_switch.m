@@ -24,6 +24,7 @@ for kk = 1:NUM_SESSION
   if strcmp(cond, 'Accurate')
     
     RT_Start{kk} = moves(kk).resptime(trial_switch(kk).F2A);
+%     RT_Start{kk} = moves(kk).resptime(trial_switch(kk).F2A) - info(kk).tgt_dline(trial_switch(kk).F2A);
     RT_End{kk} = moves(kk).resptime(trial_switch(kk).A2F-1);
     
     RT_dline(kk) = nanmean(info(kk).tgt_dline(info(kk).condition == 1));
@@ -41,7 +42,8 @@ end%for:sessions(kk)
 
 %% Compute RT distribution on single-trial
 
-BIN_LIM = ( 120 : 40 : 1000 );
+BIN_LIM = ( 100 : 50 : 1000 );
+% BIN_LIM = ( -300 : 50 : 600 ); %re. deadline
 NUM_BIN = length(BIN_LIM) - 1;
 RT_BIN = BIN_LIM(1:NUM_BIN) + diff(BIN_LIM)/2;
 
@@ -73,12 +75,14 @@ NUM_SESSION = size(RT_Start_avg,1);
 
 figure(); hold on
 
+% plot(RT_BIN, RT_Start_avg, 'k-')
 shaded_error_bar(RT_BIN, mean(RT_Start_avg), std(RT_Start_avg)/sqrt(NUM_SESSION), {'Color',[.4 .4 .4]})
-shaded_error_bar(RT_BIN, mean(RT_End_avg), std(RT_End_avg)/sqrt(NUM_SESSION), {'Color','k'})
-plot(nanmean(RT_dline)*ones(1,2), [0 0.1], 'k--', 'LineWidth',1.5)
+% shaded_error_bar(RT_BIN, mean(RT_End_avg), std(RT_End_avg)/sqrt(NUM_SESSION), {'Color','k'})
+plot(nanmean(RT_dline)*ones(1,2), [0 0.15], 'k--', 'LineWidth',1.5)
 
 if strcmp(cond, 'Accurate')
   xlim([100 1000])
+%   xlim([-300 600]) %re. deadline
 elseif strcmp(cond, 'Fast')
   xlim([100 600])
 end
