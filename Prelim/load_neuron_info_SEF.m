@@ -5,9 +5,9 @@ function [ ninfo ] = load_neuron_info_SEF( monkey )
 FILE_XLSX = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Session_Info_SAT.xlsx';
 
 if strcmp(monkey(1), 'D')
-  ninfo = load_info_xlsx_SAT([3, 40], FILE_XLSX, 'Darwin')';
+  ninfo = load_info_xlsx_SAT([6, 43], FILE_XLSX, 'Darwin')';
 elseif strcmp(monkey(1), 'E')
-  ninfo = load_info_xlsx_SAT([3, 36], FILE_XLSX, 'Euler')';
+  ninfo = load_info_xlsx_SAT([6, 39], FILE_XLSX, 'Euler')';
 else
   error('Unrecognized input "monkey"')
 end
@@ -26,14 +26,16 @@ sesh_num = num2cell(uint8(xlsread(file, monkey, build_col('A',index(1),index(2))
 err = num2cell( uint8(xlsread(file, monkey, build_col('O',index(1),index(2)))) );
 fix = num2cell( uint8(xlsread(file, monkey, build_col('M',index(1),index(2)))) );
 mov = num2cell( uint8(xlsread(file, monkey, build_col('L',index(1),index(2)))) );
-rew = num2cell( (xlsread(file, monkey, build_col('U',index(1),index(2)))) );
+rewAcc = num2cell( (xlsread(file, monkey, build_col('W',index(1),index(2)))) );
+rewFast = num2cell( (xlsread(file, monkey, build_col('X',index(1),index(2)))) );
 sat = num2cell( uint8(xlsread(file, monkey, build_col('R',index(1),index(2)))) );
 vis = num2cell( uint8(xlsread(file, monkey, build_col('K',index(1),index(2)))) );
 errDir = num2cell( (xlsread(file, monkey, build_col('S',index(1),index(2)))) );
 errTime = num2cell( (xlsread(file, monkey, build_col('T',index(1),index(2)))) );
 
 info = struct('sesh',sesh, 'snum',sesh_num, 'unit',unit, 'err',err, 'fix',fix, ...
-  'mov',mov, 'rew',rew, 'sat',sat, 'vis',vis, 'errDir',errDir, 'errTime',errTime);
+  'mov',mov, 'rewAcc',rewAcc, 'rewFast',rewFast, 'sat',sat, 'vis',vis, ...
+  'errDir',errDir, 'errTime',errTime);
 
 info = orderfields(info);
 

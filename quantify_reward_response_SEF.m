@@ -1,9 +1,10 @@
-function [  ] = quantify_reward_response_SEF( ninfo , spikes , binfo , moves )
+function [  ] = quantify_reward_response_SEF( ninfo , spikes , binfo , moves , bline )
 %quantify_reward_response_SEF Summary of this function goes here
 %   Detailed explanation goes here
 
+MIN_BLINE = 4;
 TIME_ZERO = 3500;
-T_WIN = TIME_ZERO + [50, 400];
+T_WIN = TIME_ZERO + [100, 500];
 
 NUM_CELLS = length(spikes);
 
@@ -21,6 +22,7 @@ cc_dec = false(1,NUM_CELLS); %decrease
 time_rew = determine_time_reward_SAT(binfo, moves);
 
 for cc = 1:NUM_CELLS
+%   if ((ninfo(cc).rewAcc <= 0) || (bline(cc) < MIN_BLINE)); continue; end
   
   kk = ismember({binfo.session}, ninfo(cc).sesh);
   
@@ -57,8 +59,8 @@ for cc = 1:NUM_CELLS
 end%for:cells(cc)
 
 figure(); hold on
-histogram(Aavg_AE-Aavg_AC, 'BinWidth',2, 'FaceColor',[.4 .4 .4])
-histogram(Aavg_AE(cc_dec|cc_inc)-Aavg_AC(cc_dec|cc_inc), 'BinWidth',2, 'FaceColor','k')
+histogram(Aavg_AE-Aavg_AC, 'BinWidth',4, 'FaceColor',[.4 .4 .4])
+histogram(Aavg_AE(cc_dec|cc_inc)-Aavg_AC(cc_dec|cc_inc), 'BinWidth',4, 'FaceColor','k')
 ppretty('image_size',[2,3.2])
 
 pause(0.25)
