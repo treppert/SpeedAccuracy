@@ -1,32 +1,37 @@
-function [ time_rew ] = determine_time_reward_SAT( info , moves , varargin )
+function [ time_rew , varargout ] = determine_time_reward_SAT( info , moves )
 %determine_time_reward_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {'check_timing'});
-
-MAX_DIFF_TIME = 50; %diff between 0.1 and 0.9 quantiles
+LIM_TREW = [600, 900];
 
 NUM_SESSIONS = length(info);
 time_rew = NaN(1,NUM_SESSIONS);
 
+%output combined vector of expected t_rew(err) and actual t_err(corr)
+trew_cell = cell(1,NUM_SESSIONS);
+for kk = 1:NUM_SESSIONS
+  trew_cell{kk} = NaN(1,info(kk).num_trials);
+end
+
 for kk = 1:NUM_SESSIONS
   
-  vec_time_rew = info(kk).rewtime - moves(kk).resptime;
+  idx_err = info(kk).err_time; %trials with error in timing
   
-  if (args.check_timing)
-    quant_10 = quantile(vec_time_rew, 0.1);
-    quant_90 = quantile(vec_time_rew, 0.9);
-
-    %check to see if time of reward shifted during the session
-    if ( abs(diff([quant_10, quant_90])) > MAX_DIFF_TIME)
-      continue
-    end
-  end
+  %get estimate of expected time of reward on error trials
+  time_rew(kk) = round(nanmedian(info(kk).rewtime));
   
-  time_rew(kk) = nanmedian(vec_time_rew);
+  trew_cell{kk}(idx_err) = time_rew(kk) - moves(kk).resptime(idx_err);
+  trew_cell{kk}(~idx_err) = info(kk).rewtime(~idx_err) - moves(kk).resptime(~idx_err);
+  
+  %make sure times are reasonable
+  idx_nan = ((trew_cell{kk} < LIM_TREW(1)) | (trew_cell{kk} > LIM_TREW(2)));
+  trew_cell{kk}(idx_nan) = NaN;
   
 end%for:sessions(kk)
 
+if (nargout > 1)
+  varargout{1} = trew_cell;
+end
 
 end%util:determine_time_reward_SAT()
 

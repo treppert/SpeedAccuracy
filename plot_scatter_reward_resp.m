@@ -1,4 +1,4 @@
-function [  ] = plot_scatter_reward_resp( spikes , ninfo , moves , binfo )
+function [  ] = plot_scatter_reward_resp( ninfo , spikes , binfo , moves )
 %plot_scatter_reward_resp Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,10 +16,10 @@ Aavg_AC = NaN(1,NUM_CELLS); %average activity across trials
 Aavg_AE = NaN(1,NUM_CELLS);
 Aavg_FC = NaN(1,NUM_CELLS);
 
-time_rew = determine_time_reward_SAT(binfo, moves);
+[~,time_rew] = determine_time_reward_SAT(binfo, moves);
 
 for cc = 1:NUM_CELLS
-  if (ninfo(cc).rewAcc <= 0); continue; end
+%   if (ninfo(cc).rewAcc <= 0); continue; end
   
   sdf = compute_spike_density_fxn(spikes(cc).SAT);
   kk = ismember({binfo.session}, ninfo(cc).sesh);
@@ -27,12 +27,7 @@ for cc = 1:NUM_CELLS
   idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time);
   idx_errtime = (~binfo(kk).err_dir & binfo(kk).err_time);
   
-  t_rew_kk = NaN(1,binfo(kk).num_trials); %t[rew] re. response
-  t_rew_kk(idx_errtime) = time_rew(kk);
-  t_rew_kk(idx_corr) = binfo(kk).rewtime(idx_corr) - moves(kk).resptime(idx_corr);
-  t_rew_kk(t_rew_kk > MAX_T_REW) = NaN;
-  
-  sdf = align_signal_on_response(sdf, moves(kk).resptime + t_rew_kk);
+  sdf = align_signal_on_response(sdf, moves(kk).resptime + time_rew{kk});
   
   idx_fast = (binfo(kk).condition == 3);
   idx_acc = (binfo(kk).condition == 1);
@@ -48,16 +43,16 @@ for cc = 1:NUM_CELLS
 end%for:cells(cc)
 
 figure(); hold on
-plot(Aavg_AC, Aavg_AE, 'ko', 'MarkerSize',8)
+plot(Aavg_AC, Aavg_AE, 'ko', 'MarkerSize',6)
 % histogram(Aavg_AE-Aavg_AC, 'BinWidth',2, 'FaceColor',[.4 .4 .4])
 % histogram(Aavg_AE(cc_dec|cc_inc)-Aavg_AC(cc_dec|cc_inc), 'BinWidth',2, 'FaceColor','k')
 ppretty('image_size',[4,4])
 
-pause(0.5)
-
-figure(); hold on
-plot(Aavg_AC, Aavg_FC, 'ko', 'MarkerSize',8)
-ppretty('image_size',[4,4])
+% pause(0.5)
+% 
+% figure(); hold on
+% plot(Aavg_AC, Aavg_FC, 'ko', 'MarkerSize',8)
+% ppretty('image_size',[4,4])
 
 
 end%fxn:plot_scatter_reward_resp()
