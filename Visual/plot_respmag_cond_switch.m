@@ -2,7 +2,7 @@ function [ varargout ] = plot_respmag_cond_switch( visresp_A2F , visresp_F2A , l
 %plot_respmag_cond_switch Summary of this function goes here
 %   Inputs are outputs from fxn plot_visresp_cond_switch()
 
-NORMALIZE = true;
+NORMALIZE = false;
 
 [NUM_TRIALS, NUM_CELLS] = size(visresp_A2F);
 MIN_GRADE = 3; %minimum grade for visual response

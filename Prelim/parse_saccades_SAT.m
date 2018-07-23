@@ -1,5 +1,7 @@
-function [ moves_SAT , varargout ] = parse_saccades_SAT( gaze , info )
+function [ moves_SAT , varargout ] = parse_saccades_SAT( gaze , info , tmp )
 %[ moves ] = parse_saccades_vandy( data , info )
+
+DEBUG = true;
 
 global VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
 global LIM_DURATION LIM_RESPTIME LIM_PEAKVEL MAX_RINIT MIN_RFIN MIN_DISP MAX_SKEW
@@ -24,7 +26,7 @@ MAX_RINIT = 2.5;
 MIN_RFIN = 3.0;
 LIM_RESPTIME = [0, 1500];
 
-NUM_SAMPLES_SURVEY = 2000;
+NUM_SAMPLES_SURVEY = 2500;
 IDX_SURVEY = ( TIME_ARRAY : TIME_ARRAY + NUM_SAMPLES_SURVEY - 1 ); %indexes used to look for movements
 ALLOT = 150;
 APPEND = 20;
@@ -71,7 +73,17 @@ for kk = 1:NUM_SESSIONS
 
     %% Identify saccade candidates
     cands_jj = identify_saccade_candidates(kin_jj);
-    if isempty(cands_jj); idx_sin_cand(jj) = true; continue; end
+    if isempty(cands_jj)
+      if (DEBUG)
+        figure(); hold on
+        plot(tmp(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
+        plot(tmp(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
+        plot(kin_jj.x, 'r-')
+        plot(kin_jj.y, 'r-')
+        pause()
+      end
+      idx_sin_cand(jj) = true; continue
+    end
 
     %% Identify all saccades
     [moves_all(kk), cands_jj, idx_all] = identify_all_saccades(moves_all(kk), cands_jj, idx_all);
@@ -313,16 +325,3 @@ elseif (num_taskrel > 1)
 end
 
 end%function:identify_taskrel_movement
-
-%       figure(); hold on
-%       plot(kin_tt.x, 'k-', 'LineWidth',1.25)
-%       plot(kin_tt.y, '-', 'LineWidth',1.25, 'Color',.4*ones(1,3))
-%       plot([cands_tt.resptime], [cands_tt.x_init], 'go')
-%       plot([cands_tt.resptime], [cands_tt.y_init], 'go')
-%       plot([cands_tt.resptime]+[cands_tt.duration], [cands_tt.x_fin], 'ro')
-%       plot([cands_tt.resptime]+[cands_tt.duration], [cands_tt.y_fin], 'ro')
-%       plot(moves_SAT.(tasks{jj})(kk).resptime(tt), moves_SAT.(tasks{jj})(kk).x_init(tt), 'g.', 'MarkerSize',10)
-%       plot(moves_SAT.(tasks{jj})(kk).resptime(tt), moves_SAT.(tasks{jj})(kk).y_init(tt), 'g.', 'MarkerSize',10)
-%       figure(); hold on; RT = moves_SAT.(tasks{jj})(kk).resptime(tt);
-%       plot(kin_tt.vel, 'k-', 'LineWidth',1.25)
-%       plot(RT, kin_tt.vel(RT), 'g.', 'MarkerSize',10)

@@ -2,6 +2,7 @@ function [ ] = plot_sdf_reward_SEF( spikes , ninfo , moves , binfo )
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
 
+PLOT_INDIV = false;
 NORMALIZE = true;
 
 TIME_ZERO = 3500;
@@ -56,7 +57,7 @@ if (NORMALIZE)
 end
 
 %% Plotting - individual cells
-if (false)
+if (PLOT_INDIV)
 for cc = NUM_CELLS:-1:1
   if (ninfo(cc).rewAcc <= 0); continue; end
   
@@ -70,9 +71,9 @@ for cc = NUM_CELLS:-1:1
   plot(TIME_REW, sdfAcc_ErrTime(cc,:), 'r:', 'LineWidth',1.0)
   print_session_unit(gca, ninfo(cc), 'horizontal')
 %   xlim([-625 825]); xticks(-600:100:800)
-  ppretty('image_size',[4,2])
+  ppretty('image_size',[4.8,3])
   
-  pause(0.25)
+%   pause(0.25)
 end
 end
 
@@ -82,13 +83,15 @@ sdf_Diff = sdfAcc_ErrTime-sdfAcc_Corr;
 
 figure(); hold on
 % plot(TIME_REW, sdf_Diff, 'k-')
-shaded_error_bar(TIME_REW, nanmean(sdf_Diff), nanstd(sdf_Diff)/sqrt(NUM_SEM), {'k-'}, false)
+shaded_error_bar(TIME_REW, nanmean(sdfAcc_Corr), nanstd(sdfAcc_Corr)/sqrt(NUM_SEM), {'r-'}, false)
+shaded_error_bar(TIME_REW, nanmean(sdfAcc_ErrTime), nanstd(sdfAcc_ErrTime)/sqrt(NUM_SEM), {'r:'}, false)
 ppretty('image_size',[4.8,3])
 
-% figure(); hold on
-% % plot(TIME_REW, sdf_Diff, 'k-', 'LineWidth',1.0)
-% shaded_error_bar(TIME_REW, nanmean(sdf_Diff), nanstd(sdf_Diff)/sqrt(NUM_SEM), {'k-'}, false)
-% xlim([-625 825]); xticks(-600:100:800)
-% ppretty('image_size',[4,2])
+pause(0.25)
+
+figure(); hold on
+% plot(TIME_REW, sdf_Diff, 'k-')
+shaded_error_bar(TIME_REW, nanmean(sdf_Diff), nanstd(sdf_Diff)/sqrt(NUM_SEM), {'k-'}, false)
+ppretty('image_size',[4.8,3])
 
 end%function:plot_sdf_error_SEF()

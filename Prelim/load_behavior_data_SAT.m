@@ -187,7 +187,7 @@ for kk = 1:NUM_SESSIONS
   
   %remove saturated data points
   for ff = 1:length(fields_gaze)
-    data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
+%     data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
   end
   
   %if monkey Q or S, remove trials with missing data during decision interval
