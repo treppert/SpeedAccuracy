@@ -1,7 +1,11 @@
-function [ moves_SAT , varargout ] = parse_saccades_SAT( gaze , info , tmp )
+function [ moves_SAT , varargout ] = parse_saccades_SAT( gaze , info , varargin )
 %[ moves ] = parse_saccades_vandy( data , info )
 
-DEBUG = true;
+DEBUG = false;
+
+if (DEBUG)
+  gaze_unclipped = varargin{1};
+end
 
 global VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
 global LIM_DURATION LIM_RESPTIME LIM_PEAKVEL MAX_RINIT MIN_RFIN MIN_DISP MAX_SKEW
@@ -64,6 +68,7 @@ for kk = 1:NUM_SESSIONS
   moves_SAT(kk).octant(:) = info(kk).octant;
 
   idx_sin_cand = false(1,info(kk).num_trials); %keep track of trials w/o candidates and/or responses
+  idx_sin_sacc = false(1,info(kk).num_trials);
   idx_sin_resp = false(1,info(kk).num_trials);
 
   for jj = 1:info(kk).num_trials
@@ -74,29 +79,38 @@ for kk = 1:NUM_SESSIONS
     %% Identify saccade candidates
     cands_jj = identify_saccade_candidates(kin_jj);
     if isempty(cands_jj)
-      if (DEBUG)
-        figure(); hold on
-        plot(tmp(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
-        plot(tmp(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
-        plot(kin_jj.x, 'r-')
-        plot(kin_jj.y, 'r-')
-        pause()
-      end
+%       if (DEBUG)
+%         figure(); hold on
+%         plot(gaze_unclipped(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
+%         plot(gaze_unclipped(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
+%         plot(kin_jj.x, 'r-')
+%         plot(kin_jj.y, 'r-')
+%         pause()
+%       end
       idx_sin_cand(jj) = true; continue
     end
 
     %% Identify all saccades
     [moves_all(kk), cands_jj, idx_all] = identify_all_saccades(moves_all(kk), cands_jj, idx_all);
-    if isempty(cands_jj); idx_sin_resp(jj) = true; continue; end
+    if isempty(cands_jj); idx_sin_sacc(jj) = true; continue; end
 
     %% Identify task-relevant saccade
     [moves_SAT(kk), flag_tr] = identify_taskrel_saccade(moves_SAT(kk), cands_jj, jj);
-    if (~flag_tr); idx_sin_resp(jj) = true; continue; end
+    if (~flag_tr)
+      if (DEBUG)
+        figure(); hold on
+        plot(kin_jj.x, 'k-')
+        plot(kin_jj.y, 'b-')
+        pause()
+      end
+      idx_sin_resp(jj) = true; continue
+    end
 
   end%for:trials(jj)
 
   fprintf('num_trials_wo_cand = %d/%d\n', sum(idx_sin_cand),info(kk).num_trials)
-  fprintf('num_trials_wo_sacc = %d/%d\n', sum(idx_sin_resp),info(kk).num_trials)
+  fprintf('num_trials_wo_sacc = %d/%d\n', sum(idx_sin_sacc),info(kk).num_trials)
+  fprintf('num_trials_wo_resp = %d/%d\n', sum(idx_sin_resp),info(kk).num_trials)
 
   %remove extra memory from struct with all saccades
   for ff = 1:length(FIELDS_SINGLE)

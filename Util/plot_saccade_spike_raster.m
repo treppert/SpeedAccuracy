@@ -79,7 +79,7 @@ for kk = 1:NUM_SESSION
 end%for:sessions(kk)
 
 %% Spike rasters
-
+if (0)
 sraster_acc = new_struct({'corr','errdir','errtime'}, 'dim',[1,NUM_CELL]);
 sraster_fast = new_struct({'corr','errdir','errtime'}, 'dim',[1,NUM_CELL]);
 
@@ -138,6 +138,7 @@ for cc = 1:NUM_CELL
   
 end%for:cells(cc)
 
+end
 
 %% Plotting
 Y_LIM = (TRIAL_PLOT(1)-1)*OFFSET + [-100, OFFSET*length(TRIAL_PLOT)+100];

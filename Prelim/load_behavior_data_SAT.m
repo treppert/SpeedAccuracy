@@ -59,7 +59,7 @@ info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
-gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)
+% gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)
 % save('/data/search/SAT/Euler/gaze_SAT.mat', 'gaze_SAT');
 
 end%function:load_behavior_data_SAT
@@ -187,7 +187,7 @@ for kk = 1:NUM_SESSIONS
   
   %remove saturated data points
   for ff = 1:length(fields_gaze)
-%     data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
+    data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
   end
   
   %if monkey Q or S, remove trials with missing data during decision interval

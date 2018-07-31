@@ -1,9 +1,5 @@
 function [  ] = plot_prob_distr_rt_SAT( moves , info )
 
-%no SEF cells from the first session, so remove behavior
-info(1) = [];
-moves(1) = [];
-
 idx_fast = ([info.condition] == 3);
 idx_acc  = ([info.condition] == 1);
 
