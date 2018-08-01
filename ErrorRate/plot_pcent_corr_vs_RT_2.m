@@ -22,7 +22,7 @@ Pcorr_fast = NaN(NUM_SESSION,NUM_BIN);
 for kk = 1:NUM_SESSION
   
   resptime = double(moves(kk).resptime);
-  idx_err = info(kk).err_dir;
+  idx_errdir = info(kk).err_dir;
   
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);
@@ -34,11 +34,11 @@ for kk = 1:NUM_SESSION
     
     %calculate percent correct for this RT bin
     if (sum(idx_jj & idx_fast) >= MIN_PER_BIN)
-      Pcorr_fast(kk,jj) = 1.0 - (sum(idx_err(idx_jj & idx_fast)) / sum(idx_jj & idx_fast));
+      Pcorr_fast(kk,jj) = 1.0 - (sum(idx_errdir(idx_jj & idx_fast)) / sum(idx_jj & idx_fast));
     end
     
     if (sum(idx_jj & idx_acc) >= MIN_PER_BIN)
-      Pcorr_acc(kk,jj) = 1.0 - (sum(idx_err(idx_jj & idx_acc)) / sum(idx_jj & idx_acc));
+      Pcorr_acc(kk,jj) = 1.0 - (sum(idx_errdir(idx_jj & idx_acc)) / sum(idx_jj & idx_acc));
     end
     
   end%for:RT_bins(jj)
@@ -62,8 +62,8 @@ NUM_SEM_FAST = sum(~isnan(Pcorr_fast),1);
 % ppretty('image_size',[4.8,3])
 
 figure(); hold on
-errorbar_no_caps(RT_PLOT, nanmean(Pcorr_acc), 'err',nanstd(Pcorr_acc)./sqrt(NUM_SEM_ACC), 'color','r', 'marker','o')
-errorbar_no_caps(RT_PLOT, nanmean(Pcorr_fast), 'err',nanstd(Pcorr_fast)./sqrt(NUM_SEM_FAST), 'color',[0 .7 0], 'marker','o')
+errorbar_no_caps(RT_PLOT, nanmean(Pcorr_acc), 'err',nanstd(Pcorr_acc)./sqrt(NUM_SEM_ACC), 'color','r')
+errorbar_no_caps(RT_PLOT, nanmean(Pcorr_fast), 'err',nanstd(Pcorr_fast)./sqrt(NUM_SEM_FAST), 'color',[0 .7 0])
 ppretty('image_size',[4.8,3])
 
 % figure(); hold on
