@@ -1,8 +1,8 @@
-function [  ] = plot_Perr_vs_switch( info , monkey )
+function [  ] = plot_Perr_vs_switch( info , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-ERROR = 'err_time';
+ERROR = 'err_dir';
 MIN_NUM_TRIALS = 10;
 
 TRIAL_PLOT = ( -4 : 3 );
@@ -12,6 +12,7 @@ NUM_SESSION = length(info);
 Perr_A2F = cell(1,NUM_SESSION);
 Perr_F2A = cell(1,NUM_SESSION);
 
+info = index_timing_errors_SAT(info, moves);
 trial_switch = identify_condition_switch(info, monkey);
 
 %% Compute probability of error vs trial
@@ -51,9 +52,6 @@ for kk = 1:NUM_SESSION
   mu_A2F(:,kk) = nanmean(Perr_A2F{kk},2);
   mu_F2A(:,kk) = nanmean(Perr_F2A{kk},2);
   
-%   plot(TRIAL_PLOT, mu_F2A(:,kk), '-', 'Color',.4*ones(1,3), 'LineWidth',1.0)
-%   plot(TRIAL_PLOT+NUM_TRIAL, mu_A2F(:,kk), '-', 'Color',.4*ones(1,3), 'LineWidth',1.0)
-  
 end
 
 %remove sessions with no data
@@ -62,13 +60,13 @@ mu_A2F(:,kk_nan) = [];
 mu_F2A(:,kk_nan) = [];
 NUM_SESSION = size(mu_A2F,2);
 
-% plot(TRIAL_PLOT, mean(mu_F2A,2), 'k-', 'LineWidth',2.0)
-% plot(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'k-', 'LineWidth',2.0)
-errorbar_no_caps(TRIAL_PLOT, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
-errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
-
-% plot(-0.5*ones(1,2), [0 .6], 'k--')
-% plot( 3.5*ones(1,2), [0 .6], 'k--')
+if strcmp(ERROR, 'err_time') % F-A--A-F
+  errorbar_no_caps(TRIAL_PLOT, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
+  errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
+elseif strcmp(ERROR, 'err_dir') % A-F--F-A
+  errorbar_no_caps(TRIAL_PLOT, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
+  errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
+end
 
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ppretty()

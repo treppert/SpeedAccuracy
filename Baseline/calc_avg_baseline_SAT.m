@@ -26,9 +26,11 @@ for cc = 1:NUM_CELLS
   idx_A = (binfo(kk).condition == 1);
   idx_F = (binfo(kk).condition == 3);
   
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
-  idx_errtime = (~binfo(kk).err_dir & binfo(kk).err_time);
+  idx_corr_F = (~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold) & idx_F);
+  idx_corr_A = (~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold) & idx_A);
+  idx_errdir_F = (binfo(kk).err_dir & ~binfo(kk).err_time & idx_F);
+%   idx_errdir_F = (binfo(kk).err_dir & idx_F);
+  idx_errtime_A = (~binfo(kk).err_dir & binfo(kk).err_time & idx_A);
   
   num_sp_bline = NaN(1,binfo(kk).num_trials);
   for jj = 1:binfo(kk).num_trials
@@ -39,10 +41,16 @@ for cc = 1:NUM_CELLS
   mu_bline(cc).acc = mean(num_sp_bline(idx_A));   sd_bline(cc).acc = std(num_sp_bline(idx_A));
   mu_bline(cc).fast = mean(num_sp_bline(idx_F));  sd_bline(cc).fast = std(num_sp_bline(idx_F));
   
-  mu_bline_A(cc).corr = mean(num_sp_bline(idx_A & idx_corr));
-  mu_bline_A(cc).err = mean(num_sp_bline(idx_A & idx_errtime));
-  mu_bline_F(cc).corr = mean(num_sp_bline(idx_F & idx_corr));
-  mu_bline_F(cc).err = mean(num_sp_bline(idx_F & idx_errdir));
+  %control for direction of error movements
+  %****************************************
+  [idx_errdir_F, idx_corr_F] = equate_respdir_err_vs_corr(idx_errdir_F, idx_corr_F, moves(kk).octant);
+  [idx_errtime_A, idx_corr_A] = equate_respdir_err_vs_corr(idx_errtime_A, idx_corr_A, moves(kk).octant);
+  %****************************************
+  
+  mu_bline_A(cc).corr = mean(num_sp_bline(idx_A & idx_corr_A));
+  mu_bline_A(cc).err = mean(num_sp_bline(idx_A & idx_errtime_A));
+  mu_bline_F(cc).corr = mean(num_sp_bline(idx_F & idx_corr_F));
+  mu_bline_F(cc).err = mean(num_sp_bline(idx_F & idx_errdir_F));
   
 end%for:cells(kk)
 
@@ -50,6 +58,12 @@ if (nargout > 0)
   varargout{1} = mu_bline;
   if (nargout > 1)
     varargout{2} = sd_bline;
+    if (nargout > 2)
+      varargout{3} = mu_bline_A;
+      if (nargout > 3)
+        varargout{4} = mu_bline_F;
+      end
+    end
   end
   return
 end
@@ -76,7 +90,7 @@ fprintf('T-test FAST (errdir - corr) -- pval = %g\n', pval)
 pause(0.25)
 
 %% Plotting - CDF
-
+if (false)
 Y_CDF = (1:NUM_CELLS) / NUM_CELLS;
 
 X_cdf_A_corr = sort([mu_bline_A.corr]);
@@ -97,9 +111,9 @@ plot(X_cdf_F_err, Y_CDF, '--', 'Color',[0 .7 0], 'LineWidth',1.5)
 ppretty()
 
 pause(0.25)
-
+end
 %% Plotting - Histogram
-
+if (false)
 figure()
 subplot(3,1,1); histogram([mu_bline.all], 'FaceColor',[.6 .6 .6], 'BinWidth',10)
 subplot(3,1,2); histogram([mu_bline.acc], 'FaceColor','r', 'BinWidth',10)
@@ -115,9 +129,9 @@ subplot(3,1,3); histogram([sd_bline.fast], 'FaceColor',[0 .7 0], 'BinWidth',5)
 ppretty('image_size',[6,8])
 
 pause(0.25)
-
-%% Plotting - Scatter
-
+end
+%% Plotting - Scatter X condition
+if (false)
 figure(); hold on
 plot([mu_bline.acc], [mu_bline.fast], 'ko')
 plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
@@ -131,6 +145,21 @@ ppretty()
 
 [~,pval] = ttest([mu_bline.fast] - [mu_bline.acc]);
 fprintf('T-test for sig. diff. (F - A) -- pval = %g\n', pval)
+end
+%% Plotting - Scatter X condition X error
+if (true)
+figure(); hold on
+plot([mu_bline_A.corr], [mu_bline_A.err], 'ro')
+plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
+ppretty('image_size',[5,4])
+
+pause(0.25)
+
+figure(); hold on
+plot([mu_bline_F.corr], [mu_bline_F.err], 'o', 'Color',[0 .7 0])
+plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
+ppretty('image_size',[5,4])
+end
 
 end%fxn:calc_avg_baseline_SAT()
 
