@@ -19,6 +19,10 @@ end%for:sessions(kk)
 fprintf('RT Acc: %g +/- %g ms\n', mean([RT.acc]), std([RT.acc])/sqrt(NUM_SESSIONS))
 fprintf('RT Fast: %g +/- %g ms\n', mean([RT.fast]), std([RT.fast])/sqrt(NUM_SESSIONS))
 
+%% Stats
+[~,pval,~,tstat] = ttest([RT.acc], [RT.fast], 'tail','both');
+fprintf('pval = %g || t(%d) = %g\n', pval, tstat.df, tstat.tstat)
+
 %% Plotting
 
 figure(); hold on

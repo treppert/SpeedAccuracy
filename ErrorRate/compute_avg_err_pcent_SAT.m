@@ -35,6 +35,12 @@ fprintf('Time err ACC %g +- %g  FAST %g +- %g\n\n', mean([err_time.acc]), std([e
   mean([err_time.fast]), std([err_time.fast])/sqrt(NUM_SESSION))
 % fprintf('Da dir + time err Acc/Fast: %g and %g\n', mean([err_both_Da.acc]), mean([err_both_Da.fast]))
 
+%% Stats
+[~,pval,~,tstat] = ttest([err_dir.acc], [err_dir.fast], 'tail','both');
+fprintf('Err Dir: pval = %g || t(%d) = %g\n', pval, tstat.df, tstat.tstat)
+[~,pval,~,tstat] = ttest([err_time.acc], [err_time.fast], 'tail','both');
+fprintf('Err Time: pval = %g || t(%d) = %g\n\n', pval, tstat.df, tstat.tstat)
+
 %% Split choice error rate by timing errors
 
 errdir_corr_A = NaN(1,NUM_SESSION);

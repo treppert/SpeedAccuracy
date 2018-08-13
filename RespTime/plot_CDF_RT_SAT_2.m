@@ -14,6 +14,9 @@ RT_errdir_A = NaN(NUM_SESSION, NUM_QUANTILE);
 RT_corr_F = NaN(NUM_SESSION, NUM_QUANTILE);
 RT_errdir_F = NaN(NUM_SESSION, NUM_QUANTILE);
 
+%also store RT values combined across all sessions (for Wilcoxon rank-sum)
+RT_combined = struct('acc_corr',[], 'acc_errdir',[], 'fast_corr',[], 'fast_errdir',[]);
+
 dline_A = NaN(1,NUM_SESSION);
 dline_F = NaN(1,NUM_SESSION);
 
@@ -32,6 +35,11 @@ for kk = 1:NUM_SESSION
   RT_corr_F(kk,:) = quantile(RT(idx_corr & idx_fast), QUANTILE);
   RT_errdir_F(kk,:) = quantile(RT(idx_errdir & idx_fast), QUANTILE);
   
+  RT_combined.acc_corr = cat(2, RT_combined.acc_corr, RT(idx_corr & idx_acc));
+  RT_combined.acc_errdir = cat(2, RT_combined.acc_errdir, RT(idx_errdir & idx_acc));
+  RT_combined.fast_corr = cat(2, RT_combined.fast_corr, RT(idx_corr & idx_fast));
+  RT_combined.fast_errdir = cat(2, RT_combined.fast_errdir, RT(idx_errdir & idx_fast));
+  
   dline_A(kk) = nanmean(info(kk).tgt_dline(idx_acc));
   dline_F(kk) = nanmean(info(kk).tgt_dline(idx_fast));
   
@@ -39,6 +47,14 @@ end
 
 fprintf('Deadline: ACC %g +- %g || FAST %g +- %g\n', mean(dline_A), std(dline_A)/sqrt(NUM_SESSION), ...
   mean(dline_F), std(dline_F)/sqrt(NUM_SESSION))
+
+%% Stats
+[pval,~,wstat] = ranksum(RT_combined.acc_corr, RT_combined.acc_errdir, 'tail','both');
+fprintf('ACC: Z = %g  p = %g\n', wstat.zval, pval)
+[pval,~,wstat] = ranksum(RT_combined.fast_corr, RT_combined.fast_errdir, 'tail','both');
+fprintf('FAST: Z = %g  p = %g\n', wstat.zval, pval)
+
+%% Plotting
 
 figure(); hold on
 

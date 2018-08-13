@@ -47,10 +47,10 @@ for cc = 1:NUM_CELLS
   [idx_errtime_A, idx_corr_A] = equate_respdir_err_vs_corr(idx_errtime_A, idx_corr_A, moves(kk).octant);
   %****************************************
   
-  mu_bline_A(cc).corr = mean(num_sp_bline(idx_A & idx_corr_A));
-  mu_bline_A(cc).err = mean(num_sp_bline(idx_A & idx_errtime_A));
-  mu_bline_F(cc).corr = mean(num_sp_bline(idx_F & idx_corr_F));
-  mu_bline_F(cc).err = mean(num_sp_bline(idx_F & idx_errdir_F));
+  mu_bline_A(cc).corr = mean(num_sp_bline(idx_corr_A));
+  mu_bline_A(cc).err = mean(num_sp_bline(idx_errtime_A));
+  mu_bline_F(cc).corr = mean(num_sp_bline(idx_corr_F));
+  mu_bline_F(cc).err = mean(num_sp_bline(idx_errdir_F));
   
 end%for:cells(kk)
 
@@ -69,7 +69,7 @@ if (nargout > 0)
 end
 
 %% Plotting - Bar
-
+if (false)
 Y_BAR = [mean([mu_bline.acc]), mean([mu_bline_A.corr]), mean([mu_bline_A.err]), ...
   mean([mu_bline.fast]), mean([mu_bline_F.corr]), mean([mu_bline_F.err])];
 
@@ -88,7 +88,7 @@ fprintf('T-test ACC (errtime - corr) -- pval = %g\n', pval)
 fprintf('T-test FAST (errdir - corr) -- pval = %g\n', pval)
 
 pause(0.25)
-
+end
 %% Plotting - CDF
 if (false)
 Y_CDF = (1:NUM_CELLS) / NUM_CELLS;
@@ -112,7 +112,7 @@ ppretty()
 
 pause(0.25)
 end
-%% Plotting - Histogram
+%% Plotting - Histogram X condition
 if (false)
 figure()
 subplot(3,1,1); histogram([mu_bline.all], 'FaceColor',[.6 .6 .6], 'BinWidth',10)
@@ -129,6 +129,31 @@ subplot(3,1,3); histogram([sd_bline.fast], 'FaceColor',[0 .7 0], 'BinWidth',5)
 ppretty('image_size',[6,8])
 
 pause(0.25)
+end
+%% Plotting - Histogram X condition X error
+if (true)
+  diff_bline_F = [mu_bline_F.err]-[mu_bline_F.corr];
+  diff_bline_A = [mu_bline_A.err]-[mu_bline_A.corr];
+  
+  [~,pval_F] = ttest(diff_bline_F);
+  [~,pval_A] = ttest(diff_bline_A);
+  fprintf('p-val-F = %g || p-val-A = %g\n', pval_F, pval_A)
+  
+  figure(); hold on
+  histogram(diff_bline_F, 'FaceColor',[0 .7 0], 'BinWidth',5)
+  plot([0 0], [0 10], 'k-')
+  plot(mean(diff_bline_F)*ones(1,2), [0 10], 'k--')
+  ppretty()
+  
+  pause(0.25)
+  
+  figure(); hold on
+  histogram(diff_bline_A, 'FaceColor','r', 'BinWidth',5)
+  plot([0 0], [0 10], 'k-')
+  plot(mean(diff_bline_A)*ones(1,2), [0 10], 'k--')
+  ppretty()
+  
+  pause(0.25)
 end
 %% Plotting - Scatter X condition
 if (false)
@@ -147,7 +172,7 @@ ppretty()
 fprintf('T-test for sig. diff. (F - A) -- pval = %g\n', pval)
 end
 %% Plotting - Scatter X condition X error
-if (true)
+if (false)
 figure(); hold on
 plot([mu_bline_A.corr], [mu_bline_A.err], 'ro')
 plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
