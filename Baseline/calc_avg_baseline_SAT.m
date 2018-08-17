@@ -135,9 +135,10 @@ if (true)
   diff_bline_F = [mu_bline_F.err]-[mu_bline_F.corr];
   diff_bline_A = [mu_bline_A.err]-[mu_bline_A.corr];
   
-  [~,pval_F] = ttest(diff_bline_F);
-  [~,pval_A] = ttest(diff_bline_A);
-  fprintf('p-val-F = %g || p-val-A = %g\n', pval_F, pval_A)
+  [~,pval_F,~,tstatF] = ttest(diff_bline_F);
+  [~,pval_A,~,tstatA] = ttest(diff_bline_A);
+  fprintf('FAST: t(%d) = %g, p = %g\n', tstatF.df, tstatF.tstat, pval_F)
+  fprintf('ACC: t(%d) = %g, p = %g\n', tstatA.df, tstatA.tstat, pval_A)
   
   figure(); hold on
   histogram(diff_bline_F, 'FaceColor',[0 .7 0], 'BinWidth',5)
@@ -168,8 +169,10 @@ figure()
 histogram([mu_bline.fast] - [mu_bline.acc], 'FaceColor',[.5 .5 .5])
 ppretty()
 
-[~,pval] = ttest([mu_bline.fast] - [mu_bline.acc]);
-fprintf('T-test for sig. diff. (F - A) -- pval = %g\n', pval)
+[~,pval,~,tstat] = ttest([mu_bline.fast] - [mu_bline.acc]);
+fprintf('ACC: %g +- %g   FAST: %g +- %g\n', mean([mu_bline.acc]), std([mu_bline.acc])/sqrt(NUM_CELLS), ...
+  mean([mu_bline.fast]), std([mu_bline.fast])/sqrt(NUM_CELLS))
+fprintf('t-test for sig. diff. (F - A) -- pval = %g  t(%d) = %g\n', pval, tstat.df, tstat.tstat)
 end
 %% Plotting - Scatter X condition X error
 if (false)
