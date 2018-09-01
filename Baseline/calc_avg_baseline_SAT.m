@@ -2,6 +2,8 @@ function [ varargout ] = calc_avg_baseline_SAT( spikes , ninfo , binfo , moves )
 %calc_avg_baseline_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
+CONTROL_ERR_DIR = false;
+
 TIME_STIM = 3500;
 TIME_BASE = ( -700 : -1 );
 IDX_BASE = TIME_BASE([1,end]) + TIME_STIM;
@@ -43,8 +45,10 @@ for cc = 1:NUM_CELLS
   
   %control for direction of error movements
   %****************************************
-  [idx_errdir_F, idx_corr_F] = equate_respdir_err_vs_corr(idx_errdir_F, idx_corr_F, moves(kk).octant);
-  [idx_errtime_A, idx_corr_A] = equate_respdir_err_vs_corr(idx_errtime_A, idx_corr_A, moves(kk).octant);
+  if (CONTROL_ERR_DIR)
+    [idx_errdir_F, idx_corr_F] = equate_respdir_err_vs_corr(idx_errdir_F, idx_corr_F, moves(kk).octant);
+    [idx_errtime_A, idx_corr_A] = equate_respdir_err_vs_corr(idx_errtime_A, idx_corr_A, moves(kk).octant);
+  end
   %****************************************
   
   mu_bline_A(cc).corr = mean(num_sp_bline(idx_corr_A));
@@ -131,7 +135,7 @@ ppretty('image_size',[6,8])
 pause(0.25)
 end
 %% Plotting - Histogram X condition X error
-if (true)
+if (false)
   diff_bline_F = [mu_bline_F.err]-[mu_bline_F.corr];
   diff_bline_A = [mu_bline_A.err]-[mu_bline_A.corr];
   
@@ -157,22 +161,24 @@ if (true)
   pause(0.25)
 end
 %% Plotting - Scatter X condition
-if (false)
-figure(); hold on
-plot([mu_bline.acc], [mu_bline.fast], 'ko')
-plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
-ppretty('image_size',[5,4])
-
-pause(0.25)
+if (true)
+% figure(); hold on
+% % plot([mu_bline.acc], [mu_bline.fast], 'ko')
+% plot([mu_bline_A.corr], [mu_bline_F.corr], 'ko')
+% plot([0 200], [0 200], '--', 'Color',[.5 .5 .5])
+% ppretty('image_size',[5,4])
+% 
+% pause(0.25)
 
 figure()
-histogram([mu_bline.fast] - [mu_bline.acc], 'FaceColor',[.5 .5 .5])
-ppretty()
+% histogram([mu_bline.acc] - [mu_bline.fast], 'FaceColor',[.5 .5 .5])
+histogram([mu_bline_A.corr] - [mu_bline_F.corr], 'FaceColor',[.5 .5 .5])
+ppretty('image_size',[3,4])
 
-[~,pval,~,tstat] = ttest([mu_bline.fast] - [mu_bline.acc]);
-fprintf('ACC: %g +- %g   FAST: %g +- %g\n', mean([mu_bline.acc]), std([mu_bline.acc])/sqrt(NUM_CELLS), ...
-  mean([mu_bline.fast]), std([mu_bline.fast])/sqrt(NUM_CELLS))
-fprintf('t-test for sig. diff. (F - A) -- pval = %g  t(%d) = %g\n', pval, tstat.df, tstat.tstat)
+[~,pval,~,tstat] = ttest([mu_bline_A.corr] - [mu_bline_F.corr]);
+fprintf('ACC: %g +- %g   FAST: %g +- %g\n', mean([mu_bline_A.corr]), std([mu_bline_A.corr])/sqrt(NUM_CELLS), ...
+  mean([mu_bline_F.corr]), std([mu_bline_F.corr])/sqrt(NUM_CELLS))
+fprintf('t-test for sig. diff. (A - F) -- pval = %g  t(%d) = %g\n', pval, tstat.df, tstat.tstat)
 end
 %% Plotting - Scatter X condition X error
 if (false)
