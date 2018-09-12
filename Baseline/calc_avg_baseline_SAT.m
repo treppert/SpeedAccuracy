@@ -117,22 +117,12 @@ ppretty()
 pause(0.25)
 end
 %% Plotting - Histogram X condition
-if (false)
+if (true)
 figure()
 subplot(3,1,1); histogram([mu_bline.all], 'FaceColor',[.6 .6 .6], 'BinWidth',10)
 subplot(3,1,2); histogram([mu_bline.acc], 'FaceColor','r', 'BinWidth',10)
 subplot(3,1,3); histogram([mu_bline.fast], 'FaceColor',[0 .7 0], 'BinWidth',10)
 ppretty('image_size',[6,8])
-
-pause(0.25)
-
-figure()
-subplot(3,1,1); histogram([sd_bline.all], 'FaceColor',[.6 .6 .6], 'BinWidth',5)
-subplot(3,1,2); histogram([sd_bline.acc], 'FaceColor','r', 'BinWidth',5)
-subplot(3,1,3); histogram([sd_bline.fast], 'FaceColor',[0 .7 0], 'BinWidth',5)
-ppretty('image_size',[6,8])
-
-pause(0.25)
 end
 %% Plotting - Histogram X condition X error
 if (false)
@@ -161,7 +151,7 @@ if (false)
   pause(0.25)
 end
 %% Plotting - Scatter X condition
-if (true)
+if (false)
 % figure(); hold on
 % % plot([mu_bline.acc], [mu_bline.fast], 'ko')
 % plot([mu_bline_A.corr], [mu_bline_F.corr], 'ko')

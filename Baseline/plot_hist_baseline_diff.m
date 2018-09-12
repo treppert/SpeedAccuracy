@@ -20,7 +20,7 @@ avg_base = new_struct({'acc','fast'}, 'dim',[1,NUM_CELLS]);
 norm_factor = NaN(1,NUM_CELLS); %avg baseline activity across all trials
 
 for kk = 1:NUM_CELLS
-  if ~ismember(ninfo(kk).type, {'V','VM'}); continue; end
+%   if ~ismember(ninfo(kk).type, {'V','VM'}); continue; end
   
   %get session number corresponding to behavioral data
   kk_moves = ismember({binfo.session}, ninfo(kk).sesh);

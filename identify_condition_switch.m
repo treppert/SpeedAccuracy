@@ -1,6 +1,8 @@
 function [ trial_switch ] = identify_condition_switch( binfo , monkey )
 %identify_condition_switch Summary of this function goes here
 
+DEBUG = false;
+
 NUM_SESSIONS = length(binfo);
 
 FLAG_ACC = 1;
@@ -27,6 +29,17 @@ for kk = 1:NUM_SESSIONS
   %remove those trials closest to session end
   tmp_F2A(tmp_F2A > (num_trials-4)) = [];
   tmp_A2F(tmp_A2F > (num_trials-4)) = [];
+  
+  if (DEBUG)
+    tmp = sort([tmp_F2A,tmp_A2F]);
+    tnp = diff(tmp);
+    
+    figure()
+    plot(tnp, 'ko-'); ylim([0 22])
+    title(binfo(kk).session(1:9))
+    ppretty('image_size',[3.2,2])
+    pause(0.25); print(['~/Dropbox/tmp/',binfo(kk).session(1:9),'.tif'], '-dtiff')
+  end%if:DEBUG
   
   trial_switch(kk).F2A = tmp_F2A;
   trial_switch(kk).A2F = tmp_A2F;
