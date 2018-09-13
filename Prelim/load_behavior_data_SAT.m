@@ -48,9 +48,9 @@ end
 %% Load task/TEMPO information
 
 if ismember(monkey, {'Darwin','Euler'})
-  info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
+%   info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
 end
-info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
+% info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 %% Load saccade data
