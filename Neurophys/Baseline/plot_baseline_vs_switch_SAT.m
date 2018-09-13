@@ -1,4 +1,4 @@
-function [  ] = plot_baseline_vs_trial( binfo , moves , ninfo , spikes , bline_avg , monkey )
+function [  ] = plot_baseline_vs_switch_SAT( binfo , moves , ninfo , spikes , bline_avg , monkey )
 %plot_baseline_vs_trial Summary of this function goes here
 %   Detailed explanation goes here
 

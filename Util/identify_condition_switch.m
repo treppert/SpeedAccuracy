@@ -1,7 +1,13 @@
-function [ trial_switch ] = identify_condition_switch( binfo , monkey )
+function [ trial_switch ] = identify_condition_switch( binfo , varargin )
 %identify_condition_switch Summary of this function goes here
 
 DEBUG = false;
+
+if (nargin > 1)
+  monkey = varargin{1};
+else
+  monkey = 'Da';
+end
 
 NUM_SESSIONS = length(binfo);
 

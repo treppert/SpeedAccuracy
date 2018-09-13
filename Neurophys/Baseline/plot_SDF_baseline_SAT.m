@@ -1,4 +1,4 @@
-function [  ] = plot_avg_baseline_SAT( binfo , ninfo , spikes , bline_avg )
+function [  ] = plot_SDF_baseline_SAT( binfo , ninfo , spikes , bline_avg )
 %plot_avg_sdf_baseline Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,7 +11,7 @@ LIM_FIXTIME = -2000;
 MIN_GRADE = 3;
 MIN_BLINE = 5; %sp/sec
 NUM_CELLS = length(spikes);
-NUM_SEM = sum(([ninfo.vis] >= MIN_GRADE) & (bline_avg >= MIN_BLINE));
+NUM_SEM = sum(([ninfo.vis] >= MIN_GRADE));% & (bline_avg >= MIN_BLINE));
 
 %initialize output re. fixation and stimulus
 bline_Acc_Fix = NaN(NUM_CELLS,NUM_SAMP);
@@ -21,7 +21,7 @@ bline_Fast_Stim = NaN(NUM_CELLS,NUM_SAMP);
 
 for kk = 1:NUM_CELLS
   if (ninfo(kk).vis < MIN_GRADE); continue; end
-  if (bline_avg(kk) < MIN_BLINE); continue; end
+%   if (bline_avg(kk) < MIN_BLINE); continue; end
   
   kk_moves = ismember({binfo.session}, ninfo(kk).sesh);
   
@@ -44,10 +44,10 @@ for kk = 1:NUM_CELLS
 end%for:cells(kk)
 
 %normalization
-bline_Acc_Fix = bline_Acc_Fix ./ bline_avg';
-bline_Acc_Stim = bline_Acc_Stim ./ bline_avg';
-bline_Fast_Fix = bline_Fast_Fix ./ bline_avg';
-bline_Fast_Stim = bline_Fast_Stim ./ bline_avg';
+% bline_Acc_Fix = bline_Acc_Fix ./ bline_avg';
+% bline_Acc_Stim = bline_Acc_Stim ./ bline_avg';
+% bline_Fast_Fix = bline_Fast_Fix ./ bline_avg';
+% bline_Fast_Stim = bline_Fast_Stim ./ bline_avg';
 
 figure()
 subplot(1,2,1); hold on
