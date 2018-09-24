@@ -13,7 +13,7 @@ NUM_SAMP = length(TIME_RESP);
 NUM_DIR = 8;
 NUM_CELLS = length(spikes);
 
-binfo = determine_errors_SAT(binfo);
+% binfo = determine_errors_SAT(binfo);
 
 %% Compute the SDF for each direction
 sdf_stim = new_struct({'acc','fast'}, 'dim',[NUM_DIR,NUM_CELLS]);

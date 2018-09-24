@@ -4,6 +4,7 @@ function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes
 
 NORMALIZE = true;
 MIN_NUM_CELLS = 10; %for purposes of plotting across all cells
+% MIN_NUM_CELLS = 2; %SC
 
 if strcmp(condition, 'acc')
   BIN_RT = (400 : 40 : 700);
@@ -35,6 +36,10 @@ pval = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sesh);
+  idx_nan = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
+  
+  %identify neurons to be removed based on poor spike isolation
+  if (ninfo(cc).iRem1 == 9999); continue; end
   
   idx_A = (binfo(kk).condition == 1);
   idx_F = (binfo(kk).condition == 3);
@@ -52,36 +57,42 @@ for cc = 1:NUM_CELLS
     num_sp_bline(jj) = sum((spikes(cc).SAT{jj} > IDX_BASE(1)) & (spikes(cc).SAT{jj} > IDX_BASE(2)));
   end
   
-%   figure()
-%   subplot(2,1,1); hold on
-%   plot(RT(idx_corr_A), num_sp_bline(idx_corr_A), 'ro')
-%   subplot(2,1,2); hold on
-%   plot(RT(idx_corr_F), num_sp_bline(idx_corr_F), 'go')
-%   ppretty('image_size',[4.8,6])
+  %remove trials based on poor isolation
+  if (ninfo(cc).iRem1)
+    idx_nan(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+    num_sp_bline(idx_nan) = NaN;
+  end
   
-  %use regression to determine cells that show a postive relationship
-  [rho(cc),pval(cc)] = corr(RT(idx_corr)', num_sp_bline(idx_corr)', 'type','Pearson');
+%   figure(); hold on
+%   plot(RT(idx_corr), num_sp_bline(idx_corr), 'ko')
+%   pause(1.0)
+  
+  %remove any NaN values for RT
+  if (sum(isnan(RT)) > 0)
+%     fprintf('****** There are NaN values for RT in Session %s\n', ninfo(cc).sesh);
+    idx_nan = (idx_nan | isnan(RT));
+  end
+  
+  %linear regression to determine cells that show a postive relationship
+  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~idx_nan)', num_sp_bline(idx_corr & ~idx_nan)', 'type','Spearman');
+  
+  %use the regression results to exclude neurons
   if ~((rho(cc) > 0) && (pval(cc) < .05)); continue; end
   
   %bin spike counts by RT
   for jj = 1:NUM_BIN
-    idx_jj = ((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1)));
+    idx_jj = (((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1))) & idx_corr & ~idx_nan);
     
     if (sum(idx_jj) >= MIN_PER_BIN) %enforce min number of trials
-      sp_Corr(cc,jj) = mean(num_sp_bline(idx_corr & idx_jj));
-      sd_Corr(cc,jj) = std(num_sp_bline(idx_corr & idx_jj));
+      sp_Corr(cc,jj) = mean(num_sp_bline(idx_jj));
+      sd_Corr(cc,jj) = std(num_sp_bline(idx_jj));
       
       if (NORMALIZE)
-        sp_Corr(cc,jj) = sp_Corr(cc,jj) - mean(num_sp_bline(idx_A | idx_F));
+        sp_Corr(cc,jj) = sp_Corr(cc,jj) - mean(num_sp_bline(~idx_nan & (idx_A | idx_F)));
       end
       
     end
   end%for:RT_bins(jj)
-  
-%   figure(); hold on
-%   plot(RT_PLOT, sp_A_Corr(cc,:), 'r.-')
-% %   errorbar_no_caps(RT_PLOT, sp_A_Corr(cc,:), 'err',sd_A_Corr(cc,:), 'color','r')
-%   ppretty()
   
 end%for:cells(cc)
 

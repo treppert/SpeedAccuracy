@@ -28,8 +28,9 @@ for cc = 1:NUM_CELLS
   plot(find(idx_ntrl), num_sp_bline(idx_ntrl), 'k.')
   plot(find(idx_acc), num_sp_bline(idx_acc), 'r.')
   plot(find(idx_fast), num_sp_bline(idx_fast), '.', 'Color',[0 .7 0])
+  title([ninfo(cc).sesh, '-', ninfo(cc).unit], 'FontSize',8)
   
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Baseline-X-Trial/Eu/',ninfo(cc).sesh,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1)
+%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Baseline-X-Trial/Eu/',ninfo(cc).sesh,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1)
   
 end%for:cells(cc)
 
