@@ -14,8 +14,11 @@ Nsp_bline_A = NaN(1,NUM_CELLS);
 Nsp_bline_F = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  
   kk = find(ismember({binfo.session}, ninfo(cc).sesh));
+  idx_nan = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
+  
+  %identify neurons to be removed based on poor spike isolation
+  if (ninfo(cc).iRem1 == 9999); continue; end
   
   %count spikes in the appropriate baseline interval
   num_sp_bline = NaN(1,binfo(kk).num_trials);
@@ -23,8 +26,14 @@ for cc = 1:NUM_CELLS
     num_sp_bline(jj) = sum((spikes(cc).SAT{jj} > IDX_BASE(1)) & (spikes(cc).SAT{jj} > IDX_BASE(2)));
   end
   
-  idx_acc = (binfo(kk).condition == 1);
-  idx_fast = (binfo(kk).condition == 3);
+  %remove trials based on poor isolation
+  if (ninfo(cc).iRem1)
+    idx_nan(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+    num_sp_bline(idx_nan) = NaN;
+  end
+  
+  idx_acc = ((binfo(kk).condition == 1) & ~idx_nan);
+  idx_fast = ((binfo(kk).condition == 3) & ~idx_nan);
   
   Nsp_bline_A(cc) = mean(num_sp_bline(idx_acc));
   Nsp_bline_F(cc) = mean(num_sp_bline(idx_fast));
@@ -40,11 +49,10 @@ figure(); hold on
 histogram(diff_bline, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
 
 %color-code cells with significant difference
-idx_acc = strcmp({ninfo.baseline}, 'acc');
-idx_fast = strcmp({ninfo.baseline}, 'fast');
-
-histogram(diff_bline(idx_acc), 'BinWidth',2, 'FaceColor','k')
-histogram(diff_bline(idx_fast), 'BinWidth',2, 'FaceColor','k')
+% idx_acc = strcmp({ninfo.baseline}, 'acc');
+% idx_fast = strcmp({ninfo.baseline}, 'fast');
+% histogram(diff_bline(idx_acc), 'BinWidth',2, 'FaceColor','k')
+% histogram(diff_bline(idx_fast), 'BinWidth',2, 'FaceColor','k')
 
 xlim([-15 15])
 ppretty('image_size',[4.8,3])
