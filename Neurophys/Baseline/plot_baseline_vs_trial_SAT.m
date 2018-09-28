@@ -11,8 +11,8 @@ IDX_BASE = TIME_BASE([1,end]) + TIME_STIM;
 %% Compute baseline activity vs. trial
 
 for cc = 1:NUM_CELLS
-  
-  kk = find(ismember({binfo.session}, ninfo(cc).sesh));
+  if ~ismember(cc, [12,29,30]); continue; end
+  kk = find(ismember({binfo.session}, ninfo(cc).sess));
   
   %count spikes in the appropriate baseline interval
   num_sp_bline = NaN(1,binfo(kk).num_trials);
@@ -25,12 +25,13 @@ for cc = 1:NUM_CELLS
   idx_ntrl = (binfo(kk).condition == 4);
   
   figure(); hold on
-  plot(find(idx_ntrl), num_sp_bline(idx_ntrl), 'k.')
-  plot(find(idx_acc), num_sp_bline(idx_acc), 'r.')
-  plot(find(idx_fast), num_sp_bline(idx_fast), '.', 'Color',[0 .7 0])
-  title([ninfo(cc).sesh, '-', ninfo(cc).unit], 'FontSize',8)
+  plot(num_sp_bline, 'k-')
+  plot(find(idx_ntrl), num_sp_bline(idx_ntrl), 'ko', 'MarkerSize',3)
+  plot(find(idx_acc), num_sp_bline(idx_acc), 'ro', 'MarkerSize',3)
+  plot(find(idx_fast), num_sp_bline(idx_fast), 'o', 'Color',[0 .7 0], 'MarkerSize',3)
+  title([ninfo(cc).sess, '-', ninfo(cc).unit], 'FontSize',8)
   
-%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Baseline-X-Trial/Eu/',ninfo(cc).sesh,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1)
+%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Baseline-X-Trial/Eu/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1)
   
 end%for:cells(cc)
 

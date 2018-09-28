@@ -2,14 +2,14 @@ function [  ] = plot_spike_raster_SAT( binfo , ninfo , spikes )
 %plot_spike_raster Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_CELL = length(ninfo);
+NUM_CELLS = length(ninfo);
 
-IDX_PLOT = (-500 : 750);
+IDX_PLOT = (-500 : 1000);
 IDX_STIM = 3500;
 
 %% Spike rasters
 
-for cc = 1:NUM_CELL
+for cc = 1:NUM_CELLS
   
   kk = ismember({binfo.session}, ninfo(cc).sesh);
   
@@ -35,10 +35,24 @@ for cc = 1:NUM_CELL
 
   figure(); hold on
   plot(t_spikes, trials, 'k.', 'MarkerSize',4)
-  xlim([IDX_PLOT(1), IDX_PLOT(end)]);
-  title([ninfo(cc).sesh,'-',ninfo(cc).unit], 'FontSize',8)
+  plot([0 0], [0 binfo(kk).num_trials], 'b-', 'LineWidth',1.5)
   
-  ppretty('image_size',[7,10])
+  xlim([IDX_PLOT(1), IDX_PLOT(end)]);
+  xticks(IDX_PLOT(1):100:IDX_PLOT(end));
+  y_lim = get(gca, 'ylim');
+  yticks(y_lim(1):50:y_lim(2))
+  
+  xlabel('Time re. stimulus (ms)')
+  ylabel('Trial number')
+  
+  title([ninfo(cc).sesh,'-',ninfo(cc).unit,' -- N_{trial} = ',num2str(binfo(kk).num_trials)], 'FontSize',8)
+  
+  ppretty('image_size',[8,10])
+  
+  pause(0.5)
+  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+  pause(0.5)
+  close(gcf)
   
 end%for:cells(cc)
 

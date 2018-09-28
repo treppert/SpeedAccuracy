@@ -3,7 +3,7 @@ function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes
 %   Detailed explanation goes here
 
 NORMALIZE = true;
-MIN_NUM_CELLS = 10; %for purposes of plotting across all cells
+MIN_NUM_CELLS = 3; %for purposes of plotting across all cells
 % MIN_NUM_CELLS = 2; %SC
 
 if strcmp(condition, 'acc')
@@ -35,7 +35,7 @@ rho = NaN(1,NUM_CELLS);
 pval = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sesh);
+  kk = ismember({binfo.session}, ninfo(cc).sess);
   idx_nan = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
   
   %identify neurons to be removed based on poor spike isolation
@@ -69,7 +69,7 @@ for cc = 1:NUM_CELLS
   
   %remove any NaN values for RT
   if (sum(isnan(RT)) > 0)
-%     fprintf('****** There are NaN values for RT in Session %s\n', ninfo(cc).sesh);
+%     fprintf('****** There are NaN values for RT in Session %s\n', ninfo(cc).sess);
     idx_nan = (idx_nan | isnan(RT));
   end
   

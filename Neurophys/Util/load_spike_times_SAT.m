@@ -3,7 +3,7 @@ function [ spike_times ] = load_spike_times_SAT( neuron_info )
 %   Detailed explanation goes here
 
 unit = {neuron_info.unit};
-session = {neuron_info.sesh};
+session = {neuron_info.sess};
 NUM_NEURONS = length(neuron_info);
 
 %initialize output
