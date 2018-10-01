@@ -6,7 +6,7 @@ FILE_XLSX = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Session_Info_SAT.xlsx';
 % FILE_XLSX = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Info\Session_Info_SAT.xlsx';
 
 if strcmp(monkey(1), 'D')
-  ninfo = load_info_xlsx_SAT([6, 43], FILE_XLSX, 'Darwin')';
+  ninfo = load_info_xlsx_SAT([6, 41], FILE_XLSX, 'Darwin')';
 elseif strcmp(monkey(1), 'E')
   ninfo = load_info_xlsx_SAT([6, 39], FILE_XLSX, 'Euler')';
 else
@@ -21,23 +21,23 @@ end%function:load_neuron_info_SAT()
 function [ info ] = load_info_xlsx_SAT( index , file , monkey )
 
 %session info
-sess_num = num2cell(uint8(xlsread(file, monkey, build_col('A',index(1),index(2)))));
-[~,sess] = xlsread(file, monkey, build_col('B',index(1),index(2)));
-[~,unit] = xlsread(file, monkey, build_col('C',index(1),index(2)));
+sess_num = num2cell(uint8(xlsread(file, monkey, build_col('C',index(1),index(2)))));
+[~,sess] = xlsread(file, monkey, build_col('D',index(1),index(2)));
+[~,unit] = xlsread(file, monkey, build_col('E',index(1),index(2)));
 
 %neuron type
-vis = num2cell(uint8(xlsread(file, monkey, build_col('J',index(1),index(2)))));
-mov = num2cell(uint8(xlsread(file, monkey, build_col('K',index(1),index(2)))));
+vis = num2cell(uint8(xlsread(file, monkey, build_col('L',index(1),index(2)))));
+mov = num2cell(uint8(xlsread(file, monkey, build_col('M',index(1),index(2)))));
 
 %isolation
-isolation = num2cell(uint8(xlsread(file, monkey, build_col('M',index(1),index(2)))));
-iRem_1 = num2cell( uint16(xlsread(file, monkey, build_col('N',index(1),index(2)))) );
-iRem_2 = num2cell( uint16(xlsread(file, monkey, build_col('O',index(1),index(2)))) );
+isolation = num2cell(uint8(xlsread(file, monkey, build_col('O',index(1),index(2)))));
+iRem_1 = num2cell( uint16(xlsread(file, monkey, build_col('P',index(1),index(2)))) );
+iRem_2 = num2cell( uint16(xlsread(file, monkey, build_col('Q',index(1),index(2)))) );
 
 %event-related modulation
-[~,bline] = xlsread(file, monkey, build_col('P',index(1),index(2)));
-rewAcc = num2cell( (xlsread(file, monkey, build_col('X',index(1),index(2)))) );
-rewFast = num2cell( (xlsread(file, monkey, build_col('Y',index(1),index(2)))) );
+[~,bline] = xlsread(file, monkey, build_col('R',index(1),index(2)));
+rewAcc = num2cell( (xlsread(file, monkey, build_col('Z',index(1),index(2)))) );
+rewFast = num2cell( (xlsread(file, monkey, build_col('AA',index(1),index(2)))) );
 
 %combine information into struct array
 info = struct('sess',sess, 'snum',sess_num, 'unit',unit, ...

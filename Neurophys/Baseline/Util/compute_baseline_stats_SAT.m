@@ -2,16 +2,15 @@ function [ ninfo ] = compute_baseline_stats_SAT( binfo , ninfo , spikes )
 %compute_visresp_mag_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-DEBUG = true;
+ALPHA_MANN_WHITNEY_U = 0.05;
 
 NUM_CELLS = length(ninfo);
 TIME_BLINE = (-700:-1) + 3500; %time re. array appearance
-NUM_SAMP = length(TIME_BLINE);
 
-ninfo = populate_struct(ninfo, {'bline_mean_A','bline_mean_F','bline_sd_A','bline_sd_F'}, NaN);
+ninfo = populate_struct(ninfo, {'bline_mu_A','bline_mu_F','bline_sd_A','bline_sd_F'}, NaN);
 
 for cc = 1:NUM_CELLS
-  kk = find(ismember({binfo.session}, ninfo(cc).sesh));
+  kk = find(ismember({binfo.session}, ninfo(cc).sess));
   idx_nan = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
   
   %identify neurons to be removed based on poor spike isolation
@@ -36,10 +35,23 @@ for cc = 1:NUM_CELLS
   num_sp_A = num_sp_bline(idx_corr & idx_A);
   num_sp_F = num_sp_bline(idx_corr & idx_F);
   
-  ninfo(cc).bline_mean_A =  mean(1000/NUM_SAMP * num_sp_A);
-  ninfo(cc).bline_mean_F =  mean(1000/NUM_SAMP * num_sp_F);
-  ninfo(cc).bline_sd_A =  std(1000/NUM_SAMP * num_sp_A);
-  ninfo(cc).bline_sd_F =  std(1000/NUM_SAMP * num_sp_F);
+  ninfo(cc).bline_mean_A =  mean(num_sp_A);
+  ninfo(cc).bline_mean_F =  mean(num_sp_F);
+  ninfo(cc).bline_sd_A =  std(num_sp_A);
+  ninfo(cc).bline_sd_F =  std(num_sp_F);
+  
+  %compare activity on ACC and FAST trials with a Mann-Whitney U test
+  pval_cc = ranksum(num_sp_A,num_sp_F, 'tail','both');
+  
+  if (pval_cc < ALPHA_MANN_WHITNEY_U)
+    if (mean(num_sp_A) > mean(num_sp_F))
+      ninfo(cc).bline_SAT_pref = 'A';
+    else
+      ninfo(cc).bline_SAT_pref = 'F';
+    end
+  else
+    ninfo(cc).bline_SAT_pref = 'N';
+  end
   
 end%for:cells(cc)
 
