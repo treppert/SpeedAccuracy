@@ -57,7 +57,7 @@ info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 % gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
-gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
+% gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 % gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)
 % save('/data/search/SAT/Euler/gaze_SAT.mat', 'gaze_SAT');
@@ -100,7 +100,7 @@ for kk = 1:NUM_SESSIONS
     continue
   end
   
-  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','FixAcqTime_')
+  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','FixAcqTime_','JuiceOn_')
 
   %Session information
   info(kk).num_trials = length(SAT_(:,1));
@@ -125,21 +125,19 @@ for kk = 1:NUM_SESSIONS
   info(kk).octant = uint8(saccLoc+1)';
   info(kk).resptime = SRT(:,1)'; %TEMPO estimate of RT
   
-  if exist('FixAcqTime_', 'var')
+  if exist('JuiceOn_', 'var')
     load(file_kk, 'JuiceOn_')
     info(kk).rewtime = JuiceOn_';
   else
+    fprintf('Warning -- "JuiceOn_" does not exist -- %s\n', info(kk).session)
     info(kk).rewtime = NaN(1,num_trials(kk));
   end
   
   if exist('FixAcqTime_', 'var')
     load(file_kk, 'FixAcqTime_')
-    FixAcqTime_(FixAcqTime_<-3499 | FixAcqTime_>-750) = NaN;
     info(kk).fixtime = FixAcqTime_';
   else %variable FixAcqTime_ does not exist
-    if strcmp(type, 'SEARCH')
-      fprintf('Warning -- "FixAcqTime_" does not exist -- %s\n', info(kk).session)
-    end
+    fprintf('Warning -- "FixAcqTime_" does not exist -- %s\n', info(kk).session)
     info(kk).fixtime = NaN(1,num_trials(kk));
   end
 
