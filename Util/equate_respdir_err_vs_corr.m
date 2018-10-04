@@ -1,6 +1,13 @@
-function [ idx_err , idx_corr ] = equate_respdir_err_vs_corr( idx_err , idx_corr , octant )
+function [ idx_err , idx_corr ] = equate_respdir_err_vs_corr( idx_err , idx_corr , octant , varargin )
 %equate_respdir_err_vs_corr Summary of this function goes here
 %   Detailed explanation goes here
+%   args.equate_num_trials -- If this input is true, then for those
+%   directions with both correct and error trials, the number of correct
+%   trials is cut to match that of error trials. (default = false)
+% 
+
+
+args = getopt(varargin, {'equate_num_trials'});
 
 MIN_PER_DIR = 8; %min # of trials of each type per resp. direction
 
@@ -13,10 +20,10 @@ for dd = 1:8 %loop over resp. directions
 
   if (num_err_dd < MIN_PER_DIR) %not enough errors in this direction
 
-    idx_err(find(idx_err & idx_resp_dd)) = false;
-    idx_corr(find(idx_corr & idx_resp_dd)) = false;
+    idx_err(idx_err & idx_resp_dd) = false;
+    idx_corr(idx_corr & idx_resp_dd) = false;
 
-  elseif (num_corr_dd > num_err_dd) %enough errors but too many correct resp's
+  elseif ((num_corr_dd > num_err_dd) && args.equate_num_trials) %enough errors but too many correct resp's
     %HERE IS WHERE WE SHOULD CONTROL FOR RT AND/OR TRIAL NUMBER
     %FOR NOW, I JUST TAKE THE FIRST XX TRIALS
 
