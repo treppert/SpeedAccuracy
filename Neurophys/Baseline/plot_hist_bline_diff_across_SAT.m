@@ -4,6 +4,8 @@ function [  ] = plot_hist_bline_diff_across_SAT( ninfo , spikes , binfo , moves 
 
 args = getopt(varargin, {{'BinWidth=',[]}});
 
+MIN_GRADE_VIS = 2; %scale out of 5
+
 NUM_CELLS = length(spikes);
 
 TIME_STIM = 3500;
@@ -15,7 +17,12 @@ binfo = index_timing_errors_SAT(binfo, moves);
 Nsp_bline_A = NaN(1,NUM_CELLS);
 Nsp_bline_F = NaN(1,NUM_CELLS);
 
+%exclude cells based on grade of visual responsiveness
+grade_Vis = [ninfo.vis];
+
 for cc = 1:NUM_CELLS
+  if (grade_Vis(cc) < MIN_GRADE_VIS); continue; end
+  
   kk = find(ismember({binfo.session}, ninfo(cc).sess));
   TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
   

@@ -57,7 +57,7 @@ info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 % gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
-% gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
+gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 % gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)
 % save('/data/search/SAT/Euler/gaze_SAT.mat', 'gaze_SAT');
