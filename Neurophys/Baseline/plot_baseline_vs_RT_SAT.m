@@ -2,9 +2,9 @@ function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes
 %plot_baseline_vs_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
+PLOT_INDIV_CELLS = false;
 NORMALIZE = true;
 MIN_NUM_CELLS = 3; %for purposes of plotting across all cells
-% MIN_NUM_CELLS = 2; %SC
 
 if strcmp(condition, 'acc')
   BIN_RT = (400 : 40 : 700);
@@ -36,10 +36,7 @@ pval = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  idx_nan = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
-  
-  %identify neurons to be removed based on poor spike isolation
-  if (ninfo(cc).iRem1 == 9999); continue; end
+  TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
   
   idx_A = (binfo(kk).condition == 1);
   idx_F = (binfo(kk).condition == 3);
@@ -59,36 +56,41 @@ for cc = 1:NUM_CELLS
   
   %remove trials based on poor isolation
   if (ninfo(cc).iRem1)
-    idx_nan(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-    num_sp_bline(idx_nan) = NaN;
+    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+    num_sp_bline(TRIAL_POOR_ISOLATION) = NaN;
   end
-  
-%   figure(); hold on
-%   plot(RT(idx_corr), num_sp_bline(idx_corr), 'ko')
-%   pause(1.0)
   
   %remove any NaN values for RT
   if (sum(isnan(RT)) > 0)
 %     fprintf('****** There are NaN values for RT in Session %s\n', ninfo(cc).sess);
-    idx_nan = (idx_nan | isnan(RT));
+    TRIAL_POOR_ISOLATION = (TRIAL_POOR_ISOLATION | isnan(RT));
+  end
+  
+  if (PLOT_INDIV_CELLS)
+    fit_lin = fit(RT(idx_corr & ~TRIAL_POOR_ISOLATION)', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION)', 'poly1');
+    figure(); hold on
+    plot(RT(idx_corr & ~TRIAL_POOR_ISOLATION), num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION), 'ko')
+    plot([BIN_RT(1),BIN_RT(end)], fit_lin([BIN_RT(1),BIN_RT(end)]), 'k-')
+    ppretty()
+    pause(1.0)
   end
   
   %linear regression to determine cells that show a postive relationship
-  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~idx_nan)', num_sp_bline(idx_corr & ~idx_nan)', 'type','Spearman');
+  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~TRIAL_POOR_ISOLATION)', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION)', 'type','Spearman');
   
   %use the regression results to exclude neurons
   if ~((rho(cc) > 0) && (pval(cc) < .05)); continue; end
   
   %bin spike counts by RT
   for jj = 1:NUM_BIN
-    idx_jj = (((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1))) & idx_corr & ~idx_nan);
+    idx_jj = (((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1))) & idx_corr & ~TRIAL_POOR_ISOLATION);
     
     if (sum(idx_jj) >= MIN_PER_BIN) %enforce min number of trials
       sp_Corr(cc,jj) = mean(num_sp_bline(idx_jj));
       sd_Corr(cc,jj) = std(num_sp_bline(idx_jj));
       
       if (NORMALIZE)
-        sp_Corr(cc,jj) = sp_Corr(cc,jj) - mean(num_sp_bline(~idx_nan & (idx_A | idx_F)));
+        sp_Corr(cc,jj) = sp_Corr(cc,jj) - mean(num_sp_bline(~TRIAL_POOR_ISOLATION & (idx_A | idx_F)));
       end
       
     end
