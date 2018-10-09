@@ -4,13 +4,11 @@ function [  ] = plot_hist_bline_diff_across_SAT( ninfo , spikes , binfo , moves 
 
 args = getopt(varargin, {{'BinWidth=',[]}});
 
-MIN_GRADE_VIS = 2; %scale out of 5
-
+MIN_GRADE_VIS = 3; %scale out of 5
 NUM_CELLS = length(spikes);
 
-TIME_STIM = 3500;
 TIME_BASE = ( -700 : -1 );
-IDX_BASE = TIME_BASE([1,end]) + TIME_STIM;
+IDX_BASE = TIME_BASE([1,end]) + 3500;
 
 binfo = index_timing_errors_SAT(binfo, moves);
 
@@ -45,8 +43,6 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
   
-%   Nsp_bline_A(cc) = mean(num_sp_bline(idx_acc));
-%   Nsp_bline_F(cc) = mean(num_sp_bline(idx_fast));
   Nsp_bline_A(cc) = mean(num_sp_bline(idx_acc & idx_corr));
   Nsp_bline_F(cc) = mean(num_sp_bline(idx_fast & idx_corr));
   
@@ -67,8 +63,8 @@ if isempty(args.BinWidth)
   histogram(diff_bline(idx_pref_F), 'FaceColor','k')
 else
   histogram(diff_bline, 'FaceColor',[.5 .5 .5], 'BinWidth',args.BinWidth)
-  histogram(diff_bline(idx_pref_A), 'FaceColor',[.2 .2 .2], 'BinWidth',args.BinWidth)
-  histogram(diff_bline(idx_pref_F), 'FaceColor',[.2 .2 .2], 'BinWidth',args.BinWidth)
+%   histogram(diff_bline(idx_pref_A), 'FaceColor',[.2 .2 .2], 'BinWidth',args.BinWidth)
+%   histogram(diff_bline(idx_pref_F), 'FaceColor',[.2 .2 .2], 'BinWidth',args.BinWidth)
 end
 
 

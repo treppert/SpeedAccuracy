@@ -42,7 +42,7 @@ for cc = 1:NUM_CELLS
   end
   
   %index by condition
-  idx_cond = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
+  idx_cond = ((binfo(kk).condition == 1) & ~TRIAL_POOR_ISOLATION);
   
   %index by trial outcome
   idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
@@ -88,9 +88,9 @@ fprintf('%d and %d (out of %d) cells with E- and C-modulation\n', sum(ismember(d
 
 %% Plotting - across-cell average
 TIME_PLOT = TIME_POSTSACC - 3500;
-IDX_CC_PLOT = ismember(dir_sep_err, {'C'});
+IDX_CC_PLOT = ismember(dir_sep_err, {'E'});
 
-A_DIFF = A_corr(IDX_CC_PLOT,:) - A_err(IDX_CC_PLOT,:);
+A_DIFF = A_err(IDX_CC_PLOT,:) - A_corr(IDX_CC_PLOT,:);
 
 if (NORMALIZE)
   A_DIFF = A_DIFF ./ max(A_DIFF,[],2);
@@ -100,7 +100,7 @@ figure(); hold on
 
 % plot(TIME_PLOT, A_DIFF, 'k-')
 shaded_error_bar(TIME_PLOT, mean(A_DIFF), std(A_DIFF)/sqrt(sum(IDX_CC_PLOT)), ...
-  {'LineWidth',1.5, 'Color',[0 .5 0]})
+  {'LineWidth',1.5, 'Color',[.5 0 0]})%[0 .5 0]
 
 xlim([TIME_PLOT(1), TIME_PLOT(end)])
 xlabel('Time re. saccade (ms)')

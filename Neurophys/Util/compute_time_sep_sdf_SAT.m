@@ -7,7 +7,7 @@ function [ T_SEP_SDF ] = compute_time_sep_sdf_SAT( sdf_1 , sdf_2 , varargin )
 
 args = getopt(varargin, {{'alpha=',.05},{'min_length=',10}});
 
-DEBUG = false;
+DEBUG = true;
 
 [~,NUM_SAMP] = size(sdf_1);
 
