@@ -37,12 +37,12 @@ for cc = 1:NUM_CELLS
   sdf_kk = align_signal_on_response(sdf_kk, moves(kk).resptime); 
   
   %remove trials with poor unit isolation
-  if (ninfo(cc).iRem1)
-    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-  end
+%   if (ninfo(cc).iRem1)
+%     TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+%   end
   
   %index by condition
-  idx_cond = ((binfo(kk).condition == 1) & ~TRIAL_POOR_ISOLATION);
+  idx_cond = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
   
   %index by trial outcome
   idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
@@ -88,23 +88,26 @@ fprintf('%d and %d (out of %d) cells with E- and C-modulation\n', sum(ismember(d
 
 %% Plotting - across-cell average
 TIME_PLOT = TIME_POSTSACC - 3500;
-IDX_CC_PLOT = ismember(dir_sep_err, {'E'});
+% IDX_CC_PLOT = ismember(dir_sep_err, {'E'});
+IDX_CC_PLOT = true(1,NUM_CELLS);
 
 A_DIFF = A_err(IDX_CC_PLOT,:) - A_corr(IDX_CC_PLOT,:);
 
 if (NORMALIZE)
-  A_DIFF = A_DIFF ./ max(A_DIFF,[],2);
+%   NORM_FACTOR = max(A_DIFF,[],2);
+  NORM_FACTOR = A_corr(:,400);
+  A_DIFF = A_DIFF ./ NORM_FACTOR;
 end
 
 figure(); hold on
 
 % plot(TIME_PLOT, A_DIFF, 'k-')
 shaded_error_bar(TIME_PLOT, mean(A_DIFF), std(A_DIFF)/sqrt(sum(IDX_CC_PLOT)), ...
-  {'LineWidth',1.5, 'Color',[.5 0 0]})%[0 .5 0]
+  {'LineWidth',1.5, 'Color',[0 .5 0]})
 
 xlim([TIME_PLOT(1), TIME_PLOT(end)])
 xlabel('Time re. saccade (ms)')
-ylabel('Normalized difference in activity')
+ylabel('Difference in normalized activity')
 
 ppretty('image_size',[6,4])
 
@@ -114,7 +117,7 @@ if (PLOT_INDIVIDUAL_CELLS)
 TIME_PLOT = TIME_POSTSACC - 3500;
 
 for cc = 1:NUM_CELLS
-  if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
+%   if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
   lim_lin = [min([A_corr(cc,:), A_err(cc,:)]), max([A_corr(cc,:), A_err(cc,:)])];
   
   figure(); hold on
@@ -122,7 +125,7 @@ for cc = 1:NUM_CELLS
   plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
   plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
   plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
-  plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
+%   plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
   
   plot(TIME_PLOT, A_corr(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
   plot(TIME_PLOT, A_err(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
@@ -133,7 +136,7 @@ for cc = 1:NUM_CELLS
   print_session_unit(gca, ninfo(cc))
   
   ppretty('image_size',[6,4])
-%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
   
   pause(0.5)
   
