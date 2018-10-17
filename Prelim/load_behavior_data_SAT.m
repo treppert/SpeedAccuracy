@@ -6,7 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = '/data/search/SAT/';
+ROOT_DIR = 'D:/SAT/';
+% ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -41,11 +42,14 @@ gaze = struct('DET',gaze, 'MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
   gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
+  gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
   gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
+  gaze.SAT(kk).clipped = false(NUM_SAMPLES,num_trials.SAT(kk));
   if ismember(monkey, {'Darwin','Euler'})
     gaze.DET(kk) = populate_struct(gaze.DET(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.DET(kk))));
+    gaze.DET(kk).clipped = false(NUM_SAMPLES,num_trials.DET(kk));
   end
-end
+end%for:sessions(kk)
 
 %% Load task/TEMPO information
 

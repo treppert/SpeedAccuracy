@@ -1,12 +1,12 @@
 function [ moves , varargout ] = parse_saccades_SAT( gaze , info )
 %[ moves ] = parse_saccades_vandy( data , info )
 
-DEBUG = true;
-
 global DEBUG VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
 global LIM_DURATION LIM_RESPTIME LIM_PEAKVEL MAX_RINIT MIN_RFIN MIN_DISP MAX_SKEW
 global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 global ALLOC_ALL NUM_SAMPLES_SURVEY
+
+DEBUG = true;
 
 %% Initializations
 
@@ -79,14 +79,6 @@ for kk = 1:NUM_SESSIONS
     %% Identify saccade candidates
     cands_jj = identify_saccade_candidates(kin_jj);
     if isempty(cands_jj)
-      if (DEBUG)
-        figure(); hold on
-        plot(gaze_unclipped(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
-        plot(gaze_unclipped(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
-        plot(kin_jj.x, 'r-')
-        plot(kin_jj.y, 'r-')
-        pause(1.0)
-      end
       idx_sin_cand(jj) = true; continue
     end
 
@@ -140,8 +132,9 @@ y = data_kk.y(IDX_SURVEY,trial);
 vx = data_kk.vx(IDX_SURVEY,trial);
 vy = data_kk.vy(IDX_SURVEY,trial);
 vel = data_kk.v(IDX_SURVEY,trial);
+clipped = data_kk.clipped(IDX_SURVEY,trial);
 
-kin = struct('x',x, 'y',y, 'vx',vx, 'vy',vy, 'vel',vel, 'trial',trial);
+kin = struct('x',x, 'y',y, 'vx',vx, 'vy',vy, 'vel',vel, 'clipped',clipped, 'trial',trial);
 
 end%util:init_movement_kinematics()
 
@@ -179,23 +172,10 @@ cands = populate_struct(cands, FIELDS_SINGLE, single(NaN));
 
 for jj = NUM_CAND:-1:1
   
-  IDX_FIN_1 = idx_lim(jj,2); %check for saccade clipping
-  
   [idx_lim(jj,1), idx_lim(jj,2), skip] = identify_movement_bounds(kin.vel, idx_lim(jj,1), ...
     idx_lim(jj,2), 'v_cut',VEL_CUT(2), 'min_hold',MIN_HOLD, 'allow_clip');
   
   if (skip); cands(jj) = []; continue; end %make sure we still have a candidate
-  
-  IDX_FIN_2 = idx_lim(jj,2); %check for saccade clipping
-  if (IDX_FIN_2 == IDX_FIN_1); cands(jj).clipped = true; end
-  
-  if (DEBUG)
-    figure(); hold on
-    title([num2str(kin.trial),' ',num2str(cands(jj).clipped)], 'FontSize',8)
-    plot(kin.x(idx_lim(jj,1):idx_lim(jj,2)), 'k-')
-    plot(kin.y(idx_lim(jj,1):idx_lim(jj,2)), 'b-')
-    pause(1.0)
-  end
   
   %provide precise account of RT
   offset_init = find(kin.vel(idx_lim(jj,1) : -1 : idx_lim(jj,1)-APPEND+1) < VEL_CUT(1), 1, 'first');
@@ -203,6 +183,19 @@ for jj = NUM_CAND:-1:1
     cands(jj) = []; continue
   else
     idx_lim(jj,1) = idx_lim(jj,1) - offset_init + 1;
+  end
+  
+  if (DEBUG)
+    idx_jj_clip = kin.clipped(idx_lim(jj,1) : idx_lim(jj,2));
+    
+    figure(44)
+    plot(kin.x(~idx_jj_clip), 'k-'); hold on
+    plot(kin.x(idx_jj_clip), 'r-')
+    plot(kin.y(~idx_jj_clip), 'b-');
+    plot(kin.y(idx_jj_clip), 'r-'); hold off
+    ylim([-9 9])
+    title([num2str(kin.trial),' ',num2str(cands(jj).clipped)], 'FontSize',8)
+    pause(2.0)
   end
   
   cands(jj) = save_candidate_parm(cands(jj), kin, idx_lim(jj,:));
