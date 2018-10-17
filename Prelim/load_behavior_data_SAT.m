@@ -2,7 +2,9 @@ function [ info , gaze ] = load_behavior_data_SAT( monkey )
 %load_behavior_data_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-global NUM_SAMPLES
+global NUM_SAMPLES REMOVE_CLIPPED_DATA
+
+REMOVE_CLIPPED_DATA = false;
 
 ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
@@ -48,14 +50,14 @@ end
 %% Load task/TEMPO information
 
 if ismember(monkey, {'Darwin','Euler'})
-%   info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
+  info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
 end
 % info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 %% Load saccade data
 
-% gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
+gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
@@ -147,7 +149,7 @@ end%function:load_task_info
 
 function [ data ] = load_gaze_data( info , data , sessions , num_trials , fields_gaze , type )
 
-global NUM_SAMPLES
+global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 SAMP_RATE = 1000;
 [B_BUTTER, A_BUTTER] = butter(3, 2*80/SAMP_RATE, 'low');
@@ -163,11 +165,13 @@ for kk = 1:NUM_SESSIONS
   fprintf('Session %d  (%s)\n', kk, [sessions(kk).name(1:16),type])
   load(session_file, 'EyeX_','EyeY_')
   
-  %identify points of saturation in the raw signal
   gaze_x = 3*transpose(EyeX_);  gaze_y = -3*transpose(EyeY_);
-  miss_x = (abs(abs(gaze_x)-7.5) < TOL_THRESH) & ([diff(gaze_x,1,1)==0; false(1,num_trials(kk))]);
-  miss_y = (abs(abs(gaze_y)-7.5) < TOL_THRESH) & ([diff(gaze_y,1,1)==0; false(1,num_trials(kk))]);
-
+  
+  if (REMOVE_CLIPPED_DATA) %identify points of saturation in the gaze signal
+    miss_x = (abs(abs(gaze_x)-7.5) < TOL_THRESH) & ([diff(gaze_x,1,1)==0; false(1,num_trials(kk))]);
+    miss_y = (abs(abs(gaze_y)-7.5) < TOL_THRESH) & ([diff(gaze_y,1,1)==0; false(1,num_trials(kk))]);
+  end
+  
   %filter gaze data
   gaze_x = single(filtfilt(B_BUTTER, A_BUTTER, gaze_x));
   gaze_y = single(filtfilt(B_BUTTER, A_BUTTER, gaze_y));
@@ -183,17 +187,18 @@ for kk = 1:NUM_SESSIONS
   data(kk).v = sqrt(data(kk).vx.*data(kk).vx + data(kk).vy.*data(kk).vy);
   clear gaze_x gaze_y vx vy vr
   
-  %remove saturated data points
-  for ff = 1:length(fields_gaze)
-    data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
+  if (REMOVE_CLIPPED_DATA) %remove saturated data points
+    for ff = 1:length(fields_gaze)
+      data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
+    end
   end
   
-  %if monkey Q or S, remove trials with missing data during decision interval
+  %if monkey S, remove trials with missing data during decision interval
   if ismember(info(kk).session(1), {'S'})
     bad_trials = identify_bad_trials_SAT(EyeX_, EyeY_);
     for ff = 1:length(fields_gaze)
       data(kk).(fields_gaze{ff})(:,bad_trials) = NaN;
-      info(kk).resptime(bad_trials) = NaN;
+      info(kk).resptime(bad_trials) = 0;
       info(kk).octant(bad_trials) = 0;
     end
   end

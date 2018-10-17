@@ -1,15 +1,11 @@
-function [ moves_SAT , varargout ] = parse_saccades_SAT( gaze , info , varargin )
+function [ moves , varargout ] = parse_saccades_SAT( gaze , info )
 %[ moves ] = parse_saccades_vandy( data , info )
 
-DEBUG = false;
+DEBUG = true;
 
-if (DEBUG)
-  gaze_unclipped = varargin{1};
-end
-
-global VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
+global DEBUG VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
 global LIM_DURATION LIM_RESPTIME LIM_PEAKVEL MAX_RINIT MIN_RFIN MIN_DISP MAX_SKEW
-global FIELDS_SINGLE FIELDS_DOUBLE FIELDS_VECTOR
+global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 global ALLOC_ALL NUM_SAMPLES_SURVEY
 
 %% Initializations
@@ -35,39 +31,43 @@ IDX_SURVEY = ( TIME_ARRAY : TIME_ARRAY + NUM_SAMPLES_SURVEY - 1 ); %indexes used
 ALLOT = 150;
 APPEND = 20;
 
-FIELDS_DOUBLE = {'displacement','duration','peakvel','resptime'};
-FIELDS_SINGLE = {'x_init','y_init','r_init','x_fin','y_fin','r_fin','th_fin','skew','vigor','octant'};
-FIELDS_VECTOR = {'r','th','vr','vel'};
+FIELDS_LOGICAL = {'clipped'};
+FIELDS_UINT16 = {'duration','octant','resptime','trial'};
+FIELDS_SINGLE = {'displacement','peakvel','skew','vigor','x_init','y_init','x_fin','y_fin'};
+FIELDS_VECTOR = {'zz_x','zz_y','zz_v'};
 
-FIELDS_ALL = [FIELDS_DOUBLE, FIELDS_SINGLE, FIELDS_VECTOR];
+FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 
 
 %% Initialize output movement arrays
 
-moves_SAT = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
+moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
-  moves_SAT(kk) = populate_struct(moves_SAT(kk), FIELDS_VECTOR, single(NaN(ALLOT,info(kk).num_trials)));
-  moves_SAT(kk) = populate_struct(moves_SAT(kk), FIELDS_SINGLE, single(NaN(1,info(kk).num_trials)));
-  moves_SAT(kk) = populate_struct(moves_SAT(kk), FIELDS_DOUBLE, double(NaN(1,info(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,info(kk).num_trials));
+  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,info(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,info(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,info(kk).num_trials)));
 end%for:sessions(kk)
 
-moves_all = moves_SAT; %struct array for all movements, regardless of task relevance
+moves = orderfields(moves);
+moves_all = moves; %struct array for all movements, regardless of task relevance
 
 
 %% **** Movement identification ****
 
 for kk = 1:NUM_SESSIONS
   fprintf('***Session %s (%d trials)\n', info(kk).session, info(kk).num_trials)
-
+  
   ALLOC_ALL = info(kk).num_trials;
   idx_all = 1; %index for saving all saccades (task-rel. and irrel.)
-
+  
   %start with estimate of response time and octant from TEMPO
-  moves_SAT(kk).resptime(:) = info(kk).resptime;
-  moves_SAT(kk).octant(:) = info(kk).octant;
-
-  idx_sin_cand = false(1,info(kk).num_trials); %keep track of trials w/o candidates and/or responses
+  moves(kk).resptime(:) = uint16(info(kk).resptime);
+  moves(kk).octant(:) = uint16(info(kk).octant);
+  
+  %keep track of trials w/o candidates and/or responses
+  idx_sin_cand = false(1,info(kk).num_trials);
   idx_sin_sacc = false(1,info(kk).num_trials);
   idx_sin_resp = false(1,info(kk).num_trials);
 
@@ -79,14 +79,14 @@ for kk = 1:NUM_SESSIONS
     %% Identify saccade candidates
     cands_jj = identify_saccade_candidates(kin_jj);
     if isempty(cands_jj)
-%       if (DEBUG)
-%         figure(); hold on
-%         plot(gaze_unclipped(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
-%         plot(gaze_unclipped(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
-%         plot(kin_jj.x, 'r-')
-%         plot(kin_jj.y, 'r-')
-%         pause()
-%       end
+      if (DEBUG)
+        figure(); hold on
+        plot(gaze_unclipped(kk).x(IDX_SURVEY,jj), 'k-', 'LineWidth',2.0)
+        plot(gaze_unclipped(kk).y(IDX_SURVEY,jj), 'b-', 'LineWidth',2.0)
+        plot(kin_jj.x, 'r-')
+        plot(kin_jj.y, 'r-')
+        pause(1.0)
+      end
       idx_sin_cand(jj) = true; continue
     end
 
@@ -95,46 +95,36 @@ for kk = 1:NUM_SESSIONS
     if isempty(cands_jj); idx_sin_sacc(jj) = true; continue; end
 
     %% Identify task-relevant saccade
-    [moves_SAT(kk), flag_tr] = identify_taskrel_saccade(moves_SAT(kk), cands_jj, jj);
+    [moves(kk), flag_tr] = identify_taskrel_saccade(moves(kk), cands_jj, jj);
     if (~flag_tr)
-      if (DEBUG)
-        figure(); hold on
-        plot(kin_jj.x, 'k-')
-        plot(kin_jj.y, 'b-')
-        pause()
-      end
       idx_sin_resp(jj) = true; continue
     end
 
   end%for:trials(jj)
 
-  fprintf('num_trials_wo_cand = %d/%d\n', sum(idx_sin_cand),info(kk).num_trials)
-  fprintf('num_trials_wo_sacc = %d/%d\n', sum(idx_sin_sacc),info(kk).num_trials)
-  fprintf('num_trials_wo_resp = %d/%d\n', sum(idx_sin_resp),info(kk).num_trials)
+  fprintf('num_trials_wo_[cand,sacc,taskrel] = [%d, %d, %d] / %d\n', sum(idx_sin_cand), ...
+    sum(idx_sin_sacc), sum(idx_sin_resp), info(kk).num_trials)
 
   %remove extra memory from struct with all saccades
+  for ff = 1:length(FIELDS_LOGICAL)
+    moves_all(kk).(FIELDS_LOGICAL{ff})(idx_all:ALLOC_ALL) = [];
+  end
+  for ff = 1:length(FIELDS_UINT16)
+    moves_all(kk).(FIELDS_UINT16{ff})(idx_all:ALLOC_ALL) = [];
+  end
   for ff = 1:length(FIELDS_SINGLE)
     moves_all(kk).(FIELDS_SINGLE{ff})(idx_all:ALLOC_ALL) = [];
-  end
-  for ff = 1:length(FIELDS_DOUBLE)
-    moves_all(kk).(FIELDS_DOUBLE{ff})(idx_all:ALLOC_ALL) = [];
   end
   for ff = 1:length(FIELDS_VECTOR)
     moves_all(kk).(FIELDS_VECTOR{ff})(:,idx_all:ALLOC_ALL) = [];
   end
   
-  fprintf('Number of trials with isolated response = %d/%d\n\n', sum(~isnan(moves_SAT(kk).peakvel)), info(kk).num_trials)
-  
-  pause(1.0)
+%   fprintf('Number of trials with isolated response = %d/%d\n\n', sum(~isnan(moves(kk).peakvel)), info(kk).num_trials)
+  pause(0.1)
   
 end%for:sessions(kk)
 
-%make sure we are only saving movements with non-NaN displacement
-% if (sum(isnan([moves_all.displacement])))
-%   error('Movements with NaN values for displacement')
-% end
-
-if (nargout > 0)
+if (nargout > 1)
   varargout{1} = moves_all;
 end
 
@@ -151,18 +141,14 @@ vx = data_kk.vx(IDX_SURVEY,trial);
 vy = data_kk.vy(IDX_SURVEY,trial);
 vel = data_kk.v(IDX_SURVEY,trial);
 
-th = atan2(y, x);
-r = sqrt(x.^2 + y.^2);
-vr = vx.*cos(th) + vy.*sin(th);
-
-kin = struct('x',x, 'y',y, 'vx',vx, 'vy',vy, 'r',r, 'th',th, 'vr',vr, 'vel',vel);
+kin = struct('x',x, 'y',y, 'vx',vx, 'vy',vy, 'vel',vel, 'trial',trial);
 
 end%util:init_movement_kinematics()
 
 function [ cands ] = identify_saccade_candidates( kin )
 
-global ALLOT APPEND VEL_CUT MIN_IMI MIN_HOLD NUM_SAMPLES_SURVEY
-global FIELDS_SINGLE FIELDS_DOUBLE FIELDS_VECTOR
+global DEBUG ALLOT APPEND VEL_CUT MIN_IMI MIN_HOLD NUM_SAMPLES_SURVEY
+global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 
 cands = [];
 
@@ -185,17 +171,31 @@ idx_lim = transpose([ idx_start ; idx_end ]);
 %% Identify actual saccade candidates
 
 NUM_CAND = size(idx_lim,1);
-cands = new_struct([FIELDS_SINGLE, FIELDS_DOUBLE, FIELDS_VECTOR], 'dim',[1,NUM_CAND]);
+cands = new_struct([FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR], 'dim',[1,NUM_CAND]);
+cands = populate_struct(cands, FIELDS_LOGICAL, false);
+cands = populate_struct(cands, FIELDS_UINT16, 0);
 cands = populate_struct(cands, FIELDS_VECTOR, single(NaN(ALLOT,1)));
 cands = populate_struct(cands, FIELDS_SINGLE, single(NaN));
-cands = populate_struct(cands, FIELDS_DOUBLE, NaN);
 
 for jj = NUM_CAND:-1:1
   
+  IDX_FIN_1 = idx_lim(jj,2); %check for saccade clipping
+  
   [idx_lim(jj,1), idx_lim(jj,2), skip] = identify_movement_bounds(kin.vel, idx_lim(jj,1), ...
-    idx_lim(jj,2), 'v_cut',VEL_CUT(2), 'min_hold',MIN_HOLD);
+    idx_lim(jj,2), 'v_cut',VEL_CUT(2), 'min_hold',MIN_HOLD, 'allow_clip');
   
   if (skip); cands(jj) = []; continue; end %make sure we still have a candidate
+  
+  IDX_FIN_2 = idx_lim(jj,2); %check for saccade clipping
+  if (IDX_FIN_2 == IDX_FIN_1); cands(jj).clipped = true; end
+  
+  if (DEBUG)
+    figure(); hold on
+    title([num2str(kin.trial),' ',num2str(cands(jj).clipped)], 'FontSize',8)
+    plot(kin.x(idx_lim(jj,1):idx_lim(jj,2)), 'k-')
+    plot(kin.y(idx_lim(jj,1):idx_lim(jj,2)), 'b-')
+    pause(1.0)
+  end
   
   %provide precise account of RT
   offset_init = find(kin.vel(idx_lim(jj,1) : -1 : idx_lim(jj,1)-APPEND+1) < VEL_CUT(1), 1, 'first');
@@ -216,36 +216,35 @@ function [ candidate ] = save_candidate_parm( candidate , kin , idx_move )
 
 global ALLOT APPEND
 
-%parameters that do not depend upon clipping
-candidate.octant = convert_angle_to_octant(kin.th(idx_move(2)-1));
-candidate.peakvel = double(max(kin.vel(idx_move(1):idx_move(2))));
-candidate.resptime = double(idx_move(1));
-candidate.r_init = kin.r(idx_move(1));
-candidate.x_init = kin.x(idx_move(1));
-candidate.y_init = kin.y(idx_move(1));
+%save vectors of candidate kinematics
+idx_vec = idx_move(1) - APPEND : idx_move(1)  + ALLOT - (APPEND + 1);
+idx_vec(idx_vec < 1) = 1;
+candidate.zz_x(:) = (kin.x(idx_vec));
+candidate.zz_y(:) = (kin.y(idx_vec));
+candidate.zz_v(:) = (kin.vel(idx_vec));
 
-%save all movement parameters
-idx_kin = idx_move(1) - APPEND : idx_move(1)  + ALLOT - (APPEND + 1);
-idx_kin(idx_kin < 1) = 1;
+%% Scalar parameters independent of clipping
+candidate.peakvel = single(max(kin.vel(idx_move(1):idx_move(2))));
+candidate.resptime = uint16(idx_move(1));
+candidate.x_init = single(kin.x(idx_move(1)));
+candidate.y_init = single(kin.y(idx_move(1)));
+candidate.trial = uint16(kin.trial);
 
-candidate.r(:) = (kin.r(idx_kin));
-candidate.th(:) = (kin.th(idx_kin));
-candidate.vr(:) = (kin.vr(idx_kin));
-candidate.vel(:) = (kin.vel(idx_kin));
-
-candidate.duration = double(idx_move(2) - idx_move(1));
-
-candidate.x_fin = kin.x(idx_move(2));
-candidate.y_fin = kin.y(idx_move(2));
-candidate.r_fin = kin.r(idx_move(2));
-candidate.th_fin = kin.th(idx_move(2));
-
+%% Scalar parameters only valid without clipping
 disp_x = sum(abs(diff(kin.x(idx_move(1):idx_move(2)))));
 disp_y = sum(abs(diff(kin.y(idx_move(1):idx_move(2)))));
-candidate.displacement = double(sqrt(disp_x*disp_x + disp_y*disp_y));
+candidate.displacement = single(sqrt(disp_x*disp_x + disp_y*disp_y));
+
+candidate.duration = uint16(idx_move(2) - idx_move(1));
+
+candidate.x_fin = single(kin.x(idx_move(2)));
+candidate.y_fin = single(kin.y(idx_move(2)));
+
+kin_th = atan2(kin.y, kin.x);
+candidate.octant = uint16(convert_angle_to_octant(kin_th(idx_move(2)-1)));
 
 [~, idx_pv] = max(kin.vel(idx_move(1):idx_move(2)));
-candidate.skew = idx_pv / (idx_move(2) - idx_move(1));
+candidate.skew = single(idx_pv / (idx_move(2) - idx_move(1)));
 
 end%function:save_candidate_parm()
 
@@ -306,8 +305,8 @@ global FIELDS_DOUBLE FIELDS_SINGLE FIELDS_VECTOR
 flag_tr = false;
 
 resptime = [cands.resptime];
-r_init = [cands.r_init];
-r_fin = [cands.r_fin];
+r_init = sqrt([cands.x_init].^2 + [cands.y_init].^2);
+r_fin = sqrt([cands.x_fin].^2 + [cands.y_fin].^2);
 
 idx_cut_rt = (resptime < LIM_RESPTIME(1)) | (resptime > LIM_RESPTIME(2));
 idx_cut_rinit = (r_init > MAX_RINIT);
