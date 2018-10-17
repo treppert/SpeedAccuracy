@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = 'D:/SAT/';
-% ROOT_DIR = '/data/search/SAT/';
+% ROOT_DIR = 'D:/SAT/'; %TDT
+ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -171,10 +171,9 @@ for kk = 1:NUM_SESSIONS
   
   gaze_x = 3*transpose(EyeX_);  gaze_y = -3*transpose(EyeY_);
   
-  if (REMOVE_CLIPPED_DATA) %identify points of saturation in the gaze signal
-    miss_x = (abs(abs(gaze_x)-7.5) < TOL_THRESH) & ([diff(gaze_x,1,1)==0; false(1,num_trials(kk))]);
-    miss_y = (abs(abs(gaze_y)-7.5) < TOL_THRESH) & ([diff(gaze_y,1,1)==0; false(1,num_trials(kk))]);
-  end
+  %identify points of saturation in the gaze signal
+  miss_x = (abs(abs(gaze_x)-7.5) < TOL_THRESH) & ([diff(gaze_x,1,1)==0; false(1,num_trials(kk))]);
+  miss_y = (abs(abs(gaze_y)-7.5) < TOL_THRESH) & ([diff(gaze_y,1,1)==0; false(1,num_trials(kk))]);
   
   %filter gaze data
   gaze_x = single(filtfilt(B_BUTTER, A_BUTTER, gaze_x));
@@ -191,9 +190,11 @@ for kk = 1:NUM_SESSIONS
   data(kk).v = sqrt(data(kk).vx.*data(kk).vx + data(kk).vy.*data(kk).vy);
   clear gaze_x gaze_y vx vy vr
   
+  data(kk).clipped(miss_x|miss_y) = true; %ID clipped data points
+  
   if (REMOVE_CLIPPED_DATA) %remove saturated data points
     for ff = 1:length(fields_gaze)
-      data(kk).(fields_gaze{ff})(miss_x | miss_y) = NaN;
+      data(kk).(fields_gaze{ff})(miss_x|miss_y) = NaN;
     end
   end
   

@@ -44,7 +44,7 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
-  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,info(kk).num_trials));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(ALLOT,info(kk).num_trials));
   moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,info(kk).num_trials)));
   moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,info(kk).num_trials)));
   moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,info(kk).num_trials)));
@@ -140,7 +140,7 @@ end%util:init_movement_kinematics()
 
 function [ cands ] = identify_saccade_candidates( kin )
 
-global DEBUG ALLOT APPEND VEL_CUT MIN_IMI MIN_HOLD NUM_SAMPLES_SURVEY
+global ALLOT APPEND VEL_CUT MIN_IMI MIN_HOLD NUM_SAMPLES_SURVEY
 global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 
 cands = [];
@@ -165,7 +165,7 @@ idx_lim = transpose([ idx_start ; idx_end ]);
 
 NUM_CAND = size(idx_lim,1);
 cands = new_struct([FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR], 'dim',[1,NUM_CAND]);
-cands = populate_struct(cands, FIELDS_LOGICAL, false);
+cands = populate_struct(cands, FIELDS_LOGICAL, false(ALLOT,1));
 cands = populate_struct(cands, FIELDS_UINT16, 0);
 cands = populate_struct(cands, FIELDS_VECTOR, single(NaN(ALLOT,1)));
 cands = populate_struct(cands, FIELDS_SINGLE, single(NaN));
@@ -173,7 +173,7 @@ cands = populate_struct(cands, FIELDS_SINGLE, single(NaN));
 for jj = NUM_CAND:-1:1
   
   [idx_lim(jj,1), idx_lim(jj,2), skip] = identify_movement_bounds(kin.vel, idx_lim(jj,1), ...
-    idx_lim(jj,2), 'v_cut',VEL_CUT(2), 'min_hold',MIN_HOLD, 'allow_clip');
+    idx_lim(jj,2), 'v_cut',VEL_CUT(2), 'min_hold',MIN_HOLD);
   
   if (skip); cands(jj) = []; continue; end %make sure we still have a candidate
   
@@ -183,19 +183,6 @@ for jj = NUM_CAND:-1:1
     cands(jj) = []; continue
   else
     idx_lim(jj,1) = idx_lim(jj,1) - offset_init + 1;
-  end
-  
-  if (DEBUG)
-    idx_jj_clip = kin.clipped(idx_lim(jj,1) : idx_lim(jj,2));
-    
-    figure(44)
-    plot(kin.x(~idx_jj_clip), 'k-'); hold on
-    plot(kin.x(idx_jj_clip), 'r-')
-    plot(kin.y(~idx_jj_clip), 'b-');
-    plot(kin.y(idx_jj_clip), 'r-'); hold off
-    ylim([-9 9])
-    title([num2str(kin.trial),' ',num2str(cands(jj).clipped)], 'FontSize',8)
-    pause(2.0)
   end
   
   cands(jj) = save_candidate_parm(cands(jj), kin, idx_lim(jj,:));
@@ -212,9 +199,10 @@ global ALLOT APPEND
 %save vectors of candidate kinematics
 idx_vec = idx_move(1) - APPEND : idx_move(1)  + ALLOT - (APPEND + 1);
 idx_vec(idx_vec < 1) = 1;
-candidate.zz_x(:) = (kin.x(idx_vec));
-candidate.zz_y(:) = (kin.y(idx_vec));
-candidate.zz_v(:) = (kin.vel(idx_vec));
+candidate.zz_x(:) = single(kin.x(idx_vec));
+candidate.zz_y(:) = single(kin.y(idx_vec));
+candidate.zz_v(:) = single(kin.vel(idx_vec));
+candidate.clipped(:) = kin.clipped(idx_vec);
 
 %% Scalar parameters independent of clipping
 candidate.peakvel = single(max(kin.vel(idx_move(1):idx_move(2))));
@@ -243,7 +231,7 @@ end%function:save_candidate_parm()
 
 function [ moves , cands , index ] = identify_all_saccades( moves , cands , index )
 
-global LIM_DURATION LIM_PEAKVEL MIN_DISP MAX_SKEW
+global DEBUG LIM_DURATION LIM_PEAKVEL MIN_DISP MAX_SKEW
 global FIELDS_DOUBLE FIELDS_SINGLE FIELDS_VECTOR
 global NUM_TRIAL ALLOT ALLOC_ALL
 
@@ -285,6 +273,21 @@ for ff = 1:length(FIELDS_VECTOR)
 end
 
 cands = cands(idx_saccade);
+
+if (DEBUG)
+  for jj = 1:length(cands)
+    figure(44)
+    plot(cands(jj).zz_x, 'k-'); hold on
+    plot(cands(jj).zz_y, 'b-');
+    if any(cands(jj).clipped)
+      plot(find(cands(jj).clipped), 0, 'k.');
+    end
+    hold off
+    ylim([-9 9])
+    title([num2str(cands(jj).trial),' ',num2str(jj)], 'FontSize',8)
+    pause(2.0)
+  end%for:candidates(jj)
+end%if(DEBUG)
 
 index = index + num_saccade;
 
