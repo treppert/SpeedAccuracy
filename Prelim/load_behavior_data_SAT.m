@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-% ROOT_DIR = 'D:/SAT/'; %TDT
-ROOT_DIR = '/data/search/SAT/';
+ROOT_DIR = 'C:\Users\Tom\Documents\SpeedAccuracy/';%'D:/SAT/'; %TDT
+% ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})

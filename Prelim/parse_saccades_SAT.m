@@ -28,8 +28,8 @@ LIM_RESPTIME = [0, 1500];
 
 NUM_SAMPLES_SURVEY = 2500;
 IDX_SURVEY = ( TIME_ARRAY : TIME_ARRAY + NUM_SAMPLES_SURVEY - 1 ); %indexes used to look for movements
-ALLOT = 150;
-APPEND = 20;
+ALLOT = 80;
+APPEND = 10;
 
 FIELDS_LOGICAL = {'clipped'};
 FIELDS_UINT16 = {'duration','octant','resptime','trial'};
@@ -44,7 +44,7 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
-  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(ALLOT,info(kk).num_trials));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,info(kk).num_trials));
   moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,info(kk).num_trials)));
   moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,info(kk).num_trials)));
   moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,info(kk).num_trials)));
@@ -165,7 +165,7 @@ idx_lim = transpose([ idx_start ; idx_end ]);
 
 NUM_CAND = size(idx_lim,1);
 cands = new_struct([FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR], 'dim',[1,NUM_CAND]);
-cands = populate_struct(cands, FIELDS_LOGICAL, false(ALLOT,1));
+cands = populate_struct(cands, FIELDS_LOGICAL, false);
 cands = populate_struct(cands, FIELDS_UINT16, 0);
 cands = populate_struct(cands, FIELDS_VECTOR, single(NaN(ALLOT,1)));
 cands = populate_struct(cands, FIELDS_SINGLE, single(NaN));
@@ -196,13 +196,15 @@ function [ candidate ] = save_candidate_parm( candidate , kin , idx_move )
 
 global ALLOT APPEND
 
-%save vectors of candidate kinematics
+%% Vectors of candidate kinematics
 idx_vec = idx_move(1) - APPEND : idx_move(1)  + ALLOT - (APPEND + 1);
 idx_vec(idx_vec < 1) = 1;
 candidate.zz_x(:) = single(kin.x(idx_vec));
 candidate.zz_y(:) = single(kin.y(idx_vec));
 candidate.zz_v(:) = single(kin.vel(idx_vec));
-candidate.clipped(:) = kin.clipped(idx_vec);
+
+%check for saccade clipping
+candidate.clipped = any(kin.clipped(idx_vec));
 
 %% Scalar parameters independent of clipping
 candidate.peakvel = single(max(kin.vel(idx_move(1):idx_move(2))));
@@ -211,13 +213,13 @@ candidate.x_init = single(kin.x(idx_move(1)));
 candidate.y_init = single(kin.y(idx_move(1)));
 candidate.trial = uint16(kin.trial);
 
-%% Scalar parameters only valid without clipping
+%% Scalar parameters with min values given clipping
 disp_x = sum(abs(diff(kin.x(idx_move(1):idx_move(2)))));
 disp_y = sum(abs(diff(kin.y(idx_move(1):idx_move(2)))));
 candidate.displacement = single(sqrt(disp_x*disp_x + disp_y*disp_y));
-
 candidate.duration = uint16(idx_move(2) - idx_move(1));
 
+%% Scalar parameters only valid without clipping
 candidate.x_fin = single(kin.x(idx_move(2)));
 candidate.y_fin = single(kin.y(idx_move(2)));
 
@@ -279,12 +281,9 @@ if (DEBUG)
     figure(44)
     plot(cands(jj).zz_x, 'k-'); hold on
     plot(cands(jj).zz_y, 'b-');
-    if any(cands(jj).clipped)
-      plot(find(cands(jj).clipped), 0, 'k.');
-    end
     hold off
     ylim([-9 9])
-    title([num2str(cands(jj).trial),' ',num2str(jj)], 'FontSize',8)
+    title([num2str(cands(jj).trial),' ',num2str(jj),' ',num2str(cands(jj).clipped)], 'FontSize',8)
     pause(2.0)
   end%for:candidates(jj)
 end%if(DEBUG)
