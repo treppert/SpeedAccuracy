@@ -6,7 +6,7 @@ global LIM_DURATION LIM_RESPTIME LIM_PEAKVEL MAX_RINIT MIN_RFIN MIN_DISP MAX_SKE
 global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 global ALLOC_ALL NUM_SAMPLES_SURVEY
 
-DEBUG = true;
+DEBUG = false;
 
 %% Initializations
 
@@ -57,7 +57,7 @@ moves_all = moves; %struct array for all movements, regardless of task relevance
 %% **** Movement identification ****
 
 for kk = 1:NUM_SESSIONS
-  fprintf('***Session %s (%d trials)\n', info(kk).session, info(kk).num_trials)
+  fprintf('***Session %d -- %s (%d trials)\n', kk, info(kk).session, info(kk).num_trials)
   
   ALLOC_ALL = info(kk).num_trials;
   idx_all = 1; %index for saving all saccades (task-rel. and irrel.)
@@ -110,9 +110,6 @@ for kk = 1:NUM_SESSIONS
   for ff = 1:length(FIELDS_VECTOR)
     moves_all(kk).(FIELDS_VECTOR{ff})(:,idx_all:ALLOC_ALL) = [];
   end
-  
-%   fprintf('Number of trials with isolated response = %d/%d\n\n', sum(~isnan(moves(kk).peakvel)), info(kk).num_trials)
-  pause(0.1)
   
 end%for:sessions(kk)
 
@@ -234,7 +231,7 @@ end%function:save_candidate_parm()
 function [ moves , cands , index ] = identify_all_saccades( moves , cands , index )
 
 global DEBUG LIM_DURATION LIM_PEAKVEL MIN_DISP MAX_SKEW
-global FIELDS_DOUBLE FIELDS_SINGLE FIELDS_VECTOR
+global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 global NUM_TRIAL ALLOT ALLOC_ALL
 
 idx_cut_nan = isnan([cands.displacement]);
@@ -252,8 +249,11 @@ num_saccade  = length(idx_saccade);
 if (index + num_saccade > ALLOC_ALL)
   ALLOC_ALL = ALLOC_ALL + NUM_TRIAL;
   
-  for ff = 1:length(FIELDS_DOUBLE)
-    moves.(FIELDS_DOUBLE{ff}) = [moves.(FIELDS_DOUBLE{ff}), NaN(1,NUM_TRIAL)];
+  for ff = 1:length(FIELDS_LOGICAL)
+    moves.(FIELDS_LOGICAL{ff}) = [moves.(FIELDS_LOGICAL{ff}), false(1,NUM_TRIAL)];
+  end
+  for ff = 1:length(FIELDS_UINT16)
+    moves.(FIELDS_UINT16{ff}) = [moves.(FIELDS_UINT16{ff}), zeros(1,NUM_TRIAL)];
   end
   for ff = 1:length(FIELDS_SINGLE)
     moves.(FIELDS_SINGLE{ff}) = [moves.(FIELDS_SINGLE{ff}), single(NaN(1,NUM_TRIAL))];
@@ -264,8 +264,11 @@ if (index + num_saccade > ALLOC_ALL)
 end
 
 %save all saccades for this trial
-for ff = 1:length(FIELDS_DOUBLE)
-  moves.(FIELDS_DOUBLE{ff})(index:index+num_saccade-1) = [cands(idx_saccade).(FIELDS_DOUBLE{ff})];
+for ff = 1:length(FIELDS_LOGICAL)
+  moves.(FIELDS_LOGICAL{ff})(index:index+num_saccade-1) = [cands(idx_saccade).(FIELDS_LOGICAL{ff})];
+end
+for ff = 1:length(FIELDS_UINT16)
+  moves.(FIELDS_UINT16{ff})(index:index+num_saccade-1) = [cands(idx_saccade).(FIELDS_UINT16{ff})];
 end
 for ff = 1:length(FIELDS_SINGLE)
   moves.(FIELDS_SINGLE{ff})(index:index+num_saccade-1) = [cands(idx_saccade).(FIELDS_SINGLE{ff})];
@@ -295,7 +298,7 @@ end%function:identify_all_saccades()
 function [ moves , flag_tr ] = identify_taskrel_saccade( moves , cands , trial )
 
 global LIM_RESPTIME MAX_RINIT MIN_RFIN
-global FIELDS_DOUBLE FIELDS_SINGLE FIELDS_VECTOR
+global FIELDS_LOGICAL FIELDS_UINT16 FIELDS_SINGLE FIELDS_VECTOR
 
 flag_tr = false;
 
@@ -314,8 +317,11 @@ num_taskrel = length(idx_taskrel);
 
 if (num_taskrel == 1)
   
-  for ff = 1:length(FIELDS_DOUBLE)
-    moves.(FIELDS_DOUBLE{ff})(trial) = cands(idx_taskrel).(FIELDS_DOUBLE{ff});
+  for ff = 1:length(FIELDS_LOGICAL)
+    moves.(FIELDS_LOGICAL{ff})(trial) = cands(idx_taskrel).(FIELDS_LOGICAL{ff});
+  end
+  for ff = 1:length(FIELDS_UINT16)
+    moves.(FIELDS_UINT16{ff})(trial) = cands(idx_taskrel).(FIELDS_UINT16{ff});
   end
   for ff = 1:length(FIELDS_SINGLE)
     moves.(FIELDS_SINGLE{ff})(trial) = cands(idx_taskrel).(FIELDS_SINGLE{ff});
