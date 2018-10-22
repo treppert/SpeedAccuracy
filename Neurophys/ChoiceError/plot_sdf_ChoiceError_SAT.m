@@ -1,4 +1,4 @@
-function [ varargout ] = plot_sdf_ChoiceError_SAT( spikes , ninfo , moves , binfo )
+function [ varargout ] = plot_sdf_ChoiceError_SAT( spikes , ninfo , moves , movesAll , binfo )
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -37,9 +37,9 @@ for cc = 1:NUM_CELLS
   sdf_kk = align_signal_on_response(sdf_kk, moves(kk).resptime); 
   
   %remove trials with poor unit isolation
-%   if (ninfo(cc).iRem1)
-%     TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-%   end
+  if (ninfo(cc).iRem1)
+    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+  end
   
   %index by condition
   idx_cond = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
@@ -50,6 +50,9 @@ for cc = 1:NUM_CELLS
   
   %control for choice error direction
   [idx_err, idx_corr] = equate_respdir_err_vs_corr(idx_err, idx_corr, moves(kk).octant);
+  
+  %remove any activity related to corrective saccade initiation
+  sdf_kk(idx_cond & idx_err,:) = rem_spikes_post_corrective_SAT(sdf_kk(idx_cond & idx_err,:), movesAll(kk));
   
   A_corr(cc,:) = nanmean(sdf_kk(idx_cond & idx_corr,TIME_POSTSACC));
   A_err(cc,:) = nanmean(sdf_kk(idx_cond & idx_err,TIME_POSTSACC));
