@@ -104,22 +104,25 @@ TIME_PLOT = TIME_POSTSACC - 3500;
 %trial-to-trial activity
 for cc = 1:NUM_CELLS
   
+  lim_lin = [min(min([A_corr_T2T{cc}, A_err_T2T{cc}])), max(max([A_corr_T2T{cc}, A_err_T2T{cc}]))];
+  
   figure()
   
   for jj = 1:NUM_TRIAL
     subplot(2,2,jj); hold on
-    lim_lin = [min([A_corr_T2T{cc}(jj,:), A_err_T2T{cc}(jj,:)]), max([A_corr_T2T{cc}(jj,:), A_err_T2T{cc}(jj,:)])];
     plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
     plot(TIME_PLOT, A_corr_T2T{cc}(jj,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
     plot(TIME_PLOT, A_err_T2T{cc}(jj,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
     xlim([TIME_PLOT(1), TIME_PLOT(end)])
-    print_session_unit(gca, ninfo(cc))
-    pause(0.5)
+    title(['Trial ', num2str(jj)], 'FontSize',8)
+    xlabel('Time re. saccade (ms)')
+    ylabel('Activity (sp/sec)')
+    pause(0.1)
   end
   
   ppretty('image_size',[8,8])
-  print(['C:\Users\TDT\Dropbox/tmp/T2T-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+%   print(['C:\Users\TDT\Dropbox/tmp/T2T-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
   
   pause(0.5)
   
