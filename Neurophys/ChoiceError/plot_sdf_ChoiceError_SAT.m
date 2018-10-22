@@ -1,6 +1,9 @@
-function [ varargout ] = plot_sdf_ChoiceError_SAT( spikes , ninfo , moves , movesAll , binfo )
+function [  ] = plot_sdf_ChoiceError_SAT( spikes , ninfo , moves , movesAll , binfo )
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
+
+binfo = index_timing_errors_SAT(binfo, moves);
+trial_switch = identify_condition_switch(binfo, 'Da');
 
 CLIP_SDF_POST_CORRECTIVE = true;
 PLOT_INDIVIDUAL_CELLS = true;
@@ -8,23 +11,32 @@ PLOT_INDIVIDUAL_CELLS = true;
 TIME_POSTSACC  = 3500 + (-400 : 400);
 NSAMP_POSTSACC = length(TIME_POSTSACC);
 TIME_TEST_MANNWHITNEY = 3500 + (1 : 400);
-NUM_CELLS = 20;%length(spikes);
+
+NUM_CELLS = length(spikes);
 
 %activity re. saccade initiation
 A_corr = NaN(NUM_CELLS,NSAMP_POSTSACC);
 A_err  = NaN(NUM_CELLS,NSAMP_POSTSACC);
 
+%summary params for error-related modulation
+% t_sep_err = NaN(1,NUM_CELLS);
+% dir_sep_err = cell(1,NUM_CELLS);
+
 %median RT for each condition X trial outcome
 RT_corr = NaN(1,NUM_CELLS);
 RT_err = NaN(1,NUM_CELLS);
 
-%time of separation of SDFs
-t_sep_err = NaN(1,NUM_CELLS);
+%parameters and initializations for trial-to-trial analysis
+MIN_NUM_TRIALS = 5; %min number of trials for single SDF
+TRIAL_PLOT = ( 0 : 3 );
+NUM_TRIAL = length(TRIAL_PLOT);
+A_corr_T2T = cell(1,NUM_CELLS);
+A_err_T2T = cell(1,NUM_CELLS);
+for cc = 1:NUM_CELLS
+  A_corr_T2T{cc} = NaN(NUM_TRIAL,NSAMP_POSTSACC);
+  A_err_T2T{cc} = NaN(NUM_TRIAL,NSAMP_POSTSACC);
+end%for:cells(cc)
 
-%direction of error-related modulation
-dir_sep_err = cell(1,NUM_CELLS);
-
-binfo = index_timing_errors_SAT(binfo, moves);
 
 %% Compute the SDFs split by condition and correct/error
 
@@ -60,67 +72,86 @@ for cc = 1:NUM_CELLS
   A_corr(cc,:) = nanmean(sdf_kk(idx_cond & idx_corr,TIME_POSTSACC));
   A_err(cc,:) = nanmean(sdf_kk(idx_cond & idx_err,TIME_POSTSACC));
   
-  %assess time of separation between A_corr and A_err
-%   sdf_corr_test = sdf_kk(idx_cond & idx_corr,TIME_TEST_MANNWHITNEY);
-%   sdf_err_test = sdf_kk(idx_cond & idx_err,TIME_TEST_MANNWHITNEY);
-%   t_sep_err(cc) = compute_time_sep_sdf_SAT(sdf_corr_test, sdf_err_test, 'min_length',20);
-  
-  %assess direction of error-related modulation (if any)
-%   if isnan(t_sep_err(cc))
-%     dir_sep_err{cc} = 'N';
-%   elseif (A_err(cc,400+t_sep_err(cc)) > A_corr(cc,400+t_sep_err(cc)))
-%     dir_sep_err{cc} = 'E';
-%   else
-%     dir_sep_err{cc} = 'C';
-%   end
-  
   %save median RTs
   RT_corr(cc) = nanmedian(moves(kk).resptime(idx_cond & idx_corr));
   RT_err(cc) = nanmedian(moves(kk).resptime(idx_cond & idx_err));
   
+  %trial-to-trial choice error analysis
+  jj_A2F = trial_switch(kk).A2F;
+  
+  for jj = 1:NUM_TRIAL
+    
+    trial_jj = jj_A2F + TRIAL_PLOT(jj);
+    trial_jj_err = intersect(trial_jj, find(idx_cond & idx_err));
+    trial_jj_corr = intersect(trial_jj, find(idx_cond & idx_corr));
+
+    A_corr_T2T{cc}(jj,:) = nanmean(sdf_kk(trial_jj_corr,TIME_POSTSACC));
+    
+    if (length(trial_jj_err) < MIN_NUM_TRIALS); continue; end
+    
+    A_err_T2T{cc}(jj,:) = nanmean(sdf_kk(trial_jj_err,TIME_POSTSACC));
+    
+  end%for:trials(jj)
+  
 end%for:cells(cc)
 
-if (nargout > 0)
-  varargout{1} = t_sep_err;
-  if (nargout > 1)
-    varargout{2} = dir_sep_err;
-  end
-end
-
-% fprintf('%d and %d (out of %d) cells with E- and C-modulation\n', sum(ismember(dir_sep_err, {'E'})), ...
-%   sum(ismember(dir_sep_err, {'C'})), NUM_CELLS)
 
 
 %% Plotting - individual cells
 if (PLOT_INDIVIDUAL_CELLS)
 TIME_PLOT = TIME_POSTSACC - 3500;
 
+%trial-to-trial activity
 for cc = 1:NUM_CELLS
-%   if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
-  lim_lin = [min([A_corr(cc,:), A_err(cc,:)]), max([A_corr(cc,:), A_err(cc,:)])];
   
-  figure(cc); hold on
+  figure()
   
-  plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
-  plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
-  plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
-%   plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
+  for jj = 1:NUM_TRIAL
+    subplot(2,2,jj); hold on
+    lim_lin = [min([A_corr_T2T{cc}(jj,:), A_err_T2T{cc}(jj,:)]), max([A_corr_T2T{cc}(jj,:), A_err_T2T{cc}(jj,:)])];
+    plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
+    plot(TIME_PLOT, A_corr_T2T{cc}(jj,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+    plot(TIME_PLOT, A_err_T2T{cc}(jj,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+    xlim([TIME_PLOT(1), TIME_PLOT(end)])
+    print_session_unit(gca, ninfo(cc))
+    pause(0.5)
+  end
   
-  plot(TIME_PLOT, A_corr(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-  plot(TIME_PLOT, A_err(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
-  
-  xlim([TIME_PLOT(1), TIME_PLOT(end)])
-  xlabel('Time re. saccade (ms)')
-  ylabel('Activity (sp/sec)')
-  print_session_unit(gca, ninfo(cc))
-  
-  ppretty('image_size',[5,3])
-%   print(['C:\Users\TDT\Dropbox/tmp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  ppretty('image_size',[8,8])
+  print(['C:\Users\TDT\Dropbox/tmp/T2T-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
 %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
   
   pause(0.5)
   
 end%for:cells(cc)
+
+% %average activity
+% for cc = 1:NUM_CELLS
+% %   if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
+%   lim_lin = [min([A_corr(cc,:), A_err(cc,:)]), max([A_corr(cc,:), A_err(cc,:)])];
+%   
+%   figure(); hold on
+%   
+%   plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
+%   plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
+%   plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
+% %   plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
+%   
+%   plot(TIME_PLOT, A_corr(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+%   plot(TIME_PLOT, A_err(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+%   
+%   xlim([TIME_PLOT(1), TIME_PLOT(end)])
+%   xlabel('Time re. saccade (ms)')
+%   ylabel('Activity (sp/sec)')
+%   print_session_unit(gca, ninfo(cc))
+%   
+%   ppretty('image_size',[5,3])
+% %   print(['C:\Users\TDT\Dropbox/tmp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+% %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+%   
+%   pause(0.5)
+%   
+% end%for:cells(cc)
 end%if(PLOT_INDIVIDUAL_CELLS)
 
 
@@ -149,3 +180,27 @@ end%if(PLOT_INDIVIDUAL_CELLS)
 
 
 end%function:plot_sdf_error_SEF()
+
+  %assess time of separation between A_corr and A_err
+%   sdf_corr_test = sdf_kk(idx_cond & idx_corr,TIME_TEST_MANNWHITNEY);
+%   sdf_err_test = sdf_kk(idx_cond & idx_err,TIME_TEST_MANNWHITNEY);
+%   t_sep_err(cc) = compute_time_sep_sdf_SAT(sdf_corr_test, sdf_err_test, 'min_length',20);
+  
+  %assess direction of error-related modulation (if any)
+%   if isnan(t_sep_err(cc))
+%     dir_sep_err{cc} = 'N';
+%   elseif (A_err(cc,400+t_sep_err(cc)) > A_corr(cc,400+t_sep_err(cc)))
+%     dir_sep_err{cc} = 'E';
+%   else
+%     dir_sep_err{cc} = 'C';
+%   end
+  
+% if (nargout > 0)
+%   varargout{1} = t_sep_err;
+%   if (nargout > 1)
+%     varargout{2} = dir_sep_err;
+%   end
+% end
+
+% fprintf('%d and %d (out of %d) cells with E- and C-modulation\n', sum(ismember(dir_sep_err, {'E'})), ...
+%   sum(ismember(dir_sep_err, {'C'})), NUM_CELLS)
