@@ -2,96 +2,93 @@ function [ ] = plot_sdf_reward_SEF( spikes , ninfo , moves , binfo )
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT_INDIV = false;
+PLOT_INDIV_CELLS = true;
 NORMALIZE = true;
 
-TIME_ZERO = 3500;
-TIME_REW = (-400 : 800);
+TIME_REW = 3500 + (-400 : 800);
 NUM_SAMP = length(TIME_REW);
 
-NUM_CELLS = length(spikes);
+NUM_CELLS = 3;%length(spikes);
 
-sdfAcc_Corr = NaN(NUM_CELLS, NUM_SAMP);
-sdfFast_Corr = NaN(NUM_CELLS, NUM_SAMP);
-sdfAcc_ErrTime = NaN(NUM_CELLS, NUM_SAMP);
-sdfFast_ErrTime = NaN(NUM_CELLS, NUM_SAMP);
+A_Corr = NaN(NUM_CELLS, NUM_SAMP);
+A_Err = NaN(NUM_CELLS, NUM_SAMP);
 
-maxActivity = NaN(NUM_CELLS,1); %divisor for normalization
+maxA = NaN(NUM_CELLS,1); %divisor for normalization
 
 %compute expected/actual time of reward for each session
 [~,time_rew] = determine_time_reward_SAT(binfo, moves);
 
-%% Compute the SDF
+%% Compute the SDFs split by condition and trial outcome
 
 for cc = 1:NUM_CELLS
-  if (ninfo(cc).rewAcc <= 0); continue; end
   
-  kk = ismember({binfo.session}, ninfo(cc).sesh);
+  kk = ismember({binfo.session}, ninfo(cc).sess);
+  TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials);
   
-  idx_fast = (binfo(kk).condition == 3);
-  idx_acc = (binfo(kk).condition == 1);
+  sdf_kk = compute_spike_density_fxn(spikes(cc).SAT);
+  sdf_kk = align_signal_on_response(sdf_kk, double(moves(kk).resptime) + time_rew{kk});
   
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time);
-  idx_errtime = (~binfo(kk).err_dir & binfo(kk).err_time);
+  %remove trials with poor unit isolation
+  if (ninfo(cc).iRem1)
+    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
+  end
   
-  sdf = compute_spike_density_fxn(spikes(cc).SAT);
-  sdf = align_signal_on_response(sdf, moves(kk).resptime + time_rew{kk});
+  %index by condition
+  idx_cond = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
   
-  maxActivity(cc) = max(nanmean(sdf(:,TIME_ZERO + TIME_REW)));
+  %index by trial outcome
+  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idx_err = (binfo(kk).err_dir & ~binfo(kk).err_time);
   
-  idxAcc_Corr = (idx_acc & idx_corr);
-  idxFast_Corr = (idx_fast & idx_corr);
-  idxAcc_ErrTime = (idx_acc & idx_errtime);
-  idxFast_ErrTime = (idx_fast & idx_errtime);
+  A_Corr(cc,:) = nanmean(sdf_kk(idx_cond & idx_corr,TIME_REW));
+  A_Err(cc,:) = nanmean(sdf_kk(idx_cond & idx_err,TIME_REW));
   
-  sdfAcc_Corr(cc,:) = nanmean(sdf(idxAcc_Corr,TIME_ZERO + TIME_REW));
-  sdfFast_Corr(cc,:) = nanmean(sdf(idxFast_Corr,TIME_ZERO + TIME_REW));
-  sdfAcc_ErrTime(cc,:) = nanmean(sdf(idxAcc_ErrTime,TIME_ZERO + TIME_REW));
-  sdfFast_ErrTime(cc,:) = nanmean(sdf(idxFast_ErrTime,TIME_ZERO + TIME_REW));
+  maxA(cc) = max(nanmean(sdf_kk(:,TIME_REW)));
   
 end%for:cells(kk)
 
-if (NORMALIZE)
-  sdfAcc_Corr = sdfAcc_Corr ./ maxActivity;
-  sdfAcc_ErrTime = sdfAcc_ErrTime ./ maxActivity;
-end
 
 %% Plotting - individual cells
-if (PLOT_INDIV)
-for cc = NUM_CELLS:-1:1
-  if (ninfo(cc).rewAcc <= 0); continue; end
+if (PLOT_INDIV_CELLS)
+TIME_PLOT = TIME_REW - 3500;
+for cc = 1:NUM_CELLS
   
-  linmin = min([sdfAcc_Corr(cc,:),sdfAcc_ErrTime(cc,:)]);
-  linmax = max([sdfAcc_Corr(cc,:),sdfAcc_ErrTime(cc,:)]);
+  linmin = min([A_Corr(cc,:),A_Err(cc,:)]);
+  linmax = max([A_Corr(cc,:),A_Err(cc,:)]);
   
   figure(); hold on
   plot([0 0], [linmin linmax], 'k--')
-%   plot([TIME_REW(1) TIME_REW(end)], bline(cc)*ones(1,2), 'k-')
-  plot(TIME_REW, sdfAcc_Corr(cc,:), 'r-', 'LineWidth',1.0)
-  plot(TIME_REW, sdfAcc_ErrTime(cc,:), 'r:', 'LineWidth',1.0)
+  plot(TIME_PLOT, A_Corr(cc,:), 'g-', 'LineWidth',1.0)
+  plot(TIME_PLOT, A_Err(cc,:), 'g:', 'LineWidth',1.0)
   print_session_unit(gca, ninfo(cc), 'horizontal')
-%   xlim([-625 825]); xticks(-600:100:800)
   ppretty('image_size',[4.8,3])
   
-%   pause(0.25)
+  pause(0.25)
+  
+end%for:cells(cc)
 end
-end
+
 
 %% Plotting - across-cell average
-NUM_SEM = sum([ninfo.rewAcc] > 0);
-sdf_Diff = sdfAcc_ErrTime-sdfAcc_Corr;
+if (NORMALIZE)
+  A_Corr = A_Corr ./ maxA;
+  A_Err = A_Err ./ maxA;
+end
 
-figure(); hold on
-% plot(TIME_REW, sdf_Diff, 'k-')
-shaded_error_bar(TIME_REW, nanmean(sdfAcc_Corr), nanstd(sdfAcc_Corr)/sqrt(NUM_SEM), {'r-'}, false)
-shaded_error_bar(TIME_REW, nanmean(sdfAcc_ErrTime), nanstd(sdfAcc_ErrTime)/sqrt(NUM_SEM), {'r:'}, false)
-ppretty('image_size',[4.8,3])
-
-pause(0.25)
-
-figure(); hold on
-% plot(TIME_REW, sdf_Diff, 'k-')
-shaded_error_bar(TIME_REW, nanmean(sdf_Diff), nanstd(sdf_Diff)/sqrt(NUM_SEM), {'k-'}, false)
-ppretty('image_size',[4.8,3])
+% NUM_SEM = sum([ninfo.rewAcc] > 0);
+% sdf_Diff = sdfAcc_ErrTime-sdfAcc_Corr;
+% 
+% figure(); hold on
+% % plot(TIME_REW, sdf_Diff, 'k-')
+% shaded_error_bar(TIME_PLOT, nanmean(sdfAcc_Corr), nanstd(sdfAcc_Corr)/sqrt(NUM_SEM), {'r-'}, false)
+% shaded_error_bar(TIME_PLOT, nanmean(sdfAcc_ErrTime), nanstd(sdfAcc_ErrTime)/sqrt(NUM_SEM), {'r:'}, false)
+% ppretty('image_size',[4.8,3])
+% 
+% pause(0.25)
+% 
+% figure(); hold on
+% % plot(TIME_PLOT, sdf_Diff, 'k-')
+% shaded_error_bar(TIME_PLOT, nanmean(sdf_Diff), nanstd(sdf_Diff)/sqrt(NUM_SEM), {'k-'}, false)
+% ppretty('image_size',[4.8,3])
 
 end%function:plot_sdf_error_SEF()

@@ -1,5 +1,5 @@
 function [  ] = plot_sdf_ChoiceError_SAT( spikes , ninfo , moves , movesAll , binfo )
-%plot_baseline_activity Summary of this function goes here
+%plot_sdf_ChoiceError_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 binfo = index_timing_errors_SAT(binfo, moves);
@@ -12,7 +12,7 @@ TIME_POSTSACC  = 3500 + (-400 : 400);
 NSAMP_POSTSACC = length(TIME_POSTSACC);
 TIME_TEST_MANNWHITNEY = 3500 + (1 : 400);
 
-NUM_CELLS = length(spikes);
+NUM_CELLS = 3;%length(spikes);
 
 %activity re. saccade initiation
 A_corr = NaN(NUM_CELLS,NSAMP_POSTSACC);
@@ -102,59 +102,59 @@ if (PLOT_INDIVIDUAL_CELLS)
 TIME_PLOT = TIME_POSTSACC - 3500;
 
 %trial-to-trial activity
-for cc = 1:NUM_CELLS
-  
-  lim_lin = [min(min([A_corr_T2T{cc}, A_err_T2T{cc}])), max(max([A_corr_T2T{cc}, A_err_T2T{cc}]))];
-  
-  figure()
-  
-  for jj = 1:NUM_TRIAL
-    subplot(2,2,jj); hold on
-    plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
-    plot(TIME_PLOT, A_corr_T2T{cc}(jj,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-    plot(TIME_PLOT, A_err_T2T{cc}(jj,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
-    xlim([TIME_PLOT(1), TIME_PLOT(end)])
-    title(['Trial ', num2str(jj)], 'FontSize',8)
-    xlabel('Time re. saccade (ms)')
-    ylabel('Activity (sp/sec)')
-    pause(0.1)
-  end
-  
-  ppretty('image_size',[8,8])
-%   print(['C:\Users\TDT\Dropbox/tmp/T2T-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
-  
-  pause(0.5)
-  
-end%for:cells(cc)
-
-% %average activity
 % for cc = 1:NUM_CELLS
-% %   if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
-%   lim_lin = [min([A_corr(cc,:), A_err(cc,:)]), max([A_corr(cc,:), A_err(cc,:)])];
 %   
-%   figure(); hold on
+%   lim_lin = [min(min([A_corr_T2T{cc}, A_err_T2T{cc}])), max(max([A_corr_T2T{cc}, A_err_T2T{cc}]))];
 %   
-%   plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
-%   plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
-%   plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
-% %   plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
+%   figure()
 %   
-%   plot(TIME_PLOT, A_corr(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-%   plot(TIME_PLOT, A_err(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+%   for jj = 1:NUM_TRIAL
+%     subplot(2,2,jj); hold on
+%     plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
+%     plot(TIME_PLOT, A_corr_T2T{cc}(jj,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+%     plot(TIME_PLOT, A_err_T2T{cc}(jj,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+%     xlim([TIME_PLOT(1), TIME_PLOT(end)])
+%     title(['Trial ', num2str(jj)], 'FontSize',8)
+%     xlabel('Time re. saccade (ms)')
+%     ylabel('Activity (sp/sec)')
+%     pause(0.1)
+%   end
 %   
-%   xlim([TIME_PLOT(1), TIME_PLOT(end)])
-%   xlabel('Time re. saccade (ms)')
-%   ylabel('Activity (sp/sec)')
-%   print_session_unit(gca, ninfo(cc))
-%   
-%   ppretty('image_size',[5,3])
-% %   print(['C:\Users\TDT\Dropbox/tmp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-% %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+%   ppretty('image_size',[8,8])
+% %   print(['C:\Users\TDT\Dropbox/tmp/T2T-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
 %   
 %   pause(0.5)
 %   
 % end%for:cells(cc)
+
+% %average activity
+for cc = 1:NUM_CELLS
+%   if ~strcmp(dir_sep_err{cc}, 'C'); continue; end
+  lim_lin = [min([A_corr(cc,:), A_err(cc,:)]), max([A_corr(cc,:), A_err(cc,:)])];
+  
+  figure(); hold on
+  
+  plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
+  plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
+  plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
+%   plot(t_sep_err(cc)*ones(1,2), lim_lin, 'k:')
+  
+  plot(TIME_PLOT, A_corr(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+  plot(TIME_PLOT, A_err(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+  
+  xlim([TIME_PLOT(1), TIME_PLOT(end)])
+  xlabel('Time re. saccade (ms)')
+  ylabel('Activity (sp/sec)')
+  print_session_unit(gca, ninfo(cc))
+  
+  ppretty('image_size',[5,3])
+%   print(['C:\Users\TDT\Dropbox/tmp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+  
+  pause(0.5)
+  
+end%for:cells(cc)
 end%if(PLOT_INDIVIDUAL_CELLS)
 
 
