@@ -3,7 +3,6 @@ function [] = plot_polar_distr_ppsacc_endpt( info , movesAll )
 %   Detailed explanation goes here
 
 NUM_SESSION = length(info);
-BIN_EDGES = (0 : pi/16 : 2*pi) - pi/32;
 
 octant_ppsacc = [];
 
@@ -27,13 +26,16 @@ end%for:session(kk)
 %keep convention that 1 = rightward (in this case, to the correct tgt)
 octant_ppsacc = octant_ppsacc + 1;
 
-%convert to angles for polar plotting
-theta_ppsacc = convert_tgt_octant_to_angle(octant_ppsacc);
+%convert to appropriate format for polarscatter()
+weight_octant = NaN(1,8);
+for jj = 1:8
+  weight_octant(jj) = sum(octant_ppsacc == jj);
+end%for:octant(jj)
 
 figure(); polaraxes()
-polarhistogram(theta_ppsacc, BIN_EDGES, 'Normalization', 'probability', 'FaceColor',[.2 .2 .2])
+polarscatter((0:pi/4:7*pi/4), 6*ones(1,8), weight_octant/4, [.2 .2 .2])
+rlim([0 8]); rticklabels([]); thetaticks([])
 ppretty()
-
 
 end%fxn:plot_polar_distr_ppsacc_endpt()
 

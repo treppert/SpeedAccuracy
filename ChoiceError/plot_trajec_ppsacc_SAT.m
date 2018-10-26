@@ -3,7 +3,7 @@ function [] = plot_trajec_ppsacc_SAT( info , movesAll )
 %   Detailed explanation goes here
 
 DEBUG = false;
-NUM_TRIALS = 50;
+NUM_TRIALS = 200;
 NUM_SESSION = 3;%length(info);
 
 X_ppsacc =[];
@@ -15,8 +15,6 @@ for kk = 3:NUM_SESSION
   if (length(TGT_ECCEN_kk) > 1)
     error('More than one target eccentricity for session %d', kk)
   end
-  
-%   tgt_angle_kk = convert_tgt_octant_to_angle(info(kk).tgt_octant);
   
   trials_kk = randsample(info(kk).num_trials, NUM_TRIALS);
   
@@ -42,14 +40,6 @@ for kk = 3:NUM_SESSION
     x_ppsacc_jj = cos(th_tgt) * movesAll(kk).zz_x(:,idx_jj(2))' - sin(th_tgt) * movesAll(kk).zz_y(:,idx_jj(2))';
     y_ppsacc_jj = sin(th_tgt) * movesAll(kk).zz_x(:,idx_jj(2))' + cos(th_tgt) * movesAll(kk).zz_y(:,idx_jj(2))';
     
-    %get location of target as reference
-%     x_tgt = TGT_ECCEN_kk * cos(tgt_angle_kk(jj));
-%     y_tgt = TGT_ECCEN_kk * sin(tgt_angle_kk(jj));
-    
-    %save trajectory relative to target location
-%     x_ppsacc_jj = movesAll(kk).zz_x(:,idx_jj(2))' - x_tgt;
-%     y_ppsacc_jj = movesAll(kk).zz_y(:,idx_jj(2))' - y_tgt;
-    
     X_ppsacc = cat(1, X_ppsacc, x_ppsacc_jj);
     Y_ppsacc = cat(1, Y_ppsacc, y_ppsacc_jj);
     
@@ -66,16 +56,11 @@ for kk = 3:NUM_SESSION
   
 end%for:session(kk)
 
-% figure()
-% plot(X_ppsacc, Y_ppsacc, '.', 'Color',[.2 .2 .2])
-% xlim([-12 12]); ylim([-12 12]); axis square
-% ppretty()
-
 th_ppsacc = atan2(Y_ppsacc,X_ppsacc);
 r_ppsacc = sqrt(X_ppsacc.^2 + Y_ppsacc.^2);
 figure(); polaraxes()
 polarplot(th_ppsacc, r_ppsacc, '.', 'Color',[.2 .2 .2]);
-thetaticklabels([])
+rlim([0 8]); rticklabels([]); thetaticks([])
 ppretty()
 
 end%fxn:plot_trajec_ppsacc_SAT()
