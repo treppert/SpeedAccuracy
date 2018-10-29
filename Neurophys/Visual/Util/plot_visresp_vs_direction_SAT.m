@@ -22,25 +22,33 @@ for cc = 1:NUM_CELLS
   %neuron-specific initialization
   sdf_Acc  = NaN(NUM_DIR,NUM_SAMP);
   sdf_Fast = NaN(NUM_DIR,NUM_SAMP);
+  sdf_MG   = NaN(NUM_DIR,NUM_SAMP);
     
   %get session number corresponding to behavioral data
-  kk = ismember({binfo.session}, ninfo(cc).sesh);
+  kk = ismember({binfo.SAT.session}, ninfo(cc).sess);
   
   %index by trial outcome
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idx_corr = ~(binfo.SAT(kk).err_dir | binfo.SAT(kk).err_time | binfo.SAT(kk).err_hold);
   
   %index by condition -- only trials with correct outcome
-  idx_fast = (binfo(kk).condition == 3) & idx_corr;
-  idx_acc = (binfo(kk).condition == 1) & idx_corr;
+  idx_fast = (binfo.SAT(kk).condition == 3) & idx_corr;
+  idx_acc = (binfo.SAT(kk).condition == 1) & idx_corr;
+  
+  %index by task -- Memory-guided saccade
+  idx_MG = ~(binfo.MG(kk).err_dir | binfo.MG(kk).err_hold | binfo.MG(kk).err_nosacc);
   
   for dd = 1:NUM_DIR
-    idx_dd = ismember(binfo(kk).tgt_octant, dd);
-    
+    idx_dd = ismember(binfo.SAT(kk).tgt_octant, dd);
     sdf_acc = compute_spike_density_fxn(spikes(cc).SAT(idx_acc & idx_dd));
     sdf_fast = compute_spike_density_fxn(spikes(cc).SAT(idx_fast & idx_dd));
     
+    
+    idx_dd = ismember(binfo.MG(kk).tgt_octant, dd);
+    sdf_mg = compute_spike_density_fxn(spikes(cc).MG(idx_MG & idx_dd));
+    
     sdf_Acc(dd,:)  = nanmean(sdf_acc(:,TIME_ARRAY+TIME_PLOT))';
     sdf_Fast(dd,:) = nanmean(sdf_fast(:,TIME_ARRAY+TIME_PLOT))';
+    sdf_MG(dd,:)   = nanmean(sdf_mg(:,TIME_ARRAY+TIME_PLOT))';
     
   end%for:directions(dd)
   
@@ -51,15 +59,16 @@ for cc = 1:NUM_CELLS
   Y_LIM = NaN(NUM_DIR,2);
   for dd = 1:NUM_DIR
     subplot(3,3,LOC_DD_PLOT(dd)); hold on
+    plot(TIME_PLOT, sdf_MG(dd,:), 'k-', 'linewidth',1.25);
     plot(TIME_PLOT, sdf_Acc(dd,:), 'r-', 'linewidth',1.25);
-    plot(TIME_PLOT, sdf_Fast(dd,:), '-', 'color',[0 .7 0], 'linewidth',1.25);
+%     plot(TIME_PLOT, sdf_Fast(dd,:), '-', 'color',[0 .7 0], 'linewidth',1.25);
     
     %axis labels
     if ismember(LOC_DD_PLOT(dd), [1,4,7])
       ylabel('Activity (sp/sec)')
     end
     if ismember(LOC_DD_PLOT(dd), [7,8,9])
-      xlabel('Time re. stimulus (ms)')
+      xlabel('Time from stimulus (ms)')
     end
     
     xlim([TIME_PLOT(1) TIME_PLOT(end)]); xticks(TIME_PLOT(1):100:TIME_PLOT(end)); pause(.05)
@@ -73,8 +82,11 @@ for cc = 1:NUM_CELLS
     plot([0 0], Y_LIM, 'k-')
   end
   
+  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), 'horizontal')
+  
   ppretty('image_size',[10,8])
-  pause(0.25); print(['~/Dropbox/tmp/', ninfo(cc).sesh,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.25)
+  pause(0.25)
+%   print(['~/Dropbox/tmp/', ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.25)
   
 end%for:cells(cc)
 
