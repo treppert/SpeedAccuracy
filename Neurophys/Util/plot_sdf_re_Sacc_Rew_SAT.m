@@ -1,4 +1,4 @@
-function [  ] = plot_sdf_re_Sacc_Rew_SAT( spikes , ninfo , moves , movesAll , binfo )
+function [ varargout ] = plot_sdf_re_Sacc_Rew_SAT( spikes , ninfo , moves , movesAll , binfo )
 %plot_sdf_ChoiceError_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -30,6 +30,7 @@ RT_err = NaN(1,NUM_CELLS);
 %% Compute the SDFs split by condition and correct/error
 
 for cc = 1:NUM_CELLS
+%   if ~ismember(cc, 8); continue; end
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
   TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials);
@@ -87,17 +88,24 @@ Abar_Err_Sacc = nanmean(A_Err_Sacc(:,401:700), 2);
 Abar_Corr_Rew = nanmean(A_Corr_Rew(:,401:700), 2);
 Abar_Err_Rew = nanmean(A_Err_Rew(:,401:700), 2);
 
-%compute difference (Error - Correct)
-Adiff_Sacc = Abar_Err_Sacc - Abar_Corr_Sacc;
-Adiff_Rew = Abar_Err_Rew - Abar_Corr_Rew;
+%compute *normalized* difference (Error - Correct)/(Error + Correct)
+Adiff_Sacc = (Abar_Err_Sacc - Abar_Corr_Sacc) ./ (Abar_Err_Sacc + Abar_Corr_Sacc);
+Adiff_Rew = (Abar_Err_Rew - Abar_Corr_Rew) ./ (Abar_Err_Rew + Abar_Corr_Rew);
 
-figure()
-plot(Adiff_Sacc, Adiff_Rew, 'ko')
-ppretty()
+% figure()
+% plot(Adiff_Sacc, Adiff_Rew, 'ko')
+% ppretty()
+
+if (nargout > 0)
+  varargout{1} = struct('sacc',Adiff_Sacc, 'rew',Adiff_Rew);
+end
+
 return
 %% Plotting - individual cells
 
 for cc = 1:NUM_CELLS
+%   if ~ismember(cc, 8); continue; end
+  
   min_lin = min([A_Corr_Sacc(cc,:), A_Err_Sacc(cc,:), A_Corr_Rew(cc,:), A_Err_Rew(cc,:)]);
   max_lin = max([A_Corr_Sacc(cc,:), A_Err_Sacc(cc,:), A_Corr_Rew(cc,:), A_Err_Rew(cc,:)]);
   lim_lin = [min_lin, max_lin];
