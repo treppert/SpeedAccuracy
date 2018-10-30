@@ -2,9 +2,9 @@ function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes
 %plot_baseline_vs_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT_INDIV_CELLS = false;
-NORMALIZE = true;
-MIN_NUM_CELLS = 3; %for purposes of plotting across all cells
+PLOT_INDIV_CELLS = true;
+MIN_NUM_CELLS = 3; %for plotting across all cells
+LIM_RT = [100,1200];
 
 if strcmp(condition, 'acc')
   BIN_RT = (400 : 40 : 700);
@@ -18,9 +18,8 @@ RT_PLOT = BIN_RT(1:end-1) + diff(BIN_RT)/2;
 NUM_BIN = length(RT_PLOT);
 MIN_PER_BIN = 10; %minimum number of trials per RT bin
 
-TIME_STIM = 3500;
 TIME_BASE = ( -700 : -1 );
-IDX_BASE = TIME_BASE([1,end]) + TIME_STIM;
+IDX_BASE = TIME_BASE([1,end]) + 3500;
 
 NUM_CELLS = length(spikes);
 
@@ -28,13 +27,13 @@ binfo = index_timing_errors_SAT(binfo, moves);
 
 %initializations
 sp_Corr = NaN(NUM_CELLS,NUM_BIN);
-sd_Corr = NaN(NUM_CELLS,NUM_BIN);
 
 %stats
 rho = NaN(1,NUM_CELLS);
 pval = NaN(1,NUM_CELLS);
 
-for cc = 1:NUM_CELLS
+for cc = 15:15%NUM_CELLS
+  
   kk = ismember({binfo.session}, ninfo(cc).sess);
   TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
   
@@ -47,7 +46,9 @@ for cc = 1:NUM_CELLS
     idx_corr = (~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold) & idx_A);
   end
   
-  RT = moves(kk).resptime;
+  %remove outlier values for RT
+  RT = double(moves(kk).resptime);
+  RT((RT > LIM_RT(2)) | (RT < LIM_RT(1))) = NaN;
   
   num_sp_bline = NaN(1,binfo(kk).num_trials);
   for jj = 1:binfo(kk).num_trials
@@ -60,14 +61,8 @@ for cc = 1:NUM_CELLS
     num_sp_bline(TRIAL_POOR_ISOLATION) = NaN;
   end
   
-  %remove any NaN values for RT
-  if (sum(isnan(RT)) > 0)
-%     fprintf('****** There are NaN values for RT in Session %s\n', ninfo(cc).sess);
-    TRIAL_POOR_ISOLATION = (TRIAL_POOR_ISOLATION | isnan(RT));
-  end
-  
   if (PLOT_INDIV_CELLS)
-    fit_lin = fit(RT(idx_corr & ~TRIAL_POOR_ISOLATION)', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION)', 'poly1');
+    fit_lin = fit(RT(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', 'poly1');
     figure(); hold on
     plot(RT(idx_corr & ~TRIAL_POOR_ISOLATION), num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION), 'ko')
     plot([BIN_RT(1),BIN_RT(end)], fit_lin([BIN_RT(1),BIN_RT(end)]), 'k-')
@@ -76,7 +71,7 @@ for cc = 1:NUM_CELLS
   end
   
   %linear regression to determine cells that show a postive relationship
-  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~TRIAL_POOR_ISOLATION)', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION)', 'type','Spearman');
+  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', 'type','Spearman');
   
   %use the regression results to exclude neurons
   if ~((rho(cc) > 0) && (pval(cc) < .05)); continue; end
@@ -86,13 +81,7 @@ for cc = 1:NUM_CELLS
     idx_jj = (((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1))) & idx_corr & ~TRIAL_POOR_ISOLATION);
     
     if (sum(idx_jj) >= MIN_PER_BIN) %enforce min number of trials
-      sp_Corr(cc,jj) = mean(num_sp_bline(idx_jj));
-      sd_Corr(cc,jj) = std(num_sp_bline(idx_jj));
-      
-      if (NORMALIZE)
-        sp_Corr(cc,jj) = sp_Corr(cc,jj) - mean(num_sp_bline(~TRIAL_POOR_ISOLATION & (idx_A | idx_F)));
-      end
-      
+      sp_Corr(cc,jj) = mean(num_sp_bline(idx_jj)) - mean(num_sp_bline(~TRIAL_POOR_ISOLATION & (idx_A | idx_F)));
     end
   end%for:RT_bins(jj)
   
@@ -104,7 +93,7 @@ if (nargout > 0)
     varargout{2} = pval;
   end
 end
-
+return
 %% Plotting
 if strcmp(condition, 'acc')
   COLOR_PLOT = 'r';

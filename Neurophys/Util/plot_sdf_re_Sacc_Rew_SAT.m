@@ -6,9 +6,11 @@ binfo = index_timing_errors_SAT(binfo, moves);
 
 TIME_POSTSACC  = 3500 + (-400 : 400);
 NSAMP_POSTSACC = length(TIME_POSTSACC);
+TIME_TEST_POSTSACC = 3500 + (-100 : 500);
 
 TIME_REW = 3500 + (-400 : 400);
-NUM_SAMP = length(TIME_REW);
+NSAMP_REW = length(TIME_REW);
+TIME_TEST_REW = 3500 + (-300 : 500);
 
 NUM_CELLS = length(spikes);
 
@@ -17,8 +19,8 @@ A_Corr_Sacc = NaN(NUM_CELLS,NSAMP_POSTSACC);
 A_Err_Sacc  = NaN(NUM_CELLS,NSAMP_POSTSACC);
 
 %activity from time of reward / expected reward
-A_Corr_Rew = NaN(NUM_CELLS, NUM_SAMP);
-A_Err_Rew = NaN(NUM_CELLS, NUM_SAMP);
+A_Corr_Rew = NaN(NUM_CELLS, NSAMP_REW);
+A_Err_Rew = NaN(NUM_CELLS, NSAMP_REW);
 
 %median RT for each condition X trial outcome
 RT_corr = NaN(1,NUM_CELLS);
@@ -27,10 +29,15 @@ RT_err = NaN(1,NUM_CELLS);
 %compute expected/actual time of reward for each session
 [~,time_rew] = determine_time_reward_SAT(binfo, moves);
 
+%determine cells with significant error-related modulation
+sign_mod_Sacc = cell(1,NUM_CELLS); %(N)one | (E)rror>Corr | (C)orr>Error
+sign_mod_Rew = cell(1,NUM_CELLS);
+t_mod_Sacc = NaN(1,NUM_CELLS);
+t_mod_Rew = NaN(1,NUM_CELLS);
+
 %% Compute the SDFs split by condition and correct/error
 
 for cc = 1:NUM_CELLS
-%   if ~ismember(cc, 8); continue; end
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
   TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials);
@@ -45,7 +52,7 @@ for cc = 1:NUM_CELLS
   end
   
   %index by condition
-  idx_cond = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
+  idx_fast = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
   idx_acc = ((binfo(kk).condition == 1) & ~TRIAL_POOR_ISOLATION);
   
   %index by saccade direction
@@ -56,29 +63,65 @@ for cc = 1:NUM_CELLS
   
   %index by trial outcome
   idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-  idx_err = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
   idx_errtime = (~binfo(kk).err_dir & binfo(kk).err_time);
   
   %control for choice error direction
-  [idx_err, idx_corr] = equate_respdir_err_vs_corr(idx_err, idx_corr, moves(kk).octant);
+  [idx_errdir, idx_corr] = equate_respdir_err_vs_corr(idx_errdir, idx_corr, moves(kk).octant);
   
   %remove any activity related to corrective saccade initiation
-  trial_err = find(idx_cond & idx_err);
-  sdf_sacc(idx_cond & idx_err,:) = rem_spikes_post_corrective_SAT(sdf_sacc(idx_cond & idx_err,:), movesAll(kk), trial_err);
+%   trial_err = find(idx_cond & idx_err);
+%   sdf_sacc(idx_cond & idx_err,:) = rem_spikes_post_corrective_SAT(sdf_sacc(idx_cond & idx_err,:), movesAll(kk), trial_err);
+  
+  %% Compute significance
+  
+  t_mod_Sacc(cc) = compute_time_sep_sdf_SAT(sdf_sacc(idx_fast & idx_corr,TIME_TEST_POSTSACC), ...
+    sdf_sacc(idx_fast & idx_errdir,TIME_TEST_POSTSACC), 'min_length',150, 'alpha',.30);
+  
+  t_mod_Rew(cc) = compute_time_sep_sdf_SAT(sdf_rew(idx_acc & idx_corr,TIME_TEST_REW), ...
+    sdf_rew(idx_acc & idx_errtime,TIME_TEST_REW), 'min_length',160, 'alpha',.35);
+  
+  if isnan(t_mod_Sacc(cc))
+    sign_mod_Sacc{cc} = 'N';
+  else
+    if (nanmean(nanmean(sdf_sacc(idx_fast & idx_errdir,TIME_TEST_POSTSACC))) > ...
+        nanmean(nanmean(sdf_sacc(idx_fast & idx_corr,TIME_TEST_POSTSACC))))
+      sign_mod_Sacc{cc} = 'E';
+    else
+      sign_mod_Sacc{cc} = 'C';
+    end
+  end
+  
+  if isnan(t_mod_Rew(cc))
+    sign_mod_Rew{cc} = 'N';
+  else
+    if (nanmean(nanmean(sdf_rew(idx_acc & idx_errtime,TIME_TEST_REW))) > ...
+        nanmean(nanmean(sdf_rew(idx_acc & idx_corr,TIME_TEST_REW))))
+      sign_mod_Rew{cc} = 'E';
+    else
+      sign_mod_Rew{cc} = 'C';
+    end
+  end
+  
+  %% Save activity (SDF)
   
   %save activity post-primary saccade
-  A_Corr_Sacc(cc,:) = nanmean(sdf_sacc(idx_cond & idx_corr,TIME_POSTSACC));
-  A_Err_Sacc(cc,:) = nanmean(sdf_sacc(idx_cond & idx_err,TIME_POSTSACC));
+  A_Corr_Sacc(cc,:) = nanmean(sdf_sacc(idx_fast & idx_corr,TIME_POSTSACC));
+  A_Err_Sacc(cc,:) = nanmean(sdf_sacc(idx_fast & idx_errdir,TIME_POSTSACC));
   
   %save activity from time of reward
   A_Corr_Rew(cc,:) = nanmean(sdf_rew(idx_acc & idx_corr,TIME_REW));
   A_Err_Rew(cc,:) = nanmean(sdf_rew(idx_acc & idx_errtime,TIME_REW));
   
   %save median RTs
-  RT_corr(cc) = nanmedian(moves(kk).resptime(idx_cond & idx_corr));
-  RT_err(cc) = nanmedian(moves(kk).resptime(idx_cond & idx_err));
+  RT_corr(cc) = nanmedian(moves(kk).resptime(idx_fast & idx_corr));
+  RT_err(cc) = nanmedian(moves(kk).resptime(idx_fast & idx_errdir));
   
 end%for:cells(cc)
+
+%correct for offset in estimate of timing of error-related activity
+t_mod_Sacc = t_mod_Sacc - 100;
+t_mod_Rew = t_mod_Rew - 300;
 
 %% Scatterplot of average error-related activity (Choice vs. Timing)
 
@@ -92,31 +135,40 @@ Abar_Err_Rew = nanmean(A_Err_Rew(:,401:700), 2);
 Adiff_Sacc = (Abar_Err_Sacc - Abar_Corr_Sacc) ./ (Abar_Err_Sacc + Abar_Corr_Sacc);
 Adiff_Rew = (Abar_Err_Rew - Abar_Corr_Rew) ./ (Abar_Err_Rew + Abar_Corr_Rew);
 
-% figure()
+% figure(); hold on
 % plot(Adiff_Sacc, Adiff_Rew, 'ko')
+% plot([0 0], [-.3 .4], 'k--')
+% plot([-.3 .4], [0 0], 'k--')
 % ppretty()
 
 if (nargout > 0)
   varargout{1} = struct('sacc',Adiff_Sacc, 'rew',Adiff_Rew);
+  if (nargout > 1)
+    varargout{2} = struct('sacc',sign_mod_Sacc, 'rew',sign_mod_Rew);
+    if (nargout > 2)
+      varargout{3} = struct('sacc',t_mod_Sacc, 'rew',t_mod_Rew);
+    end
+  end
 end
 
 return
+
 %% Plotting - individual cells
 
 for cc = 1:NUM_CELLS
-%   if ~ismember(cc, 8); continue; end
   
   min_lin = min([A_Corr_Sacc(cc,:), A_Err_Sacc(cc,:), A_Corr_Rew(cc,:), A_Err_Rew(cc,:)]);
   max_lin = max([A_Corr_Sacc(cc,:), A_Err_Sacc(cc,:), A_Corr_Rew(cc,:), A_Err_Rew(cc,:)]);
   lim_lin = [min_lin, max_lin];
   
-  figure(cc)
+  figure()
   
   subplot(1,2,1); hold on %activity post-primary saccade
   
   plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
   plot(-RT_corr(cc)*ones(1,2), lim_lin, '-', 'Color',[0 .5 0])
   plot(-RT_err(cc)*ones(1,2), lim_lin, ':', 'Color',[0 .5 0])
+  plot(t_mod_Sacc(cc)*ones(1,2), lim_lin, 'k:')
   plot(TIME_POSTSACC-3500, A_Corr_Sacc(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.0)
   plot(TIME_POSTSACC-3500, A_Err_Sacc(cc,:), ':', 'Color',[0 .7 0], 'LineWidth',1.0)
   
@@ -129,6 +181,7 @@ for cc = 1:NUM_CELLS
   subplot(1,2,2); hold on %activity from reward / expected reward
   
   plot([0 0], lim_lin, 'k--', 'LineWidth',1.0)
+  plot(t_mod_Rew(cc)*ones(1,2), lim_lin, 'k:')
   plot(TIME_REW-3500, A_Corr_Rew(cc,:), 'r-', 'LineWidth',1.0)
   plot(TIME_REW-3500, A_Err_Rew(cc,:), 'r:', 'LineWidth',3.0)
   
@@ -137,7 +190,7 @@ for cc = 1:NUM_CELLS
   
   ppretty('image_size',[10,4])
   pause(0.1)
-%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
 %   print(gcf, ['C:\Users\Tom\Dropbox\tmp\',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
   
   pause(0.25)
