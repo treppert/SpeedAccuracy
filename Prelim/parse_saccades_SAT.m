@@ -1,4 +1,4 @@
-function [ moves , varargout ] = parse_saccades_SAT( gaze , info )
+function [ moves , binfo , varargout ] = parse_saccades_SAT( gaze , binfo )
 %[ moves ] = parse_saccades_vandy( data , info )
 
 global DEBUG VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
@@ -44,10 +44,10 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
-  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,info(kk).num_trials));
-  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,info(kk).num_trials)));
-  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,info(kk).num_trials)));
-  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,info(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,binfo(kk).num_trials));
+  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,binfo(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,binfo(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,binfo(kk).num_trials)));
 end%for:sessions(kk)
 
 moves = orderfields(moves);
@@ -57,21 +57,21 @@ moves_all = moves; %struct array for all movements, regardless of task relevance
 %% **** Movement identification ****
 
 for kk = 1:NUM_SESSIONS
-  fprintf('***Session %d -- %s (%d trials)\n', kk, info(kk).session, info(kk).num_trials)
+  fprintf('***Session %d -- %s (%d trials)\n', kk, binfo(kk).session, binfo(kk).num_trials)
   
-  ALLOC_ALL = info(kk).num_trials;
+  ALLOC_ALL = binfo(kk).num_trials;
   idx_all = 1; %index for saving all saccades (task-rel. and irrel.)
   
   %start with estimate of response time and octant from TEMPO
-  moves(kk).resptime(:) = uint16(info(kk).resptime);
-  moves(kk).octant(:) = uint16(info(kk).octant);
+  moves(kk).resptime(:) = uint16(binfo(kk).resptime);
+  moves(kk).octant(:) = uint16(binfo(kk).octant);
   
   %keep track of trials w/o candidates and/or responses
-  idx_sin_cand = false(1,info(kk).num_trials);
-  idx_sin_sacc = false(1,info(kk).num_trials);
-  idx_sin_resp = false(1,info(kk).num_trials);
+  idx_sin_cand = false(1,binfo(kk).num_trials);
+  idx_sin_sacc = false(1,binfo(kk).num_trials);
+  idx_sin_resp = false(1,binfo(kk).num_trials);
 
-  for jj = 1:info(kk).num_trials
+  for jj = 1:binfo(kk).num_trials
 
     %% Initialize trial-specific saccade kinematics
     kin_jj = initialize_saccade_kinematics(gaze(kk), jj);
@@ -95,7 +95,7 @@ for kk = 1:NUM_SESSIONS
   end%for:trials(jj)
 
   fprintf('num_trials_wo_[cand,sacc,taskrel] = [%d, %d, %d] / %d\n', sum(idx_sin_cand), ...
-    sum(idx_sin_sacc), sum(idx_sin_resp), info(kk).num_trials)
+    sum(idx_sin_sacc), sum(idx_sin_resp), binfo(kk).num_trials)
 
   %remove extra memory from struct with all saccades
   for ff = 1:length(FIELDS_LOGICAL)
@@ -113,7 +113,13 @@ for kk = 1:NUM_SESSIONS
   
 end%for:sessions(kk)
 
-if (nargout > 1)
+%make sure indexing of timing errors is correct
+binfo = index_timing_errors_SAT(binfo, moves);
+
+%include correct estimate of reward time
+binfo = determine_time_reward_SAT(binfo, moves);
+
+if (nargout > 2)
   varargout{1} = moves_all;
 end
 

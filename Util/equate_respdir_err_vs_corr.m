@@ -25,7 +25,7 @@ for dd = 1:8 %loop over resp. directions
 
   elseif ((num_corr_dd > num_err_dd) && args.equate_num_trials) %enough errors but too many correct resp's
     %HERE IS WHERE WE SHOULD CONTROL FOR RT AND/OR TRIAL NUMBER
-    %FOR NOW, I JUST TAKE THE FIRST XX TRIALS
+    %FOR NOW, I JUST SAMPLE TRIALS WITHOUT REPLACEMENT
 
     tr_corr_dd = find(idx_corr & idx_resp_dd); %get all correct trials in this dir.
     
