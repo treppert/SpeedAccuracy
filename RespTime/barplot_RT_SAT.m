@@ -1,4 +1,4 @@
-function [  ] = barplot_RT_SAT( info , moves )
+function [  ] = barplot_RT_SAT( binfo , moves )
 %compute_avg_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -12,23 +12,30 @@ RTntrl = new_struct({'corr','errdir'}, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
   
-  idx_acc = (info(kk).condition == 1);
-  idx_fast = (info(kk).condition == 3);
-  idx_ntrl = (info(kk).condition == 4);
+  %index by condition
+  idx_acc = (binfo(kk).condition == 1);
+  idx_fast = (binfo(kk).condition == 3);
+  idx_ntrl = (binfo(kk).condition == 4);
   
-  RT(kk).acc = nanmean(moves(kk).resptime(idx_acc));
-  RT(kk).fast = nanmean(moves(kk).resptime(idx_fast));
-  RT(kk).ntrl = nanmean(moves(kk).resptime(idx_ntrl));
+  RT_kk = double(moves(kk).resptime);
   
-  idx_corr = ~(info(kk).err_dir | info(kk).err_hold | info(kk).err_nosacc);
-  idx_errdir = info(kk).err_dir;
+  RT(kk).acc = nanmean(RT_kk(idx_acc));
+  RT(kk).fast = nanmean(RT_kk(idx_fast));
+  RT(kk).ntrl = nanmean(RT_kk(idx_ntrl));
   
-  RTacc(kk).corr = nanmean(moves(kk).resptime(idx_acc & idx_corr));
-  RTacc(kk).errdir = nanmean(moves(kk).resptime(idx_acc & idx_errdir));
-  RTfast(kk).corr = nanmean(moves(kk).resptime(idx_fast & idx_corr));
-  RTfast(kk).errdir = nanmean(moves(kk).resptime(idx_fast & idx_errdir));
-  RTntrl(kk).corr = nanmean(moves(kk).resptime(idx_ntrl & idx_corr));
-  RTntrl(kk).errdir = nanmean(moves(kk).resptime(idx_ntrl & idx_errdir));
+  %index by trial outcome
+  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
+  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  
+  %control for choice error direction
+  [idx_errdir, idx_corr] = equate_respdir_err_vs_corr(idx_errdir, idx_corr, moves(kk).octant);
+  
+  RTacc(kk).corr = nanmean(RT_kk(idx_acc & idx_corr));
+  RTacc(kk).errdir = nanmean(RT_kk(idx_acc & idx_errdir));
+  RTfast(kk).corr = nanmean(RT_kk(idx_fast & idx_corr));
+  RTfast(kk).errdir = nanmean(RT_kk(idx_fast & idx_errdir));
+  RTntrl(kk).corr = nanmean(RT_kk(idx_ntrl & idx_corr));
+  RTntrl(kk).errdir = nanmean(RT_kk(idx_ntrl & idx_errdir));
   
 end%for:sessions(kk)
 
@@ -72,6 +79,7 @@ errorbar_no_caps([2.95 3.95], mu_N, 'err',err_N)
 errorbar_no_caps([4.95 5.95], mu_F, 'err',err_F)
 
 xticks([]); xlim([.5 6.5])
+ylim([200 700])
 ppretty('image_size',[2.2,4])
 end
 
