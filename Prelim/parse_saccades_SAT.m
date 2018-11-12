@@ -33,7 +33,7 @@ APPEND = 10;
 
 FIELDS_LOGICAL = {'clipped'};
 FIELDS_UINT16 = {'duration','octant','resptime','trial'};
-FIELDS_SINGLE = {'displacement','peakvel','skew','vigor','x_init','y_init','x_fin','y_fin'};
+FIELDS_SINGLE = {'amplitude','displacement','peakvel','skew','vigor','x_init','y_init','x_fin','y_fin'};
 FIELDS_VECTOR = {'zz_x','zz_y','zz_v'};
 
 FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
@@ -217,6 +217,9 @@ candidate.y_init = single(kin.y(idx_move(1)));
 candidate.trial = uint16(kin.trial);
 
 %% Scalar parameters with min values given clipping
+amp_x = kin.x(idx_move(2)) - kin.x(idx_move(1));
+amp_y = kin.y(idx_move(2)) - kin.y(idx_move(1));
+candidate.amplitude = single(sqrt(amp_x*amp_x + amp_y*amp_y));
 disp_x = sum(abs(diff(kin.x(idx_move(1):idx_move(2)))));
 disp_y = sum(abs(diff(kin.y(idx_move(1):idx_move(2)))));
 candidate.displacement = single(sqrt(disp_x*disp_x + disp_y*disp_y));

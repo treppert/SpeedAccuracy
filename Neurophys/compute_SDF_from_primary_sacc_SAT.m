@@ -2,10 +2,10 @@ function [ A_POSTSACC ] = compute_SDF_from_primary_sacc_SAT( binfo , moves , nin
 %compute_SDF_from_primary_sacc_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_CELLS = 8;%length(spikes);
+NUM_CELLS = length(spikes);
 
 TIME_POSTSACC  = 3500 + (-300 : 500);
-A_POSTSACC = new_struct({'FastCorr','FastErrDir','FastErrTime',...
+A_POSTSACC = new_struct({'t','FastCorr','FastErrDir','FastErrTime',...
   'AccCorr','AccErrDir','AccErrTime'}, 'dim',[1,NUM_CELLS]);
 
 for cc = 1:NUM_CELLS
@@ -44,6 +44,9 @@ for cc = 1:NUM_CELLS
   A_POSTSACC(cc).AccCorr = sdf_kk(idx_acc & idx_corr, TIME_POSTSACC);
   A_POSTSACC(cc).AccErrDir = sdf_kk(idx_acc & idx_errdir, TIME_POSTSACC);
   A_POSTSACC(cc).AccErrTime = sdf_kk(idx_acc & idx_errtime, TIME_POSTSACC);
+  
+  %save time from primary saccade
+  A_POSTSACC(cc).t = TIME_POSTSACC - 3500;
   
 end%for:cells(cc)
 
