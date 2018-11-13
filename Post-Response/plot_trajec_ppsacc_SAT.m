@@ -3,13 +3,13 @@ function [] = plot_trajec_ppsacc_SAT( info , movesAll )
 %   Detailed explanation goes here
 
 DEBUG = false;
-NUM_TRIALS = 200;
-NUM_SESSION = 3;%length(info);
+NUM_TRIALS = 150;
+NUM_SESSION = length(info);
 
 X_ppsacc =[];
 Y_ppsacc = [];
 
-for kk = 3:NUM_SESSION
+for kk = 1:NUM_SESSION
   
   TGT_ECCEN_kk = unique(info(kk).tgt_eccen);
   if (length(TGT_ECCEN_kk) > 1)
@@ -59,8 +59,8 @@ end%for:session(kk)
 th_ppsacc = atan2(Y_ppsacc,X_ppsacc);
 r_ppsacc = sqrt(X_ppsacc.^2 + Y_ppsacc.^2);
 figure(); polaraxes()
-polarplot(th_ppsacc, r_ppsacc, '.', 'Color',[.2 .2 .2]);
-rlim([0 8]); rticklabels([]); thetaticks([])
+polarplot(th_ppsacc', r_ppsacc', '-', 'Color',[.2 .2 .2]);
+rlim([0 15]); rticklabels([]); thetaticks([])
 ppretty()
 
 end%fxn:plot_trajec_ppsacc_SAT()

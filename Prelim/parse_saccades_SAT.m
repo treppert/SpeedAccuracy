@@ -32,7 +32,7 @@ ALLOT = 80;
 APPEND = 10;
 
 FIELDS_LOGICAL = {'clipped'};
-FIELDS_UINT16 = {'duration','octant','resptime','trial'};
+FIELDS_UINT16 = {'duration','octant','resptime','trial','index'};
 FIELDS_SINGLE = {'amplitude','displacement','peakvel','skew','vigor','x_init','y_init','x_fin','y_fin'};
 FIELDS_VECTOR = {'zz_x','zz_y','zz_v'};
 
@@ -115,9 +115,6 @@ end%for:sessions(kk)
 
 %make sure indexing of timing errors is correct
 binfo = index_timing_errors_SAT(binfo, moves);
-
-%include correct estimate of reward time
-binfo = determine_time_reward_SAT(binfo, moves);
 
 if (nargout > 2)
   varargout{1} = moves_all;
@@ -287,6 +284,9 @@ for ff = 1:length(FIELDS_VECTOR)
 end
 
 cands = cands(idx_saccade);
+
+%save the within-trial saccade index
+moves.index(index:index+num_saccade-1) = (1 : num_saccade);
 
 if (DEBUG)
   for jj = 1:length(cands)
