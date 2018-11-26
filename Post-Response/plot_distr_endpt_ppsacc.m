@@ -1,4 +1,4 @@
-function [] = plot_distr_endpt_ppsacc( binfo , movesPP )
+function [ movesPP ] = plot_distr_endpt_ppsacc( binfo , movesPP )
 %plot_distr_endpt_ppsacc Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -43,13 +43,20 @@ for kk = 1:NUM_SESSION
   rfinPP_ = sqrt(xfinPP_.*xfinPP_ + yfinPP_.*yfinPP_);
   dOctPP_ = movesPP(kk).octant(idx_cond & idx_errdir & ~idx_noPP) - uint16(binfo(kk).tgt_octant(idx_cond & idx_errdir & ~idx_noPP));
   
-  idx_Fix = (rfinPP_ < 3.0);
-  idx_Tgt = (~idx_Fix & (dOctPP_ == 0));
-  idx_Distr = (~idx_Fix & (dOctPP_ ~= 0));
+  idxFix = (rfinPP_ < 3.0);
+  idxTgt = (~idxFix & (dOctPP_ == 0));
+  idxDistr = (~idxFix & (dOctPP_ ~= 0));
+  fprintf('%d\n', sum(idxDistr))
+  count_ppsacc_endpt.F = count_ppsacc_endpt.F + sum(idxFix);
+  count_ppsacc_endpt.T = count_ppsacc_endpt.T + sum(idxTgt);
+  count_ppsacc_endpt.D = count_ppsacc_endpt.D + sum(idxDistr);
   
-  count_ppsacc_endpt.F = count_ppsacc_endpt.F + sum(idx_Fix);
-  count_ppsacc_endpt.T = count_ppsacc_endpt.T + sum(idx_Tgt);
-  count_ppsacc_endpt.D = count_ppsacc_endpt.D + sum(idx_Distr);
+  %save for future trial indexing
+  trialPP_ = find(idx_cond & idx_errdir & ~idx_noPP);
+  movesPP(kk).endpt = zeros(1,binfo(kk).num_trials);
+  movesPP(kk).endpt(trialPP_(idxTgt)) = 1;
+  movesPP(kk).endpt(trialPP_(idxDistr)) = 2;
+  movesPP(kk).endpt(trialPP_(idxFix)) = 3;
   
 end%for:session(kk)
 
@@ -59,10 +66,10 @@ end%for:session(kk)
 TH_PPSACC = atan2(yfin_ppsacc, xfin_ppsacc);
 R_PPSACC = sqrt(xfin_ppsacc.*xfin_ppsacc + yfin_ppsacc.*yfin_ppsacc);
 
-figure(); polaraxes()
-polarscatter(TH_PPSACC, R_PPSACC, 10.0, [.2 .2 .2])
-rlim([0 10]); rticklabels([]); thetaticks([])
-ppretty()
+% figure(); polaraxes()
+% polarscatter(TH_PPSACC, R_PPSACC, 10.0, [.2 .2 .2])
+% rlim([0 10]); rticklabels([]); thetaticks([])
+% ppretty()
 
 %barplot
 yy_bar = [count_ppsacc_endpt.F count_ppsacc_endpt.D count_ppsacc_endpt.T];
