@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = 'C:\Users\Tom\Documents\SpeedAccuracy/';%'D:/SAT/'; %TDT
-% ROOT_DIR = '/data/search/SAT/';
+% ROOT_DIR = 'C:\Users\Tom\Documents\SpeedAccuracy/';%'D:/SAT/'; %TDT
+ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -56,12 +56,12 @@ end%for:sessions(kk)
 if ismember(monkey, {'Darwin','Euler'})
   info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
 end
-% info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
+info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 %% Load saccade data
 
-gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
+% gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
 % gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
