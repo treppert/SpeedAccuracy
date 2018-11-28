@@ -30,9 +30,10 @@ for cc = 1:NUM_CELLS
   print_session_unit(gca, ninfo(cc), 'horizontal')
   ppretty()
   
-  pause(0.5)
+  pause()
+%   pause(0.5)
 %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
-  pause(0.5)
+%   pause(0.5)
   
 end%for:cells(cc)
 
