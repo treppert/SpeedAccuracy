@@ -7,67 +7,54 @@ MIN_VIS = 3; %minimum grade for VIS cells
 LOC_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9]; %indexes for plotting by direction
 
 TIME_ARRAY = 3500;
-TIME_PLOT = (-200 : 300);
+TIME_PLOT = (-100 : 300);
 NUM_SAMP = length(TIME_PLOT);
 
 NUM_DIR = 8;
 NUM_CELLS = length(spikes);
 
 for cc = 1:NUM_CELLS
-  
   if (ninfo(cc).vis < MIN_VIS); continue; end
+  
+  %get session number corresponding to behavioral data
+  kk = ismember({binfo.session}, ninfo(cc).sess);
+  
+  %index by isolation quality
+  idx_iso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  
+  %index by condition
+  idx_cond = ((binfo(kk).condition == 3) & ~idx_iso);
+  
+  %index by trial outcome
+  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
   
   %% Compute the SDF for each direction
   
   %neuron-specific initialization
-  sdf_Acc  = NaN(NUM_DIR,NUM_SAMP);
-  sdf_Fast = NaN(NUM_DIR,NUM_SAMP);
-  sdf_MG   = NaN(NUM_DIR,NUM_SAMP);
+  sdf_cc = NaN(NUM_DIR,NUM_SAMP);
     
-  %get session number corresponding to behavioral data
-  kk = ismember({binfo.SAT.session}, ninfo(cc).sess);
-  
-  %index by trial outcome
-  idx_corr = ~(binfo.SAT(kk).err_dir | binfo.SAT(kk).err_time | binfo.SAT(kk).err_hold);
-  
-  %index by condition -- only trials with correct outcome
-  idx_fast = (binfo.SAT(kk).condition == 3) & idx_corr;
-  idx_acc = (binfo.SAT(kk).condition == 1) & idx_corr;
-  
-  %index by task -- Memory-guided saccade
-  idx_MG = ~(binfo.MG(kk).err_dir | binfo.MG(kk).err_hold | binfo.MG(kk).err_nosacc);
-  
   for dd = 1:NUM_DIR
-    idx_dd = ismember(binfo.SAT(kk).tgt_octant, dd);
-    sdf_acc = compute_spike_density_fxn(spikes(cc).SAT(idx_acc & idx_dd));
-    sdf_fast = compute_spike_density_fxn(spikes(cc).SAT(idx_fast & idx_dd));
     
+    idx_dd = ismember(binfo(kk).tgt_octant, dd);
+    sdf_dd = compute_spike_density_fxn(spikes(cc).SAT(idx_cond & idx_corr & idx_dd));
     
-    idx_dd = ismember(binfo.MG(kk).tgt_octant, dd);
-    sdf_mg = compute_spike_density_fxn(spikes(cc).MG(idx_MG & idx_dd));
-    
-    sdf_Acc(dd,:)  = nanmean(sdf_acc(:,TIME_ARRAY+TIME_PLOT))';
-    sdf_Fast(dd,:) = nanmean(sdf_fast(:,TIME_ARRAY+TIME_PLOT))';
-    sdf_MG(dd,:)   = nanmean(sdf_mg(:,TIME_ARRAY+TIME_PLOT))';
+    sdf_cc(dd,:) = nanmean(sdf_dd(:,TIME_ARRAY+TIME_PLOT))';
     
   end%for:directions(dd)
   
   %% Plotting
+  Y_LIM = NaN(NUM_DIR,2);
   
   figure()
   
-  Y_LIM = NaN(NUM_DIR,2);
   for dd = 1:NUM_DIR
     subplot(3,3,LOC_DD_PLOT(dd)); hold on
-    plot(TIME_PLOT, sdf_MG(dd,:), 'k-', 'linewidth',1.25);
-    plot(TIME_PLOT, sdf_Acc(dd,:), 'r-', 'linewidth',1.25);
-%     plot(TIME_PLOT, sdf_Fast(dd,:), '-', 'color',[0 .7 0], 'linewidth',1.25);
+    plot(TIME_PLOT, sdf_cc(dd,:), '-', 'color',[0 .7 0], 'linewidth',1.25);
     
     %axis labels
-    if ismember(LOC_DD_PLOT(dd), [1,4,7])
+    if (LOC_DD_PLOT(dd) == 4)
       ylabel('Activity (sp/sec)')
-    end
-    if ismember(LOC_DD_PLOT(dd), [7,8,9])
+    elseif (LOC_DD_PLOT(dd) == 8)
       xlabel('Time from stimulus (ms)')
     end
     
@@ -78,7 +65,7 @@ for cc = 1:NUM_CELLS
   %set y-axes and plot zero-line
   Y_LIM = [min(Y_LIM(:,1)), max(Y_LIM(:,2))];
   for dd = 1:NUM_DIR
-    subplot(3,3,LOC_DD_PLOT(dd)); ylim(Y_LIM)
+    subplot(3,3,LOC_DD_PLOT(dd))
     plot([0 0], Y_LIM, 'k-')
   end
   

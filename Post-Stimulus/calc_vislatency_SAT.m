@@ -1,4 +1,4 @@
-function [ latency ] = calc_vislatency_SAT( ninfo , spikes )
+function [ latVR ] = calc_vislatency_SAT( ninfo , spikes , binfo )
 %calc_vislatency_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,22 +13,31 @@ MIN_HOLD = 10; %minimum consecutive timepoints above criterion
 TIME_STIM = 3500;
 TIME_CHECK = ( 1 : 200 ); %timepoints re. stimulus appearance
 
-latency = NaN(1,NUM_CELLS);
+latVR = NaN(1,NUM_CELLS);
 
-for kk = 1:NUM_CELLS
-  if (ninfo(kk).vis < MIN_GRADE); continue; end
+for cc = 1:NUM_CELLS
+  if (ninfo(cc).vis < MIN_GRADE); continue; end
   
-  visresp = compute_spike_density_fxn( spikes(kk).SAT );
-  visresp = mean(visresp(:,TIME_STIM + TIME_CHECK));
+  %get session number corresponding to behavioral data
+  kk = ismember({binfo.session}, ninfo(cc).sess);
   
-  bline = mean(visresp(1:40));
+  %index by isolation quality
+  idx_iso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  
+  %index by trial outcome
+  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  
+  VRcc = compute_spike_density_fxn(spikes(cc).SAT(idx_corr & ~idx_iso));
+  VRcc = mean(VRcc(:,TIME_STIM + TIME_CHECK));
+  
+  bline = mean(VRcc(1:40));
   
   %find points that are above threshold
-  time_sup = find(visresp > ( bline + MIN_RISE ));
+  time_sup = find(VRcc > ( bline + MIN_RISE ));
   
   %make correction for cells with low firing rate
   if isempty(time_sup)
-    time_sup = find(visresp > ( bline + 3 ));
+    time_sup = find(VRcc > ( bline + 3 ));
   end
   
   num_sup = length(time_sup);
@@ -51,17 +60,18 @@ for kk = 1:NUM_CELLS
   end
   
   %get best estimate of latency by walking back to baseline
-  latency(kk) = find(visresp(1:estimated_lat) < (bline+2), 1, 'last');
+  latVR(cc) = find(VRcc(1:estimated_lat) < (bline+2), 1, 'last');
   
   %make correction for cells with slow ramping
-  if (latency(kk) > 100)
-    latency(kk) = find(visresp(1:latency(kk)) < (bline), 1, 'last');
+  if (latVR(cc) > 100)
+    latVR(cc) = find(VRcc(1:latVR(cc)) < (bline), 1, 'last');
   end
   
   if (DEBUG)
-    figure(); hold on
-    plot(visresp, 'k-');
-    plot(latency(kk), visresp(latency(kk)), 'r*')
+    figure(101); hold off
+    plot(VRcc, 'k-'); hold on
+    plot(latVR(cc), VRcc(latVR(cc)), 'r*')
+    print_session_unit(gca , ninfo(cc), 'horizontal')
     pause(1.0)
   end
   
