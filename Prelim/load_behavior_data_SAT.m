@@ -41,8 +41,8 @@ info = struct('DET',info, 'MG',info, 'SAT',info);
 gaze = struct('DET',gaze, 'MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
-  gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
-  gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
+%   gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
+%   gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
   gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
   gaze.SAT(kk).clipped = false(NUM_SAMPLES,num_trials.SAT(kk));
   if ismember(monkey, {'Darwin','Euler'})
@@ -56,7 +56,7 @@ end%for:sessions(kk)
 if ismember(monkey, {'Darwin','Euler'})
   info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
 end
-info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
+% info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 %% Load saccade data
@@ -75,8 +75,16 @@ function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , monkey , 
 %initialize_behavior_data Summary of this function goes here
 %   Detailed explanation goes here
 
+MIN_TOTAL_TRIALS_PER_SESSION = 700;
+
 %identify all recording sessions
 sessions = dir([root_dir, monkey, '/*_',type,'.mat']);
+
+%remove sessions without data from SEF (Da & Eu)
+if ismember(monkey, {'Darwin','Euler'})
+  sessions(1) = [];
+end
+
 num_sessions = length(sessions);
 
 if isempty(sessions);  error('No %s sessions found', type);  end
@@ -87,6 +95,13 @@ for kk = 1:num_sessions
   session_file = [sessions(kk).folder,'/',sessions(kk).name];
   session_vars = whos('-file', session_file);
   num_trials(kk) = session_vars(1).size(1);
+end
+
+%remove sessions without enough total trials (Q & S)
+if ismember(monkey, {'Quincy','Seymour'})
+  kkRemove = (num_trials < MIN_TOTAL_TRIALS_PER_SESSION);
+  sessions(kkRemove) = [];
+  num_trials(kkRemove) = [];
 end
 
 end%function:identify_sessions_SAT
