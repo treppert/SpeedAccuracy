@@ -2,7 +2,7 @@ function [ latVR ] = calc_vislatency_SAT( ninfo , spikes , binfo )
 %calc_vislatency_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-DEBUG = false;
+DEBUG = true;
 
 NUM_CELLS = length(ninfo);
 MIN_GRADE = 3; %minimum grade for visual response
