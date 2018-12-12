@@ -41,8 +41,8 @@ info = struct('DET',info, 'MG',info, 'SAT',info);
 gaze = struct('DET',gaze, 'MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
-%   gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
-%   gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
+  gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
+  gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
   gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
   gaze.SAT(kk).clipped = false(NUM_SAMPLES,num_trials.SAT(kk));
   if ismember(monkey, {'Darwin','Euler'})
@@ -54,15 +54,15 @@ end%for:sessions(kk)
 %% Load task/TEMPO information
 
 if ismember(monkey, {'Darwin','Euler'})
-  info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
+%   info.DET = load_task_info(info.DET, sessions, num_trials.DET, 'DET');
 end
-% info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
+info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
 info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
 
 %% Load saccade data
 
 % gaze.DET = load_gaze_data(info.DET, gaze.DET, sessions, num_trials.DET, FIELDS_GAZE, 'DET');
-% gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
+gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
 gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 % gaze_SAT = gaze.SAT; %save filtered gaze data (organized by trial number)

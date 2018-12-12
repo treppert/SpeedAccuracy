@@ -43,7 +43,7 @@ for cc = 1:NUM_CELLS
     idx_dd = (idx_cond & idx_corr & (moves(kk).octant == dd)); %choice error trials
     
     sdf_dd = compute_spike_density_fxn(spikes(cc).SAT(idx_dd));
-    sdf_cc(dd,:) = nanmean(sdf_dd(:,3500+TIME_PLOT))';
+    sdf_cc(dd,:) = nanmean(sdf_dd(:,3500+TIME_PLOT));
     
   end%for:directions(dd)
   

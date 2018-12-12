@@ -1,7 +1,8 @@
-function [ ] = plot_visresp_vs_direction_MG( spikes , ninfo , binfo )
+function [ ] = plot_visresp_vs_direction_MG( spikes , ninfo , binfo , moves )
 %plot_visresp_vs_direction_MG Summary of this function goes here
 %   Detailed explanation goes here
 
+MIN_GRADE = 3;
 LOC_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9]; %indexes for plotting by direction
 
 TIME_PLOT = (-100 : 400);
@@ -11,6 +12,8 @@ NUM_DIR = 8;
 NUM_CELLS = length(spikes);
 
 for cc = 1:NUM_CELLS
+  if (ninfo(cc).vis < MIN_GRADE); continue; end
+  
   %get session number corresponding to behavioral data
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
@@ -24,10 +27,10 @@ for cc = 1:NUM_CELLS
     
   for dd = 1:NUM_DIR
     
-    idx_dd = ismember(binfo(kk).tgt_octant, dd);
+    idx_dd = ismember(moves(kk).octant, dd);
     sdf_dd = compute_spike_density_fxn(spikes(cc).MG(idx_corr & idx_dd));
     
-    sdf_cc(dd,:) = nanmean(sdf_dd(:,3500+TIME_PLOT))';
+    sdf_cc(dd,:) = nanmean(sdf_dd(:,3500+TIME_PLOT));
     
   end%for:directions(dd)
   

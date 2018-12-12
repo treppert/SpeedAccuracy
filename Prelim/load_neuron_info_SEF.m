@@ -25,9 +25,14 @@ sess_num = num2cell(uint8(xlsread(file, monkey, build_col('C',index(1),index(2))
 [~,sess] = xlsread(file, monkey, build_col('D',index(1),index(2)));
 [~,unit] = xlsread(file, monkey, build_col('E',index(1),index(2)));
 
-%neuron type
+%neuron type and RF
 vis = num2cell(uint8(xlsread(file, monkey, build_col('L',index(1),index(2)))));
 mov = num2cell(uint8(xlsread(file, monkey, build_col('M',index(1),index(2)))));
+[~,RF] = xlsread(file, monkey, build_col('S',index(1),index(2)));
+
+for cc = 1:length(RF)
+  RF{cc} = str2num(RF{cc});
+end
 
 %isolation
 isolation = num2cell(uint8(xlsread(file, monkey, build_col('O',index(1),index(2)))));
@@ -35,15 +40,14 @@ iRem_1 = num2cell( uint16(xlsread(file, monkey, build_col('P',index(1),index(2))
 iRem_2 = num2cell( uint16(xlsread(file, monkey, build_col('Q',index(1),index(2)))) );
 
 %event-related modulation
-[~,bline] = xlsread(file, monkey, build_col('R',index(1),index(2)));
-rewAcc = num2cell( (xlsread(file, monkey, build_col('Z',index(1),index(2)))) );
-rewFast = num2cell( (xlsread(file, monkey, build_col('AA',index(1),index(2)))) );
+% [~,bline] = xlsread(file, monkey, build_col('R',index(1),index(2)));
+% rewAcc = num2cell( (xlsread(file, monkey, build_col('Z',index(1),index(2)))) );
+% rewFast = num2cell( (xlsread(file, monkey, build_col('AA',index(1),index(2)))) );
 
 %combine information into struct array
 info = struct('sess',sess, 'snum',sess_num, 'unit',unit, ...
-  'vis',vis, 'mov',mov, ...
-  'isolation',isolation, 'iRem1',iRem_1, 'iRem2',iRem_2, ...
-  'bline',bline, 'rewAcc',rewAcc, 'rewFast',rewFast);
+  'vis',vis, 'mov',mov, 'RF',RF, ...
+  'isolation',isolation, 'iRem1',iRem_1, 'iRem2',iRem_2);
 
 info = orderfields(info);
 

@@ -40,7 +40,6 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 
 
 %% Initialize output movement arrays
-
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
 
 for kk = 1:NUM_SESSIONS
