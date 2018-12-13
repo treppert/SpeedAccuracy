@@ -1,32 +1,31 @@
-function [  ] = plot_distr_errRT_SAT( moves , info )
+function [  ] = plot_distr_errRT_SAT( moves , binfo )
 
-idx_fast = ([info.condition] == 3);
-idx_acc  = ([info.condition] == 1);
+NUM_SESSION = length(moves);
 
-resptime = double([moves.resptime]);
-deadline = double([info.tgt_dline]);
+for kk = 1:NUM_SESSION
+  
+  idxFast = (binfo(kk).condition == 3);
+  idxAcc  = (binfo(kk).condition == 1);
+  
+  idxErrTime = (~binfo(kk).err_dir & binfo(kk).err_time);
+  idxErrHold = (binfo(kk).err_hold);
+  
+  errRT_Acc_Break = double(moves(kk).resptime(idxAcc & idxErrTime)) - double(binfo(kk).tgt_dline(idxAcc & idxErrTime));
+%   errRT_Fast = double(moves(kk).resptime(idxFast & idxErrTime)) - double(binfo(kk).tgt_dline(idxFast & idxErrTime));
+  
+  %% Plotting
+  figure(); hold on
 
-rt_fast = resptime(idx_fast) - deadline(idx_fast);
-rt_acc  = resptime(idx_acc)  - deadline(idx_acc);
+  histogram(errRT_Acc_Break, 'BinWidth',50, 'EdgeColor','none', 'FaceColor','r', 'Normalization','count')
+  plot(median(errRT_Acc_Break)*ones(1,2), [0 20], 'k--')
+%   histogram(errRT_Fast, 'BinWidth',50, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','count')
+%   line([0 0], [0 .25], 'color','k', 'linewidth',1.5)
+%   xlim([-400 800]); xticks(-400:200:800)
 
-figure(); hold on
-h_ax = gca;
+  ppretty()
+  pause()
+  
+end%for:session(kk)
 
-histogram(rt_acc, 'BinWidth',50, 'EdgeColor','none', 'FaceColor','r', 'Normalization','probability')
-histogram(rt_fast, 'BinWidth',50, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','probability')
-line([0 0], [0 .25], 'color','k', 'linewidth',1.5)
-xlim([-400 800]); xticks(-400:200:800)
-
-%produce inset of deadline distribution
-axes('Position',[.6 .6 .3 .3]); hold on
-histogram(deadline(idx_acc), 'BinWidth',10, 'EdgeColor','none', 'FaceColor','r', 'Normalization','probability')
-histogram(deadline(idx_fast), 'BinWidth',10, 'EdgeColor','none', 'FaceColor',[0 .7 0], 'Normalization','probability')
-xlim([250 600])
-
-ppretty()
-
-% set(gca,'yticklabel',num2str(get(gca,'ytick')','%.1f')) %inset
-% set(h_ax,'yticklabel',num2str(get(h_ax,'ytick')','%.2f')) %main histogram
-
-end%function:plot_RT_distr_re_dline_SAT()
+end%function:plot_distr_errRT_SAT()
 

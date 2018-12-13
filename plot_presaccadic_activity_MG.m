@@ -3,7 +3,7 @@ function [ ] = plot_presaccadic_activity_MG( spikes , ninfo , binfo , moves )
 %   Detailed explanation goes here
 
 T_BASE = (-700 : 0);
-T_STIM = (-200 : 400);  T_STAT_STIM = (50 : 150);  IDX_STAT_STIM = ismember(T_STIM, T_STAT_STIM);
+T_STIM = (-200 : 400);  T_STAT_STIM = (100 : 200);  IDX_STAT_STIM = ismember(T_STIM, T_STAT_STIM);
 T_RESP = (-300 : 300);  T_STAT_RESP = (-100 : 0);  IDX_STAT_RESP = ismember(T_RESP, T_STAT_RESP);
 N_SAMP = length(T_RESP);
 
@@ -100,40 +100,40 @@ for cc = 1:NUM_CELLS
   
   ppretty('image_size',[9,7])
   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
-  pause(0.25)
+  pause(0.25); close()
   
-  figure() %plot re. response initiation
-  
-  for dd = 1:8
-    subplot(3,3,LOC_DD_PLOT(dd)); hold on
-    
-    plot([0 0], ylim_cc, 'k--')
-    plot([T_RESP(1) T_RESP(end)], [A_base(cc) A_base(cc)], 'k--')
-    plot(T_STAT_RESP(1)*ones(1,2), ylim_cc, 'k:')
-    plot(T_STAT_RESP(end)*ones(1,2), ylim_cc, 'k:')
-    plot(T_RESP, A_resp{cc}(dd,:), 'k-', 'LineWidth',1.25);
-    xlim([T_RESP(1) T_RESP(end)])
-    
-    if (LOC_DD_PLOT(dd) == 4)
-      ylabel('Activity (sp/sec)')
-    elseif (LOC_DD_PLOT(dd) == 8)
-      xlabel('Time from response (ms)')
-    end
-    
-    pause(.05)
-  end%for:direction(dd)
-  
-  %plot tuning curve of visual response magnitude
-  subplot(3,3,5); hold on
-  plot([-10 -10], [-5 5], 'k-', 'LineWidth',0.1)
-  plot([0 360], [0 0], 'k--')
-  plot((0 : 45 : 360), Abar_resp(cc,:), 'ko-', 'MarkerSize',3)
-  xlim([-10 370]); xticks(0 : 90 : 360)
-  print_session_unit(gca , ninfo(cc), binfo(kk), 'eccen','horizontal')
-  
-  ppretty('image_size',[9,7])
-  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
-  pause(0.25)
+%   figure() %plot re. response initiation
+%   
+%   for dd = 1:8
+%     subplot(3,3,LOC_DD_PLOT(dd)); hold on
+%     
+%     plot([0 0], ylim_cc, 'k--')
+%     plot([T_RESP(1) T_RESP(end)], [A_base(cc) A_base(cc)], 'k--')
+%     plot(T_STAT_RESP(1)*ones(1,2), ylim_cc, 'k:')
+%     plot(T_STAT_RESP(end)*ones(1,2), ylim_cc, 'k:')
+%     plot(T_RESP, A_resp{cc}(dd,:), 'k-', 'LineWidth',1.25);
+%     xlim([T_RESP(1) T_RESP(end)])
+%     
+%     if (LOC_DD_PLOT(dd) == 4)
+%       ylabel('Activity (sp/sec)')
+%     elseif (LOC_DD_PLOT(dd) == 8)
+%       xlabel('Time from response (ms)')
+%     end
+%     
+%     pause(.05)
+%   end%for:direction(dd)
+%   
+%   %plot tuning curve of saccade-related activity
+%   subplot(3,3,5); hold on
+%   plot([-10 -10], [-5 5], 'k-', 'LineWidth',0.1)
+%   plot([0 360], [0 0], 'k--')
+%   plot((0 : 45 : 360), Abar_resp(cc,:), 'ko-', 'MarkerSize',3)
+%   xlim([-10 370]); xticks(0 : 90 : 360)
+%   print_session_unit(gca , ninfo(cc), binfo(kk), 'eccen','horizontal')
+%   
+%   ppretty('image_size',[9,7])
+% %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+%   pause()
   
 end%for:cells(cc)
 
