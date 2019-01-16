@@ -36,11 +36,11 @@ figure()
 
 for kk = 1:NUM_SESSION
   
-  subplot(4,2,kk,polaraxes); hold on
-  subaxis(4,2,kk, 'SpacingHoriz', 0.01, 'SpacingVert', 0.01, 'Padding',0.0, 'Margin', 0.0);
+  subplot(5,4,kk,polaraxes); hold on
+  subaxis(5,4,kk, 'SpacingHoriz', 0.01, 'SpacingVert', 0.01, 'Padding',0.0, 'Margin', 0.0);
   polarplot(THETA_PLOT, respTime{kk}, 'k-', 'LineWidth',1.0)
   thetaticks([])
-  rlim([0 1300])
+  rlim([0 1800])
   pause(0.10)
   
 end%for:session(kk)

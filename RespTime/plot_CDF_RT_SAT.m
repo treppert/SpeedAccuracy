@@ -28,7 +28,7 @@ for kk = 1:NUM_SESSION
   idx_errdir = info(kk).err_dir;
   idx_corr = ~(info(kk).err_dir | info(kk).err_hold | info(kk).err_nosacc);
   
-  RT = moves(kk).resptime;
+  RT = double(moves(kk).resptime);
   
   RT_corr_A(kk,:) = quantile(RT(idx_corr & idx_acc), QUANTILE);
   RT_errdir_A(kk,:) = quantile(RT(idx_errdir & idx_acc), QUANTILE);

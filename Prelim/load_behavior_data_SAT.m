@@ -16,12 +16,12 @@ end
 
 %% Initializations
 
-num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
+% num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
 
-[sessions,num_trials.SAT] = identify_sessions_SAT(ROOT_DIR, monkey, 'SEARCH');
-[~,num_trials.MG] = identify_sessions_SAT(ROOT_DIR, monkey, 'MG');
+[sessions,num_trials] = identify_sessions_SAT(ROOT_DIR, monkey, 'SEARCH');
+% [~,num_trials.MG] = identify_sessions_SAT(ROOT_DIR, monkey, 'MG');
 
-NUM_SESSIONS = length(sessions);
+NUM_SESSIONS = length(sessions.SAT);
 
 %% Initialize outputs
 
@@ -62,48 +62,59 @@ function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , monkey , 
 
 MIN_TOTAL_TRIALS_PER_SESSION = 700;
 
-%identify all recording sessions
-sessions = dir([root_dir, monkey, '/*_',type,'.mat']);
+%identify recording sessions
+sessions.SAT = dir([root_dir, monkey, '/*_SEARCH.mat']);
+sessions.MG = dir([root_dir, monkey, '/*_MG.mat']);
 
 %remove sessions without data from SEF (Da & Eu)
 if ismember(monkey, {'Darwin','Euler'})
-  sessions(1) = [];
+  sessions.SAT(1) = [];
 end
 
-num_sessions = length(sessions);
+num_sessions = length(sessions.SAT);
 
-if isempty(sessions);  error('No %s sessions found', type);  end
+if isempty(sessions.SAT);  error('No %s sessions found', type);  end
 
 %get the number of trials per session
-num_trials = zeros(1,num_sessions);
+num_trials = struct('MG',zeros(1,num_sessions), 'SAT',zeros(1,num_sessions));
 for kk = 1:num_sessions
-  session_file = [sessions(kk).folder,'/',sessions(kk).name];
-  session_vars = whos('-file', session_file);
-  num_trials(kk) = session_vars(1).size(1);
+  
+  file_SAT_kk = [sessions.SAT(kk).folder,'/',sessions.SAT(kk).name];
+  vars_SAT_kk = whos('-file', file_SAT_kk);
+  
+  file_MG_kk = [sessions.MG(kk).folder,'/',sessions.MG(kk).name];
+  vars_MG_kk = whos('-file', file_MG_kk);
+  
+  num_trials.SAT(kk) = vars_SAT_kk(1).size(1);
+  num_trials.MG(kk) = vars_MG_kk(1).size(1);
+  
 end
 
 %remove sessions without enough total trials (Q & S)
 if ismember(monkey, {'Quincy','Seymour'})
-  kkRemove = (num_trials < MIN_TOTAL_TRIALS_PER_SESSION);
-  sessions(kkRemove) = [];
-  num_trials(kkRemove) = [];
-end
+  
+  kkRemove = (num_trials.SAT < MIN_TOTAL_TRIALS_PER_SESSION);
+  
+  sessions.SAT(kkRemove) = [];
+  num_trials.SAT(kkRemove) = [];
+  sessions.MG(kkRemove) = [];
+  num_trials.MG(kkRemove) = [];
+  
+end%if(Q-or-S)
 
 end%function:identify_sessions_SAT
 
 function [ info ] = load_task_info( info , sessions , num_trials , type )
 
-NUM_SESSIONS = length(sessions);
+NUM_SESSIONS = length(sessions.SAT);
 
 for kk = 1:NUM_SESSIONS
-  file_kk = [sessions(kk).folder,'/',sessions(kk).name(1:16),type,'.mat'];
-  
-  info(kk).session = sessions(kk).name(1:12);
-  
-  %no DET data for Da/Eu first session
-  if (strcmp(type, 'DET') && (kk == 1))
-    info(kk).num_trials = 0;
-    continue
+  if strcmp(type, 'MG')
+    file_kk = [sessions.MG(kk).folder,'/',sessions.MG(kk).name(1:16),type,'.mat'];
+    info(kk).session = sessions.MG(kk).name(1:12);
+  else %(SAT)
+    file_kk = [sessions.SAT(kk).folder,'/',sessions.SAT(kk).name(1:16),type,'.mat'];
+    info(kk).session = sessions.SAT(kk).name(1:12);
   end
   
   load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','FixAcqTime_','JuiceOn_')
@@ -159,14 +170,20 @@ SAMP_RATE = 1000;
 [B_BUTTER, A_BUTTER] = butter(3, 2*80/SAMP_RATE, 'low');
 TOL_THRESH = 0.01; %used to identify A/D saturation in EyeX_/EyeY_
 
-NUM_SESSIONS = length(sessions);
+if strcmp(type, 'MG')
+  TASK = 'MG';
+elseif strcmp(type, 'SEARCH')
+  TASK = 'SAT';
+end
+
+NUM_SESSIONS = length(sessions.(TASK));
 
 for kk = 1:NUM_SESSIONS
-  session_file = [sessions(kk).folder,'/',sessions(kk).name(1:16),type,'.mat'];
+  session_file = [sessions.(TASK)(kk).folder,'/',sessions.(TASK)(kk).name(1:16),type,'.mat'];
   
   if ~exist(session_file, 'file'); continue; end
   
-  fprintf('Session %d  (%s)\n', kk, [sessions(kk).name(1:16),type])
+  fprintf('Session %d  (%s)\n', kk, [sessions.(TASK)(kk).name(1:16),type])
   load(session_file, 'EyeX_','EyeY_')
   
   gaze_x = 3*transpose(EyeX_);  gaze_y = -3*transpose(EyeY_);

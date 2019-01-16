@@ -99,8 +99,8 @@ for cc = 1:NUM_CELLS
   print_session_unit(gca , ninfo(cc), binfo(kk), 'eccen','horizontal')
   
   ppretty('image_size',[9,7])
-  print_fig_SAT(ninfo(cc), gcf, '-dtiff')
-  pause(0.25); close()
+%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+  pause()
   
 %   figure() %plot re. response initiation
 %   
