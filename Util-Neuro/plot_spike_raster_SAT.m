@@ -9,7 +9,7 @@ IDX_PLOT = (-500 : 1000);
 
 %% Spike rasters
 
-for cc = 15:15%NUM_CELLS
+for cc = 1:NUM_CELLS
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
@@ -63,7 +63,7 @@ for cc = 15:15%NUM_CELLS
   
   title([ninfo(cc).sess,'-',ninfo(cc).unit,' -- N_{trial} = ',num2str(num_trials)], 'FontSize',8)
   ppretty('image_size',[8,10])
-  
+  pause()
 %   pause(0.5)
 %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
 %   pause(0.5)

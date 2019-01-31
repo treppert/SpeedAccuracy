@@ -2,7 +2,7 @@ function [  ] = plot_RT_distr_switch( info , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-CONDITION = 'fast'; %'acc' or 'fast'
+CONDITION = 'acc'; %'acc' or 'fast'
 PLOT_TYPE = 'cdf'; %'pdf' or 'cdf'
 
 MIN_NUM_TRIALS = 10;

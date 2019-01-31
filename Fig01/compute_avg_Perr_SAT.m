@@ -1,4 +1,4 @@
-function [  ] = compute_avg_err_pcent_SAT( info , moves )
+function [  ] = compute_avg_Perr_SAT( info , moves )
 %compute_avg_err_pcent_SAT Summary of this function goes here
 %   Detailed explanation goes here
 

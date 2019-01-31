@@ -14,6 +14,8 @@ RT_N = NaN(1,NUM_SESSION);
 
 for kk = 1:NUM_SESSION
   
+  idx_err = (info(kk).err_dir);
+  
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);
   idx_ntrl = (info(kk).condition == 4);
@@ -22,9 +24,9 @@ for kk = 1:NUM_SESSION
   RT_F(kk) = nanmean(moves(kk).resptime(idx_fast));
   RT_N(kk) = nanmean(moves(kk).resptime(idx_ntrl));
   
-  ER_A(kk) = sum(info(kk).err_dir(idx_acc)) / sum(idx_acc);
-  ER_F(kk) = sum(info(kk).err_dir(idx_fast)) / sum(idx_fast);
-  ER_N(kk) = sum(info(kk).err_dir(idx_ntrl)) / sum(idx_ntrl);
+  ER_A(kk) = sum(idx_err & idx_acc) / sum(idx_acc);
+  ER_F(kk) = sum(idx_err & idx_fast) / sum(idx_fast);
+  ER_N(kk) = sum(idx_err & idx_ntrl) / sum(idx_ntrl);
   
 end%for:session(kk)
 

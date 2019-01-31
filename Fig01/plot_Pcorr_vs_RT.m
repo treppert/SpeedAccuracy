@@ -1,5 +1,5 @@
-function [ ] = plot_pcent_corr_vs_RT_2( moves , info )
-%[  ] = plot_pcent_corr_vs_RT( moves , info )
+function [ ] = plot_Pcorr_vs_RT( moves , info )
+%[  ] = plot_Pcorr_vs_RT( moves , info )
 %   Detailed explanation goes here
 
 MIN_PER_BIN = 8; %number of movements per RT bin
@@ -76,4 +76,4 @@ ppretty('image_size',[4.8,3])
 % xlim([200 850])
 % ppretty('image_size',[4.8,3])
 
-end%function:plot_prob_error_vs_rxntime_SAT()
+end%function:plot_Pcorr_vs_RT()

@@ -60,17 +60,22 @@ mu_F2A(:,kk_nan) = [];
 NUM_SESSION = size(mu_A2F,2);
 
 if strcmp(ERROR, 'err_time') % F-A--A-F
+  
   errorbar_no_caps(TRIAL_PLOT, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
   errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
+  
 elseif strcmp(ERROR, 'err_dir') % A-F--F-A
+  
   errorbar_no_caps(TRIAL_PLOT, mean(mu_A2F,2), 'err',std(mu_A2F,0,2)/sqrt(NUM_SESSION), 'color','k')
   errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(mu_F2A,2), 'err',std(mu_F2A,0,2)/sqrt(NUM_SESSION), 'color','k')
+  
   %stats
   MU_A2F = mean(mu_A2F,2); SE_A2F = std(mu_A2F,0,2)/sqrt(NUM_SESSION);
   MU_F2A = mean(mu_F2A,2); SE_F2A = std(mu_F2A,0,2)/sqrt(NUM_SESSION);
   fprintf('FAST Trial 0: %g +- %g\n', MU_A2F(TRIAL_PLOT==0), SE_A2F(TRIAL_PLOT==0))
   fprintf('FAST Trial N: %g +- %g\n', MU_F2A(TRIAL_PLOT==-1), SE_F2A(TRIAL_PLOT==-1))
-end
+  
+end%if(err-time)
 
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ppretty()
