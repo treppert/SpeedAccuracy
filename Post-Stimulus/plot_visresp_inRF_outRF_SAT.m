@@ -1,11 +1,8 @@
-function [ ] = plot_visresp_inRF_outRF_SAT( spikes , ninfo , binfo , moves )
+function [ ] = plot_visresp_inRF_outRF_SAT( spikes , ninfo , binfo )
 %plot_visresp_inRF_outRF_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT_INDIV_CELLS = true;
-MIN_GRADE = 3;
-
-TIME_PLOT = (-100 : 400);
+TIME_PLOT = (-100 : 500);
 NUM_SAMP = length(TIME_PLOT);
 
 NUM_CELLS = length(spikes);
@@ -14,132 +11,123 @@ NUM_CELLS = length(spikes);
 
 VR_MG = struct('in',NaN(NUM_CELLS,NUM_SAMP), 'out',NaN(NUM_CELLS,NUM_SAMP));
 VR_SAT = struct('in',NaN(NUM_CELLS,NUM_SAMP), 'out',NaN(NUM_CELLS,NUM_SAMP));
+VR_SAT = struct('acc',VR_SAT, 'fast',VR_SAT);
+
+normFactor_MG = NaN(1,NUM_CELLS);
+normFactor_SAT = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
+  if ~ninfo(cc).visTestTS; continue; end %make sure we can task for target selection
   
   %get session number corresponding to behavioral data
   kk = ismember({binfo.SAT.session}, ninfo(cc).sess);
   
   %index by isolation quality (SAT)
-  idxIsoSAT = identify_trials_poor_isolation_SAT(ninfo(cc), binfo.SAT(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo.SAT(kk).num_trials);
+  
   %index by condition (SAT)
-%   idxCondSAT = ((binfo.SAT(kk).condition == 1) | (binfo.SAT(kk).condition == 3));
-  idxCondSAT = (binfo.SAT(kk).condition == 3);
+  idxAcc = (binfo.SAT(kk).condition == 1);
+  idxFast = (binfo.SAT(kk).condition == 3);
   
   %index by trial outcome
   idxCorrMG = ~(binfo.MG(kk).err_dir | binfo.MG(kk).err_hold | binfo.MG(kk).err_nosacc);
   idxCorrSAT = ~(binfo.SAT(kk).err_dir | binfo.SAT(kk).err_time | binfo.SAT(kk).err_hold);
   
-  %index by response direction re. response field (RF)
-  LOC_RF_IN = ninfo(cc).RF;
-  LOC_RF_OUT = LOC_RF_IN - 4;
-  LOC_RF_OUT(LOC_RF_OUT < 1) = LOC_RF_OUT(LOC_RF_OUT < 1) + 8;
+  %index by response direction re. RF
+  idxInMG = ismember(binfo.MG(kk).tgt_octant, ninfo(cc).RF);
+  idxOutMG = ~ismember(binfo.MG(kk).tgt_octant, ninfo(cc).RF);
+  idxInSAT = ismember(binfo.SAT(kk).tgt_octant, ninfo(cc).RF);
+  idxOutSAT = ~ismember(binfo.SAT(kk).tgt_octant, ninfo(cc).RF);
   
-  %index by response direction
-  idxInMG = ismember(moves.MG(kk).octant, LOC_RF_IN);
-  idxOutMG = ismember(moves.MG(kk).octant, LOC_RF_OUT);
-  idxInSAT = ismember(moves.SAT(kk).octant, LOC_RF_IN);
-  idxOutSAT = ismember(moves.SAT(kk).octant, LOC_RF_OUT);
+  %compute and save SDF
+  sdfInMG_cc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxInMG));
+  sdfOutMG_cc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxOutMG));
+  sdfInAllSAT_cc = compute_spike_density_fxn(spikes(cc).SAT(~idxIso & (idxAcc | idxFast) & idxCorrSAT & idxInSAT));
+  sdfInFastSAT_cc = compute_spike_density_fxn(spikes(cc).SAT(~idxIso & idxFast & idxCorrSAT & idxInSAT));
+  sdfOutFastSAT_cc = compute_spike_density_fxn(spikes(cc).SAT(~idxIso & idxFast & idxCorrSAT & idxOutSAT));
+  sdfInAccSAT_cc = compute_spike_density_fxn(spikes(cc).SAT(~idxIso & idxAcc & idxCorrSAT & idxInSAT));
+  sdfOutAccSAT_cc = compute_spike_density_fxn(spikes(cc).SAT(~idxIso & idxAcc & idxCorrSAT & idxOutSAT));
   
-  %compute SDF
-  sdfInMGcc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxInMG));
-  sdfOutMGcc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxOutMG));
-  sdfInSATcc = compute_spike_density_fxn(spikes(cc).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxInSAT));
-  sdfOutSATcc = compute_spike_density_fxn(spikes(cc).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxOutSAT));
+  VR_MG.in(cc,:) = nanmean(sdfInMG_cc(:,3500+TIME_PLOT));
+  VR_MG.out(cc,:) = nanmean(sdfOutMG_cc(:,3500+TIME_PLOT));
+  VR_SAT.fast.in(cc,:) = nanmean(sdfInFastSAT_cc(:,3500+TIME_PLOT));
+  VR_SAT.fast.out(cc,:) = nanmean(sdfOutFastSAT_cc(:,3500+TIME_PLOT));
+  VR_SAT.acc.in(cc,:) = nanmean(sdfInAccSAT_cc(:,3500+TIME_PLOT));
+  VR_SAT.acc.out(cc,:) = nanmean(sdfOutAccSAT_cc(:,3500+TIME_PLOT));
   
-  %save SDF
-  VR_MG.in(cc,:) = nanmean(sdfInMGcc(:,3500+TIME_PLOT));
-  VR_MG.out(cc,:) = nanmean(sdfOutMGcc(:,3500+TIME_PLOT));
-  VR_SAT.in(cc,:) = nanmean(sdfInSATcc(:,3500+TIME_PLOT));
-  VR_SAT.out(cc,:) = nanmean(sdfOutSATcc(:,3500+TIME_PLOT));
+  %compute normalization factors
+  normFactor_MG(cc) = max(VR_MG.in(cc,:));
+  normFactor_SAT(cc) = max(nanmean(sdfInAllSAT_cc(:,3500+TIME_PLOT)));
   
 end%for:cells(cc)
 
 
-%% Plotting -- Individual neurons
-if (PLOT_INDIV_CELLS)
+%% Plotting -- Individual cells
+
+if (1)
 for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
+  if ~ninfo(cc).visTestTS; continue; end
   
-  tmp = [VR_MG.in(cc,:), VR_MG.out(cc,:), VR_SAT.in(cc,:), VR_SAT.out(cc,:)];
+  tmp = [VR_MG.in(cc,:), VR_MG.out(cc,:), VR_SAT.fast.in(cc,:), VR_SAT.fast.out(cc,:)];
   limLin = [min(tmp), max(tmp)];
   
   figure()
   
   subplot(1,2,1); hold on
-  
   plot([0 0], limLin, 'k--')
   plot(TIME_PLOT, VR_MG.in(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',1.25)
   plot(TIME_PLOT, VR_MG.out(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',0.75)
-  
   print_session_unit(gca , ninfo(cc))
   
   subplot(1,2,2); hold on
-  
   plot([0 0], limLin, 'k--')
-  plot(TIME_PLOT, VR_SAT.in(cc,:), 'r-', 'LineWidth',1.25)
-  plot(TIME_PLOT, VR_SAT.out(cc,:), 'r-', 'LineWidth',0.75)
+  plot(TIME_PLOT, VR_SAT.acc.in(cc,:), 'r-', 'LineWidth',1.25)
+  plot(TIME_PLOT, VR_SAT.acc.out(cc,:), 'r-', 'LineWidth',0.75)
+  plot(TIME_PLOT, VR_SAT.fast.in(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
+  plot(TIME_PLOT, VR_SAT.fast.out(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',0.75)
+  yticklabels([])
   
-  ppretty('image_size',[7,3])
+  ppretty('image_size',[8,4])
   
-  pause(0.5)
+  pause()
   
 end%for:cells(cc)
-return
-end%if:PLOT-INDIV-CELLS
+end%if:PLOT_INDIV_CELLS
 
-%% Plotting -- All neurons
-NUM_SEM = sum([ninfo.vis] >= MIN_GRADE);
+%% Plotting -- Across cells
+NUM_SEM = sum([ninfo.visTestTS]);
 
-%compute the normalization factor for each cell
-aNormMG = NaN(1,NUM_CELLS);
-aNormSAT = NaN(1,NUM_CELLS);
-for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
-  aNormMG(cc) = max(VR_MG.in(cc,:));
-  aNormSAT(cc) = max(VR_SAT.in(cc,:));
-end%for:cells(cc)
+%normalize activity (independent for MG and SAT)
+VR_MG.in = VR_MG.in ./ normFactor_MG';
+VR_MG.out = VR_MG.out ./ normFactor_MG';
+VR_SAT.acc.in = VR_SAT.acc.in ./ normFactor_SAT';
+VR_SAT.acc.out = VR_SAT.acc.out ./ normFactor_SAT';
+VR_SAT.fast.in = VR_SAT.fast.in ./ normFactor_SAT';
+VR_SAT.fast.out = VR_SAT.fast.out ./ normFactor_SAT';
 
-%normalize all SDFs
-VR_MG.in = VR_MG.in ./ aNormMG';
-VR_MG.out = VR_MG.out ./ aNormMG';
-VR_SAT.in = VR_SAT.in ./ aNormSAT';
-VR_SAT.out = VR_SAT.out ./ aNormSAT';
-
-%compute the difference in SDFs
-dVR_MG = VR_MG.in - VR_MG.out;
-dVR_SAT = VR_SAT.in -VR_SAT.out;
 
 figure()
 
-subplot(2,2,1); hold on
-
-plot([0 0], [0.2 0.9], 'k--')
-shaded_error_bar(TIME_PLOT, nanmean(VR_MG.in), nanstd(VR_MG.in)/sqrt(NUM_SEM), {'Color',[.5 .5 .5], 'LineWidth',1.25})
-shaded_error_bar(TIME_PLOT, nanmean(VR_MG.out), nanstd(VR_MG.out)/sqrt(NUM_SEM), {'Color',[.5 .5 .5], 'LineWidth',0.75})
+subplot(1,2,1); hold on
 % plot(TIME_PLOT, VR_MG.in, '-', 'Color',[.5 .5 .5], 'LineWidth',1.25)
 % plot(TIME_PLOT, VR_MG.out, '-', 'Color',[.5 .5 .5], 'LineWidth',0.75)
+shaded_error_bar(TIME_PLOT, nanmean(VR_MG.in), nanstd(VR_MG.in)/sqrt(NUM_SEM), {'k-', 'LineWidth',1.25})
+shaded_error_bar(TIME_PLOT, nanmean(VR_MG.out), nanstd(VR_MG.out)/sqrt(NUM_SEM), {'k-', 'LineWidth',0.75})
+ytickformat('%2.1f')
 
-subplot(2,2,2); hold on
+subplot(1,2,2); hold on
+% plot(TIME_PLOT, VR_SAT.acc.in, 'r-', 'LineWidth',1.25)
+% plot(TIME_PLOT, VR_SAT.acc.out, 'r-', 'LineWidth',0.75)
+% plot(TIME_PLOT, VR_SAT.fast.in, '-', 'Color',[0 .7 0], 'LineWidth',1.25)
+% plot(TIME_PLOT, VR_SAT.fast.out, '-', 'Color',[0 .7 0], 'LineWidth',0.75)
+shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.acc.in), nanstd(VR_SAT.acc.in)/sqrt(NUM_SEM), {'r-', 'LineWidth',1.25})
+shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.acc.out), nanstd(VR_SAT.acc.out)/sqrt(NUM_SEM), {'r-', 'LineWidth',0.75})
+shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.fast.in), nanstd(VR_SAT.fast.in)/sqrt(NUM_SEM), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
+shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.fast.out), nanstd(VR_SAT.fast.out)/sqrt(NUM_SEM), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
+ytickformat('%2.1f')
 
-plot([0 0], [0.2 0.9], 'k--')
-shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.in), nanstd(VR_SAT.in)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',1.25})
-shaded_error_bar(TIME_PLOT, nanmean(VR_SAT.out), nanstd(VR_SAT.out)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.75})
-% plot(TIME_PLOT, VR_SAT.in, 'r-', 'LineWidth',1.25)
-% plot(TIME_PLOT, VR_SAT.out, 'r-', 'LineWidth',0.75)
+ppretty('image_size',[8,4])
 
-subplot(2,2,3); hold on
-
-plot([-100 400], [0 0], 'k--')
-shaded_error_bar(TIME_PLOT, nanmean(dVR_MG), nanstd(dVR_MG)/sqrt(NUM_SEM), {'Color',[.3 .3 .3], 'LineWidth',1.25})
-
-subplot(2,2,4); hold on
-
-plot([-100 400], [0 0], 'k--')
-shaded_error_bar(TIME_PLOT, nanmean(dVR_SAT), nanstd(dVR_SAT)/sqrt(NUM_SEM), {'Color',[.5 0 0], 'LineWidth',0.75})
-
-ppretty('image_size',[9,7])
 
 end%function:plot_visresp_inRF_outRF_SAT()
 

@@ -1,92 +1,129 @@
-function [ ] = plot_sdf_reward_SEF( spikes , ninfo , moves , binfo , Adiff )
-%plot_baseline_activity Summary of this function goes here
+function [ ] = plot_sdf_reward_SEF( spikes , ninfo , binfo )
+%plot_sdf_reward_SEF Summary of this function goes here
 %   Detailed explanation goes here
 
-binfo = index_timing_errors_SAT(binfo, moves);
-
-PLOT_INDIV_CELLS = false;
-
-TIME_REW = 3500 + (-400 : 400);
-NUM_SAMP = length(TIME_REW);
-TIME_PLOT = TIME_REW - 3500;
-
+T_PLOT = (-400 : 800);
+OFFSET_TEST = 200;
 NUM_CELLS = length(spikes);
 
-A_Corr = NaN(NUM_CELLS, NUM_SAMP);
-A_Err = NaN(NUM_CELLS, NUM_SAMP);
+Acorr = NaN(NUM_CELLS, length(T_PLOT));
+Aerr = NaN(NUM_CELLS, length(T_PLOT));
 
-maxA = NaN(NUM_CELLS,1); %divisor for normalization
+normFactor = NaN(1,NUM_CELLS); %normalization
+
+tStartRPE = NaN(1,NUM_CELLS); %stats
+tVecRPE = cell(1,NUM_CELLS);
 
 %compute expected/actual time of reward for each session
-[~,time_rew] = determine_time_reward_SAT(binfo, moves);
-
-% CC_PLOT = find(Adiff.sacc > .05 & Adiff.rew > .05);
-% CC_PLOT = find(Adiff.sacc > .05 & abs(Adiff.rew) < .05);
-CC_PLOT = find(abs(Adiff.sacc) < .05 & Adiff.rew > .05);
-NUM_CC_PLOT = length(CC_PLOT);
-
-%% Compute the SDFs split by condition and trial outcome
+binfo = determine_time_reward_SAT(binfo);
 
 for cc = 1:NUM_CELLS
-  if ~ismember(cc, CC_PLOT); continue; end
-  
+  if (ninfo(cc).RPE ~= 1); continue; end
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials);
   
-  sdf_kk = compute_spike_density_fxn(spikes(cc).SAT);
-  sdf_kk = align_signal_on_response(sdf_kk, double(moves(kk).resptime) + time_rew{kk});
-  
-  %remove trials with poor unit isolation
-  if (ninfo(cc).iRem1)
-    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-  end
-  
-  %index by condition
-  idx_cond = ((binfo(kk).condition == 1) & ~TRIAL_POOR_ISOLATION);
+  idxIso = false(1,binfo(kk).num_trials);
+  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   
   %index by trial outcome
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-  idx_err = (~binfo(kk).err_dir & binfo(kk).err_time);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idxErr = (~binfo(kk).err_dir & binfo(kk).err_time);
   
   %compute SDF
-  A_Corr(cc,:) = nanmean(sdf_kk(idx_cond & idx_corr,TIME_REW));
-  A_Err(cc,:) = nanmean(sdf_kk(idx_cond & idx_err,TIME_REW));
+  sdf_cc = compute_spike_density_fxn(spikes(cc).SAT);
+  sdf_cc = align_signal_on_response(sdf_cc, binfo(kk).resptime + binfo(kk).rewtime);
+  
+  sdfAccCorr = sdf_cc(idxAcc & idxCorr, T_PLOT+3500);
+  sdfAccErr = sdf_cc(idxAcc & idxErr, T_PLOT+3500);
+  
+  %compute timing stats for RPE
+  sdfAC_test = sdfAccCorr(:,OFFSET_TEST:end); %offset in time
+  sdfAE_test = sdfAccErr(:,OFFSET_TEST:end);
+  [tStartRPE(cc),tVecRPE{cc}] = compute_time_RPE(sdfAC_test, sdfAE_test, 0.05, 100);
+  tVecRPE{cc} = tVecRPE{cc} - OFFSET_TEST; %correct for offset
+  
+  Acorr(cc,:) = nanmean(sdfAccCorr);
+  Aerr(cc,:) = nanmean(sdfAccErr);
   
   %compute normalization factor
-  maxA(cc) = max(nanmean(sdf_kk(idx_cond,TIME_REW)));
+  normFactor(cc) = max(nanmean(sdf_cc(idxAcc, T_PLOT+3500)));
   
 end%for:cells(kk)
 
+tStartRPE = tStartRPE - OFFSET_TEST; %correct for offset
+
 
 %% Plotting - individual cells
-if (PLOT_INDIV_CELLS)
+
+if (0)
 for cc = 1:NUM_CELLS
+  if (ninfo(cc).RPE ~= 1); continue; end
   
-  linmin = min([A_Corr(cc,:),A_Err(cc,:)]);
-  linmax = max([A_Corr(cc,:),A_Err(cc,:)]);
+  linMin = min([Acorr(cc,:),Aerr(cc,:)]);
+  linMax = max([Acorr(cc,:),Aerr(cc,:)]);
   
   figure(); hold on
-  plot([0 0], [linmin linmax], 'k--')
-  plot(TIME_PLOT, A_Corr(cc,:), 'r-', 'LineWidth',1.0)
-  plot(TIME_PLOT, A_Err(cc,:), 'r:', 'LineWidth',1.0)
-  print_session_unit(gca, ninfo(cc), 'horizontal')
-  ppretty('image_size',[4.8,3])
   
-  pause(0.25)
+  plot([0 0], [linMin linMax], 'k--')
+  plot([tStartRPE(cc) tStartRPE(cc)], [linMin linMax], 'k:')
+  plot(tVecRPE{cc}, linMin, 'k.', 'MarkerSize',8)
+  
+  plot(T_PLOT, Acorr(cc,:), 'r-', 'LineWidth',1.75)
+  plot(T_PLOT, Aerr(cc,:), 'r-', 'LineWidth',0.75)
+  
+  print_session_unit(gca, ninfo(cc), binfo(kk), 'horizontal')
+  ppretty('image_size',[7,3])
+  
+  pause()
   
 end%for:cells(cc)
 end
 
-%% Plotting - across-cell average
-A_Diff = (A_Err - A_Corr) ./ maxA; %normalization
+%% Plotting - across cells
+NUM_SEM = sum([ninfo.RPE] == 1);
 
-% figure(); hold on
-% shaded_error_bar(TIME_PLOT, nanmean(A_Corr), nanstd(A_Corr)/sqrt(NUM_SEM), {'r-'}, false)
-% shaded_error_bar(TIME_PLOT, nanmean(A_Err), nanstd(A_Err)/sqrt(NUM_SEM), {'r:'}, false)
-% ppretty('image_size',[4.8,3])
+%normalization
+Acorr = Acorr ./ normFactor';
+Aerr = Aerr ./ normFactor';
 
 figure(); hold on
-shaded_error_bar(TIME_PLOT, nanmean(A_Diff), nanstd(A_Diff)/sqrt(NUM_CC_PLOT), {'r-'}, false)
-ppretty('image_size',[5,4])
+shaded_error_bar(T_PLOT, nanmean(Acorr), nanstd(Acorr)/sqrt(NUM_SEM), {'r-', 'LineWidth',1.5})
+shaded_error_bar(T_PLOT, nanmean(Aerr), nanstd(Aerr)/sqrt(NUM_SEM), {'r-', 'LineWidth',0.5})
+ytickformat('%3.2f')
+ppretty('image_size',[6,4])
 
-end%function:plot_sdf_error_SEF()
+figure(); hold on
+shaded_error_bar(T_PLOT, nanmean(Aerr-Acorr), nanstd(Aerr-Acorr)/sqrt(NUM_SEM), {'k-', 'LineWidth',1.5})
+ytickformat('%3.2f')
+ppretty('image_size',[6,4])
+
+end%function:plot_sdf_reward_SEF()
+
+
+function [tStart, tVec] = compute_time_RPE( A_corr , A_err , alpha , minLength)
+
+NUM_MISSES_ALLOWED = 5; %can skip up to this number of timepoints
+
+tStart = NaN; %initialization
+tVec = NaN;
+
+[~,NUM_SAMP] = size(A_corr);
+
+H_MW = false(1,NUM_SAMP); %Mann-Whitney U-test
+P_MW = NaN(1,NUM_SAMP);
+for ii = 1:NUM_SAMP
+  [P_MW(ii),H_MW(ii)] = ranksum(A_corr(:,ii), A_err(:,ii), 'alpha',alpha, 'tail','both');
+end%for:samples(ii)
+
+samp_H_1 = find(H_MW);
+dsamp_H_1 = diff(samp_H_1);
+NUM_DSAMP = length(dsamp_H_1);
+
+for ii = 1:(NUM_DSAMP-minLength+1)
+  if (sum(dsamp_H_1(ii : ii+minLength-1)) <= (minLength+NUM_MISSES_ALLOWED))
+    tStart = samp_H_1(ii);
+    tVec = samp_H_1;
+    break
+  end
+end%for:num-dsamp-estimates(ii)
+
+end%util:compute_time_RPE()

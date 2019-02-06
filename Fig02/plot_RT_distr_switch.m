@@ -2,7 +2,7 @@ function [  ] = plot_RT_distr_switch( info , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
-CONDITION = 'acc'; %'acc' or 'fast'
+CONDITION = 'fast'; %'acc' or 'fast'
 PLOT_TYPE = 'cdf'; %'pdf' or 'cdf'
 
 MIN_NUM_TRIALS = 10;
@@ -87,11 +87,12 @@ figure(); hold on
 shaded_error_bar(RT_BIN, mean(RT_Start_avg), std(RT_Start_avg)/sqrt(NUM_SESSION), {'Color',[.4 .4 .4]})
 shaded_error_bar(RT_BIN, mean(RT_End_avg), std(RT_End_avg)/sqrt(NUM_SESSION), {'Color','k'})
 plot(nanmean(RT_dline)*ones(1,2), [0 0.15], 'k--', 'LineWidth',1.5)
+ytickformat('%2.1f')
 
 if strcmp(CONDITION, 'acc')
   xlim([100 1000])
 elseif strcmp(CONDITION, 'fast')
-  xlim([100 600])
+  xlim([100 1000])
 end
 
 ppretty()

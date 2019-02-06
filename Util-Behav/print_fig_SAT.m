@@ -10,7 +10,7 @@ else
   error('Input "format" must either be "-dtiff" or "-depsc2"')
 end
 
-print(curr_fig, ['~/Dropbox/tmp/',ninfo_cc.sess,'-',ninfo_cc.unit,file_ext], format)
+print(curr_fig, ['~/Dropbox/ZZtmp/',ninfo_cc.sess,'-',ninfo_cc.unit,file_ext], format)
 
 end%util:print_fig_SAT()
 

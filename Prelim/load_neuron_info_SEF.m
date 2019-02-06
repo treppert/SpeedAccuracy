@@ -26,9 +26,10 @@ sess_num = num2cell(uint8(xlsread(file, monkey, build_col('C',index(1),index(2))
 [~,unit] = xlsread(file, monkey, build_col('E',index(1),index(2)));
 
 %visual response
-[~,visType] = xlsread(file, monkey, build_col('L',index(1),index(2)));
-visGrade = num2cell(uint8(xlsread(file, monkey, build_col('M',index(1),index(2)))));
-[~,RF] = xlsread(file, monkey, build_col('N',index(1),index(2)));
+% [~,visType] = xlsread(file, monkey, build_col('L',index(1),index(2)));
+visGrade = num2cell(xlsread(file, monkey, build_col('L',index(1),index(2))));
+[~,RF] = xlsread(file, monkey, build_col('M',index(1),index(2)));
+visTestTS = num2cell(logical(xlsread(file, monkey, build_col('O',index(1),index(2)))));
 
 for cc = 1:length(RF)
   RF{cc} = str2num(RF{cc});
@@ -39,15 +40,14 @@ isolation = num2cell(uint8(xlsread(file, monkey, build_col('T',index(1),index(2)
 iRem_1 = num2cell( uint16(xlsread(file, monkey, build_col('U',index(1),index(2)))) );
 iRem_2 = num2cell( uint16(xlsread(file, monkey, build_col('V',index(1),index(2)))) );
 
-%event-related modulation
-% [~,bline] = xlsread(file, monkey, build_col('R',index(1),index(2)));
-% rewAcc = num2cell( (xlsread(file, monkey, build_col('Z',index(1),index(2)))) );
-% rewFast = num2cell( (xlsread(file, monkey, build_col('AA',index(1),index(2)))) );
+%reward prediction error
+RPE = num2cell(xlsread(file, monkey, build_col('W',index(1),index(2))));
 
 %combine information into struct array
 info = struct('sess',sess, 'snum',sess_num, 'unit',unit, ...
-  'visType',visType, 'visGrade',visGrade, 'RF',RF, ...
-  'isolation',isolation, 'iRem1',iRem_1, 'iRem2',iRem_2);
+  'visGrade',visGrade, 'visTestTS',visTestTS, 'RF',RF, ...
+  'isolation',isolation, 'iRem1',iRem_1, 'iRem2',iRem_2, ...
+  'RPE',RPE);
 
 info = orderfields(info);
 

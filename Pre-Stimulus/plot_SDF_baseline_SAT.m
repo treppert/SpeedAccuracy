@@ -1,64 +1,69 @@
-function [  ] = plot_SDF_baseline_SAT( ninfo , spikes , binfo , moves )
+function [  ] = plot_SDF_baseline_SAT( ninfo , spikes , binfo )
 %plot_avg_sdf_baseline Summary of this function goes here
 %   Detailed explanation goes here
 
-NORMALIZE = true;
-MIN_GRADE_VIS = 3; %scale out of 5
 NUM_CELLS = length(spikes);
+NORMALIZE = true;
+MIN_GRADE = 0.5;
 
 %indexes to plot re. stimulus appearance
-TIME_BASE = (-700 : -1);
-IDX_BASE = TIME_BASE + 3500;
+TIME_BASE = (-600 : -1);
 
-NUM_SAMP = length(TIME_BASE);
-
-binfo = index_timing_errors_SAT(binfo, moves);
-
-bline_acc = NaN(NUM_CELLS,NUM_SAMP);
-bline_fast = NaN(NUM_CELLS,NUM_SAMP);
-bline_avg = NaN(1,NUM_CELLS); %for normalization
+blineAcc = NaN(NUM_CELLS,length(TIME_BASE));
+blineFast = NaN(NUM_CELLS,length(TIME_BASE));
+blineMean = NaN(1,NUM_CELLS); %for normalization
 
 %exclude cells based on grade of visual responsiveness
-grade_Vis = [ninfo.vis];
+gradeVis = [ninfo.visGrade];
 
 for cc = 1:NUM_CELLS
-  if (grade_Vis(cc) < MIN_GRADE_VIS); continue; end
-  
+  if (gradeVis(cc) < MIN_GRADE); continue; end
+%   if (gradeVis(cc) ~= 0); continue; end
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials);
   
-  %remove trials with poor unit isolation
-  if (ninfo(cc).iRem1)
-    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-  end
+  %index by isolation quality
+  idx_iso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  
+  %index by condition
+  idxFast = ((binfo(kk).condition == 3) & ~idx_iso);
+  idxAcc = ((binfo(kk).condition == 1) & ~idx_iso);
+  
+  %index by trial outcome
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
   
   sdf_stim = compute_spike_density_fxn(spikes(cc).SAT);
 
-  %index by condition
-  idx_Acc =  ((binfo(kk).condition == 1) & ~TRIAL_POOR_ISOLATION);
-  idx_Fast = ((binfo(kk).condition == 3) & ~TRIAL_POOR_ISOLATION);
+  blineAcc(cc,:) = mean(sdf_stim(idxAcc & idxCorr,TIME_BASE + 3500));
+  blineFast(cc,:) = mean(sdf_stim(idxFast & idxCorr,TIME_BASE + 3500));
   
-  %index by trial outcome
-  idx_corr = ~(binfo(kk).err_time | binfo(kk).err_dir | binfo(kk).err_hold);
-  
-  bline_acc(cc,:) = mean(sdf_stim(idx_Acc & idx_corr,IDX_BASE));
-  bline_fast(cc,:) = mean(sdf_stim(idx_Fast & idx_corr,IDX_BASE));
-  
-  %record average baseline across Acc and Fast for normalization
-  bline_avg(cc) = nanmean([bline_acc(cc,:), bline_fast(cc,:)]);
+  %record mean baseline across Acc and Fast for normalization
+  blineMean(cc) = nanmean([blineAcc(cc,:), blineFast(cc,:)]);
   
 end%for:cells(kk)
 
 if (NORMALIZE)
-  bline_acc = bline_acc ./ bline_avg';
-  bline_fast = bline_fast ./ bline_avg';
+  blineAcc = blineAcc ./ blineMean';
+  blineFast = blineFast ./ blineMean';
 end
 
+%% Plotting
+NUM_SEM = sum(gradeVis >= MIN_GRADE);
+
 figure(); hold on
-shaded_error_bar(TIME_BASE, nanmean(bline_fast), nanstd(bline_fast)/sqrt(NUM_CELLS), {'-', 'Color',[0 .7 0]})
-shaded_error_bar(TIME_BASE, nanmean(bline_acc), nanstd(bline_acc)/sqrt(NUM_CELLS), {'r-'})
+shaded_error_bar(TIME_BASE, nanmean(blineFast), nanstd(blineFast)/sqrt(NUM_SEM), {'-', 'Color',[0 .7 0]})
+shaded_error_bar(TIME_BASE, nanmean(blineAcc), nanstd(blineAcc)/sqrt(NUM_SEM), {'r-'})
 xlim([TIME_BASE(1)-10, TIME_BASE(end)+10]);
 ppretty('image_size',[6.4,4])
+% print('~/Dropbox/ZZtmp/blineVis-Eu.eps', '-depsc2')
+
+pause(0.25)
+
+figure(); hold on
+shaded_error_bar(TIME_BASE, nanmean(blineFast-blineAcc), nanstd(blineFast-blineAcc)/sqrt(NUM_SEM), 'k-')
+xlim([TIME_BASE(1)-10, TIME_BASE(end)+10]);
+ppretty('image_size',[6.4,4])
+% print('~/Dropbox/ZZtmp/blineDiffVis-Eu.eps', '-depsc2')
+
 
 end%util:plot_SDF_baseline_SAT()
 

@@ -1,4 +1,4 @@
-function [  ] = plot_Perr_vs_RT_vs_cond( moves , info )
+function [ errRate ] = plot_Perr_vs_RT_vs_cond( moves , binfo )
 %plot_errorrate_vs_RT_vs_cond Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,31 +14,37 @@ RT_N = NaN(1,NUM_SESSION);
 
 for kk = 1:NUM_SESSION
   
-  idx_err = (info(kk).err_dir);
+  idx_err = (binfo(kk).err_dir);
   
-  idx_acc = (info(kk).condition == 1);
-  idx_fast = (info(kk).condition == 3);
-  idx_ntrl = (info(kk).condition == 4);
+  idx_acc = (binfo(kk).condition == 1);
+  idx_fast = (binfo(kk).condition == 3);
+%   idx_ntrl = (info(kk).condition == 4);
   
   RT_A(kk) = nanmean(moves(kk).resptime(idx_acc));
   RT_F(kk) = nanmean(moves(kk).resptime(idx_fast));
-  RT_N(kk) = nanmean(moves(kk).resptime(idx_ntrl));
+%   RT_N(kk) = nanmean(moves(kk).resptime(idx_ntrl));
   
   ER_A(kk) = sum(idx_err & idx_acc) / sum(idx_acc);
   ER_F(kk) = sum(idx_err & idx_fast) / sum(idx_fast);
-  ER_N(kk) = sum(idx_err & idx_ntrl) / sum(idx_ntrl);
+%   ER_N(kk) = sum(idx_err & idx_ntrl) / sum(idx_ntrl);
   
 end%for:session(kk)
 
-X_PLOT = [mean(RT_F) mean(RT_N) mean(RT_A)];
-XERR_PLOT = [std(RT_F) std(RT_N) std(RT_A)] / sqrt(NUM_SESSION);
+if (nargout > 0)
+  errRate = struct('acc',ER_A, 'fast',ER_F);
+  return
+end
 
-Y_PLOT = [mean(ER_F) mean(ER_N) mean(ER_A)];
-YERR_PLOT = [std(ER_F) std(ER_N) std(ER_A)] / sqrt(NUM_SESSION);
+% figure(); hold on
+% errorbarxy(mean(RT_F), mean(ER_F), std(RT_F)/sqrt(NUM_SESSION), std(ER_F)/sqrt(NUM_SESSION), {'g-','g','g'})
+% errorbarxy(mean(RT_A), mean(ER_A), std(RT_A)/sqrt(NUM_SESSION), std(ER_A)/sqrt(NUM_SESSION), {'r-','r','r'})
+% ytickformat('%3.2f')
+% xlim([300 600]); ppretty('image_size',[4.8,3])
 
 figure(); hold on
-errorbarxy(X_PLOT, Y_PLOT, XERR_PLOT, YERR_PLOT, {'k-','k','k'})
-xlim([300 600]); ppretty('image_size',[4.8,3])
+plot([RT_F ; RT_A], [ER_F ; ER_A], 'k-')
+ytickformat('%3.2f')
+ppretty('image_size',[4.8,3])
 
 end%fxn:plot_errorrate_vs_RT_vs_cond()
 

@@ -50,6 +50,7 @@ errorbar_no_caps(TRIAL_PLOT, mean(pErrF2A), 'err',std(pErrF2A)/sqrt(NUM_SEM), 'c
 errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(pErrA2F), 'err',std(pErrA2F)/sqrt(NUM_SEM), 'color','k')
 
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
+ytickformat('%3.2f')
 ppretty()
 
 end%function:plot_probTE_vs_switch()
