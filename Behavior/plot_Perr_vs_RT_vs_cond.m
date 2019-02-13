@@ -6,11 +6,11 @@ NUM_SESSION = length(moves);
 
 ER_A = NaN(1,NUM_SESSION);
 ER_F = NaN(1,NUM_SESSION);
-ER_N = NaN(1,NUM_SESSION);
+% ER_N = NaN(1,NUM_SESSION);
 
 RT_A = NaN(1,NUM_SESSION);
 RT_F = NaN(1,NUM_SESSION);
-RT_N = NaN(1,NUM_SESSION);
+% RT_N = NaN(1,NUM_SESSION);
 
 for kk = 1:NUM_SESSION
   
@@ -35,16 +35,18 @@ if (nargout > 0)
   return
 end
 
-% figure(); hold on
-% errorbarxy(mean(RT_F), mean(ER_F), std(RT_F)/sqrt(NUM_SESSION), std(ER_F)/sqrt(NUM_SESSION), {'g-','g','g'})
-% errorbarxy(mean(RT_A), mean(ER_A), std(RT_A)/sqrt(NUM_SESSION), std(ER_A)/sqrt(NUM_SESSION), {'r-','r','r'})
-% ytickformat('%3.2f')
-% xlim([300 600]); ppretty('image_size',[4.8,3])
-
 figure(); hold on
-plot([RT_F ; RT_A], [ER_F ; ER_A], 'k-')
+plot([mean(RT_F),mean(RT_A)], [mean(ER_F),mean(ER_A)], 'k-')
+errorbarxy(mean(RT_F), mean(ER_F), std(RT_F)/sqrt(NUM_SESSION), std(ER_F)/sqrt(NUM_SESSION), {'g-','g','g'})
+errorbarxy(mean(RT_A), mean(ER_A), std(RT_A)/sqrt(NUM_SESSION), std(ER_A)/sqrt(NUM_SESSION), {'r-','r','r'})
 ytickformat('%3.2f')
+xlim([250 600]); ylim([.05 .4])
 ppretty('image_size',[4.8,3])
+
+% figure(); hold on
+% plot([RT_F ; RT_A], [ER_F ; ER_A], 'k-')
+% ytickformat('%3.2f')
+% ppretty('image_size',[4.8,3])
 
 end%fxn:plot_errorrate_vs_RT_vs_cond()
 
