@@ -1,106 +1,57 @@
-function [ ninfo ] = load_neuron_info_SAT( area , varargin )
+function [ ninfoSAT ] = load_neuron_info_SAT( )
 %load_neuron_info_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'monkey=','Da'}});
 
-FILE_XLSX = '~/Dropbox/Speed Accuracy/__SC_SAT/Task_Info/Session_Info_SAT.xlsx';
-% load('~/Documents/SAT/info_moves_SAT.mat', 'movesDa','movesEu','movesQ','movesS')
+FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
+MONKEY = {'Darwin','Euler','Quincy','Seymour'};
 
-%% Initializations
+NUM_UNIT = [98, 42, 160, 158]; %Da, Eu, Q, S
+ROW_INIT = 6; %row of first unit for each monkey
 
-%Excel spreadsheet column labels -- depth|unit|hemi|session|num|RF|MF|type
-LETTER_SC = {'I','C','E','B','A','M','N','D'};
-LETTER_Q = {'K','C','E','B','A','I','J','D'};
-LETTER_S = {'L','C','E','B','A','H','I','D'};
+COL_AREA_DE = 'F';
 
-%spreadsheet row limits
-IDX_SC = [4, 10];
-IDX_Q = [4, 163];
-IDX_S = [4, 161];
-IDX_Da_FEF = [14, 59];
-IDX_Da_SEF = [63, 107];
-IDX_Eu_SEF = [14, 48];
+COL_UNIT_NUM = 'B';
+COL_SESS_NUM = 'C';
+COL_SESS = 'D';
+COL_UNIT = 'E';
 
-if strcmp(area, 'sc')
+COL_REM_ISO_DE = 'T';
+
+ninfoSAT = [];
+for mm = 1:4
   
-  info_Da_SC = load_info_xlsx_SAT(LETTER_SC, IDX_SC, FILE_XLSX, 'monkey','Darwin');
-  info_Eu_SC = load_info_xlsx_SAT(LETTER_SC, IDX_SC, FILE_XLSX, 'monkey','Euler');
+  idx_mm = [ROW_INIT, ROW_INIT+NUM_UNIT(mm)-1];
   
-  ninfo = [info_Da_SC; info_Eu_SC]';
+  unitNum = num2cell(uint16(xlsread(FILE, MONKEY{mm}, build_col(COL_UNIT_NUM,idx_mm))));
+  sessNum = num2cell(uint16(xlsread(FILE, MONKEY{mm}, build_col(COL_SESS_NUM,idx_mm))));
+  [~,sess] = xlsread(FILE, MONKEY{mm}, build_col(COL_SESS,idx_mm));
+  [~,unit] = xlsread(FILE, MONKEY{mm}, build_col(COL_UNIT,idx_mm));
   
-elseif strcmp(area, 'fef')
-  
-  info_Da_FEF = [];
-  info_Q_FEF = [];
-  info_S_FEF = [];
-  
-  if strcmp(args.monkey, 'Da')
-    info_Da_FEF = load_info_xlsx_SAT(LETTER_SC, IDX_Da_FEF, FILE_XLSX, 'monkey','Darwin');
-  elseif strcmp(args.monkey, 'Q')
-    info_Q_FEF = load_info_xlsx_SAT(LETTER_Q, IDX_Q, FILE_XLSX, 'monkey','Quincy');
-  elseif strcmp(args.monkey, 'S')
-    info_S_FEF = load_info_xlsx_SAT(LETTER_S, IDX_S, FILE_XLSX, 'monkey','Seymour');
-  else
-    error('Input "monkey" not recognized')
+  if ismember(MONKEY{mm}, {'Darwin','Euler'})
+    [~,area] = xlsread(FILE, MONKEY{mm}, build_col(COL_AREA_DE,idx_mm));
+    [~,tRemIso] = xlsread(FILE, MONKEY{mm}, build_col(COL_REM_ISO_DE,idx_mm));
+    for cc = 1:NUM_UNIT(mm)
+      tRemIso{cc} = str2double(tRemIso{cc});
+    end
+  elseif ismember(MONKEY{mm}, {'Quincy','Seymour'})
+    area = cell(NUM_UNIT(mm),1);
+    tRemIso = cell(NUM_UNIT(mm),1);
+    for cc = 1:NUM_UNIT(mm)
+      area{cc} = 'FEF';
+      tRemIso{cc} = 0;
+    end
   end
   
-  ninfo = [info_Da_FEF; info_Q_FEF; info_S_FEF]';
+  ninfo_mm = struct('monkey',MONKEY{mm}, 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
+    'area',area, 'tRemIso',tRemIso);
   
-elseif strcmp(area, 'sef')
+  ninfoSAT = cat(1, ninfoSAT, ninfo_mm);
   
-  info_Da_SEF = [];
-  info_Eu_SEF = [];
-  
-  if strcmp(args.monkey, 'Da')
-    info_Da_SEF = load_info_xlsx_SAT(LETTER_SC, IDX_Da_SEF, FILE_XLSX, 'monkey','Darwin');
-  elseif strcmp(args.monkey, 'Eu')
-    info_Eu_SEF = load_info_xlsx_SAT(LETTER_SC, IDX_Eu_SEF, FILE_XLSX, 'monkey','Euler');
-  else
-    error('Input "monkey" not recognized')
-  end
-  
-  ninfo = [info_Da_SEF; info_Eu_SEF];
-  
+end%for:monkey(mm)
+
+end%fxn:load_neuron_info_SAT_()
+
+function [ col ] = build_col( letter , idx )
+  col = [upper(letter),num2str(idx(1)),':',upper(letter),num2str(idx(2))];
 end
-
-end%function:load_neuron_info_SAT()
-
-
-
-%load raw info from Excel spreadsheet
-function [ info ] = load_info_xlsx_SAT( col_header , index , file , varargin )
-
-args = getopt(varargin, {{'monkey=','Darwin'}});
-
-%collect relevant information from Excel spreadsheet
-[~,unit] = xlsread(file, args.monkey, build_col(col_header{2},index(1),index(2)));
-[~,hemi] = xlsread(file, args.monkey, build_col(col_header{3},index(1),index(2)));
-[~,session] = xlsread(file, args.monkey, build_col(col_header{4},index(1),index(2)));
-session_num = uint8(xlsread(file, args.monkey, build_col(col_header{5},index(1),index(2))));
-[~,RF] = xlsread(file, args.monkey, build_col(col_header{6},index(1),index(2)));
-[~,MF] = xlsread(file, args.monkey, build_col(col_header{7},index(1),index(2)));
-[~,type] = xlsread(file, args.monkey, build_col(col_header{8},index(1),index(2)));
-
-NUM_NEURONS = length(session_num);
-
-monkey = cell(NUM_NEURONS,1);
-
-for kk = 1:NUM_NEURONS
-  RF{kk} = str2num(RF{kk}) + 1;
-  MF{kk} = str2num(MF{kk}) + 1;
-  monkey{kk} = args.monkey(1);
-end
-
-info = struct('sess',session, 'session_num',num2cell(session_num), 'unit',unit, ...
-  'type',type, 'hemi',hemi, 'move_field',MF, 'resp_field',RF, 'monkey',monkey);
-
-info = orderfields(info);
-
-end%function:load_data_xlsx_SAT()
-
-%utility to specify cells in Excel spreadsheet
-function [ col ] = build_col( letter , idx_1 , idx_2 )
-  col = [upper(letter),num2str(idx_1),':',upper(letter),num2str(idx_2)];
-end%function:build_col()
-

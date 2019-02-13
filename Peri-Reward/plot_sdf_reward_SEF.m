@@ -54,7 +54,7 @@ tStartRPE = tStartRPE - OFFSET_TEST; %correct for offset
 
 %% Plotting - individual cells
 
-if (0)
+if (1)
 for cc = 1:NUM_CELLS
   if (ninfo(cc).RPE ~= 1); continue; end
   
