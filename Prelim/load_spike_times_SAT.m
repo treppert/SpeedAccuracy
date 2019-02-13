@@ -45,7 +45,6 @@ switch (session(1))
     error('Monkey initial not recognized for unit %s', unit)
 end%switch:initial
 
-% ROOT_DIR = ['~/Documents/SAT/', monkey, '/'];
 ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
 
 if strcmp(task, 'SAT')

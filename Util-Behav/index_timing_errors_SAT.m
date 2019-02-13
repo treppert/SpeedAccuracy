@@ -1,4 +1,4 @@
-function [ binfo ] = index_timing_errors_SAT( binfo , moves )
+function [ binfo ] = index_timing_errors_SAT( binfo )
 %index_timing_errors_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,7 +14,7 @@ for kk = 1:NUM_SESSION
   idx_acc = (binfo(kk).condition == 1);
   idx_fast = (binfo(kk).condition == 3);
   
-  resptime = moves(kk).resptime;
+  resptime = binfo(kk).resptime;
   
   ierr_time_Fast = (idx_fast & ((resptime > tgt_dline) | (resptime > MAX_DLINE_FAST)));
   ierr_time_Acc = (idx_acc & (resptime < tgt_dline));

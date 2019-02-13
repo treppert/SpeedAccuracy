@@ -1,4 +1,4 @@
-function [ moves , binfo , varargout ] = parse_saccades_SAT( gaze , binfo )
+function [ moves , varargout ] = parse_saccades_SAT( gaze , binfo )
 %[ moves ] = parse_saccades_vandy( data , info )
 
 global DEBUG VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
@@ -111,9 +111,6 @@ for kk = 1:NUM_SESSIONS
   end
   
 end%for:sessions(kk)
-
-%make sure indexing of timing errors is correct
-binfo = index_timing_errors_SAT(binfo, moves);
 
 if (nargout > 2)
   varargout{1} = moves_all;

@@ -1,4 +1,4 @@
-function [ info , gaze ] = load_behavior_data_SAT( monkey )
+function [ binfo , gaze ] = load_behavior_data_SAT( monkey )
 %load_behavior_data_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -31,9 +31,9 @@ FIELDS_INFO = {'session','num_trials','condition', ...
   'err_dir','err_time','err_hold','err_nosacc', ...
   'octant','resptime','fixtime','rewtime'};
 
-info = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); info = orderfields(info);
+binfo = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); binfo = orderfields(binfo);
 gaze = new_struct(FIELDS_GAZE, 'dim',[1,NUM_SESSIONS]); gaze = orderfields(gaze);
-info = struct('MG',info, 'SAT',info);
+binfo = struct('MG',binfo, 'SAT',binfo);
 gaze = struct('MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
@@ -45,13 +45,14 @@ end%for:sessions(kk)
 
 %% Load task/TEMPO information
 
-info.MG = load_task_info(info.MG, sessions, num_trials.MG, 'MG');
-info.SAT = load_task_info(info.SAT, sessions, num_trials.SAT, 'SEARCH');
+binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
+binfo.SAT = load_task_info(binfo.SAT, sessions, num_trials.SAT, 'SEARCH');
+binfo.SAT = index_timing_errors_SAT(binfo.SAT);
 
 %% Load saccade data
 
-gaze.MG = load_gaze_data(info.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
-gaze.SAT = load_gaze_data(info.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
+gaze.MG = load_gaze_data(binfo.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
+gaze.SAT = load_gaze_data(binfo.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 end%function:load_behavior_data_SAT()
 
@@ -67,9 +68,9 @@ sessions.SAT = dir([root_dir, monkey, '/*_SEARCH.mat']);
 sessions.MG = dir([root_dir, monkey, '/*_MG.mat']);
 
 %remove sessions without data from SEF (Da & Eu)
-if ismember(monkey, {'Darwin','Euler'})
-  sessions.SAT(1) = [];
-end
+% if ismember(monkey, {'Darwin','Euler'})
+%   sessions.SAT(1) = [];
+% end
 
 num_sessions = length(sessions.SAT);
 

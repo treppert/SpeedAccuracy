@@ -32,7 +32,7 @@ for mm = 1:4
     [~,area] = xlsread(FILE, MONKEY{mm}, build_col(COL_AREA_DE,idx_mm));
     [~,tRemIso] = xlsread(FILE, MONKEY{mm}, build_col(COL_REM_ISO_DE,idx_mm));
     for cc = 1:NUM_UNIT(mm)
-      tRemIso{cc} = str2double(tRemIso{cc});
+      tRemIso{cc} = str2num(tRemIso{cc});
     end
   elseif ismember(MONKEY{mm}, {'Quincy','Seymour'})
     area = cell(NUM_UNIT(mm),1);
@@ -43,7 +43,7 @@ for mm = 1:4
     end
   end
   
-  ninfo_mm = struct('monkey',MONKEY{mm}, 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
+  ninfo_mm = struct('monkey',MONKEY{mm}(1), 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
     'area',area, 'tRemIso',tRemIso);
   
   ninfoSAT = cat(1, ninfoSAT, ninfo_mm);

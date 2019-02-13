@@ -4,8 +4,8 @@ function [ idx_poor_isolation ] = identify_trials_poor_isolation_SAT( ninfo , nu
 
 idx_poor_isolation = false(1,num_trials);
 
-if (ninfo.iRem1)
-  idx_poor_isolation(ninfo.iRem1 : ninfo.iRem2) = true;
+if ~isnan(ninfo.tRemIso)
+  idx_poor_isolation(ninfo.tRemIso(1) : ninfo.tRemIso(2)) = true;
 end
 
 end%util:identify_trials_poor_isolation_SAT()
