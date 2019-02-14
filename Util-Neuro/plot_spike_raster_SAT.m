@@ -2,7 +2,13 @@ function [  ] = plot_spike_raster_SAT( binfo , moves , ninfo , spikes , varargin
 %plot_spike_raster Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {'sort_RT'});
+args = getopt(varargin, {'sort_RT', {'area=','SC'}, {'monkey=','D'}});
+
+idx_area = ismember({ninfo.area}, args.area);
+idx_monkey = ismember({ninfo.monkey}, args.monkey);
+
+ninfo = ninfo(idx_area & idx_monkey);
+spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(ninfo);
 IDX_PLOT = (-500 : 1000);

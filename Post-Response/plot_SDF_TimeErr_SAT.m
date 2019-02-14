@@ -46,7 +46,8 @@ for cc = 1:NUM_CELLS
     sdfAccErr(dd,:) = nanmean(sdf_kk(idxAcc & idxErr & idx_dd, T_PLOT));
   end
   
-  %plotting
+  
+  %% Plotting
   figure()
   
   tmp = [sdfAccCorr, sdfAccErr];

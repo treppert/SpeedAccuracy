@@ -1,12 +1,20 @@
-function [ ] = plot_raster_vs_direction_SAT( binfo , moves , ninfo , spikes )
+function [ ] = plot_raster_vs_direction_SAT( binfo , moves , ninfo , spikes , varargin )
 %plot_baseline_activity Summary of this function goes here
 %   Detailed explanation goes here
+
+args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
+
+idx_area = ismember({ninfo.area}, args.area);
+idx_monkey = ismember({ninfo.monkey}, args.monkey);
+
+ninfo = ninfo(idx_area & idx_monkey);
+spikes = spikes(idx_area & idx_monkey);
 
 EVENT_ALIGN = 'stimulus';
 % EVENT_ALIGN = 'response';
 CONDITION = 'acc';
 % CONDITION = 'fast';
-SORT_BY_RT = false;
+SORT_BY_RT = true;
 
 %% Initializations
 
@@ -110,7 +118,7 @@ for cc = 1:NUM_CELLS
     if strcmp(EVENT_ALIGN, 'response'); RT_dd = -RT_dd; end
 
     [spikes, trials] = prepare_raster_spikes(spikes_x_dir(dd,cc).times(idx_dd), 'tlim',T_LIM);
-    plot(spikes, trials, '.', 'Color',COLOR_RASTER, 'MarkerSize',2)
+    plot(spikes, trials, '.', 'Color',COLOR_RASTER, 'MarkerSize',4)
 
     %plot RT
     for jj = 1:num_trials_(dd,cc)
