@@ -13,7 +13,7 @@ spikes = spikes(idx_area & idx_monkey);
 NUM_CELLS = length(spikes);
 SORT_X_RT = true;
 
-T_PLOT  = 3500 + (-400 : 800);
+T_PLOT  = 3500 + (-200 : 800);
 IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 
 for cc = 1:NUM_CELLS
@@ -24,7 +24,7 @@ for cc = 1:NUM_CELLS
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-  idxCond = ((binfo(kk).condition == 3) & ~idxIso);
+  idxCond = ((binfo(kk).condition == 1) & ~idxIso);
   %index by trial outcome
   idxOutcome = ~(binfo(kk).err_dir | binfo(kk).err_hold);
   
@@ -50,7 +50,7 @@ for cc = 1:NUM_CELLS
     %% Plotting
     subplot(3,3,IDX_DD_PLOT(dd)); hold on
     
-    plot(tSpike-3500, trialSpike, '.', 'Color',[0 .5 0], 'MarkerSize',4)
+    plot(tSpike-3500, trialSpike, '.', 'Color',[.5 0 0], 'MarkerSize',4)
     plot([0 0], [0 nTrialDD], 'k--', 'LineWidth',1.5)
     if (SORT_X_RT)
       plot(RT, (1:nTrialDD), 'o', 'Color',[.4 .4 .4], 'MarkerSize',3)
@@ -76,7 +76,7 @@ for cc = 1:NUM_CELLS
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   ppretty('image_size',[12,8])
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-FAST.tif'], '-dtiff')
+  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-ACC.tif'], '-dtiff')
   pause(0.1); close()
   
 end%for:cells(cc)
