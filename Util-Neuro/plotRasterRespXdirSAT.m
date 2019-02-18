@@ -1,5 +1,5 @@
-function [  ] = plotRasterStimRespSAT( binfo , moves , ninfo , spikes , varargin )
-%plotRasterStimRespSAT Summary of this function goes here
+function [  ] = plotRasterRespXdirSAT( binfo , moves , ninfo , spikes , varargin )
+%plotRasterRespXdirSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
@@ -13,7 +13,7 @@ spikes = spikes(idx_area & idx_monkey);
 NUM_CELLS = length(spikes);
 SORT_X_RT = true;
 
-T_PLOT  = 3500 + (-200 : 800);
+T_PLOT  = 3500 + (-600 : 600);
 IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 
 for cc = 1:NUM_CELLS
@@ -26,7 +26,7 @@ for cc = 1:NUM_CELLS
   %index by condition
   idxCond = ((binfo(kk).condition == 1) & ~idxIso);
   %index by trial outcome
-  idxOutcome = ~(binfo(kk).err_dir | binfo(kk).err_hold);
+  idxOutcome = (binfo(kk).err_dir);
   
   yMax = 0;
   for dd = 1:8 %loop over directions and plot
@@ -37,7 +37,12 @@ for cc = 1:NUM_CELLS
     spikesDD = spikes(cc).SAT(idxCond & idxOutcome & idxDD);
     nTrialDD = sum(idxCond & idxOutcome & idxDD);
     
-    RT = moves(kk).resptime(idxCond & idxOutcome & idxDD);
+    %plot spike times relative to time of primary saccade
+    RT = double(moves(kk).resptime(idxCond & idxOutcome & idxDD));
+    for jj = 1:nTrialDD
+      spikesDD{jj} = spikesDD{jj} - RT(jj);
+    end
+    
     if (SORT_X_RT)
       [RT,idxRT] = sort(RT);
     else
@@ -50,28 +55,31 @@ for cc = 1:NUM_CELLS
     %% Plotting
     subplot(3,3,IDX_DD_PLOT(dd)); hold on
     
-    plot(tSpike-3500, trialSpike, '.', 'Color',[1 .5 .5], 'MarkerSize',4)
+    plot(tSpike-3500, trialSpike, '.', 'Color',[.3 .7 .4], 'MarkerSize',4)
     plot([0 0], [0 nTrialDD], 'k--', 'LineWidth',1.5)
     if (SORT_X_RT)
-      plot(RT, (1:nTrialDD), 'o', 'Color',[.4 .4 .4], 'MarkerSize',3)
+      plot(-RT, (1:nTrialDD), 'o', 'Color',[.4 .4 .4], 'MarkerSize',3)
     end
     
     if (IDX_DD_PLOT(dd) == 4)
       ylabel('Trial')
-      yTicks = get(gca, 'ytick');
       xticklabels([])
     elseif (IDX_DD_PLOT(dd) == 8)
-      xlabel('Time from stimulus (ms)')
-      xTicks = get(gca, 'xtick');
+      xlabel('Time from response (ms)')
+%       xTicks = get(gca, 'xtick');
       yticklabels([])
     else
       xticklabels([])
       yticklabels([])
     end
     
-    xlim([-200 800])
+    xlim([T_PLOT(1) T_PLOT(end)]-3500)
+    xticks((T_PLOT(1) : 200 : T_PLOT(end)) - 3500)
     yLim = get(gca, 'ylim');
-    if (yLim(2) > yMax); yMax = yLim(2); end
+    if (yLim(2) > yMax)
+      yMax = yLim(2);
+      yTicks = get(gca, 'ytick');
+    end
     
     pause(0.1)
   end%for:direction(dd)
@@ -79,7 +87,7 @@ for cc = 1:NUM_CELLS
   %make axis ticks and limits consistent across plots
   for dd = 1:8
     subplot(3,3,IDX_DD_PLOT(dd))
-    yticks(yTicks); xticks(xTicks); ylim([0 yMax])
+    yticks(yTicks); ylim([0 yMax])
   end
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
@@ -90,7 +98,7 @@ for cc = 1:NUM_CELLS
   
 end%for:cells(cc)
 
-end%util:plotRasterStimRespSAT()
+end%util:plotRasterRespXdirSAT()
 
 function [ tSpike , trialSpike ] = collectSpikeTimes( spikes , tPlot )
 

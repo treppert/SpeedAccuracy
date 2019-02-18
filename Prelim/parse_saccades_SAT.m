@@ -10,7 +10,7 @@ DEBUG = false;
 
 %% Initializations
 
-NUM_SESSIONS = length(gaze);
+NUM_SESSION = length(gaze);
 TIME_ARRAY = 3500;
 
 VEL_CUT = [30, 50, 100];
@@ -40,9 +40,9 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 
 
 %% Initialize output movement arrays
-moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSIONS]);
+moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSION]);
 
-for kk = 1:NUM_SESSIONS
+for kk = 1:NUM_SESSION
   moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,binfo(kk).num_trials));
   moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,binfo(kk).num_trials)));
   moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,binfo(kk).num_trials)));
@@ -50,12 +50,11 @@ for kk = 1:NUM_SESSIONS
 end%for:sessions(kk)
 
 moves = orderfields(moves);
-moves_all = moves; %struct array for all movements, regardless of task relevance
-
+movesAll = moves; %struct array for all movements, regardless of task relevance
 
 %% **** Movement identification ****
 
-for kk = 1:NUM_SESSIONS
+for kk = 1:NUM_SESSION
   fprintf('***Session %d -- %s (%d trials)\n', kk, binfo(kk).session, binfo(kk).num_trials)
   
   ALLOC_ALL = binfo(kk).num_trials;
@@ -82,7 +81,7 @@ for kk = 1:NUM_SESSIONS
     end
 
     %% Identify all saccades
-    [moves_all(kk), cands_jj, idx_all] = identify_all_saccades(moves_all(kk), cands_jj, idx_all);
+    [movesAll(kk), cands_jj, idx_all] = identify_all_saccades(movesAll(kk), cands_jj, idx_all);
     if isempty(cands_jj); idx_sin_sacc(jj) = true; continue; end
 
     %% Identify task-relevant saccade
@@ -98,22 +97,26 @@ for kk = 1:NUM_SESSIONS
 
   %remove extra memory from struct with all saccades
   for ff = 1:length(FIELDS_LOGICAL)
-    moves_all(kk).(FIELDS_LOGICAL{ff})(idx_all:ALLOC_ALL) = [];
+    movesAll(kk).(FIELDS_LOGICAL{ff})(idx_all:ALLOC_ALL) = [];
   end
   for ff = 1:length(FIELDS_UINT16)
-    moves_all(kk).(FIELDS_UINT16{ff})(idx_all:ALLOC_ALL) = [];
+    movesAll(kk).(FIELDS_UINT16{ff})(idx_all:ALLOC_ALL) = [];
   end
   for ff = 1:length(FIELDS_SINGLE)
-    moves_all(kk).(FIELDS_SINGLE{ff})(idx_all:ALLOC_ALL) = [];
+    movesAll(kk).(FIELDS_SINGLE{ff})(idx_all:ALLOC_ALL) = [];
   end
   for ff = 1:length(FIELDS_VECTOR)
-    moves_all(kk).(FIELDS_VECTOR{ff})(:,idx_all:ALLOC_ALL) = [];
+    movesAll(kk).(FIELDS_VECTOR{ff})(:,idx_all:ALLOC_ALL) = [];
   end
   
 end%for:sessions(kk)
 
-if (nargout > 2)
-  varargout{1} = moves_all;
+if (nargout > 1) %return post-primary saccade
+  movesPP = parse_PostPrimary_sacc_SAT(movesAll, binfo);
+  varargout{1} = movesPP;
+  if (nargout > 2) %return all saccades
+    varargout{2} = movesAll;
+  end
 end
 
 end%function:parse_saccades_SAT()
