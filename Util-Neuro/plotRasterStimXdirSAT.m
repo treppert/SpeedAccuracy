@@ -1,5 +1,5 @@
-function [  ] = plotRasterXDirSAT( binfo , moves , ninfo , spikes , varargin )
-%plotRasterXDirSAT Summary of this function goes here
+function [  ] = plotRasterStimXdirSAT( binfo , moves , ninfo , spikes , varargin )
+%plotRasterStimXdirSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
@@ -19,7 +19,7 @@ IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
-  figure()
+  figure(); ppretty('image_size',[12,8])
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
@@ -50,7 +50,7 @@ for cc = 1:NUM_CELLS
     %% Plotting
     subplot(3,3,IDX_DD_PLOT(dd)); hold on
     
-    plot(tSpike-3500, trialSpike, '.', 'Color',[.5 0 0], 'MarkerSize',4)
+    plot(tSpike-3500, trialSpike, '.', 'Color',[1 .5 .5], 'MarkerSize',4)
     plot([0 0], [0 nTrialDD], 'k--', 'LineWidth',1.5)
     if (SORT_X_RT)
       plot(RT, (1:nTrialDD), 'o', 'Color',[.4 .4 .4], 'MarkerSize',3)
@@ -58,8 +58,15 @@ for cc = 1:NUM_CELLS
     
     if (IDX_DD_PLOT(dd) == 4)
       ylabel('Trial')
+      yTicks = get(gca, 'ytick');
+      xticklabels([])
     elseif (IDX_DD_PLOT(dd) == 8)
       xlabel('Time from stimulus (ms)')
+      xTicks = get(gca, 'xtick');
+      yticklabels([])
+    else
+      xticklabels([])
+      yticklabels([])
     end
     
     xlim([-200 800])
@@ -69,19 +76,21 @@ for cc = 1:NUM_CELLS
     pause(0.1)
   end%for:direction(dd)
   
-  %make y-limits consistent across plots
+  %make axis ticks and limits consistent across plots
   for dd = 1:8
-    subplot(3,3,IDX_DD_PLOT(dd)); ylim([0 yMax])
+    subplot(3,3,IDX_DD_PLOT(dd))
+    yticks(yTicks); xticks(xTicks); ylim([0 yMax])
   end
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   ppretty('image_size',[12,8])
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-ACC.tif'], '-dtiff')
-  pause(0.1); close()
+%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-ACC.tif'], '-dtiff')
+%   pause(0.1); close()
+  pause()
   
 end%for:cells(cc)
 
-end%util:plotRasterXDirSAT()
+end%util:plotRasterStimSAT()
 
 function [ tSpike , trialSpike ] = collectSpikeTimes( spikes , tPlot )
 

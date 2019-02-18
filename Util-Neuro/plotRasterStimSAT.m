@@ -1,5 +1,5 @@
-function [  ] = plot_spike_raster_SAT( binfo , moves , ninfo , spikes , varargin )
-%plot_spike_raster Summary of this function goes here
+function [  ] = plotRasterStimSAT( binfo , moves , ninfo , spikes , varargin )
+%plotRasterStimSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {'sort_RT', {'area=','SC'}, {'monkey=','D'}});
