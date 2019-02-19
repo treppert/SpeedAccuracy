@@ -1,5 +1,5 @@
-function [ movesPP ] = parse_PostPrimary_sacc_SAT( movesAll , binfo )
-%parse_PostPrimary_sacc_SAT Summary of this function goes here
+function [ movesPP ] = parse_PPsacc_SAT( movesAll , moves , binfo )
+%parse_PPsacc_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 INDEX = 2; %index of the saccade re. stimulus appearance
@@ -46,7 +46,7 @@ for kk = 1:NUM_SESSION
   end%for:trials(jj)
   
   %split PP saccades by endpoint (1=Target, 2=Distractor, 3=Fixation)
-  movesPP(kk) = classify_endpt_ppsacc(binfo(kk), movesPP(kk));
+  movesPP(kk) = classify_endpt_PPsacc(binfo(kk), movesPP(kk), moves(kk));
   
   idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
   fprintf('**** Sess %d -- %d/%d trials (%d/%d err-dir) no post-primary\n', ...
@@ -56,20 +56,28 @@ end%for:sessions(kk)
 
 end%fxn:parse_PostPrimary_sacc_SAT()
 
-function [ movesPP ] = classify_endpt_ppsacc( binfo , movesPP )
+function [ movesPP ] = classify_endpt_PPsacc( binfo , movesPP , moves )
 %classify_endpt_ppsacc Summary of this function goes here
 %   Detailed explanation goes here
 
-rfinPP_ = sqrt(movesPP.x_fin.*movesPP.x_fin + movesPP.y_fin.*movesPP.y_fin);
-dOctPP_ = movesPP.octant - uint16(binfo.tgt_octant);
+ISI = movesPP.resptime - moves.resptime;
+idxNoPP = ((ISI == 0) | (ISI > 700)); %no post-primary saccade
 
-idxFix = (rfinPP_ < 3.0);
-idxTgt = (~idxFix & (dOctPP_ == 0));
-idxDistr = (~idxFix & (dOctPP_ ~= 0));
+rFin = sqrt(movesPP.x_fin.*movesPP.x_fin + movesPP.y_fin.*movesPP.y_fin);
+rErr = rFin - unique(binfo.tgt_eccen);
 
-%save for future trial indexing
-movesPP.endpt(idxTgt) = 1;
-movesPP.endpt(idxDistr) = 2;
-movesPP.endpt(idxFix) = 3;
+idxFix = ((rErr < -6) | (rFin < 3)); %re-fixating movement
+idxStim = ((rErr > -6) & (rErr < 2)); %stimulus (Target or Distractor)
+idxOther = (rErr > 2);
+
+dOctant = movesPP.octant - uint16(binfo.tgt_octant);
+idxTgt = (~idxFix & (dOctant == 0));
+idxDistr = (~idxFix & (dOctant ~= 0));
+
+%save classifications
+movesPP.endpt(idxStim & idxTgt & ~idxNoPP) = 1;
+movesPP.endpt(idxStim & idxDistr & ~idxNoPP) = 2;
+movesPP.endpt(idxFix & ~idxNoPP) = 3;
+movesPP.endpt(idxOther & ~idxNoPP) = 4;
 
 end%util:classify_endpt_ppsacc()
