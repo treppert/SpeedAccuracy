@@ -23,7 +23,7 @@ for cc = 1:NUM_CELLS
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-  idxCond = ((binfo(kk).condition == 3) & ~idxIso);
+  idxCond = ((binfo(kk).condition == 1) & ~idxIso);
   %index by trial outcome
   idxErr = (binfo(kk).err_dir);
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
@@ -66,8 +66,8 @@ for cc = 1:NUM_CELLS
     subplot(3,3,IDX_DD_PLOT(dd)); hold on
     
     plot(tSpikeCorr-3500, trialSpikeCorr, '.', 'Color',[.3 .3 .3], 'MarkerSize',4)
-    plot(tSpikeErr-3500, trialSpikeErr, '.', 'Color',[.3 .7 .4], 'MarkerSize',4)
-%     plot(tSpikeErr-3500, trialSpikeErr, '.', 'Color',[1 .5 .5], 'MarkerSize',4)
+%     plot(tSpikeErr-3500, trialSpikeErr, '.', 'Color',[.3 .7 .4], 'MarkerSize',4)
+    plot(tSpikeErr-3500, trialSpikeErr, '.', 'Color',[1 .5 .5], 'MarkerSize',4)
     
     plot([0 0], [0 nTrialCorr+nTrialErr], 'k-', 'LineWidth',1.0) %time zero (time of response)
     plot(-RTcorr, (1:nTrialCorr), 'o', 'Color','k', 'MarkerSize',3) %stimulus ON (correct)
@@ -104,7 +104,7 @@ for cc = 1:NUM_CELLS
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   ppretty('image_size',[12,8])
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/Raster-PostChoiceError-FAST/', ...
+  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/Raster-PostChoiceError-xDir-ACC/', ...
     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
   pause(0.1); close()
 %   pause()

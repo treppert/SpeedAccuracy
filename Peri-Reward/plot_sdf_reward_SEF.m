@@ -38,8 +38,7 @@ for cc = 1:NUM_CELLS
   %compute timing stats for RPE
   sdfAC_test = sdfAccCorr(:,OFFSET_TEST:end); %offset in time
   sdfAE_test = sdfAccErr(:,OFFSET_TEST:end);
-  [tStartRPE(cc),tVecRPE{cc}] = compute_time_RPE(sdfAC_test, sdfAE_test, 0.05, 100);
-  tVecRPE{cc} = tVecRPE{cc} - OFFSET_TEST; %correct for offset
+  [tStartRPE(cc),tVecRPE{cc}] = calcTimeErrSignal(sdfAC_test, sdfAE_test, 0.05, 100, OFFSET_TEST);
   
   Acorr(cc,:) = nanmean(sdfAccCorr);
   Aerr(cc,:) = nanmean(sdfAccErr);
@@ -97,33 +96,3 @@ ytickformat('%3.2f')
 ppretty('image_size',[6,4])
 
 end%function:plot_sdf_reward_SEF()
-
-
-function [tStart, tVec] = compute_time_RPE( A_corr , A_err , alpha , minLength)
-
-NUM_MISSES_ALLOWED = 5; %can skip up to this number of timepoints
-
-tStart = NaN; %initialization
-tVec = NaN;
-
-[~,NUM_SAMP] = size(A_corr);
-
-H_MW = false(1,NUM_SAMP); %Mann-Whitney U-test
-P_MW = NaN(1,NUM_SAMP);
-for ii = 1:NUM_SAMP
-  [P_MW(ii),H_MW(ii)] = ranksum(A_corr(:,ii), A_err(:,ii), 'alpha',alpha, 'tail','both');
-end%for:samples(ii)
-
-samp_H_1 = find(H_MW);
-dsamp_H_1 = diff(samp_H_1);
-NUM_DSAMP = length(dsamp_H_1);
-
-for ii = 1:(NUM_DSAMP-minLength+1)
-  if (sum(dsamp_H_1(ii : ii+minLength-1)) <= (minLength+NUM_MISSES_ALLOWED))
-    tStart = samp_H_1(ii);
-    tVec = samp_H_1;
-    break
-  end
-end%for:num-dsamp-estimates(ii)
-
-end%util:compute_time_RPE()

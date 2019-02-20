@@ -28,7 +28,7 @@ for cc = 1:NUM_CELLS
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  idxCond = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
   idxErr = (binfo(kk).err_dir);
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
@@ -43,11 +43,11 @@ for cc = 1:NUM_CELLS
   for dd = 1:8 %loop over response directions
     idxDir = (moves(kk).octant == dd);
     
-    sdfCorr(dd,:) = nanmean(sdfSess(idxFast & idxCorr & idxDir, T_PLOT));
-    sdfErr(dd,:) = nanmean(sdfSess(idxFast & idxErr & idxDir, T_PLOT));
-    rtCorr(dd) = median(RTkk(idxFast & idxCorr & idxDir));
-    rtErr(dd) = median(RTkk(idxFast & idxErr & idxDir));
-    isiErr(dd) = median(ISIkk(idxFast & idxErr & idxDir));
+    sdfCorr(dd,:) = nanmean(sdfSess(idxCond & idxCorr & idxDir, T_PLOT));
+    sdfErr(dd,:) = nanmean(sdfSess(idxCond & idxErr & idxDir, T_PLOT));
+    rtCorr(dd) = median(RTkk(idxCond & idxCorr & idxDir));
+    rtErr(dd) = median(RTkk(idxCond & idxErr & idxDir));
+    isiErr(dd) = median(ISIkk(idxCond & idxErr & idxDir));
   end%for:direction(dd)
   
   %% Plotting
@@ -86,8 +86,8 @@ for cc = 1:NUM_CELLS
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   ppretty('image_size',[12,8])
-%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/SDF-PostChoiceError-xDir-FAST/', ...
-  pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-PostChoiceError-xDir-FAST\', ...
+  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/SDF-PostChoiceError-xDir-FAST/', ...
+%   pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-PostChoiceError-xDir-FAST\', ...
     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
   pause(0.1); close()
 %   pause()
