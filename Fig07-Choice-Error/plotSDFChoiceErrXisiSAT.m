@@ -1,4 +1,4 @@
-function [  ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
 %plotSDFChoiceErrXisiSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -48,7 +48,7 @@ for cc = 1:NUM_CELLS
   idxCond = (ismember(binfo(kk).condition, [1,3]) & ~idxIso);
   %index by trial outcome
   idxErr = (binfo(kk).err_dir);
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
+  idxCorr = ~(binfo(kk).err_dir);
   %index by direction from error field
   idxDir = ismember(moves(kk).octant, ninfo(cc).errField);
   
@@ -74,9 +74,13 @@ for cc = 1:NUM_CELLS
   isiErrL(cc) = median(ISIkk(idxCond & idxErr & idxDir & idxISIl));
 end%for:cells(cc)
 
+%dt-error encoding vs. dt-PP saccade latency
+dtEncode = tStartErrISIl - tStartErrISIs;
+dtSaccLatency = isiErrL - isiErrS;
+testStat = dtEncode ./ dtSaccLatency;
 
 %% Plotting
-
+if (1)
 for cc = 1:NUM_CELLS
   if (ninfo(cc).errGrade ~= 1); continue; end
   figure(); hold on
@@ -84,7 +88,11 @@ for cc = 1:NUM_CELLS
   tmp = [sdfCorr(cc,:), sdfErrISIs(cc,:)];
   yLim = [min(min(tmp)) max(max(tmp))];
   
-  plot([0 0], yLim, 'k-', 'LineWidth',1.0) %time of primary response
+  if (testStat(cc) < 0.25)
+    plot([0 0], yLim, 'b-', 'LineWidth',1.0) %time of primary response
+  else
+    plot([0 0], yLim, 'k-', 'LineWidth',1.0)
+  end
   
   plot(-rtCorr(cc)*ones(1,2), yLim, 'k-') %median (primary) RT
   plot(-rtErr(cc)*ones(1,2), yLim, 'k--')
@@ -100,6 +108,7 @@ for cc = 1:NUM_CELLS
   plot(T_PLOT-3500, sdfCorr(cc,:), '-', 'Color',[0 0 0], 'LineWidth',1.5);
   plot(T_PLOT-3500, sdfErrISIs(cc,:), '-', 'Color',[0 0 0], 'LineWidth',0.75);
   plot(T_PLOT-3500, sdfErrISIl(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',0.75);
+%   plot(T_PLOT-3500, sdfErrNoPP(cc,:), '-', 'Color',[0 0 1], 'LineWidth',0.75);
   
   ylabel('Activity (sp/sec)')
   xlabel('Time from response (ms)')
@@ -108,13 +117,32 @@ for cc = 1:NUM_CELLS
   xticks((T_PLOT(1) : 200 : T_PLOT(end)) - 3500)
   
   print_session_unit(gca, ninfo(cc), binfo(kk), 'horizontal')
-  ppretty('image_size',[9.6,6])
+  ppretty('image_size',[6.4,4])
   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/SDF-ChoiceErr-xISI-Test/', ...
-    ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+    ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.eps'], '-depsc2')
   pause(0.1); close()
 %   pause()
   
 end%for:cells(cc)
+end
+
+if (nargout > 0)
+  varargout{1} = dtSaccLatency;
+  if (nargout > 1)
+    varargout{2} = dtEncode;
+  end
+end
+
+%% Statistics - Test of effect of post-primary saccade on error encoding
+% figure(); hold on
+% plot([100 250], [0 0], 'k-')
+% plot([100 250], [100 250], 'k--')
+% plot([100 250], [50  125], 'k:')
+% plot(dtSaccLatency, dtEncode, 'ko', 'MarkerSize',6)
+% xlabel('Increase in saccade latency (ms)')
+% ylabel('Increase in onset of encoding (ms)')
+% title('alpha = .05 || minL = 100 ms')
+% ppretty('image_size',[6.4,4])
 
 end%fxn:plotSDFChoiceErrXisiSAT()
 

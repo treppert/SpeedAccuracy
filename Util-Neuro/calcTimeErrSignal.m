@@ -2,7 +2,7 @@ function [tStart, tVec] = calcTimeErrSignal( Acorr , Aerr , alpha , minLength , 
 %calcTimeErrSignal Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_MISSES_ALLOWED = 5; %can skip up to this number of timepoints
+NUM_MISSES_ALLOWED = 10; %can skip up to this number of timepoints
 
 tStart = NaN; %initialization
 tVec = NaN;
