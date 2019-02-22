@@ -1,4 +1,4 @@
-function [  ] = plot_CDF_RT_SAT( moves , info )
+function [  ] = plot_CDF_RT_SAT( info , moves )
 %plot_CDF_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,7 +7,7 @@ NUM_SESSION = length(moves);
 QUANTILE = (.1 : .1 : .9);
 NUM_QUANTILE = length(QUANTILE);
 
-info = index_timing_errors_SAT(info, moves);
+info = index_timing_errors_SAT(info);
 
 RT_corr_A = NaN(NUM_SESSION, NUM_QUANTILE);
 RT_errdir_A = NaN(NUM_SESSION, NUM_QUANTILE);

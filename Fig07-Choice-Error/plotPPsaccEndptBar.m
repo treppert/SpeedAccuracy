@@ -1,5 +1,5 @@
-function [ ] = plotPPsaccParamSAT( movesPP , binfo )
-%plotPPsaccParamSAT Summary of this function goes here
+function [ ] = plotPPsaccEndptBar( binfo , movesPP )
+%plotPPsaccEndptBar Summary of this function goes here
 %   Detailed explanation goes here
 
 NUM_SESSION = length(movesPP);
@@ -30,5 +30,5 @@ bar((1:5), yyMean, 'BarWidth',0.75)
 errorbar_no_caps((1:5), yyMean, 'err',yySE, 'color','k')
 ppretty('image_size',[3,4])
 
-end%fxn:plotPPsaccParamSAT()
+end%fxn:plotPPsaccEndptBar()
 

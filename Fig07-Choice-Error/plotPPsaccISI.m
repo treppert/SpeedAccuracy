@@ -1,5 +1,5 @@
-function [ ] = plot_distr_t_ppsacc( moves , movesPP , binfo )
-%plot_distr_t_ppsacc Summary of this function goes here
+function [ ] = plotPPsaccISI( binfo , moves , movesPP )
+%plotPPsaccISI Summary of this function goes here
 %   Detailed explanation goes here
 
 % T_BIN_EDGES = (0 : 25 : 800);
@@ -43,5 +43,5 @@ plot(t_plot_A, y_plot_A, 'r-', 'LineWidth',1.25)
 xlim([100 800])
 ppretty()
 
-end%fxn:plot_distr_t_ppsacc()
+end%fxn:plotPPsaccISI()
 

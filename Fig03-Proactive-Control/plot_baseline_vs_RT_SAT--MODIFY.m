@@ -1,9 +1,9 @@
-function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes , condition )
+function [ ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes , condition )
 %plot_baseline_vs_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT_INDIV_CELLS = true;
 MIN_NUM_CELLS = 3; %for plotting across all cells
+PLOT_INDIV_CELLS = false;
 LIM_RT = [100,1200];
 
 if strcmp(condition, 'acc')
@@ -23,7 +23,7 @@ IDX_BASE = TIME_BASE([1,end]) + 3500;
 
 NUM_CELLS = length(spikes);
 
-binfo = index_timing_errors_SAT(binfo, moves);
+binfo = index_timing_errors_SAT(binfo);
 
 %initializations
 sp_Corr = NaN(NUM_CELLS,NUM_BIN);
@@ -32,7 +32,7 @@ sp_Corr = NaN(NUM_CELLS,NUM_BIN);
 rho = NaN(1,NUM_CELLS);
 pval = NaN(1,NUM_CELLS);
 
-for cc = 15:15%NUM_CELLS
+for cc = 1:NUM_CELLS
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
   TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
@@ -87,13 +87,6 @@ for cc = 15:15%NUM_CELLS
   
 end%for:cells(cc)
 
-if (nargout > 0)
-  varargout{1} = rho;
-  if (nargout > 1)
-    varargout{2} = pval;
-  end
-end
-return
 %% Plotting
 if strcmp(condition, 'acc')
   COLOR_PLOT = 'r';

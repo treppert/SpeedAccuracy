@@ -1,4 +1,4 @@
-function [ ] = plot_Pcorr_vs_RT( moves , info )
+function [ ] = plot_Pcorr_vs_RT( info , moves )
 %[  ] = plot_Pcorr_vs_RT( moves , info )
 %   Detailed explanation goes here
 

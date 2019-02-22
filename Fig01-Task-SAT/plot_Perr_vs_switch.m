@@ -1,4 +1,4 @@
-function [  ] = plot_Perr_vs_switch( info , moves )
+function [  ] = plot_Perr_vs_switch( info )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -12,7 +12,7 @@ NUM_SESSION = length(info);
 Perr_A2F = cell(1,NUM_SESSION);
 Perr_F2A = cell(1,NUM_SESSION);
 
-info = index_timing_errors_SAT(info, moves);
+info = index_timing_errors_SAT(info);
 trial_switch = identify_condition_switch(info);
 
 %% Compute probability of error vs trial

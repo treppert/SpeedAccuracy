@@ -104,10 +104,10 @@ for cc = 1:NUM_CELLS
   
   subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   ppretty('image_size',[12,8])
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/Raster-PostChoiceError-xDir-ACC/', ...
-    ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  pause(0.1); close()
-%   pause()
+%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/Raster-PostChoiceError-xDir-ACC/', ...
+%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   pause(0.1); close()
+  pause()
   
 end%for:cells(cc)
 
