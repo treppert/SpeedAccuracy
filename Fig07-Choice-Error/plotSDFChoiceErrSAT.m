@@ -41,7 +41,7 @@ for cc = 1:NUM_CELLS
   %index by condition
   idxCond = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir);
+  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
   %index by direction from error field
   idxDir = ismember(moves(kk).octant, ninfo(cc).errField);
@@ -88,9 +88,13 @@ for cc = 1:NUM_CELLS
   
   print_session_unit(gca, ninfo(cc), binfo(kk))
   ppretty('image_size',[6.4,4])
+%   pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr-ACC\', ...
+%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   pause(0.1); close()
   pause()
   
 end%for:cells(cc)
+return
 end
 
 
@@ -116,7 +120,7 @@ pause(0.25)
 
 %plot onset time of the error signal
 figure(); hold on
-histogram(tStartErr, 'BinWidth',50, 'FaceColor',[0 .7 0])
+histogram(tStartErr, 'BinWidth',50, 'FaceColor',[.4 .4 .4])
 ppretty('image_size',[4,4])
 
 end%fxn:plotSDFChoiceErrSAT()

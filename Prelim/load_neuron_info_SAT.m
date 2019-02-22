@@ -3,7 +3,8 @@ function [ ninfoSAT ] = load_neuron_info_SAT( )
 %   Detailed explanation goes here
 
 
-FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
+% FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
+FILE = 'C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
 MONKEY = {'Darwin','Euler','Quincy','Seymour'};
 
 NUM_UNIT = [98, 42, 160, 158]; %Da, Eu, Q, S
