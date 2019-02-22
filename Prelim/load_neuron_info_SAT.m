@@ -1,10 +1,12 @@
-function [ ninfoSAT ] = load_neuron_info_SAT( )
+function [ ninfoSAT ] = load_neuron_info_SAT( OS )
 %load_neuron_info_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-
-% FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
-FILE = 'C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
+if strcmp(OS, 'Linux')
+  FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
+elseif strcmp(OS, 'Windows')
+  FILE = 'C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
+end
 MONKEY = {'Darwin','Euler','Quincy','Seymour'};
 
 NUM_UNIT = [98, 42, 160, 158]; %Da, Eu, Q, S
