@@ -2,30 +2,32 @@ function [ ] = plotPPsaccISI( binfo , moves , movesPP )
 %plotPPsaccISI Summary of this function goes here
 %   Detailed explanation goes here
 
-% T_BIN_EDGES = (0 : 25 : 800);
-NUM_SESSION = length(moves);
+NUM_SESSION = length(movesPP);
 
-tPP_Acc = [];
-tPP_Fast = [];
+QUANT = (0.1 : 0.1 : 0.9); %quantiles of inter-saccade interval
+NUM_QUANT = length(QUANT);
+
+tppAcc = NaN(NUM_SESSION,NUM_QUANT);
+tppFast = NaN(NUM_SESSION,NUM_QUANT);
 
 for kk = 1:NUM_SESSION
   
   %skip trials with no recorded post-primary saccade
-  idx_noPP = (movesPP(kk).resptime == 0);
+  idxNoPP = (movesPP(kk).resptime == 0);
   
   %index trials by condition
-  idx_Acc = (binfo(kk).condition == 1);
-  idx_Fast = (binfo(kk).condition == 3);
+  idxAcc = (binfo(kk).condition == 1);
+  idxFast = (binfo(kk).condition == 3);
   
   %index by trial outcome
-  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   
   %isolate RT data
   RTmoves = double(moves(kk).resptime);
   RTmovesPP = double(movesPP(kk).resptime);
   
-  tPP_Acc = cat(2, tPP_Acc, RTmovesPP(idx_Acc & idx_errdir & ~idx_noPP) - RTmoves(idx_Acc & idx_errdir & ~idx_noPP));
-  tPP_Fast = cat(2, tPP_Fast, RTmovesPP(idx_Fast & idx_errdir & ~idx_noPP) - RTmoves(idx_Fast & idx_errdir & ~idx_noPP));
+  tPP_Acc = cat(2, tPP_Acc, RTmovesPP(idxAcc & idxErr & ~idxNoPP) - RTmoves(idxAcc & idxErr & ~idxNoPP));
+  tPP_Fast = cat(2, tPP_Fast, RTmovesPP(idxFast & idxErr & ~idxNoPP) - RTmoves(idxFast & idxErr & ~idxNoPP));
   
 end%for:session(kk)
 

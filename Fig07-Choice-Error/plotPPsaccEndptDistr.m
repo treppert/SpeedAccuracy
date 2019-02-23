@@ -10,7 +10,7 @@ yFinPP = [];
 for kk = 1:NUM_SESSION
   
   %index by condition
-  idxCond = (binfo(kk).condition == 3);
+  idxCond = (binfo(kk).condition == 3 | binfo(kk).condition == 1);
   %index by trial outcome
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   %skip trials with no recorded post-primary saccade
@@ -39,7 +39,7 @@ TH_PPSACC = atan2(yFinPP, xFinPP);
 R_PPSACC = sqrt(xFinPP.*xFinPP + yFinPP.*yFinPP);
 
 figure(); polaraxes()
-polarscatter(TH_PPSACC, R_PPSACC, 40, [.3 .3 .3], 'filled', 'MarkerFaceAlpha',0.5)
+polarscatter(TH_PPSACC, R_PPSACC, 40, [.3 .3 .3], 'filled', 'MarkerFaceAlpha',0.3)
 rlim([0 10]); rticklabels([]); thetaticks([])
 ppretty()
 

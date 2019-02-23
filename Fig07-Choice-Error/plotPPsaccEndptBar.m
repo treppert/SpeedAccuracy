@@ -12,7 +12,7 @@ for kk = 1:NUM_SESSION
   %index by condition
   idxCond = ((binfo(kk).condition == 1) | (binfo(kk).condition == 3));
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir);
+  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   
   endpt.N(kk) = sum((movesPP(kk).endpt == 0) & idxCond & idxErr) / sum(idxCond & idxErr);
   endpt.T(kk) = sum((movesPP(kk).endpt == 1) & idxCond & idxErr) / sum(idxCond & idxErr);
