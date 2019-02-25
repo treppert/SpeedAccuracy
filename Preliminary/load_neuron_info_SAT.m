@@ -73,6 +73,8 @@ for mm = 1:4
   
 end%for:monkey(mm)
 
+ninfoSAT = transpose(ninfoSAT);
+
 end%fxn:load_neuron_info_SAT_()
 
 function [ col ] = build_col( letter , idx )

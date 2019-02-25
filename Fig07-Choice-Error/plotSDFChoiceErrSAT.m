@@ -1,4 +1,4 @@
-function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [ ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -10,10 +10,11 @@ idx_monkey = ismember({ninfo.monkey}, args.monkey);
 ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
+PERFORM_RT_MATCHING = true;
+
 NUM_CELLS = length(spikes);
 T_PLOT  = 3500 + (-400 : 800);
 OFFSET_TEST = 200;
-PERFORM_RT_MATCHING = true;
 
 TASK_CONDITION = [1,3];
 
@@ -36,14 +37,14 @@ for tc = 1:2
   for cc = 1:NUM_CELLS
     if (ninfo(cc).errGrade ~= 1); continue; end
     kk = ismember({binfo.session}, ninfo(cc).sess);
-
+    
     RTkk = double(moves(kk).resptime);
     ISIkk = double(movesPP(kk).resptime) - RTkk;
-
+    
     %compute spike density function and align on primary response
     sdfSess = compute_spike_density_fxn(spikes(cc).SAT);
     sdfSess = align_signal_on_response(sdfSess, RTkk); 
-
+    
     %index by isolation quality
     idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
     %index by condition
@@ -53,7 +54,10 @@ for tc = 1:2
     idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
     %index by direction from error field
     idxDir = ismember(moves(kk).octant, ninfo(cc).errField);
-
+    
+%     fprintf('Before RT matching, %i (Corr) and %i (Err) trials\n', ...
+%       sum(idxCond & idxCorr & idxDir), sum(idxCond & idxErr & idxDir))
+    
     if (PERFORM_RT_MATCHING) %if desired, do RT matching
       arrTestRTcorr = [ find(idxCond & idxCorr & idxDir); RTkk(idxCond & idxCorr & idxDir) ]';
       arrTestRTerr =  [ find(idxCond & idxErr & idxDir);  RTkk(idxCond & idxErr & idxDir) ]';
@@ -64,26 +68,28 @@ for tc = 1:2
       idxErr = (idxCond & idxErr & idxDir);
       idxCorr = (idxCond & idxCorr & idxDir);
     end%if:RT-MATCHING
-
+    
+    fprintf('After RT matching, %i (Corr) and %i (Err) trials\n', length(idxCorr), length(idxErr))
+    
     sdfCorr{tc}(cc,:) = nanmean(sdfSess(idxCorr, T_PLOT));
     sdfErr{tc}(cc,:) = nanmean(sdfSess(idxErr, T_PLOT));
-
+    
     %compute timing of error signal
     sdfCorrTest = sdfSess(idxCorr, T_PLOT+OFFSET_TEST);
     sdfErrTest = sdfSess(idxErr, T_PLOT+OFFSET_TEST);
     [tStartErr(tc,cc),tVecErr{tc,cc}] = calcTimeErrSignal(sdfCorrTest, sdfErrTest, 0.05, 100, OFFSET_TEST);
-
+    
     rtCorr(tc,cc) = median(RTkk(idxCorr));
     rtErr(tc,cc) = median(RTkk(idxErr));
     isiErr(tc,cc) = median(ISIkk(idxErr));
-
+    
   end%for:cells(cc)
   
 end%for:task-condition(tc)
 
 %% Plotting - Individual cells
 
-if (0)
+if (1)
 for cc = 1:NUM_CELLS
   if (ninfo(cc).errGrade ~= 1); continue; end
   figure(); hold on
@@ -148,9 +154,5 @@ ppretty('image_size',[6.4,4])
 % figure(); hold on
 % histogram(tStartErr, 'BinWidth',50, 'FaceColor',[.4 .4 .4])
 % ppretty('image_size',[4,4])
-
-if (nargout > 0)
-  varargout{1} = tStartErr;
-end
 
 end%fxn:plotSDFChoiceErrSAT()
