@@ -2,8 +2,8 @@ function [tStart, tVec] = calcTimeErrSignal( Acorr , Aerr , alpha , minLength , 
 %calcTimeErrSignal Summary of this function goes here
 %   Detailed explanation goes here
 
-DEBUG = true;
-NUM_MISSES_ALLOWED = 10; %can skip up to this number of timepoints
+DEBUG = false;
+NUM_MISSES_ALLOWED = 15; %can skip up to this number of timepoints
 
 tStart = NaN; %initialization
 tVec = NaN;
@@ -46,7 +46,7 @@ if (DEBUG)
   plot(samp_H1(1:end-minLength), sumDsamp, 'bo', 'MarkerSize',3)
   yLim = get(gca, 'ylim');
   ylim([yLim(1) max(nanmean(Aerr))+5])
-  ppretty('image_size', [7,3])
+  ppretty([7,3])
 end%if-DEBUG
 
 %correct for offset in time
