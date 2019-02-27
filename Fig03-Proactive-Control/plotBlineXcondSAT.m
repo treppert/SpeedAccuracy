@@ -1,4 +1,4 @@
-function [ ] = plotBlineXcondSAT( binfo , ninfo , spikes , varargin )
+function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , spikes , varargin )
 %plotBlineXcondSAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -28,20 +28,22 @@ for cc = 1:NUM_CELLS
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-  idx_A = ((binfo(kk).condition == 1) & ~idxIso);
-  idx_F = ((binfo(kk).condition == 3) & ~idxIso);
+  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
+  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-  idxErr = (binfo(kk).err_time & ~binfo(kk).err_dir);
+  idxErr = (~binfo(kk).err_time & binfo(kk).err_dir);
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
   
-  sdfAcc(cc,:) = nanmean(sdfSess(idx_A & idxCorr, T_BASE));
-  sdfFast(cc,:) = nanmean(sdfSess(idx_F & idxCorr, T_BASE));
-  
+  sdfAcc(cc,:) = nanmean(sdfSess(idxAcc & idxCorr, T_BASE)); %correct trials
+  sdfFast(cc,:) = nanmean(sdfSess(idxFast & idxCorr, T_BASE));
   blineAcc(cc) = mean(sdfAcc(cc,:));
   blineFast(cc) = mean(sdfFast(cc,:));
   
-end%for:cells(kk)
+end%for:cells(cc)
 
+if (nargout > 0)
+  varargout{1} = struct('Acc',blineAcc, 'Fast',blineFast);
+end
 
 %% Plotting - Scatter X condition
 
@@ -55,7 +57,6 @@ pause(0.25)
 figure(); hold on
 histogram(blineFast-blineAcc, 'BinWidth',2, 'FaceColor',[.4 .4 .4])
 ppretty('image_size',[4,4])
-
 
 end%fxn:plotBlineXcondSAT()
 

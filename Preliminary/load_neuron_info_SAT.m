@@ -19,13 +19,15 @@ COL_SESS_NUM = 'C';
 COL_SESS = 'D';
 COL_UNIT = 'E';
 
-COL_REM_ISO_DE = 'V';
+COL_BASELINE_DE = 'L';
 
-COL_MOVEFIELD_DE = 'T';
+COL_MOVEFIELD_DE = 'U';
 COL_MOVEFFIELD_QS = 'O';
 
-COL_ERRGRADE_DE = 'P';
-COL_ERRFIELD_DE = 'U';
+COL_ERRGRADE_DE = 'Q';
+COL_ERRFIELD_DE = 'V';
+
+COL_REM_ISO_DE = 'W';
 
 ninfoSAT = [];
 
@@ -39,6 +41,7 @@ for mm = 1:4
   [~,unit] = xlsread(FILE, MONKEY{mm}, build_col(COL_UNIT,idx_mm));
   
   if ismember(MONKEY{mm}, {'Darwin','Euler'})
+    baseLine = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_BASELINE_DE,idx_mm)));
     errGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_ERRGRADE_DE,idx_mm)));
     [~,area] = xlsread(FILE, MONKEY{mm}, build_col(COL_AREA_DE,idx_mm));
     [~,tRemIso] = xlsread(FILE, MONKEY{mm}, build_col(COL_REM_ISO_DE,idx_mm));
@@ -53,6 +56,7 @@ for mm = 1:4
       end
     end
   elseif ismember(MONKEY{mm}, {'Quincy','Seymour'})
+    baseLine = num2cell(zeros(NUM_UNIT(mm),1));
     errGrade = num2cell(zeros(NUM_UNIT(mm),1));
     area = cell(NUM_UNIT(mm),1);
     tRemIso = cell(NUM_UNIT(mm),1);
@@ -67,7 +71,8 @@ for mm = 1:4
   end
   
   ninfo_mm = struct('monkey',MONKEY{mm}(1), 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
-    'area',area, 'tRemIso',tRemIso, 'moveField',moveField, 'errGrade',errGrade, 'errField',errField);
+    'area',area, 'baseLine',baseLine, 'errGrade',errGrade, 'moveField',moveField, 'errField',errField, ...
+    'tRemIso',tRemIso);
   
   ninfoSAT = cat(1, ninfoSAT, ninfo_mm);
   
