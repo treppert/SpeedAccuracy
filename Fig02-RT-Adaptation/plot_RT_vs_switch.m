@@ -1,9 +1,9 @@
-function [  ] = plot_RT_vs_switch( info , moves , monkey )
+function [  ] = plot_RT_vs_switch( binfo , moves , monkey )
 %plot_param_re_switch Summary of this function goes here
 %   Detailed explanation goes here
 
 MIN_NUM_TRIALS = 10;
-NUM_SESSION = length(info);
+NUM_SESSION = length(binfo);
 
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
@@ -11,7 +11,7 @@ NUM_TRIAL = length(TRIAL_PLOT);
 rtA2F = NaN(NUM_SESSION,NUM_TRIAL);
 rtF2A = NaN(NUM_SESSION,NUM_TRIAL);
 
-trial_switch = identify_condition_switch(info, monkey);
+trial_switch = identify_condition_switch(binfo, monkey);
 
 %% Compute RT vs trial
 

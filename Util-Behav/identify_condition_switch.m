@@ -1,13 +1,7 @@
-function [ trial_switch ] = identify_condition_switch( binfo , varargin )
+function [ trial_switch ] = identify_condition_switch( binfo )
 %identify_condition_switch Summary of this function goes here
 
 DEBUG = false;
-
-if (nargin > 1)
-  monkey = varargin{1};
-else
-  monkey = 'Da';
-end
 
 NUM_SESSIONS = length(binfo);
 
@@ -27,7 +21,7 @@ for kk = 1:NUM_SESSIONS
   tmp_F2A = find(diff(condition) == (FLAG_ACC - FLAG_FAST)) + 1 ;
   tmp_A2F = find(diff(condition) == (FLAG_FAST - FLAG_ACC)) + 1 ;
   
-  if ismember(monkey, {'Q','S'})
+  if ismember(binfo(kk).session(1), {'Q','S'})
     tmp_A2N = find((condition(1:end-1) == FLAG_ACC) & (diff(condition) == 1)) + 1;
     tmp_N2F = find((condition(1:end-1) == FLAG_NORM) & (diff(condition) == 1)) + 1;
   end
@@ -50,7 +44,7 @@ for kk = 1:NUM_SESSIONS
   trial_switch(kk).F2A = tmp_F2A;
   trial_switch(kk).A2F = tmp_A2F;
   
-  if ismember(monkey, {'Q','S'})
+  if ismember(binfo(kk).session(1), {'Q','S'})
     tmp_N2F(tmp_N2F > (num_trials-9)) = [];
     tmp_A2N(tmp_A2N > (num_trials-9)) = [];
     trial_switch(kk).A2N = tmp_A2N;

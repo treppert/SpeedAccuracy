@@ -49,7 +49,7 @@ for cc = 1:NUM_CELLS
   
   %compute stats for individual cells
   [hVal(cc),pVal(cc),~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc});
-  if (hVal(cc) && (tmp.tstat < 0)); hVal(cc) = 0; end %not including cells Acc > Fast
+  if (hVal(cc) && (tmp.tstat < 0)); hVal(cc) = -1; end %not including cells Acc > Fast
   
 end%for:cells(cc)
 
