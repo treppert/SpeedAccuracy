@@ -1,9 +1,9 @@
-function [  ] = plot_probTE_vs_switch( info , monkey )
-%plot_probTE_vs_switch Summary of this function goes here
+function [  ] = plotPerrXtrial( binfo )
+%plotPerrXtrial Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_NUM_TRIALS = 10;
-NUM_SESSION = length(info);
+NUM_SESSION = length(binfo);
+MIN_NUM_TRIALS = 8;
 
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
@@ -11,16 +11,16 @@ NUM_TRIAL = length(TRIAL_PLOT);
 pErrA2F = NaN(NUM_SESSION,NUM_TRIAL);
 pErrF2A = NaN(NUM_SESSION,NUM_TRIAL);
 
-trial_switch = identify_condition_switch(info, monkey);
+trialSwitch = identify_condition_switch(binfo);
 
 %% Compute probability of error vs trial
 
 for kk = 1:NUM_SESSION
   
-  jjErrTime = find(info(kk).err_time);
+  jjErrTime = find(binfo(kk).err_dir);
   
-  jjA2F = trial_switch(kk).A2F;  numA2F = length(jjA2F);
-  jjF2A = trial_switch(kk).F2A;  numF2A = length(jjF2A);
+  jjA2F = trialSwitch(kk).A2F;  numA2F = length(jjA2F);
+  jjF2A = trialSwitch(kk).F2A;  numF2A = length(jjF2A);
   
   if ((numA2F < MIN_NUM_TRIALS) || (numF2A < MIN_NUM_TRIALS))
     fprintf('Session %d -- Less than %d trials\n', kk, MIN_NUM_TRIALS)
@@ -51,7 +51,7 @@ errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(pErrA2F), 'err',std(pErrA2F)/sqrt(NU
 
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ytickformat('%3.2f')
-ppretty()
+ppretty([6.4,4])
 
-end%function:plot_probTE_vs_switch()
+end%function:plotPerrXtrial()
 
