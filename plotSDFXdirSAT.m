@@ -1,5 +1,5 @@
-function [  ] = plotSDFXdirMG( binfo , moves , ninfo , spikes , varargin )
-%plotSDFXdirMG() Summary of this function goes here
+function [  ] = plotSDFXdirSAT( binfo , moves , ninfo , spikes , varargin )
+%plotSDFXdirSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
@@ -9,8 +9,6 @@ idx_monkey = ismember({ninfo.monkey}, args.monkey);
 
 ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
-
-MIN_RT = 550; %enforce hard minimum on MG RT
 
 NUM_CELLS = length(spikes);
 T_STIM = 3500 + (-400 : 400);
@@ -24,35 +22,45 @@ for cc = 1:NUM_CELLS
   RTkk = double(moves(kk).resptime);
   
   %compute spike density function and align on primary response
-  sdfKKstim = compute_spike_density_fxn(spikes(cc).MG);
+  sdfKKstim = compute_spike_density_fxn(spikes(cc).SAT);
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
+  %index by condition
+  idxAcc = (binfo(kk).condition == 1);
+  idxFast = (binfo(kk).condition == 3);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  %index by hard min RT
-  idxRT = (RTkk >= MIN_RT);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   
   %initializations
-  sdfStim = NaN(8,length(T_STIM));
-  sdfResp = NaN(8,length(T_STIM));
-  RT = NaN(1,8);
+  sdfAccStim = NaN(8,length(T_STIM));
+  sdfAccResp = NaN(8,length(T_STIM));
+  sdfFastStim = NaN(8,length(T_STIM));
+  sdfFastResp = NaN(8,length(T_STIM));
+  RTAcc = NaN(1,8);
+  RTFast = NaN(1,8);
   for dd = 1:8 %loop over response directions
     idxDir = (moves(kk).octant == dd);
-    sdfStim(dd,:) = nanmean(sdfKKstim(idxCorr & idxRT & idxDir, T_STIM));
-    sdfResp(dd,:) = nanmean(sdfKKresp(idxCorr & idxRT & idxDir, T_RESP));
-    RT(dd) = median(RTkk(idxCorr & idxRT & idxDir));
+    sdfAccStim(dd,:) = nanmean(sdfKKstim(idxAcc & idxCorr & idxDir, T_STIM));
+    sdfAccResp(dd,:) = nanmean(sdfKKresp(idxAcc & idxCorr & idxDir, T_RESP));
+    sdfFastStim(dd,:) = nanmean(sdfKKstim(idxFast & idxCorr & idxDir, T_STIM));
+    sdfFastResp(dd,:) = nanmean(sdfKKresp(idxFast & idxCorr & idxDir, T_RESP));
+    RTAcc(dd) = median(RTkk(idxAcc & idxCorr & idxDir));
+    RTFast(dd) = median(RTkk(idxFast & idxCorr & idxDir));
   end%for:direction(dd)
   
   %% Plotting
-  figure();  yLim = [min(min([sdfStim sdfResp])) max(max([sdfStim sdfResp]))];
+  sdfAll = [sdfAccStim sdfAccResp sdfFastStim sdfFastResp];
+  figure();  yLim = [min(min(sdfAll)) max(max(sdfAll))];
   
   for dd = 1:8 %loop over directions and plot
     
     %plot from array
     subplot(3,6,IDX_STIM_PLOT(dd)); hold on
     plot([0 0], yLim, 'k-')
-    plot(RT(dd)*ones(1,2), yLim, 'k:')
-    plot(T_STIM-3500, sdfStim(dd,:), 'k-');
+    plot(RTAcc(dd)*ones(1,2), yLim, 'r:')
+    plot(RTFast(dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
+    plot(T_STIM-3500, sdfAccStim(dd,:), 'r-');
+    plot(T_STIM-3500, sdfFastStim(dd,:), '-', 'Color',[0 .7 0]);
     
     xlim([T_STIM(1) T_STIM(end)]-3500)
     xticks((T_STIM(1) : 200 : T_STIM(end)) - 3500)
@@ -69,8 +77,10 @@ for cc = 1:NUM_CELLS
     %plot from response
     subplot(3,6,IDX_RESP_PLOT(dd)); hold on
     plot([0 0], yLim, 'k-')
-    plot(-RT(dd)*ones(1,2), yLim, 'k:')
-    plot(T_RESP-3500, sdfResp(dd,:), 'k-');
+    plot(-RTAcc(dd)*ones(1,2), yLim, 'r:')
+    plot(-RTFast(dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
+    plot(T_RESP-3500, sdfAccResp(dd,:), 'r-');
+    plot(T_RESP-3500, sdfFastResp(dd,:), '-', 'Color',[0 .7 0]);
     
     xlim([T_RESP(1) T_RESP(end)]-3500)
     xticks((T_RESP(1) : 200 : T_RESP(end)) - 3500)
@@ -88,10 +98,10 @@ for cc = 1:NUM_CELLS
   
   ppretty([14,8])
 %   pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Memory-Guided\SDFXdir\', ...
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/1-Classification/SDFXdir-MG/', ...
+  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/1-Classification/SDFXdir-SAT/', ...
     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
   pause(0.1); close()
   
 end%for:cells(cc)
 
-end%fxn:plotSDFXdirMG()
+end%fxn:plotSDFXdirSAT()
