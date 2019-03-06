@@ -11,6 +11,7 @@ ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(spikes);
+T_BASE = 3500 + (-600 : -1);
 T_STIM = 3500 + (-100 : 300);
 T_RESP_ACC = 3500 + (-300 : 100);
 T_RESP_FAST = 3500 + (-100 : 100);
@@ -22,6 +23,10 @@ sdfMoveAcc = NaN(NUM_CELLS,length(T_RESP_ACC));
 sdfMoveFast = NaN(NUM_CELLS,length(T_RESP_FAST));
 RTAcc = NaN(1,NUM_CELLS);
 RTFast = NaN(1,NUM_CELLS);
+
+%visual response latency
+latVRAcc = NaN(1,NUM_CELLS);
+latVRFast = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   if ~strcmp(ninfo(cc).visType, 'sustained'); continue; end
@@ -50,6 +55,19 @@ for cc = 1:NUM_CELLS
   RTAcc(cc) = median(RTkk(idxAcc & idxCorr & idxRF));
   RTFast(cc) = median(RTkk(idxFast & idxCorr & idxRF));
   
+  
+  %% Compute visual response latency
+  blineCC = nanmean(sdfKKstim((idxAcc | idxFast) & idxCorr, T_BASE));
+  blineMean = mean(blineCC);
+  blineSD = std(blineCC);
+  
+  THRESH = blineMean + 6*blineSD;
+  
+  %find all points above THRESH
+  idxPrelimFast = find(visRespFast(cc,:) > THRESH);
+  
+  latVRFast(cc) = T_STIM(1) + idxPrelimFast(1) - 3500;
+  
   %% Plotting
   figure()
   
@@ -61,6 +79,9 @@ for cc = 1:NUM_CELLS
   plot([0 0], yLim, 'k--')
   plot(T_STIM-3500, visRespAcc(cc,:), 'r-', 'LineWidth',0.5)
   plot(T_STIM-3500, visRespFast(cc,:), '-', 'Color',[0 .7 0], 'LineWidth',0.5)
+  plot(latVRFast(cc)*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, blineMean*ones(1,2), 'k:', 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, THRESH*ones(1,2), 'k--', 'LineWidth',0.5)
   plot(RTAcc(cc)*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
   plot(RTFast(cc)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
   xlim([T_STIM(1) T_STIM(end)]-3500)
@@ -76,23 +97,50 @@ for cc = 1:NUM_CELLS
   xlim([T_RESP_ACC(1) T_RESP_ACC(end)]-3500)
   set(gca, 'YAxisLocation','right')
   
-  ppretty('image_size',[8,3])
+  ppretty([8,3])
   pause(); close()
   
 end%for:cells(cc)
 
 
-% %% Plotting
+%% Plotting - Across cells
+NUM_CELLS_PLOT = sum(ismember({ninfo.visType}, {'sustained'}));
+
+%remove cells with no visual response
+ccRemove = ~ismember({ninfo.visType}, {'sustained'});
+ninfo(ccRemove) = [];
+visRespAcc(ccRemove,:) = [];
+visRespFast(ccRemove,:) = [];
+sdfMoveAcc(ccRemove,:) = [];
+sdfMoveFast(ccRemove,:) = [];
+RTAcc(ccRemove) = [];
+RTFast(ccRemove) = [];
+latVRFast(ccRemove) = [];
+
+%normalization
+visRespAcc = visRespAcc ./ max(visRespFast,[],2);
+visRespFast = visRespFast ./ max(visRespFast,[],2);
+
+%sort neurons by visual response latency
+[latVRFast,idxVRFast] = sort(latVRFast);
+visRespFast = visRespFast(idxVRFast,:);
+ninfo = ninfo(idxVRFast);
+
+figure(); hold on
+imagesc(T_STIM-3500, (1:NUM_CELLS_PLOT), visRespFast); %colorbar
+plot(latVRFast, (1:NUM_CELLS_PLOT), 'k.', 'MarkerSize',15)
+text((T_STIM(1)-3500)*ones(1,NUM_CELLS_PLOT), (1:NUM_CELLS_PLOT), {ninfo.sess})
+text(zeros(1,NUM_CELLS_PLOT), (1:NUM_CELLS_PLOT), {ninfo.unit})
+xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
+ylim([0 NUM_CELLS_PLOT+1])
+ppretty([6.4,8])
+
 % figure(); hold on
-% 
 % plot(T_STIM-3500, visRespAcc, 'r-', 'LineWidth',0.5)
 % plot(T_STIM-3500, visRespFast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-% 
 % % plot(nanmean(RTAcc)*ones(1,2), [.2 .8], 'r:', 'LineWidth',0.5)
 % % plot(nanmean(RTFast)*ones(1,2), [.2 .8], ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-% 
 % xlim([T_STIM(1) T_STIM(end)]-3500)
-% 
 % ppretty([6.4,4])
 
 end%fxn:plotVisRespSAT()
