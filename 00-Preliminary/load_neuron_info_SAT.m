@@ -21,6 +21,7 @@ COL_UNIT = 'E';
 
 COL_BASELINE_DE = 'L';
 
+COL_VISTYPE_DE = 'S';
 COL_VISGRADE_DE = 'M';
 COL_VISFIELD_DE = 'P';
 
@@ -31,7 +32,7 @@ COL_MOVEFFIELD_QS = 'O';
 COL_ERRGRADE_DE = 'O';
 COL_ERRFIELD_DE = 'R';
 
-COL_REM_ISO_DE = 'S';
+COL_REM_ISO_DE = 'T';
 
 ninfoSAT = [];
 
@@ -50,15 +51,16 @@ for mm = 1:4
     moveGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_MOVEGRADE_DE,idx_mm)));
     errGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_ERRGRADE_DE,idx_mm)));
     [~,area] = xlsread(FILE, MONKEY{mm}, build_col(COL_AREA_DE,idx_mm));
-    [~,tRemIso] = xlsread(FILE, MONKEY{mm}, build_col(COL_REM_ISO_DE,idx_mm));
+    [~,visType] = xlsread(FILE, MONKEY{mm}, build_col(COL_VISTYPE_DE,idx_mm));
     [~,visField] = xlsread(FILE, MONKEY{mm}, build_col(COL_VISFIELD_DE,idx_mm));
     [~,moveField] = xlsread(FILE, MONKEY{mm}, build_col(COL_MOVEFIELD_DE,idx_mm));
     [~,errField] = xlsread(FILE, MONKEY{mm}, build_col(COL_ERRFIELD_DE,idx_mm));
+    [~,tRemIso] = xlsread(FILE, MONKEY{mm}, build_col(COL_REM_ISO_DE,idx_mm));
     for cc = 1:NUM_UNIT(mm)
-      tRemIso{cc} = str2num(tRemIso{cc});
       visField{cc} = str2num(visField{cc});
       moveField{cc} = str2num(moveField{cc});
       errField{cc} = str2num(errField{cc});
+      tRemIso{cc} = str2num(tRemIso{cc});
       if (visField{cc} == 9) %field is all directions
         visField{cc} = (1:8);
       end
@@ -75,21 +77,23 @@ for mm = 1:4
     moveGrade = num2cell(zeros(NUM_UNIT(mm),1));
     errGrade = num2cell(zeros(NUM_UNIT(mm),1));
     area = cell(NUM_UNIT(mm),1);
-    tRemIso = cell(NUM_UNIT(mm),1);
+    visType = cell(NUM_UNIT(mm),1);
     visField = cell(NUM_UNIT(mm),1);
     [~,moveField] = xlsread(FILE, MONKEY{mm}, build_col(COL_MOVEFFIELD_QS,idx_mm));
     errField = cell(NUM_UNIT(mm),1);
+    tRemIso = cell(NUM_UNIT(mm),1);
     for cc = 1:NUM_UNIT(mm)
       area{cc} = 'FEF';
-      tRemIso{cc} = 0;
+      visType{cc} = 'none';
       visField{cc} = 0;
       moveField{cc} = 0;
       errField{cc} = 0;
+      tRemIso{cc} = 0;
     end
   end
   
   ninfo_mm = struct('monkey',MONKEY{mm}(1), 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
-    'area',area, 'visGrade',visGrade, 'moveGrade',moveGrade, 'errGrade',errGrade, ...
+    'area',area, 'visType',visType, 'visGrade',visGrade, 'moveGrade',moveGrade, 'errGrade',errGrade, ...
     'visField',visField, 'moveField',moveField, 'errField',errField, ...
     'baseLine',baseLine, 'tRemIso',tRemIso);
   

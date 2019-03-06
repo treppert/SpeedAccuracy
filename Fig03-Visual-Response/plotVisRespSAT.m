@@ -10,7 +10,6 @@ idx_monkey = ismember({ninfo.monkey}, args.monkey);
 ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
-MIN_VISGRADE = 0.5;
 NUM_CELLS = length(spikes);
 T_STIM = 3500 + (-100 : 300);
 T_RESP_ACC = 3500 + (-300 : 100);
@@ -25,8 +24,7 @@ RTAcc = NaN(1,NUM_CELLS);
 RTFast = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  if ((ninfo(cc).visGrade < MIN_VISGRADE) || (ninfo(cc).moveGrade < 0.5)); continue; end %vis-move
-%   if ((ninfo(cc).visGrade < MIN_VISGRADE) || (ninfo(cc).moveGrade >= 0.5)); continue; end %just vis
+  if ~strcmp(ninfo(cc).visType, 'sustained'); continue; end
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
   RTkk = double(moves(kk).resptime);
@@ -78,23 +76,23 @@ for cc = 1:NUM_CELLS
   xlim([T_RESP_ACC(1) T_RESP_ACC(end)]-3500)
   set(gca, 'YAxisLocation','right')
   
-  ppretty([8,3])
+  ppretty('image_size',[8,3])
   pause(); close()
   
 end%for:cells(cc)
 
 
-%% Plotting
-figure(); hold on
-
-plot(T_STIM-3500, visRespAcc, 'r-', 'LineWidth',0.5)
-plot(T_STIM-3500, visRespFast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-
-% plot(nanmean(RTAcc)*ones(1,2), [.2 .8], 'r:', 'LineWidth',0.5)
-% plot(nanmean(RTFast)*ones(1,2), [.2 .8], ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-
-xlim([T_STIM(1) T_STIM(end)]-3500)
-
-ppretty([6.4,4])
+% %% Plotting
+% figure(); hold on
+% 
+% plot(T_STIM-3500, visRespAcc, 'r-', 'LineWidth',0.5)
+% plot(T_STIM-3500, visRespFast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
+% 
+% % plot(nanmean(RTAcc)*ones(1,2), [.2 .8], 'r:', 'LineWidth',0.5)
+% % plot(nanmean(RTFast)*ones(1,2), [.2 .8], ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+% 
+% xlim([T_STIM(1) T_STIM(end)]-3500)
+% 
+% ppretty([6.4,4])
 
 end%fxn:plotVisRespSAT()
