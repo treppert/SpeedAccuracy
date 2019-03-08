@@ -68,7 +68,7 @@ for cc = 1:NUM_CELLS
   ylabel('Trial number')
   
   title([ninfo(cc).sess,'-',ninfo(cc).unit,' -- N_{trial} = ',num2str(num_trials)], 'FontSize',8)
-  ppretty('image_size',[8,10])
+  ppretty([8,10])
   pause()
 %   pause(0.5)
 %   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
