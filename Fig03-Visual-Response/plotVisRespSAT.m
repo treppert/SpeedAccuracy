@@ -70,40 +70,49 @@ for cc = 1:NUM_CELLS
   
   %plot individual cell activity
   plotVisRespCC(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), latVR(cc))
-  print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal'); pause()
+  print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+  pause()
 end%for:cells(cc)
 
 
-% %% Plotting - Across cells
-% %normalization
-% %1. subtract off baseline
-% visRespAcc = visRespAcc - repmat(meanBlineAcc', 1,length(T_STIM));
-% visRespFast = visRespFast - repmat(meanBlineFast', 1,length(T_STIM));
-% %2. divide by max in the Fast condition
-% visRespAcc = visRespAcc ./ max(visRespFast,[],2);
-% visRespFast = visRespFast ./ max(visRespFast,[],2);
-% 
-% %sort neurons by visual response latency
-% [latVRFast,idxVRFast] = sort(latVRFast);
-% visRespFast = visRespFast(idxVRFast,:);
-% ninfo = ninfo(idxVRFast);
-% 
-% figure(); hold on
-% imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); %colorbar
-% plot(latVRFast, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
-% text((T_STIM(1)-3500)*ones(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.sess})
-% text(zeros(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.unit})
-% xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
-% ylim([0 NUM_CELLS+1])
-% ppretty([6.4,8])
-% 
-% % figure(); hold on
-% % plot(T_STIM-3500, visRespAcc, 'r-', 'LineWidth',0.5)
-% % plot(T_STIM-3500, visRespFast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-% % % plot(nanmean(RTAcc)*ones(1,2), [.2 .8], 'r:', 'LineWidth',0.5)
-% % % plot(nanmean(RTFast)*ones(1,2), [.2 .8], ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-% % xlim([T_STIM(1) T_STIM(end)]-3500)
-% % ppretty([6.4,4])
+%% Plotting - Across cells
+visRespAcc = transpose([visResp.Acc]);
+visRespFast = transpose([visResp.Fast]);
+latVRAcc = [latVR.Acc];
+latVRFast = [latVR.Fast];
+
+%normalization
+%1. subtract off baseline
+visRespAcc = visRespAcc - repmat([meanBline.Acc]', 1,length(T_STIM));
+visRespFast = visRespFast - repmat([meanBline.Fast]', 1,length(T_STIM));
+%2. divide by max in the Fast condition
+visRespAcc = visRespAcc ./ max(visRespFast,[],2);
+visRespFast = visRespFast ./ max(visRespFast,[],2);
+
+%sort neurons by visual response latency in the Fast condition
+[latVRFast,idxVRFast] = sort(latVRFast);
+visRespFast = visRespFast(idxVRFast,:);
+visRespAcc = visRespAcc(idxVRFast,:);
+latVRAcc = latVRAcc(idxVRFast);
+ninfo = ninfo(idxVRFast);
+
+figure()
+
+subplot(1,2,1); hold on %Fast
+imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); colorbar
+plot(latVRFast, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
+text((T_STIM(1)-3500)*ones(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.sess})
+text(zeros(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.unit})
+xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
+ylim([0 NUM_CELLS+1])
+
+subplot(1,2,2); hold on %Acc
+imagesc(T_STIM-3500, (1:NUM_CELLS), visRespAcc); colorbar
+plot(latVRAcc, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
+xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
+ylim([0 NUM_CELLS+1])
+
+ppretty([12,8])
 
 end%fxn:plotVisRespSAT()
 
