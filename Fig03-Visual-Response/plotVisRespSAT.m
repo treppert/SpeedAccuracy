@@ -79,14 +79,13 @@ for cc = 1:NUM_CELLS
   %plot individual cell activity
   if (0)
   plotVisRespCC(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), latVR(cc))
-  subplot(1,2,1)
-  plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Fast*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-  plot([T_STIM(1) T_STIM(end)]-3500, threshFast.High*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-  plot([T_STIM(1) T_STIM(end)]-3500, threshFast.Low*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-  plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Acc*ones(1,2), 'r:', 'LineWidth',0.5)
-  plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.High*ones(1,2), 'r:', 'LineWidth',0.5)
-  plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.Low*ones(1,2), 'r:', 'LineWidth',0.5)
-  print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+  subplot(1,2,1); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+%   plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Fast*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+%   plot([T_STIM(1) T_STIM(end)]-3500, threshFast.High*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+%   plot([T_STIM(1) T_STIM(end)]-3500, threshFast.Low*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+%   plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Acc*ones(1,2), 'r:', 'LineWidth',0.5)
+%   plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.High*ones(1,2), 'r:', 'LineWidth',0.5)
+%   plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.Low*ones(1,2), 'r:', 'LineWidth',0.5)
   pause()
   end
 end%for:cells(cc)
@@ -121,7 +120,7 @@ visRespAcc = visRespAcc(idxVRFast,:);
 latVRAcc = latVRAcc(idxVRFast);
 ninfo = ninfo(idxVRFast);
 
-figure()
+figure() %plot Fast and Acc separately
 
 subplot(1,2,1); hold on %Fast
 imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); %colorbar
@@ -145,6 +144,17 @@ subplot(1,2,1); caxis(cLim)
 subplot(1,2,2); caxis(cLim)
 
 ppretty([12,8])
+
+pause(0.25)
+
+figure(); hold on %plot the difference
+imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast-visRespAcc); colorbar
+text((T_STIM(1)-3500)*ones(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.sess})
+text(zeros(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.unit})
+xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
+ylim([0 NUM_CELLS+1])
+ppretty([6.4,8])
+
 
 %% Output variables
 

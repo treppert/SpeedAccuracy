@@ -1,5 +1,5 @@
-function [ varargout ] = plotBlineSpkCtXcondSAT( binfo , ninfo , spikes , varargin )
-%plotBlineSpkCtXcondSAT Summary of this function goes here
+function [ varargout ] = computeBlineSpkCtXcondSAT( binfo , ninfo , spikes , varargin )
+%computeBlineSpkCtXcondSAT Summary of this function goes here
 %   Not currently including cells for which Acc > Fast.
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
@@ -60,5 +60,5 @@ if (nargout > 0)
   end
 end
 
-end%fxn:plotBlineSpkCtXcondSAT()
+end%fxn:computeBlineSpkCtXcondSAT()
 
