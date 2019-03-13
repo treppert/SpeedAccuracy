@@ -13,7 +13,7 @@ ninfo = ninfo(idxArea & idxMonkey & idxVis);
 spikes = spikes(idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = length(spikes);
-T_BASE = 3500 + (-600 : -1);
+T_BASE = 3500 + (-300 : -1);
 T_STIM = 3500 + (-100 : 300);
 T_RESP.Acc = 3500 + (-300 : 100);
 T_RESP.Fast = 3500 + (-100 : 100);
@@ -65,13 +65,22 @@ for cc = 1:NUM_CELLS
   meanBline(cc).Fast = mean(blineFast);
   
   %compute visual response latency
-  latVR(cc).Acc = computeVisRespLatency(visResp(cc).Acc(:), blineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  latVR(cc).Fast = computeVisRespLatency(visResp(cc).Fast(:), blineFast, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  [latVR(cc).Acc, threshAcc] = computeVisRespLatency(visResp(cc).Acc(:), blineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  [latVR(cc).Fast, threshFast] = computeVisRespLatency(visResp(cc).Fast(:), blineFast, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
   
   %plot individual cell activity
+  if (0)
   plotVisRespCC(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), latVR(cc))
+  subplot(1,2,1)
+  plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Fast*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, threshFast.High*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, threshFast.Low*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, meanBline(cc).Acc*ones(1,2), 'r:', 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.High*ones(1,2), 'r:', 'LineWidth',0.5)
+  plot([T_STIM(1) T_STIM(end)]-3500, threshAcc.Low*ones(1,2), 'r:', 'LineWidth',0.5)
   print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
   pause()
+  end
 end%for:cells(cc)
 
 
@@ -130,9 +139,6 @@ plot(T_STIM-3500, visResp.Acc, 'r-', 'LineWidth',0.5)
 plot(T_STIM-3500, visResp.Fast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
 plot(latVR.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(latVR.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-% plot([T_STIM(1) T_STIM(end)]-3500, meanBlineFast(cc)*ones(1,2), 'k:', 'LineWidth',0.5)
-%   plot([T_STIM(1) T_STIM(end)]-3500, THRESH_TOP*ones(1,2), 'k--', 'LineWidth',0.5)
-%   plot([T_STIM(1) T_STIM(end)]-3500, THRESH_BOTTOM*ones(1,2), 'k--', 'LineWidth',0.5)
 plot(RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 xlim([T_STIM(1) T_STIM(end)]-3500)
@@ -151,16 +157,16 @@ ppretty([8,3])
 
 end%util:plotVisRespCC()
 
-function [ latency ] = computeVisRespLatency(visResp, bline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
+function [ latency , varargout ] = computeVisRespLatency(visResp, bline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
 
 meanBline = mean(bline);
 SDBline = std(bline);
 
-THRESH_TOP = meanBline + SD_THRESH_VR(1)*SDBline;
-THRESH_BOTTOM = meanBline + SD_THRESH_VR(2)*SDBline;
+THRESH_HIGH = meanBline + SD_THRESH_VR(1)*SDBline;
+THRESH_LOW = meanBline + SD_THRESH_VR(2)*SDBline;
 
 %find all points above THRESH
-tCand = find(visResp > THRESH_TOP);
+tCand = find(visResp > THRESH_HIGH);
 nSamp = length(tCand) - MIN_DUR_VR;
 dtCand = diff(tCand);
 
@@ -170,7 +176,7 @@ for ii = 1:nSamp %loop over candidate samples and find run of MIN_DUR
   if (runLengthII == MIN_DUR_VR)%found a run of MIN_DUR_VR above threshold
     tInitVR = tCand(ii);
     %now walk back to baseline mean + 2*SD
-    tCand = find(visResp < THRESH_BOTTOM);
+    tCand = find(visResp < THRESH_LOW);
     tInitVR = tCand(find(tCand < tInitVR, 1, 'last'));
     break
   end
@@ -181,5 +187,9 @@ if isnan(tInitVR)
 end
 
 latency = T_STIM(1) + tInitVR - 3500;
+
+if (nargout > 1) %return threshold values for plotting
+  varargout{1} = struct('High',THRESH_HIGH, 'Low',THRESH_LOW);
+end
 
 end%util:computeVisRespLatency()
