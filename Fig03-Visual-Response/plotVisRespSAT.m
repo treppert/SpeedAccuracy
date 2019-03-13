@@ -1,4 +1,4 @@
-function [  ] = plotVisRespSAT( binfo , moves , ninfo , spikes , varargin )
+function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , spikes , varargin )
 %plotVisRespSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -22,6 +22,9 @@ T_RESP.Fast = 3500 + (-100 : 100);
 MIN_DUR_VR = 50; %mininum duration of the visual response (ms)
 SD_THRESH_VR = [6, 2]; %minimum number of SDs from the mean (threshold)
 
+%visual response magnitude parameters
+DUR_COMP_MAG = 100; %amount of time (ms) after latency used to estimate mag
+
 %output initializations
 visResp = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
 visResp = populate_struct(visResp, {'Acc','Fast'}, NaN(length(T_STIM),1));
@@ -31,7 +34,8 @@ sdfMove = populate_struct(sdfMove, {'Fast'}, NaN(length(T_RESP.Fast),1));
 RT = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
 RT = populate_struct(RT, {'Acc','Fast'}, NaN);
 meanBline = RT;
-latVR = RT;
+latVR = RT; %visual response latency
+magVR = RT; %visual response magnitude
 
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
@@ -68,6 +72,10 @@ for cc = 1:NUM_CELLS
   [latVR(cc).Acc, threshAcc] = computeVisRespLatency(visResp(cc).Acc(:), blineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
   [latVR(cc).Fast, threshFast] = computeVisRespLatency(visResp(cc).Fast(:), blineFast, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
   
+  if isnan(latVR(cc).Acc)
+    latVR(cc).Acc = latVR(cc).Fast;
+  end
+  
   %plot individual cell activity
   if (0)
   plotVisRespCC(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), latVR(cc))
@@ -83,7 +91,6 @@ for cc = 1:NUM_CELLS
   end
 end%for:cells(cc)
 
-
 %% Plotting - Across cells
 visRespAcc = transpose([visResp.Acc]);
 visRespFast = transpose([visResp.Fast]);
@@ -94,6 +101,15 @@ latVRFast = [latVR.Fast];
 %1. subtract off baseline
 visRespAcc = visRespAcc - repmat([meanBline.Acc]', 1,length(T_STIM));
 visRespFast = visRespFast - repmat([meanBline.Fast]', 1,length(T_STIM));
+
+%*** compute visual response magnitude after correcting for baseline
+for cc = 1:NUM_CELLS
+  latAccCC = latVR(cc).Acc - T_STIM(1) + 3500;
+  latFastCC = latVR(cc).Fast - T_STIM(1) + 3500;
+  magVR(cc).Acc = mean(visRespAcc(cc,latAccCC:latAccCC+DUR_COMP_MAG),2);
+  magVR(cc).Fast = mean(visRespFast(cc,latFastCC:latFastCC+DUR_COMP_MAG),2);
+end%for:cells(cc)
+
 %2. divide by max in the Fast condition
 visRespAcc = visRespAcc ./ max(visRespFast,[],2);
 visRespFast = visRespFast ./ max(visRespFast,[],2);
@@ -108,20 +124,37 @@ ninfo = ninfo(idxVRFast);
 figure()
 
 subplot(1,2,1); hold on %Fast
-imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); colorbar
+imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); %colorbar
 plot(latVRFast, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
 text((T_STIM(1)-3500)*ones(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.sess})
 text(zeros(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.unit})
 xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
 ylim([0 NUM_CELLS+1])
+cLim1 = caxis(gca);
 
 subplot(1,2,2); hold on %Acc
-imagesc(T_STIM-3500, (1:NUM_CELLS), visRespAcc); colorbar
+imagesc(T_STIM-3500, (1:NUM_CELLS), visRespAcc); %colorbar
 plot(latVRAcc, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
 xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
 ylim([0 NUM_CELLS+1])
+cLim2 = caxis(gca);
+
+%set color limits to match
+cLim = [min([cLim1 cLim2]), max([cLim1 cLim2])];
+subplot(1,2,1); caxis(cLim)
+subplot(1,2,2); caxis(cLim)
 
 ppretty([12,8])
+
+%% Output variables
+
+if (nargout > 0)
+  varargout{1} = latVR;
+  if (nargout > 1)
+    varargout{2} = magVR;
+  end
+end
+
 
 end%fxn:plotVisRespSAT()
 
@@ -183,7 +216,7 @@ for ii = 1:nSamp %loop over candidate samples and find run of MIN_DUR
 end%for:sample(ii)
 
 if isnan(tInitVR)
-  warning('Unable to locate vis response initiation')
+  warning('Unable to locate VR initiation. Setting Acc latency = Fast latency.')
 end
 
 latency = T_STIM(1) + tInitVR - 3500;
