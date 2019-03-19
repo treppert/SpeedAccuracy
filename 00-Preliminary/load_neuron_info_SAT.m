@@ -5,7 +5,7 @@ function [ ninfoSAT ] = load_neuron_info_SAT( OS )
 if strcmp(OS, 'Linux')
   FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
 elseif strcmp(OS, 'Windows')
-  FILE = 'C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
+  FILE = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
 end
 MONKEY = {'Darwin','Euler','Quincy','Seymour'};
 
@@ -19,20 +19,18 @@ COL_SESS_NUM = 'C';
 COL_SESS = 'D';
 COL_UNIT = 'E';
 
-COL_BASELINE_DE = 'L';
+COL_VISTYPE_DE = 'R';
+COL_VISGRADE_DE = 'L';
+COL_VISFIELD_DE = 'O';
 
-COL_VISTYPE_DE = 'S';
-COL_VISGRADE_DE = 'M';
-COL_VISFIELD_DE = 'P';
-
-COL_MOVEGRADE_DE = 'N';
-COL_MOVEFIELD_DE = 'Q';
+COL_MOVEGRADE_DE = 'M';
+COL_MOVEFIELD_DE = 'P';
 COL_MOVEFFIELD_QS = 'O';
 
-COL_ERRGRADE_DE = 'O';
-COL_ERRFIELD_DE = 'R';
+COL_ERRGRADE_DE = 'N';
+COL_ERRFIELD_DE = 'Q';
 
-COL_REM_ISO_DE = 'T';
+COL_REM_ISO_DE = 'S';
 
 ninfoSAT = [];
 
@@ -46,7 +44,6 @@ for mm = 1:4
   [~,unit] = xlsread(FILE, MONKEY{mm}, build_col(COL_UNIT,idx_mm));
   
   if ismember(MONKEY{mm}, {'Darwin','Euler'})
-    baseLine = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_BASELINE_DE,idx_mm)));
     visGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_VISGRADE_DE,idx_mm)));
     moveGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_MOVEGRADE_DE,idx_mm)));
     errGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_ERRGRADE_DE,idx_mm)));
@@ -72,7 +69,6 @@ for mm = 1:4
       end
     end
   elseif ismember(MONKEY{mm}, {'Quincy','Seymour'})
-    baseLine = num2cell(zeros(NUM_UNIT(mm),1));
     visGrade = num2cell(zeros(NUM_UNIT(mm),1));
     moveGrade = num2cell(zeros(NUM_UNIT(mm),1));
     errGrade = num2cell(zeros(NUM_UNIT(mm),1));
@@ -95,7 +91,7 @@ for mm = 1:4
   ninfo_mm = struct('monkey',MONKEY{mm}(1), 'sessNum',sessNum, 'sess',sess, 'unitNum',unitNum, 'unit',unit, ...
     'area',area, 'visType',visType, 'visGrade',visGrade, 'moveGrade',moveGrade, 'errGrade',errGrade, ...
     'visField',visField, 'moveField',moveField, 'errField',errField, ...
-    'baseLine',baseLine, 'tRemIso',tRemIso);
+    'tRemIso',tRemIso);
   
   ninfoSAT = cat(1, ninfoSAT, ninfo_mm);
   

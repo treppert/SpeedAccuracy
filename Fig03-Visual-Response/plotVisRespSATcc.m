@@ -1,4 +1,4 @@
-function [ ] = plotVisRespSATcc(T_STIM, T_RESP, visResp, sdfMove, RT, ninfo)
+function [ ] = plotVisRespSATcc(T_STIM, T_RESP, visResp, sdfMove, RT, ninfo, nstats)
 %plotVisRespSATcc Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -12,8 +12,8 @@ subplot(1,2,1); hold on
 plot([0 0], yLim, 'k--')
 plot(T_STIM-3500, visResp.Acc, 'r-', 'LineWidth',0.5)
 plot(T_STIM-3500, visResp.Fast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-plot(ninfo.latVRAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-plot(ninfo.latVRFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+plot(nstats.visRespAccLAT*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
+plot(nstats.visRespFastLAT*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 plot(RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 xlim([T_STIM(1) T_STIM(end)]-3500)

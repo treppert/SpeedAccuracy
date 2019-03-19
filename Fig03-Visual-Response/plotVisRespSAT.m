@@ -1,12 +1,8 @@
-function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , spikes , varargin )
+function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes , varargin )
 %plotVisRespSAT() Summary of this function goes here
 %   Note - In order to use this function, first run plotBlineXcondSAT() in
 %   order to obtain estimates of mean and SD of baseline activity.
 % 
-
-if ~isfield(ninfo, 'muBlineAcc')
-  error('No field "muBlineAcc". First run plotBlineXcondSAT() to quantify baseline activity')
-end
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
@@ -67,47 +63,52 @@ for cc = 1:NUM_CELLS
   RT(cc).Acc = median(RTkk(idxAcc & idxCorr & idxRF));
   RT(cc).Fast = median(RTkk(idxFast & idxCorr & idxRF));
   
-  %compute visual response latency
-  ninfo(cc).latVRAcc = computeVisRespLatency(VRAccCC, ninfo(cc).muBlineAcc, ninfo(cc).sdBlineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  ninfo(cc).latVRFast = computeVisRespLatency(VRFastCC, ninfo(cc).muBlineAcc, ninfo(cc).sdBlineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  if isnan(ninfo(cc).latVRAcc)
-    ninfo(cc).latVRAcc = ninfo(cc).latVRFast;
-  end
+  %% Parameterize the visual response
+  idxStats = ninfo(cc).unitNum;
+  
+  %normalization factor
+  nstats(idxStats).visRespNormFactor = max(visResp(cc).Fast);
+  
+  %latency
+  nstats(idxStats).visRespAccLAT = computeVisRespLatency(VRAccCC, nstats(idxStats).blineAccMEAN, nstats(idxStats).blineAccSD, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  nstats(idxStats).visRespFastLAT = computeVisRespLatency(VRFastCC, nstats(idxStats).blineFastMEAN, nstats(idxStats).blineFastSD, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  
+  %magnitude
+  %subtract baseline activity
+  VRAccCC = visResp(cc).Acc - nstats(idxStats).blineAccMEAN;
+  VRFastCC = visResp(cc).Fast - nstats(idxStats).blineFastMEAN;
+  
+  %mean activity during 100-ms interval post-onset
+  idxVRAcc = nstats(idxStats).visRespAccLAT - (T_STIM(1) - 3500);
+  idxVRFast = nstats(idxStats).visRespFastLAT - (T_STIM(1) - 3500);
+  nstats(idxStats).visRespAccMAG = mean(VRAccCC(idxVRAcc:idxVRAcc+WIN_COMP_MAG-1));
+  nstats(idxStats).visRespFastMAG = mean(VRFastCC(idxVRFast:idxVRFast+WIN_COMP_MAG-1));
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), ninfo(cc))
-%   pause()
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), ninfo(cc), nstats(idxStats)); pause()
+  
 end%for:cells(cc)
+
+if (nargout > 0)
+  varargout{1} = nstats;
+end
 
 %% Plotting - Across cells
 visRespAcc = transpose([visResp.Acc]);
 visRespFast = transpose([visResp.Fast]);
-latVRAcc = [ninfo.latVRAcc];
-latVRFast = [ninfo.latVRFast];
+latVRAcc = [nstats(idxArea & idxMonkey & idxVis).visRespAccLAT];
+latVRFast = [nstats(idxArea & idxMonkey & idxVis).visRespFastLAT];
 
 %normalization
-%1. subtract off baseline
-visRespAcc = visRespAcc - repmat([ninfo.muBlineAcc]', 1,length(T_STIM));
-visRespFast = visRespFast - repmat([ninfo.muBlineFast]', 1,length(T_STIM));
-
-%compute VR magnitude as mean of SDF during the 100-ms interval post-onset
-for cc = 1:NUM_CELLS
-  idxVRAcc = ninfo(cc).latVRAcc - (T_STIM(1) - 3500);
-  idxVRFast = ninfo(cc).latVRFast - (T_STIM(1) - 3500);
-  ninfo(cc).magVRAcc = mean(visResp(cc).Acc(idxVRAcc:idxVRAcc+WIN_COMP_MAG-1));
-  ninfo(cc).magVRFast = mean(visResp(cc).Fast(idxVRFast:idxVRFast+WIN_COMP_MAG-1));
-end%for:cells(cc)
-
-%2. divide by max in the Fast condition
 visRespAcc = visRespAcc ./ max(visRespFast,[],2);
 visRespFast = visRespFast ./ max(visRespFast,[],2);
 
 %sort neurons by visual response latency in the Fast condition
-% [latVRFast,idxVRFast] = sort(latVRFast);
-% visRespFast = visRespFast(idxVRFast,:);
-% visRespAcc = visRespAcc(idxVRFast,:);
-% latVRAcc = latVRAcc(idxVRFast);
-% ninfo = ninfo(idxVRFast);
+[latVRFast,idxVRFast] = sort(latVRFast);
+visRespFast = visRespFast(idxVRFast,:);
+visRespAcc = visRespAcc(idxVRFast,:);
+latVRAcc = latVRAcc(idxVRFast);
+ninfo = ninfo(idxVRFast);
 
 figure() %plot Fast and Acc separately
 
@@ -134,18 +135,9 @@ subplot(1,2,2); caxis(cLim)
 
 ppretty([12,8])
 
-%% Output variables
-if (nargout > 0)
-  varargout{1} = ninfo;
-  if (nargout > 1)
-    varargout{2} = spikes;
-  end
-end
-
-
 end%fxn:plotVisRespSAT()
 
-function [ latency , varargout ] = computeVisRespLatency(visResp, meanBline, SDBline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
+function [ latency , varargout ] = computeVisRespLatency(visResp, MEANBline, SDBline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
 
 %start testing for vis response at MIN_VIS_LAT
 MIN_VIS_LAT = 20; %minimum acceptable value for response latency
@@ -161,8 +153,8 @@ NUM_TRIAL = size(visResp,1); %number of trials from which to sample
 latency = NaN(1,NUM_ITER);
 
 %compute activity threshold values based on baseline activity
-THRESH_HIGH = meanBline + SD_THRESH_VR(1)*SDBline;
-THRESH_LOW = meanBline + SD_THRESH_VR(2)*SDBline;
+THRESH_HIGH = MEANBline + SD_THRESH_VR(1)*SDBline;
+THRESH_LOW = MEANBline + SD_THRESH_VR(2)*SDBline;
 
 for jj = 1:NUM_ITER
   %sample with replacement from candidate trials

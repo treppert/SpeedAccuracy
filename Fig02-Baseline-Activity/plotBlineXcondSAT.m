@@ -1,14 +1,14 @@
-function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , spikes , varargin )
+function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , nstats , spikes , varargin )
 %plotBlineXcondSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
-spikes = spikes(idx_area & idx_monkey);
+ninfo = ninfo(idxArea & idxMonkey);
+spikes = spikes(idxArea & idxMonkey);
 
 NUM_CELLS = length(spikes);
 T_BASE  = 3500 + (-100 : 20);
@@ -27,34 +27,33 @@ for cc = 1:NUM_CELLS
   idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   
   %compute SDFs
-  sdfAcc(cc,:) = nanmean(sdfKK(idxAcc & idxCorr, T_BASE));
-  sdfFast(cc,:) = nanmean(sdfKK(idxFast & idxCorr, T_BASE));
+  sdfAcc(cc,:) = nanmean(sdfKK(idxAcc, T_BASE));
+  sdfFast(cc,:) = nanmean(sdfKK(idxFast, T_BASE));
   
   %parameterize baseline activity
-  ninfo(cc).muBlineAcc = mean(sdfAcc(cc,:));
-  ninfo(cc).muBlineFast = mean(sdfFast(cc,:));
-  ninfo(cc).sdBlineAcc = std(sdfAcc(cc,:));
-  ninfo(cc).sdBlineFast = std(sdfFast(cc,:));
+  idxStats = ninfo(cc).unitNum; %index nstats correctly
+  nstats(idxStats).blineAccMEAN = mean(sdfAcc(cc,:));
+  nstats(idxStats).blineFastMEAN = mean(sdfFast(cc,:));
+  nstats(idxStats).blineAccSD = std(sdfAcc(cc,:));
+  nstats(idxStats).blineFastSD = std(sdfFast(cc,:));
   
 end%for:cells(cc)
 
 if (nargout > 0)
-  varargout{1} = ninfo;
-  if (nargout > 1)
-    varargout{2} = spikes;
-  end
+  varargout{1} = nstats;
 end
 
-
 %% Plotting
-blineDiff = [ninfo.muBlineFast] - [ninfo.muBlineAcc];
+
+blineDiff = [nstats.blineFastMEAN] - [nstats.blineAccMEAN];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
-histogram(blineDiff([ninfo.baseLine]~=0), 'BinWidth',2, 'FaceColor','b')
+histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
+histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==-1), 'BinWidth',2, 'FaceColor','r')
 ppretty([5,4])
 
 end%fxn:plotBlineXcondSAT()

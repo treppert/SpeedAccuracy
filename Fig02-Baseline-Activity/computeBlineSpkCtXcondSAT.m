@@ -1,4 +1,4 @@
-function [ varargout ] = computeBlineSpkCtXcondSAT( binfo , ninfo , spikes , varargin )
+function [ varargout ] = computeBlineSpkCtXcondSAT( binfo , ninfo , nstats , spikes , varargin )
 %computeBlineSpkCtXcondSAT Summary of this function goes here
 %   Not currently including cells for which Acc > Fast.
 
@@ -15,8 +15,6 @@ T_BASE  = 3500 + [-700, -1];
 
 spkCtAcc = cell(1,NUM_CELLS); %baseline spike counts
 spkCtFast = cell(1,NUM_CELLS);
-hVal = NaN(1,NUM_CELLS); %stats
-pVal = NaN(1,NUM_CELLS);
 
 meanAcc = NaN(1,NUM_CELLS); %mean spike counts for plotting
 meanFast = NaN(1,NUM_CELLS);
@@ -48,17 +46,22 @@ for cc = 1:NUM_CELLS
   meanFast(cc) = mean(spkCtFast{cc});
   
   %compute stats for individual cells
-  [hVal(cc),pVal(cc),~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc});
-  if (hVal(cc) && (tmp.tstat < 0)); hVal(cc) = -1; end %not including cells Acc > Fast
+  idxStats = ninfo(cc).unitNum; %index nstats correctly
+  [hVal,~,~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc});
+  if (hVal)
+    if (tmp.tstat < 0) %Acc > Fast
+      nstats(idxStats).blineEffect = -1;
+    else %Fast > Acc
+      nstats(idxStats).blineEffect = 1;
+    end
+  else%no SAT effect on baseline
+    nstats(idxStats).blineEffect = 0;
+  end
   
 end%for:cells(cc)
 
 if (nargout > 0)
-  varargout{1} = struct('Acc',spkCtAcc, 'Fast',spkCtFast);
-  if (nargout > 1)
-    varargout{2} = struct('hVal',hVal, 'pVal',pVal);
-  end
+  varargout{1} = nstats;
 end
-
 end%fxn:computeBlineSpkCtXcondSAT()
 
