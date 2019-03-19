@@ -11,19 +11,15 @@ ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(spikes);
-T_BASE  = 3500 + (-700 : -1);
+T_BASE  = 3500 + (-100 : 20);
 
-blineAcc = NaN(1,NUM_CELLS);
-blineFast = NaN(1,NUM_CELLS);
 sdfAcc = NaN(NUM_CELLS,length(T_BASE));
 sdfFast = NaN(NUM_CELLS,length(T_BASE));
 
 for cc = 1:NUM_CELLS
 %   if ~(ninfo(cc).baseLine); continue; end %make sure we have modulation Fast > Acc
   kk = ismember({binfo.session}, ninfo(cc).sess);
-
-  %compute spike density function
-  sdfSess = compute_spike_density_fxn(spikes(cc).SAT);
+  sdfKK = compute_spike_density_fxn(spikes(cc).SAT);
 
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
@@ -31,31 +27,30 @@ for cc = 1:NUM_CELLS
   idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-%   idxErr = (~binfo(kk).err_time & binfo(kk).err_dir);
-%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   
-  sdfAcc(cc,:) = nanmean(sdfSess(idxAcc, T_BASE));
-  sdfFast(cc,:) = nanmean(sdfSess(idxFast, T_BASE));
-  blineAcc(cc) = mean(sdfAcc(cc,:));
-  blineFast(cc) = mean(sdfFast(cc,:));
+  %compute SDFs
+  sdfAcc(cc,:) = nanmean(sdfKK(idxAcc & idxCorr, T_BASE));
+  sdfFast(cc,:) = nanmean(sdfKK(idxFast & idxCorr, T_BASE));
+  
+  %parameterize baseline activity
+  ninfo(cc).muBlineAcc = mean(sdfAcc(cc,:));
+  ninfo(cc).muBlineFast = mean(sdfFast(cc,:));
+  ninfo(cc).sdBlineAcc = std(sdfAcc(cc,:));
+  ninfo(cc).sdBlineFast = std(sdfFast(cc,:));
   
 end%for:cells(cc)
 
 if (nargout > 0)
-  varargout{1} = struct('Acc',blineAcc, 'Fast',blineFast);
+  varargout{1} = ninfo;
   if (nargout > 1)
-    varargout{2} = struct('Acc',sdfAcc, 'Fast',sdfFast);
+    varargout{2} = spikes;
   end
 end
 
 
 %% Plotting
-blineDiff = blineFast - blineAcc;
-
-% figure(); hold on
-% plot(blineAcc, blineFast, 'ko', 'MarkerSize',5)
-% plot([5 100], [5 100], ':', 'Color',[.5 .5 .5])
-% xlim([0 80]); ylim([0 80]); ppretty('image_size',[5,4])
+blineDiff = [ninfo.muBlineFast] - [ninfo.muBlineAcc];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])

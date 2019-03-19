@@ -1,29 +1,31 @@
 function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , spikes , varargin )
 %plotVisRespSAT() Summary of this function goes here
-%   Detailed explanation goes here
+%   Note - In order to use this function, first run plotBlineXcondSAT() in
+%   order to obtain estimates of mean and SD of baseline activity.
+% 
+
+if ~isfield(ninfo, 'muBlineAcc')
+  error('No field "muBlineAcc". First run plotBlineXcondSAT() to quantify baseline activity')
+end
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-%remove cells w/o correct form of visual response
 idxVis = ismember({ninfo.visType}, {'sustained'});
 
 ninfo = ninfo(idxArea & idxMonkey & idxVis);
 spikes = spikes(idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = length(spikes);
-T_BASE = 3500 + (-100 : 20);
 T_STIM = 3500 + (-100 : 300);
 T_RESP.Acc = 3500 + (-300 : 100);
 T_RESP.Fast = 3500 + (-100 : 100);
 
-%visual response latency parameters
+%param used to quantify the visual response
 MIN_DUR_VR = 50; %mininum duration of the visual response (ms)
 SD_THRESH_VR = [6, 2]; %minimum number of SDs from the mean (threshold)
-
-%visual response magnitude parameters
-% DUR_COMP_MAG = 100; %amount of time (ms) after latency used to estimate mag
+WIN_COMP_MAG = 100; %amount of time (ms) used to estimate magnitude
 
 %output initializations
 visResp = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
@@ -33,8 +35,6 @@ sdfMove = populate_struct(sdfMove, {'Acc'}, NaN(length(T_RESP.Acc),1));
 sdfMove = populate_struct(sdfMove, {'Fast'}, NaN(length(T_RESP.Fast),1));
 RT = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
 RT = populate_struct(RT, {'Acc','Fast'}, NaN);
-meanBline = RT;
-latVR = RT; %visual response latency
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -46,9 +46,11 @@ for cc = 1:NUM_CELLS
   %align on primary response for sdfMove plots
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk);
   
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (binfo(kk).condition == 1 & ~idxIso);
+  idxFast = (binfo(kk).condition == 3 & ~idxIso);
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by response dir re. response field
@@ -64,46 +66,48 @@ for cc = 1:NUM_CELLS
   %compute median RT
   RT(cc).Acc = median(RTkk(idxAcc & idxCorr & idxRF));
   RT(cc).Fast = median(RTkk(idxFast & idxCorr & idxRF));
-  %compute baseline activity
-  blineAcc = nanmean(sdfKKstim(idxAcc & idxCorr, T_BASE));
-  blineFast = nanmean(sdfKKstim(idxFast & idxCorr, T_BASE));
-  meanBline(cc).Acc = mean(blineAcc);
-  meanBline(cc).Fast = mean(blineFast);
   
   %compute visual response latency
-  latVR(cc).Acc = computeVisRespLatency(VRAccCC, blineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  latVR(cc).Fast = computeVisRespLatency(VRFastCC, blineFast, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  
-  if isnan(latVR(cc).Acc)
-    latVR(cc).Acc = latVR(cc).Fast;
+  ninfo(cc).latVRAcc = computeVisRespLatency(VRAccCC, ninfo(cc).muBlineAcc, ninfo(cc).sdBlineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  ninfo(cc).latVRFast = computeVisRespLatency(VRFastCC, ninfo(cc).muBlineAcc, ninfo(cc).sdBlineAcc, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  if isnan(ninfo(cc).latVRAcc)
+    ninfo(cc).latVRAcc = ninfo(cc).latVRFast;
   end
   
   %plot individual cell activity
-%   plotVisRespCC(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), latVR(cc))
-%   subplot(1,2,1); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), ninfo(cc))
+%   pause()
 end%for:cells(cc)
 
 %% Plotting - Across cells
 visRespAcc = transpose([visResp.Acc]);
 visRespFast = transpose([visResp.Fast]);
-latVRAcc = [latVR.Acc];
-latVRFast = [latVR.Fast];
+latVRAcc = [ninfo.latVRAcc];
+latVRFast = [ninfo.latVRFast];
 
 %normalization
 %1. subtract off baseline
-visRespAcc = visRespAcc - repmat([meanBline.Acc]', 1,length(T_STIM));
-visRespFast = visRespFast - repmat([meanBline.Fast]', 1,length(T_STIM));
+visRespAcc = visRespAcc - repmat([ninfo.muBlineAcc]', 1,length(T_STIM));
+visRespFast = visRespFast - repmat([ninfo.muBlineFast]', 1,length(T_STIM));
+
+%compute VR magnitude as mean of SDF during the 100-ms interval post-onset
+for cc = 1:NUM_CELLS
+  idxVRAcc = ninfo(cc).latVRAcc - (T_STIM(1) - 3500);
+  idxVRFast = ninfo(cc).latVRFast - (T_STIM(1) - 3500);
+  ninfo(cc).magVRAcc = mean(visResp(cc).Acc(idxVRAcc:idxVRAcc+WIN_COMP_MAG-1));
+  ninfo(cc).magVRFast = mean(visResp(cc).Fast(idxVRFast:idxVRFast+WIN_COMP_MAG-1));
+end%for:cells(cc)
 
 %2. divide by max in the Fast condition
 visRespAcc = visRespAcc ./ max(visRespFast,[],2);
 visRespFast = visRespFast ./ max(visRespFast,[],2);
 
 %sort neurons by visual response latency in the Fast condition
-[latVRFast,idxVRFast] = sort(latVRFast);
-visRespFast = visRespFast(idxVRFast,:);
-visRespAcc = visRespAcc(idxVRFast,:);
-latVRAcc = latVRAcc(idxVRFast);
-ninfo = ninfo(idxVRFast);
+% [latVRFast,idxVRFast] = sort(latVRFast);
+% visRespFast = visRespFast(idxVRFast,:);
+% visRespAcc = visRespAcc(idxVRFast,:);
+% latVRAcc = latVRAcc(idxVRFast);
+% ninfo = ninfo(idxVRFast);
 
 figure() %plot Fast and Acc separately
 
@@ -132,13 +136,16 @@ ppretty([12,8])
 
 %% Output variables
 if (nargout > 0)
-  varargout{1} = latVR;
+  varargout{1} = ninfo;
+  if (nargout > 1)
+    varargout{2} = spikes;
+  end
 end
 
 
 end%fxn:plotVisRespSAT()
 
-function [ latency , varargout ] = computeVisRespLatency(visResp, bline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
+function [ latency , varargout ] = computeVisRespLatency(visResp, meanBline, SDBline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
 
 %start testing for vis response at MIN_VIS_LAT
 MIN_VIS_LAT = 20; %minimum acceptable value for response latency
@@ -147,21 +154,19 @@ visResp = visResp(:,idxTestStart:end);
 T_STIM = T_STIM(idxTestStart:end);
 
 %bootstrapping parameters
-NUM_ITER = 1000; %number of times to sample
+NUM_ITER = 1; %number of times to sample
 NUM_TRIAL = size(visResp,1); %number of trials from which to sample
 
 %initializations
 latency = NaN(1,NUM_ITER);
 
 %compute activity threshold values based on baseline activity
-meanBline = mean(bline);
-SDBline = std(bline);
 THRESH_HIGH = meanBline + SD_THRESH_VR(1)*SDBline;
 THRESH_LOW = meanBline + SD_THRESH_VR(2)*SDBline;
 
 for jj = 1:NUM_ITER
   %sample with replacement from candidate trials
-  trialJJ = datasample((1:NUM_TRIAL), NUM_TRIAL, 'Replace',true);
+  trialJJ = datasample((1:NUM_TRIAL), NUM_TRIAL, 'Replace',false);
   %use the sampled trials to compute the SDF
   visRespJJ = nanmean(visResp(trialJJ,:));
   
@@ -201,35 +206,3 @@ if (nargout > 1) %if desired, return threshold values for plotting
 end
 
 end%util:computeVisRespLatency()
-
-function [] = plotVisRespCC(T_STIM, T_RESP, visResp, sdfMove, RT, latVR)
-
-figure()
-
-tmp = [visResp.Acc ; visResp.Fast ; sdfMove.Acc ; sdfMove.Fast];
-yLim = [min(tmp) max(tmp)];
-
-%visual response
-subplot(1,2,1); hold on
-plot([0 0], yLim, 'k--')
-plot(T_STIM-3500, visResp.Acc, 'r-', 'LineWidth',0.5)
-plot(T_STIM-3500, visResp.Fast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-plot(latVR.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-plot(latVR.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-plot(RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-plot(RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-xlim([T_STIM(1) T_STIM(end)]-3500)
-
-%activity from primary response
-subplot(1,2,2); hold on
-plot([0 0], yLim, 'k--')
-plot(T_RESP.Acc-3500, sdfMove.Acc, 'r-', 'LineWidth',0.5)
-plot(T_RESP.Fast-3500, sdfMove.Fast, '-', 'Color',[0 .7 0], 'LineWidth',0.5)
-plot(-RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-plot(-RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-xlim([T_RESP.Acc(1) T_RESP.Acc(end)]-3500)
-set(gca, 'YAxisLocation','right')
-
-ppretty([8,3])
-
-end%util:plotVisRespCC()
