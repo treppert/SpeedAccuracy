@@ -15,22 +15,13 @@ spikes = spikes(idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = length(spikes);
 T_STIM = 3500 + (-100 : 300);
-T_RESP.Acc = 3500 + (-300 : 100);
-T_RESP.Fast = 3500 + (-100 : 100);
-
-%param used to quantify the visual response
-MIN_DUR_VR = 50; %mininum duration of the visual response (ms)
-SD_THRESH_VR = [6, 2]; %minimum number of SDs from the mean (threshold)
-WIN_COMP_MAG = 100; %amount of time (ms) used to estimate magnitude
+T_RESP = 3500 + (-300 : 100);
 
 %output initializations
 visResp = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
 visResp = populate_struct(visResp, {'Acc','Fast'}, NaN(length(T_STIM),1));
 sdfMove = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
-sdfMove = populate_struct(sdfMove, {'Acc'}, NaN(length(T_RESP.Acc),1));
-sdfMove = populate_struct(sdfMove, {'Fast'}, NaN(length(T_RESP.Fast),1));
-RT = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
-RT = populate_struct(RT, {'Acc','Fast'}, NaN);
+sdfMove = populate_struct(sdfMove, {'Acc','Fast'}, NaN(length(T_RESP),1));
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -52,40 +43,36 @@ for cc = 1:NUM_CELLS
   %index by response dir re. response field
   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   
-  %compute SDF
+  %isolate single-trial SDFs
   VRAccCC = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);
   VRFastCC = sdfKKstim(idxFast & idxCorr & idxRF, T_STIM);
-  visResp(cc).Acc(:) = nanmean(VRAccCC);
-  visResp(cc).Fast(:) = nanmean(VRFastCC);
-  sdfMove(cc).Acc(:) = nanmean(sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP.Acc));
-  sdfMove(cc).Fast(:) = nanmean(sdfKKresp(idxFast & idxCorr & idxRF, T_RESP.Fast));
-  %compute median RT
-  RT(cc).Acc = median(RTkk(idxAcc & idxCorr & idxRF));
-  RT(cc).Fast = median(RTkk(idxFast & idxCorr & idxRF));
+  
+  %compute mean SDFs
+  visResp(cc).Acc(:) = mean(VRAccCC);
+  visResp(cc).Fast(:) = mean(VRFastCC);
+  sdfMove(cc).Acc(:) = mean(sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP));
+  sdfMove(cc).Fast(:) = mean(sdfKKresp(idxFast & idxCorr & idxRF, T_RESP));
   
   %% Parameterize the visual response
-  idxStats = ninfo(cc).unitNum;
-  
-  %normalization factor
-  nstats(idxStats).visRespNormFactor = max(visResp(cc).Fast);
+  ccNS = ninfo(cc).unitNum;
   
   %latency
-  nstats(idxStats).visRespAccLAT = computeVisRespLatency(VRAccCC, nstats(idxStats).blineAccMEAN, nstats(idxStats).blineAccSD, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
-  nstats(idxStats).visRespFastLAT = computeVisRespLatency(VRFastCC, nstats(idxStats).blineFastMEAN, nstats(idxStats).blineFastSD, SD_THRESH_VR, MIN_DUR_VR, T_STIM);
+  [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
+  nstats(ccNS).VRlatAcc = VRlatAcc;
+  nstats(ccNS).VRlatFast = VRlatFast;
   
   %magnitude
-  %subtract baseline activity
-  VRAccCC = visResp(cc).Acc - nstats(idxStats).blineAccMEAN;
-  VRFastCC = visResp(cc).Fast - nstats(idxStats).blineFastMEAN;
+  [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC, VRFastCC, VRlatAcc, VRlatFast, nstats(ccNS).blineAccMEAN, nstats(ccNS).blineFastMEAN);
+  nstats(ccNS).VRmagAcc = VRmagAcc;
+  nstats(ccNS).VRmagFast = VRmagFast;
   
-  %mean activity during 100-ms interval post-onset
-  idxVRAcc = nstats(idxStats).visRespAccLAT - (T_STIM(1) - 3500);
-  idxVRFast = nstats(idxStats).visRespFastLAT - (T_STIM(1) - 3500);
-  nstats(idxStats).visRespAccMAG = mean(VRAccCC(idxVRAcc:idxVRAcc+WIN_COMP_MAG-1));
-  nstats(idxStats).visRespFastMAG = mean(VRFastCC(idxVRFast:idxVRFast+WIN_COMP_MAG-1));
+  %normalization factor
+%   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), RT(cc), ninfo(cc), nstats(idxStats)); pause()
+  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+  print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Visual-Response/SDF-VisResp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.25)
   
 end%for:cells(cc)
 
@@ -96,8 +83,8 @@ end
 %% Plotting - Across cells
 visRespAcc = transpose([visResp.Acc]);
 visRespFast = transpose([visResp.Fast]);
-latVRAcc = [nstats(idxArea & idxMonkey & idxVis).visRespAccLAT];
-latVRFast = [nstats(idxArea & idxMonkey & idxVis).visRespFastLAT];
+latVRAcc = [nstats(idxArea & idxMonkey & idxVis).VRlatAcc];
+latVRFast = [nstats(idxArea & idxMonkey & idxVis).VRlatFast];
 
 %normalization
 visRespAcc = visRespAcc ./ max(visRespFast,[],2);
@@ -136,65 +123,3 @@ subplot(1,2,2); caxis(cLim)
 ppretty([12,8])
 
 end%fxn:plotVisRespSAT()
-
-function [ latency , varargout ] = computeVisRespLatency(visResp, MEANBline, SDBline, SD_THRESH_VR, MIN_DUR_VR, T_STIM)
-
-%start testing for vis response at MIN_VIS_LAT
-MIN_VIS_LAT = 20; %minimum acceptable value for response latency
-idxTestStart = find((T_STIM-3500) == MIN_VIS_LAT);
-visResp = visResp(:,idxTestStart:end);
-T_STIM = T_STIM(idxTestStart:end);
-
-%bootstrapping parameters
-NUM_ITER = 1; %number of times to sample
-NUM_TRIAL = size(visResp,1); %number of trials from which to sample
-
-%initializations
-latency = NaN(1,NUM_ITER);
-
-%compute activity threshold values based on baseline activity
-THRESH_HIGH = MEANBline + SD_THRESH_VR(1)*SDBline;
-THRESH_LOW = MEANBline + SD_THRESH_VR(2)*SDBline;
-
-for jj = 1:NUM_ITER
-  %sample with replacement from candidate trials
-  trialJJ = datasample((1:NUM_TRIAL), NUM_TRIAL, 'Replace',false);
-  %use the sampled trials to compute the SDF
-  visRespJJ = nanmean(visResp(trialJJ,:));
-  
-  %find all points above THRESH
-  tCand = find(visRespJJ > THRESH_HIGH);
-  nSamp = length(tCand) - MIN_DUR_VR;
-  dtCand = diff(tCand);
-  
-  tInitVR = NaN;
-  for ii = 1:nSamp %loop over candidate samples and find run of MIN_DUR
-    runLengthII = sum(dtCand(ii:ii+MIN_DUR_VR-1));
-    if (runLengthII == MIN_DUR_VR)%found a run of MIN_DUR_VR above top threshold
-      %tag the start of the run as the vis resp latency
-      tInitVR = tCand(ii);
-      %now walk back to the bottom threshold
-      tCand = find(visRespJJ < THRESH_LOW); %find points below bottom threshold
-      idxVRNew = find(tCand < tInitVR, 1, 'last'); %find last such point before VR
-      if ~isempty(idxVRNew) %if there is no such point, then keep current estimate
-        tInitVR = tCand(idxVRNew);
-      end
-      break
-    end
-  end%for:sample(ii)
-  
-  if isnan(tInitVR)
-    fprintf('Warning jj=%d: Unable to locate VR initiation\n', jj)
-  end
-  
-  latency(jj) = T_STIM(1) + tInitVR - 3500;
-  
-end%for:bootstrap-iter(jj)
-
-latency = nanmedian(latency);
-
-if (nargout > 1) %if desired, return threshold values for plotting
-  varargout{1} = struct('High',THRESH_HIGH, 'Low',THRESH_LOW);
-end
-
-end%util:computeVisRespLatency()
