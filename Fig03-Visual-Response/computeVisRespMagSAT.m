@@ -1,4 +1,4 @@
-function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, latAcc, latFast, blineAcc, blineFast )
+function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, latAcc, latFast, nstats )
 %computeVisRespMagSAT Summary of this function goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
 %   sdfVRFast - Single-trial visual response SDFs in the Fast condition
@@ -8,6 +8,10 @@ T_AVERAGE = 75; %amount of time (ms) used to estimate magnitude
 %compute the mean spike density function for each condition
 sdfVRAcc = mean(sdfVRAcc);
 sdfVRFast = mean(sdfVRFast);
+
+%load mean baseline activity
+blineAcc = nstats.blineAccMEAN;
+blineFast = nstats.blineFastMEAN;
 
 %subtract off baseline activity
 sdfVRAcc = sdfVRAcc - blineAcc;

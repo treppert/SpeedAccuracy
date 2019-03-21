@@ -57,12 +57,12 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum;
   
   %latency
-  [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
-  nstats(ccNS).VRlatAcc = VRlatAcc;
-  nstats(ccNS).VRlatFast = VRlatFast;
+%   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
+  VRlatAcc = nstats(ccNS).VRlatAcc; %already computed
+  VRlatFast = nstats(ccNS).VRlatFast;
   
   %magnitude
-  [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC, VRFastCC, VRlatAcc, VRlatFast, nstats(ccNS).blineAccMEAN, nstats(ccNS).blineFastMEAN);
+  [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), VRlatAcc, VRlatFast, nstats(ccNS));
   nstats(ccNS).VRmagAcc = VRmagAcc;
   nstats(ccNS).VRmagFast = VRmagFast;
   
@@ -70,9 +70,9 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
-  print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Visual-Response/SDF-VisResp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  pause(0.25)
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+%   print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Visual-Response/SDF-VisResp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   pause(0.25)
   
 end%for:cells(cc)
 
