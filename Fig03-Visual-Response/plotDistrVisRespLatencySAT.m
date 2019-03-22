@@ -16,17 +16,21 @@ NUM_CELLS = length(nstats);
 latAcc = [nstats.VRlatAcc];
 latFast = [nstats.VRlatFast];
 
-%compute the cumulative distribution function
+%plot the distribution of difference in latency
+figure(); hold on
+histogram(latAcc-latFast, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
+ppretty([5,5])
+pause(0.25)
+
+%compute the cumulative distribution
 latAcc = sort(latAcc);
 latFast = sort(latFast);
 
 yCDF = (1:NUM_CELLS) / NUM_CELLS;
 
 figure(); hold on
-
 plot(latAcc, yCDF, 'r.-', 'LineWidth',1.0, 'MarkerSize',10)
 plot(latFast, yCDF, '.-', 'Color',[0 .7 0], 'LineWidth',1.0, 'MarkerSize',10)
-
 ppretty([5,5])
 
 %compute stats

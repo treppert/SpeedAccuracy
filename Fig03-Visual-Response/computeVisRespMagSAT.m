@@ -3,7 +3,7 @@ function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, l
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
 %   sdfVRFast - Single-trial visual response SDFs in the Fast condition
 
-T_AVERAGE = 75; %amount of time (ms) used to estimate magnitude
+T_AVERAGE = 100; %amount of time (ms) used to estimate magnitude
 
 %compute the mean spike density function for each condition
 sdfVRAcc = mean(sdfVRAcc);
