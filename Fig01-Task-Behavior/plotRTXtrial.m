@@ -1,8 +1,12 @@
-function [  ] = plotRTXtrial( binfo , moves )
+function [  ] = plotRTXtrial( binfo , moves , varargin )
 %plotRTXtrial Summary of this function goes here
 %   Detailed explanation goes here
 
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+[binfo, moves] = utilIsolateMonkeyBehavior(binfo, moves, args.monkey);
 NUM_SESSION = length(binfo);
+
 MIN_NUM_TRIALS = 8;
 
 TRIAL_PLOT = ( -4 : 3 );

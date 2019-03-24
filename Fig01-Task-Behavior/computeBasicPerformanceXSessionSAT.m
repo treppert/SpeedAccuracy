@@ -4,18 +4,8 @@ function [ ] = computeBasicPerformanceXSessionSAT(binfo, moves, varargin)
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-MIN_NUM_TRIALS = 500;
-
-idxMonkey = ismember({binfo.monkey}, args.monkey);
-idxNumTrials = ([binfo.num_trials] > MIN_NUM_TRIALS);
-
-binfo = binfo(idxMonkey & idxNumTrials); NUM_SESSION = length(binfo);
-moves = moves(idxMonkey & idxNumTrials);
-
-if ((length(args.monkey) == 1) && ismember(args.monkey, {'D','E'})) %remove sessions with no SEF
-  binfo(1) = []; NUM_SESSION = NUM_SESSION - 1;
-  moves(1) = [];
-end
+[binfo, moves] = utilIsolateMonkeyBehavior(binfo, moves, args.monkey);
+NUM_SESSION = length(binfo);
 
 dlineAcc = NaN(1,NUM_SESSION);
 dlineFast = NaN(1,NUM_SESSION);

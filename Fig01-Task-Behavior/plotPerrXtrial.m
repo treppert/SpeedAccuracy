@@ -1,8 +1,12 @@
-function [  ] = plotPerrXtrial( binfo )
+function [  ] = plotPerrXtrial( binfo , varargin )
 %plotPerrXtrial Summary of this function goes here
 %   Detailed explanation goes here
 
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+[binfo, ~] = utilIsolateMonkeyBehavior(binfo, cell(1,length(binfo)), args.monkey);
 NUM_SESSION = length(binfo);
+
 MIN_NUM_TRIALS = 8;
 
 TRIAL_PLOT = ( -4 : 3 );
@@ -17,7 +21,7 @@ trialSwitch = identify_condition_switch(binfo);
 
 for kk = 1:NUM_SESSION
   
-  jjErrTime = find(binfo(kk).err_dir);
+  jjErr = find(binfo(kk).err_dir);
   
   jjA2F = trialSwitch(kk).A2F;  numA2F = length(jjA2F);
   jjF2A = trialSwitch(kk).F2A;  numF2A = length(jjF2A);
@@ -29,8 +33,8 @@ for kk = 1:NUM_SESSION
   
   for jj = 1:NUM_TRIAL
     
-    pErrA2F(kk,jj) = length(intersect(jjErrTime,jjA2F + TRIAL_PLOT(jj))) / numA2F;
-    pErrF2A(kk,jj) = length(intersect(jjErrTime,jjF2A + TRIAL_PLOT(jj))) / numF2A;
+    pErrA2F(kk,jj) = length(intersect(jjErr,jjA2F + TRIAL_PLOT(jj))) / numA2F;
+    pErrF2A(kk,jj) = length(intersect(jjErr,jjF2A + TRIAL_PLOT(jj))) / numF2A;
     
   end%for:trials(jj)
   
