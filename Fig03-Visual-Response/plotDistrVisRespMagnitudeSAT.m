@@ -15,14 +15,20 @@ NUM_CELLS = length(nstats);
 
 magAcc = [nstats.VRmagAcc];
 magFast = [nstats.VRmagFast];
+magDiff = magFast - magAcc;
 
 %plot distribution of difference in response magnitude
+ccFgA = ([nstats.VReffect] == 1); %cells with VR Fast > Acc
+ccAgF = ([nstats.VReffect] == -1); %cells with VR Acc > Fast
+
 figure(); hold on
-histogram(magFast-magAcc, 'BinWidth',2, 'FaceColor',[.4 .4 .4], 'Normalization','count')
+histogram(magDiff, 'BinWidth',2, 'FaceColor',[.4 .4 .4], 'Normalization','count')
+histogram(magDiff(ccFgA), 'BinWidth',2, 'FaceColor',[0 .7 0], 'Normalization','count')
+histogram(magDiff(ccAgF), 'BinWidth',2, 'FaceColor','r', 'Normalization','count')
 ppretty([5,5])
-pause(0.25)
 
 %compute the cumulative distribution function
+return
 magAcc = sort(magAcc);
 magFast = sort(magFast);
 

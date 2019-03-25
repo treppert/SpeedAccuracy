@@ -1,32 +1,47 @@
-function [ ] = testVisRespMagSATeffect( binfo , ninfo , nstats , spikes , varargin )
+function [ nstats ] = testVisRespMagSATeffect( binfo , moves , ninfo , nstats , spikes , varargin )
 %testVisRespMagSATeffect Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxVis = ismember({ninfo.visType}, {'sustained'});
 
-ninfo = ninfo(idx_area & idx_monkey);
-spikes = spikes(idx_area & idx_monkey);
+ninfo = ninfo(idxArea & idxMonkey & idxVis);
+spikes = spikes(idxArea & idxMonkey & idxVis); NUM_CELLS = length(spikes);
 
-NUM_CELLS = length(spikes);
-T_BASE  = 3500 + [-700, -1];
+DUR_TEST = 100; %duration over which to test (time-locked to VR onset)
+% MIN_DIFF_AVG_CT = 0.25; %min diff (Acc vs. Fast) in average spike ct
 
-spkCtAcc = cell(1,NUM_CELLS); %baseline spike counts
+%pull visual response latencies
+VRlatAcc = [nstats.VRlatAcc];
+VRlatFast = [nstats.VRlatFast];
+
+%initializations
+spkCtAcc = cell(1,NUM_CELLS);
 spkCtFast = cell(1,NUM_CELLS);
-
-meanAcc = NaN(1,NUM_CELLS); %mean spike counts for plotting
-meanFast = NaN(1,NUM_CELLS);
+meanCtAcc = NaN(1,NUM_CELLS);
+meanCtFast = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
+  ccNS = ninfo(cc).unitNum; %index nstats correctly
+  
+  %determine testing intervals (time-locked to VR)
+  %NOTE - after including SC/FEF, this index needs to be ccNS !!!
+  tTestAcc = VRlatAcc(cc) + [0, DUR_TEST-1] + 3500;
+  tTestFast = VRlatFast(cc) + [0, DUR_TEST-1] + 3500;
 
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  %index by trial outcome
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+  %index by response dir re. response field
+  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   %index by condition
-  trialAcc = find((binfo(kk).condition == 1) & ~idxIso);
-  trialFast = find((binfo(kk).condition == 3) & ~idxIso);
+  trialAcc = find((binfo(kk).condition == 1) & ~idxIso & idxCorr & idxRF);
+  trialFast = find((binfo(kk).condition == 3) & ~idxIso & idxCorr & idxRF);
   
   numTrialAcc = length(trialAcc);
   numTrialFast = length(trialFast);
@@ -34,32 +49,29 @@ for cc = 1:NUM_CELLS
   spkCtAcc{cc} = NaN(1,numTrialAcc);
   for jj = 1:numTrialAcc
     spkTime_jj = spikes(cc).SAT{trialAcc(jj)};
-    spkCtAcc{cc}(jj) = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2)));
+    spkCtAcc{cc}(jj) = sum((spkTime_jj > tTestAcc(1)) & (spkTime_jj < tTestAcc(2)));
   end%for:trial(jj)
-  meanAcc(cc) = mean(spkCtAcc{cc});
+  meanCtAcc(cc) = mean(spkCtAcc{cc});
   
   spkCtFast{cc} = NaN(1,numTrialFast);
   for jj = 1:numTrialFast
     spkTime_jj = spikes(cc).SAT{trialFast(jj)};
-    spkCtFast{cc}(jj) = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2)));
+    spkCtFast{cc}(jj) = sum((spkTime_jj > tTestFast(1)) & (spkTime_jj < tTestFast(2)));
   end%for:trial(jj)
-  meanFast(cc) = mean(spkCtFast{cc});
+  meanCtFast(cc) = mean(spkCtFast{cc});
   
   %compute stats for individual cells
-  idxStats = ninfo(cc).unitNum; %index nstats correctly
-  [hVal,~,~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc});
+  [hVal,~,~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc}, 'Alpha',0.05, 'Tail','both');
   if (hVal)
     if (tmp.tstat < 0) %Acc > Fast
-      nstats(idxStats).blineEffect = -1;
+      nstats(ccNS).VReffect = -1;
     else %Fast > Acc
-      nstats(idxStats).blineEffect = 1;
+      nstats(ccNS).VReffect = 1;
     end
-  else%no SAT effect on baseline
-    nstats(idxStats).blineEffect = 0;
+  else%no SAT effect on VR
+    nstats(ccNS).VReffect = 0;
   end
   
 end%for:cells(cc)
 
-
 end%util:testVisRespMagSATeffect()
-
