@@ -15,12 +15,17 @@ NUM_CELLS = length(nstats);
 
 latAcc = [nstats.VRlatAcc];
 latFast = [nstats.VRlatFast];
+latDiff = latAcc - latFast;
 
-%plot the distribution of difference in latency
+%plot distribution of difference in response magnitude
+ccFgA = ([nstats.VReffect] == 1); %cells with VR Fast > Acc
+ccAgF = ([nstats.VReffect] == -1); %cells with VR Acc > Fast
+
 figure(); hold on
-histogram(latAcc-latFast, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
+histogram(latDiff, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
+histogram(latDiff(ccFgA), 'BinWidth',5, 'FaceColor',[0 .7 0], 'Normalization','count')
+histogram(latDiff(ccAgF), 'BinWidth',5, 'FaceColor','r', 'Normalization','count')
 ppretty([5,5])
-pause(0.25)
 
 %compute the cumulative distribution
 latAcc = sort(latAcc);

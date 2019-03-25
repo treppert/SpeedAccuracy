@@ -1,6 +1,8 @@
 function [ nstats ] = testVisRespMagSATeffect( binfo , moves , ninfo , nstats , spikes , varargin )
 %testVisRespMagSATeffect Summary of this function goes here
-%   Detailed explanation goes here
+%   Test for a significant difference in VR magnitude (relative to
+%   baseline) across conditions Fast and Accurate.
+% 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
@@ -11,6 +13,7 @@ idxVis = ismember({ninfo.visType}, {'sustained'});
 ninfo = ninfo(idxArea & idxMonkey & idxVis);
 spikes = spikes(idxArea & idxMonkey & idxVis); NUM_CELLS = length(spikes);
 
+T_BASE = [-90, 9] + 3500; %baseline interval spike ct to be subtracted
 DUR_TEST = 100; %duration over which to test (time-locked to VR onset)
 % MIN_DIFF_AVG_CT = 0.25; %min diff (Acc vs. Fast) in average spike ct
 
@@ -19,8 +22,8 @@ VRlatAcc = [nstats.VRlatAcc];
 VRlatFast = [nstats.VRlatFast];
 
 %initializations
-spkCtAcc = cell(1,NUM_CELLS);
-spkCtFast = cell(1,NUM_CELLS);
+relSpkCtAcc = cell(1,NUM_CELLS); %relative to baseline
+relSpkCtFast = cell(1,NUM_CELLS);
 meanCtAcc = NaN(1,NUM_CELLS);
 meanCtFast = NaN(1,NUM_CELLS);
 
@@ -29,9 +32,8 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum; %index nstats correctly
   
   %determine testing intervals (time-locked to VR)
-  %NOTE - after including SC/FEF, this index needs to be ccNS !!!
-  tTestAcc = VRlatAcc(cc) + [0, DUR_TEST-1] + 3500;
-  tTestFast = VRlatFast(cc) + [0, DUR_TEST-1] + 3500;
+  tTestAcc = VRlatAcc(ccNS) + [0, DUR_TEST-1] + 3500;
+  tTestFast = VRlatFast(ccNS) + [0, DUR_TEST-1] + 3500;
 
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
@@ -46,22 +48,26 @@ for cc = 1:NUM_CELLS
   numTrialAcc = length(trialAcc);
   numTrialFast = length(trialFast);
   
-  spkCtAcc{cc} = NaN(1,numTrialAcc);
+  relSpkCtAcc{cc} = NaN(1,numTrialAcc);
   for jj = 1:numTrialAcc
     spkTime_jj = spikes(cc).SAT{trialAcc(jj)};
-    spkCtAcc{cc}(jj) = sum((spkTime_jj > tTestAcc(1)) & (spkTime_jj < tTestAcc(2)));
+    spkCtAccBasejj = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2))); %baseline spk ct
+    spkCtAccVRjj = sum((spkTime_jj > tTestAcc(1)) & (spkTime_jj < tTestAcc(2))); %VR spk ct
+    relSpkCtAcc{cc}(jj) = spkCtAccVRjj - spkCtAccBasejj; %difference (relative) spk ct
   end%for:trial(jj)
-  meanCtAcc(cc) = mean(spkCtAcc{cc});
+  meanCtAcc(cc) = mean(relSpkCtAcc{cc});
   
-  spkCtFast{cc} = NaN(1,numTrialFast);
+  relSpkCtFast{cc} = NaN(1,numTrialFast);
   for jj = 1:numTrialFast
     spkTime_jj = spikes(cc).SAT{trialFast(jj)};
-    spkCtFast{cc}(jj) = sum((spkTime_jj > tTestFast(1)) & (spkTime_jj < tTestFast(2)));
+    spkCtFastBasejj = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2)));
+    spkCtFastVRjj = sum((spkTime_jj > tTestFast(1)) & (spkTime_jj < tTestFast(2)));
+    relSpkCtFast{cc}(jj) = spkCtFastVRjj - spkCtFastBasejj;
   end%for:trial(jj)
-  meanCtFast(cc) = mean(spkCtFast{cc});
+  meanCtFast(cc) = mean(relSpkCtFast{cc});
   
   %compute stats for individual cells
-  [hVal,~,~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc}, 'Alpha',0.05, 'Tail','both');
+  [hVal,~,~,tmp] = ttest2(relSpkCtFast{cc}, relSpkCtAcc{cc}, 'Alpha',0.05, 'Tail','both');
   if (hVal)
     if (tmp.tstat < 0) %Acc > Fast
       nstats(ccNS).VReffect = -1;

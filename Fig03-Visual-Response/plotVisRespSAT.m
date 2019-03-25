@@ -24,8 +24,11 @@ sdfMove = new_struct({'Acc','Fast'}, 'dim',[1,NUM_CELLS]);
 sdfMove = populate_struct(sdfMove, {'Acc','Fast'}, NaN(length(T_RESP),1));
 
 for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
+%   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
+  ccNS = ninfo(cc).unitNum;
+  if (nstats(ccNS).VReffect ~= 1); continue; end
+  
   RTkk = double(moves(kk).resptime);
   
   %compute spike density function
@@ -54,8 +57,6 @@ for cc = 1:NUM_CELLS
   sdfMove(cc).Fast(:) = mean(sdfKKresp(idxFast & idxCorr & idxRF, T_RESP));
   
   %% Parameterize the visual response
-  ccNS = ninfo(cc).unitNum;
-  
   %latency
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
   VRlatAcc = nstats(ccNS).VRlatAcc; %already computed
@@ -70,9 +71,9 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
 %   print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Visual-Response/SDF-VisResp/',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-%   pause(0.25)
+  pause()
   
 end%for:cells(cc)
 
