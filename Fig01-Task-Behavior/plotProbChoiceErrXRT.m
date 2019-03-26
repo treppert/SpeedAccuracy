@@ -1,8 +1,11 @@
-function [ ] = plotProbChoiceErrXRT( binfo , moves )
+function [ ] = plotProbChoiceErrXRT( binfo , moves , varargin )
 %plotProbChoiceErrXRT Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESSION = length(moves);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+[binfo, moves] = utilIsolateMonkeyBehavior(binfo, moves, args.monkey);
+NUM_SESSION = length(binfo);
 
 erAcc = NaN(1,NUM_SESSION);
 erFast = NaN(1,NUM_SESSION);
@@ -18,21 +21,22 @@ for kk = 1:NUM_SESSION
   idxAcc = (binfo(kk).condition == 1);
   idxFast = (binfo(kk).condition == 3);
   
-  rtAcc(kk) = nanmean(moves(kk).resptime(idxAcc));
-  rtFast(kk) = nanmean(moves(kk).resptime(idxFast));
+  rtAcc(kk) = nanmedian(moves(kk).resptime(idxAcc));
+  rtFast(kk) = nanmedian(moves(kk).resptime(idxFast));
   
-  erAcc(kk) = sum(idxErr & idxAcc) / sum(idxAcc);
-  erFast(kk) = sum(idxErr & idxFast) / sum(idxFast);
+  erAcc(kk) = sum(idxAcc & idxErr) / sum(idxAcc);
+  erFast(kk) = sum(idxFast & idxErr) / sum(idxFast);
   
 end%for:session(kk)
 
 figure(); hold on
-plot([mean(rtFast),mean(rtAcc)], [mean(erFast),mean(erAcc)], 'k-')
-errorbarxy(mean(rtFast), mean(erFast), std(rtFast)/sqrt(NUM_SESSION), std(erFast)/sqrt(NUM_SESSION), {'g-','g','g'})
-errorbarxy(mean(rtAcc), mean(erAcc), std(rtAcc)/sqrt(NUM_SESSION), std(erAcc)/sqrt(NUM_SESSION), {'r-','r','r'})
+plot([rtFast;rtAcc], [erFast;erAcc], 'k-')
+% plot([mean(rtFast),mean(rtAcc)], [mean(erFast),mean(erAcc)], 'k-')
+% errorbarxy(mean(rtFast), mean(erFast), std(rtFast)/sqrt(NUM_SESSION), std(erFast)/sqrt(NUM_SESSION), {'g-','g','g'})
+% errorbarxy(mean(rtAcc), mean(erAcc), std(rtAcc)/sqrt(NUM_SESSION), std(erAcc)/sqrt(NUM_SESSION), {'r-','r','r'})
 ytickformat('%3.2f')
 xlim([250 600]); ylim([.05 .4])
-ppretty('image_size',[4.8,3])
+ppretty([4.8,3])
 
 end%fxn:plotProbChoiceErrXRT()
 

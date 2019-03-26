@@ -9,9 +9,6 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 idxVis = ismember({ninfo.visType}, {'sustained'});
 
 nstats = nstats(idxArea & idxMonkey & idxVis);
-ninfo = ninfo(idxArea & idxMonkey & idxVis);
-
-NUM_CELLS = length(nstats);
 
 magAcc = [nstats.VRmagAcc];
 magFast = [nstats.VRmagFast];
@@ -27,22 +24,10 @@ histogram(magDiff(ccFgA), 'BinWidth',2, 'FaceColor',[0 .7 0], 'Normalization','c
 histogram(magDiff(ccAgF), 'BinWidth',2, 'FaceColor','r', 'Normalization','count')
 ppretty([5,5])
 
-%compute the cumulative distribution function
-return
-magAcc = sort(magAcc);
-magFast = sort(magFast);
+fprintf('Difference in magnitude (Acc-Fast) = %g +- %g\n', mean(magDiff), std(magDiff))
 
-yCDF = (1:NUM_CELLS) / NUM_CELLS;
-
-figure(); hold on
-plot(magAcc, yCDF, 'r.-', 'LineWidth',1.0, 'MarkerSize',10)
-plot(magFast, yCDF, '.-', 'Color',[0 .7 0], 'LineWidth',1.0, 'MarkerSize',10)
-ppretty([5,5])
-
-%compute stats
-[~,p,~,tstat] = ttest(magAcc-magFast);
-
-if (nargout > 0)
+if (nargout > 0) %if desired, compute across-neuron stats
+  [~,p,~,tstat] = ttest(magDiff);
   varargout{1} = struct('pval',p, 'tstat',tstat);
 end
 

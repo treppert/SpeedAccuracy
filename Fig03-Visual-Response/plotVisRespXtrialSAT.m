@@ -18,7 +18,7 @@ T_STIM = 3500 + (-100 : 300);
 T_RESP = 3500 + (-300 : 100);
 
 %sort visual response by trial number
-TRIAL = (-2 : 1); %from condition switch
+TRIAL = (-1 : 1); %from condition switch
 NUM_TRIAL = length(TRIAL);
 COLORA2F = {[1 0 0], [.4 .7 .4], [0 .7 0]}; %colors for plotting
 COLORF2A = {[0 .7 0], [1 .5 .5], [1 0 0]};
@@ -61,6 +61,7 @@ for cc = 1:NUM_CELLS
   idxFast = (binfo(kk).condition == 3);
   medRTFast = median(RTkk(idxFast & idxCorr & idxRF & ~idxIso));
   
+  %initialize mean SDFs for plotting
   visRespA2F = NaN(NUM_TRIAL,length(T_STIM));
   visRespF2A = NaN(NUM_TRIAL,length(T_STIM));
   sdfMoveA2F = NaN(NUM_TRIAL,length(T_STIM));
@@ -68,7 +69,7 @@ for cc = 1:NUM_CELLS
   
   for jj = 1:NUM_TRIAL %loop over trials from cued condition switch
     
-    %isolate single-trial SDFs
+    %isolate single-trial SDFs (used to compute response magnitude)
     VRA2Fjj = sdfKKstim(trialA2F + TRIAL(jj), T_STIM);
     VRF2Ajj = sdfKKstim(trialF2A + TRIAL(jj), T_STIM);
     SDFmoveA2Fjj = sdfKKresp(trialA2F + TRIAL(jj), T_RESP);
@@ -80,11 +81,10 @@ for cc = 1:NUM_CELLS
     sdfMoveA2F(jj,:) = mean(SDFmoveA2Fjj);
     sdfMoveF2A(jj,:) = mean(SDFmoveF2Ajj);
     
-    if (jj <= NUM_TRIAL/2) %first half of trials
-%     if (jj == 1)
+    if (TRIAL(jj) < 0) %pre-switch
       [VRmagA2F(cc,jj),VRmagF2A(cc,jj)] = computeVisRespMagSAT(VRA2Fjj(:,101:400), VRF2Ajj(:,101:400), ...
         VRlatAcc(ccNS), VRlatFast(ccNS), nstats(ccNS));
-    else %second half of trials
+    else %post-switch
       [VRmagF2A(cc,jj),VRmagA2F(cc,jj)] = computeVisRespMagSAT(VRF2Ajj(:,101:400), VRA2Fjj(:,101:400), ...
         VRlatAcc(ccNS), VRlatFast(ccNS), nstats(ccNS));
     end
@@ -92,7 +92,7 @@ for cc = 1:NUM_CELLS
   end%for:trial(jj)
   
   %plotting - individual neurons
-  if (0)
+  if (1)
   yLim = [min(min([visRespA2F visRespF2A sdfMoveA2F sdfMoveF2A])), max(max([visRespA2F visRespF2A sdfMoveA2F sdfMoveF2A]))];
   figure()
   
@@ -130,10 +130,10 @@ for cc = 1:NUM_CELLS
   
 end%for:cells(cc)
 
-%% Plotting
+%% Plotting - Mean change in normalized response magnitude
 NUM_SEM = sum([nstats.VReffect] == 1);
 
-%normalization
+%normalization - use mean response magnitude across the two conditions
 VRmagAcc = [nstats(idxArea & idxMonkey & idxVis).VRmagAcc];
 VRmagFast = [nstats(idxArea & idxMonkey & idxVis).VRmagFast];
 normFactor = mean([VRmagAcc;VRmagFast]);

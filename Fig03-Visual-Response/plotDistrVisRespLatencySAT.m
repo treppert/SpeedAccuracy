@@ -9,9 +9,6 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 idxVis = ismember({ninfo.visType}, {'sustained'});
 
 nstats = nstats(idxArea & idxMonkey & idxVis);
-ninfo = ninfo(idxArea & idxMonkey & idxVis);
-
-NUM_CELLS = length(nstats);
 
 latAcc = [nstats.VRlatAcc];
 latFast = [nstats.VRlatFast];
@@ -27,21 +24,10 @@ histogram(latDiff(ccFgA), 'BinWidth',5, 'FaceColor',[0 .7 0], 'Normalization','c
 histogram(latDiff(ccAgF), 'BinWidth',5, 'FaceColor','r', 'Normalization','count')
 ppretty([5,5])
 
-%compute the cumulative distribution
-latAcc = sort(latAcc);
-latFast = sort(latFast);
+fprintf('Difference in latency (Acc-Fast) = %g +- %g\n', mean(latDiff), std(latDiff))
 
-yCDF = (1:NUM_CELLS) / NUM_CELLS;
-
-figure(); hold on
-plot(latAcc, yCDF, 'r.-', 'LineWidth',1.0, 'MarkerSize',10)
-plot(latFast, yCDF, '.-', 'Color',[0 .7 0], 'LineWidth',1.0, 'MarkerSize',10)
-ppretty([5,5])
-
-%compute stats
-[~,p,~,tstat] = ttest(latAcc-latFast);
-
-if (nargout > 0)
+if (nargout > 0) %if desired, compute across-neuron stats
+  [~,p,~,tstat] = ttest(latDiff);
   varargout{1} = struct('pval',p, 'tstat',tstat);
 end
 

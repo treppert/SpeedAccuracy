@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-% ROOT_DIR = 'C:\Users\Tom\Documents\SpeedAccuracy/';%'D:/SAT/'; %TDT
-ROOT_DIR = '/data/search/SAT/';
+ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
+% ROOT_DIR = '/data/search/SAT/';
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -45,7 +45,7 @@ end%for:sessions(kk)
 
 %% Load task/TEMPO information
 
-binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
+% binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
 binfo.SAT = load_task_info(binfo.SAT, sessions, num_trials.SAT, 'SEARCH');
 binfo.SAT = index_timing_errors_SAT(binfo.SAT);
 
@@ -64,17 +64,11 @@ function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , monkey , 
 MIN_TOTAL_TRIALS_PER_SESSION = 700;
 
 %identify recording sessions
-sessions.SAT = dir([root_dir, monkey, '/*_SEARCH.mat']);
-sessions.MG = dir([root_dir, monkey, '/*_MG.mat']);
-
-%remove sessions without data from SEF (Da & Eu)
-% if ismember(monkey, {'Darwin','Euler'})
-%   sessions.SAT(1) = [];
-% end
-
-num_sessions = length(sessions.SAT);
+sessions.SAT = dir([root_dir, '*_SEARCH.mat']);
+sessions.MG = dir([root_dir, '*_MG.mat']);
 
 if isempty(sessions.SAT);  error('No %s sessions found', type);  end
+num_sessions = length(sessions.SAT);
 
 %get the number of trials per session
 num_trials = struct('MG',zeros(1,num_sessions), 'SAT',zeros(1,num_sessions));
@@ -118,7 +112,7 @@ for kk = 1:NUM_SESSIONS
     info(kk).session = sessions.SAT(kk).name(1:12);
   end
   
-  load(file_kk, 'SAT_','Errors_','Target_','SRT','saccLoc','FixAcqTime_','JuiceOn_')
+  load(file_kk, 'Errors_','FixAcqTime_','JuiceOn_','SAT_','Target_','SRT','saccLoc','Stimuli_')
 
   %Session information
   info(kk).num_trials = length(SAT_(:,1));
