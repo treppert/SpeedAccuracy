@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
-% ROOT_DIR = '/data/search/SAT/';
+% ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
+ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -27,9 +27,10 @@ NUM_SESSIONS = length(sessions.SAT);
 
 FIELDS_GAZE = {'x','y','vx','vy','v'};
 FIELDS_INFO = {'session','num_trials','condition', ...
-  'tgt_octant','tgt_eccen','tgt_dline', ...
+  'tgt_octant','tgt_eccen','deadline', ...
   'err_dir','err_time','err_hold','err_nosacc', ...
-  'octant','resptime','fixtime','rewtime'};
+  'octant','resptime','fixtime','rewtime', ...
+  'durReward','stimuli','taskType'};
 
 binfo = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); binfo = orderfields(binfo);
 gaze = new_struct(FIELDS_GAZE, 'dim',[1,NUM_SESSIONS]); gaze = orderfields(gaze);
@@ -45,7 +46,7 @@ end%for:sessions(kk)
 
 %% Load task/TEMPO information
 
-% binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
+binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
 binfo.SAT = load_task_info(binfo.SAT, sessions, num_trials.SAT, 'SEARCH');
 binfo.SAT = index_timing_errors_SAT(binfo.SAT);
 
@@ -113,30 +114,42 @@ for kk = 1:NUM_SESSIONS
   end
   
   load(file_kk, 'Errors_','FixAcqTime_','JuiceOn_','SAT_','Target_','SRT','saccLoc','Stimuli_')
-
-  %Session information
+  
+  %parse array SAT_
   info(kk).num_trials = length(SAT_(:,1));
-  info(kk).condition = transpose(uint8(SAT_(:,1))); %1==accurate, 3==fast
+  info(kk).condition = uint8(SAT_(:,1))'; %1==accurate, 3==fast
+  info(kk).deadline = SAT_(:,3)'; info(kk).deadline(info(kk).deadline > 1000) = NaN;
+  info(kk).durReward = SAT_(:,5)';
   
-  %Target/stimulus information
+  %parse array Stimuli_
+  info(kk).stimuli = Stimuli_;
+  if strcmp(type, 'SEARCH')
+    if (sum(Stimuli_(51,:) > 20) == 1)
+      info(kk).taskType = 1; %T among L
+    elseif (sum(Stimuli_(51,:) < 20) == 1)
+      info(kk).taskType = 2; %L among T
+    else
+      error('Task type not identified for session %d', kk)
+    end
+  end
   
-  tgt_dline = transpose(SAT_(:,3));
-  tgt_dline(tgt_dline > 1000) = NaN;
+  %parse array Target_
+  info(kk).tgt_octant = uint8(Target_(:,2) + 1);
+  info(kk).tgt_eccen = Target_(:,12);
   
-  info(kk).tgt_octant = transpose(uint8(Target_(:,2) + 1));
-  info(kk).tgt_eccen = transpose(Target_(:,12));
-  info(kk).tgt_dline = tgt_dline;
-  
-  %Response information
-  
+  %parse array Errors_
   info(kk).err_nosacc = false(1,num_trials(kk));   info(kk).err_nosacc(Errors_(:,2) == 1) = true;
   info(kk).err_hold = false(1,num_trials(kk));   info(kk).err_hold(Errors_(:,4) == 1) = true;
   info(kk).err_dir = false(1,num_trials(kk));    info(kk).err_dir(Errors_(:,5) == 1) = true;
   info(kk).err_time = false(1,num_trials(kk));   info(kk).err_time((Errors_(:,6) == 1) | (Errors_(:,7) == 1)) = true;
   
-  info(kk).octant = uint8(saccLoc+1)';
+  %parse saccLoc
+  info(kk).octant = uint8(saccLoc+1)'; %TEMPO estimate of endpoint
+  
+  %parse SRT
   info(kk).resptime = SRT(:,1)'; %TEMPO estimate of RT
   
+  %parse JuiceOn_
   if exist('JuiceOn_', 'var')
     load(file_kk, 'JuiceOn_')
     info(kk).rewtime = JuiceOn_';
@@ -145,6 +158,7 @@ for kk = 1:NUM_SESSIONS
     info(kk).rewtime = NaN(1,num_trials(kk));
   end
   
+  %parse FixAcqTime_
   if exist('FixAcqTime_', 'var')
     load(file_kk, 'FixAcqTime_')
     info(kk).fixtime = FixAcqTime_';

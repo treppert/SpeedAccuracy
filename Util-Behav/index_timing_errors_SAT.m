@@ -9,15 +9,15 @@ MAX_DLINE_FAST = 600; %enforce a hard deadline on the Fast condition
 for kk = 1:NUM_SESSION
   
 %   ierr_dir = info(kk).err_dir;
-  tgt_dline = binfo(kk).tgt_dline;
+  deadline = binfo(kk).deadline;
   
   idx_acc = (binfo(kk).condition == 1);
   idx_fast = (binfo(kk).condition == 3);
   
   resptime = binfo(kk).resptime;
   
-  ierr_time_Fast = (idx_fast & ((resptime > tgt_dline) | (resptime > MAX_DLINE_FAST)));
-  ierr_time_Acc = (idx_acc & (resptime < tgt_dline));
+  ierr_time_Fast = (idx_fast & ((resptime > deadline) | (resptime > MAX_DLINE_FAST)));
+  ierr_time_Acc = (idx_acc & (resptime < deadline));
   
   binfo(kk).err_time(ierr_time_Fast | ierr_time_Acc) = true;
   
