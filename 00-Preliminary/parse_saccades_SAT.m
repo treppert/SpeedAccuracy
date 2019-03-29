@@ -112,7 +112,7 @@ for kk = 1:NUM_SESSION
 end%for:sessions(kk)
 
 if (nargout > 1) %return post-primary saccade
-  movesPP = parse_PostPrimary_sacc_SAT(movesAll, binfo);
+  movesPP = parse_PPsacc_SAT(movesAll, moves, binfo);
   varargout{1} = movesPP;
   if (nargout > 2) %return all saccades
     varargout{2} = movesAll;

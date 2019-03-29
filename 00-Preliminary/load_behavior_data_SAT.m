@@ -6,8 +6,8 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-% ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
-ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
+ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
+% ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
 NUM_SAMPLES = 6001;
 
 if ~ismember(monkey, {'Darwin','Euler','Quincy','Seymour'})
@@ -122,7 +122,7 @@ for kk = 1:NUM_SESSIONS
   info(kk).durReward = SAT_(:,5)';
   
   %parse array Stimuli_
-  info(kk).stimuli = Stimuli_;
+  info(kk).stimuli = Stimuli_';
   if strcmp(type, 'SEARCH')
     if (sum(Stimuli_(51,:) > 20) == 1)
       info(kk).taskType = 1; %T among L
@@ -134,8 +134,8 @@ for kk = 1:NUM_SESSIONS
   end
   
   %parse array Target_
-  info(kk).tgt_octant = uint8(Target_(:,2) + 1);
-  info(kk).tgt_eccen = Target_(:,12);
+  info(kk).tgt_octant = uint8(Target_(:,2) + 1)';
+  info(kk).tgt_eccen = Target_(:,12)';
   
   %parse array Errors_
   info(kk).err_nosacc = false(1,num_trials(kk));   info(kk).err_nosacc(Errors_(:,2) == 1) = true;
