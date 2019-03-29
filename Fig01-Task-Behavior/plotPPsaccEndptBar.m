@@ -1,8 +1,11 @@
-function [ ] = plotPPsaccEndptBar( binfo , movesPP )
+function [ ] = plotPPsaccEndptBar( binfo , movesPP , varargin )
 %plotPPsaccEndptBar Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESSION = length(movesPP);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+[binfo, ~, movesPP] = utilIsolateMonkeyBehavior(binfo, cell(1,length(binfo)), movesPP, args.monkey);
+NUM_SESSION = length(binfo);
 
 endpt = new_struct({'T','D','F','N','O'}, 'dim',[1,1]);
 endpt = populate_struct(endpt, {'T','D','F','N','O'}, NaN(1,NUM_SESSION));

@@ -1,5 +1,5 @@
-function [ ] = plotProbChoiceErrXtaskXRT( binfo , moves , varargin )
-%plotProbChoiceErrXtaskXRT Summary of this function goes here
+function [ ] = plotPErrXRTXtask( binfo , moves , varargin )
+%plotPErrXRTXtask Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -49,5 +49,5 @@ ytickformat('%3.2f')
 % xlim([250 600]); ylim([.05 .4])
 ppretty([4.8,3])
 
-end%fxn:plotProbChoiceErrXtaskXRT()
+end%fxn:plotPErrXRTXtask()
 

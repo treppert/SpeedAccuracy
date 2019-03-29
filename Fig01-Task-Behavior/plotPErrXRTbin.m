@@ -1,5 +1,5 @@
-function [ ] = plotProbChoiceErrXRTbinned( binfo , moves )
-%[  ] = plotProbChoiceErrXRTbinned(  )
+function [ ] = plotPErrXRTbin( binfo , moves )
+%[  ] = plotPErrXRTbin(  )
 %   Detailed explanation goes here
 
 NUM_SESSION = length(moves);
@@ -77,4 +77,4 @@ plot(xDlineAcc(2)*ones(1,2), [.1 .5], 'r:')
 ppretty([6.4,4])
 
 
-end%function:plotProbChoiceErrXRTbinned()
+end%function:plotPErrXRTbin()
