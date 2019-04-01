@@ -4,7 +4,7 @@ function [  ] = plotRTXtrial( binfo , moves , varargin )
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-[binfo, moves] = utilIsolateMonkeyBehavior(binfo, moves, args.monkey);
+[binfo, moves, ~] = utilIsolateMonkeyBehavior(binfo, moves, cell(1,length(binfo)), args.monkey);
 NUM_SESSION = length(binfo);
 
 MIN_NUM_TRIALS = 8;
@@ -12,8 +12,8 @@ MIN_NUM_TRIALS = 8;
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
-rtA2F = NaN(NUM_SESSION,NUM_TRIAL);
-rtF2A = NaN(NUM_SESSION,NUM_TRIAL);
+rtA2F{1} = NaN(NUM_SESSION,NUM_TRIAL); rtA2F{2} = rtA2F{1};
+rtF2A{1} = NaN(NUM_SESSION,NUM_TRIAL); rtF2A{2} = rtF2A{1};
 
 trialSwitch = identify_condition_switch(binfo);
 
@@ -29,29 +29,43 @@ for kk = 1:NUM_SESSION
     continue
   end
   
+  %index by task (T/L or L/T)
+  tt = binfo(kk).taskType;
+  
   for jj = 1:NUM_TRIAL
     
-    rtA2F(kk,jj) = mean(moves(kk).resptime(trialA2F + TRIAL_PLOT(jj)));
-    rtF2A(kk,jj) = mean(moves(kk).resptime(trialF2A + TRIAL_PLOT(jj)));
+    rtA2F{tt}(kk,jj) = mean(moves(kk).resptime(trialA2F + TRIAL_PLOT(jj)));
+    rtF2A{tt}(kk,jj) = mean(moves(kk).resptime(trialF2A + TRIAL_PLOT(jj)));
     
   end%for:trials(jj)
   
 end%for:sessions(kk)
 
+%remove extra NaNs based on task (T/L or L/T)
+idxTT1 = ([binfo.taskType] == 1);
+idxTT2 = ([binfo.taskType] == 2);
+rtA2F{1}(idxTT2,:) = []; rtF2A{1}(idxTT2,:) = [];
+rtA2F{2}(idxTT1,:) = []; rtF2A{2}(idxTT1,:) = [];
+
 %% Plotting
 
 %remove sessions with insufficient number of switch trials
-idxNaN = isnan(rtA2F(:,1));
-rtA2F(idxNaN,:) = [];
-rtF2A(idxNaN,:) = [];
-[NUM_SEM,~] = size(rtA2F);
+NUM_SEM = NaN(1,2);
+for tt = 1:2
+  idxNaN = isnan(rtA2F{tt}(:,1));
+  rtA2F{tt}(idxNaN,:) = [];
+  rtF2A{tt}(idxNaN,:) = [];
+  NUM_SEM(tt) = size(rtA2F{tt}, 1);
+end
 
 figure(); hold on
 
-errorbar_no_caps(TRIAL_PLOT, mean(rtF2A), 'err',std(rtF2A)/sqrt(NUM_SEM), 'color','k')
-errorbar_no_caps(TRIAL_PLOT+NUM_TRIAL, mean(rtA2F), 'err',std(rtA2F)/sqrt(NUM_SEM), 'color','k')
+errorbar(TRIAL_PLOT+0.1, mean(rtF2A{1}), std(rtF2A{1})/sqrt(NUM_SEM(1)), 'Color','k', 'LineWidth',0.75, 'CapSize',0)
+errorbar(TRIAL_PLOT+NUM_TRIAL+0.1, mean(rtA2F{1}), std(rtA2F{1})/sqrt(NUM_SEM(1)), 'Color','k', 'LineWidth',0.75, 'CapSize',0)
+errorbar(TRIAL_PLOT-0.1, mean(rtF2A{2}), std(rtF2A{2})/sqrt(NUM_SEM(2)), 'Color','k', 'LineWidth',1.25, 'CapSize',0)
+errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(rtA2F{2}), std(rtA2F{2})/sqrt(NUM_SEM(2)), 'Color','k', 'LineWidth',1.25, 'CapSize',0)
 
-xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
+xlim([-5 12]); xticks(-4:11); xticklabels(cell(1,12))
 ppretty([6.4,4])
 
 end%function:plotRTXtrial()
