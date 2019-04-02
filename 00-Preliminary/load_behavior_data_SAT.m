@@ -6,7 +6,7 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = ['Z:\data\', monkey, '\SAT\Matlab\'];
+ROOT_DIR = ['T:\data\', monkey, '\SAT\Matlab\'];
 % ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
 NUM_SAMPLES = 6001;
 
@@ -16,16 +16,21 @@ end
 
 %% Initializations
 
-% num_trials = struct('DET',[], 'MG',[], 'SAT',[]);
-
 [sessions,num_trials] = identify_sessions_SAT(ROOT_DIR, monkey, 'SEARCH');
-% [~,num_trials.MG] = identify_sessions_SAT(ROOT_DIR, monkey, 'MG');
+
+if strcmp(monkey, 'Quincy') %Quincy S5 -- no behavioral data
+  sessions.SAT(5) = []; sessions.MG(5) = [];
+  num_trials.SAT(5) = []; num_trials.MG(5) = [];
+elseif strcmp(monkey, 'Seymour') %Seymour S20110518001 - no behavioral data
+  sessions.SAT(16) = []; sessions.MG(16) = [];
+  num_trials.SAT(16) = []; num_trials.MG(16) = [];
+end
 
 NUM_SESSIONS = length(sessions.SAT);
 
 %% Initialize outputs
 
-FIELDS_GAZE = {'x','y','vx','vy','v'};
+FIELDS_GAZE = {'x','y','vx','vy','v'}; 
 FIELDS_INFO = {'session','num_trials','condition', ...
   'tgt_octant','tgt_eccen','deadline', ...
   'err_dir','err_time','err_hold','err_nosacc', ...
@@ -171,7 +176,7 @@ end%for:sessions
 
 end%function:load_task_info
 
-function [ data ] = load_gaze_data( info , data , sessions , num_trials , fields_gaze , type )
+function [ data ] = load_gaze_data( binfo , data , sessions , num_trials , fields_gaze , type )
 
 global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
@@ -225,12 +230,12 @@ for kk = 1:NUM_SESSIONS
   end
   
   %if monkey S, remove trials with missing data during decision interval
-  if ismember(info(kk).session(1), {'S'})
+  if ismember(binfo(kk).session(1), {'S'})
     bad_trials = identify_bad_trials_SAT(EyeX_, EyeY_);
     for ff = 1:length(fields_gaze)
       data(kk).(fields_gaze{ff})(:,bad_trials) = NaN;
-      info(kk).resptime(bad_trials) = 0;
-      info(kk).octant(bad_trials) = 0;
+      binfo(kk).resptime(bad_trials) = 0;
+      binfo(kk).octant(bad_trials) = 0;
     end
   end
   
