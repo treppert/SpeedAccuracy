@@ -22,6 +22,7 @@ figure(); hold on
 histogram(magDiff, 'BinWidth',2, 'FaceColor',[.4 .4 .4], 'Normalization','count')
 histogram(magDiff(ccFgA), 'BinWidth',2, 'FaceColor',[0 .7 0], 'Normalization','count')
 histogram(magDiff(ccAgF), 'BinWidth',2, 'FaceColor','r', 'Normalization','count')
+plot(mean(magDiff)*ones(1,2), [0 5], 'k--')
 ppretty([5,5])
 
 fprintf('Difference in magnitude (Acc-Fast) = %g +- %g\n', mean(magDiff), std(magDiff))

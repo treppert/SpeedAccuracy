@@ -46,16 +46,16 @@ for cc = 1:NUM_CELLS
   meanFast(cc) = mean(spkCtFast{cc});
   
   %compute stats for individual cells
-  idxStats = ninfo(cc).unitNum; %index nstats correctly
+  ccNS = ninfo(cc).unitNum; %index nstats correctly
   [hVal,~,~,tmp] = ttest2(spkCtFast{cc}, spkCtAcc{cc});
   if (hVal)
     if (tmp.tstat < 0) %Acc > Fast
-      nstats(idxStats).blineEffect = -1;
+      nstats(ccNS).blineEffect = -1;
     else %Fast > Acc
-      nstats(idxStats).blineEffect = 1;
+      nstats(ccNS).blineEffect = 1;
     end
   else%no SAT effect on baseline
-    nstats(idxStats).blineEffect = 0;
+    nstats(ccNS).blineEffect = 0;
   end
   
 end%for:cells(cc)

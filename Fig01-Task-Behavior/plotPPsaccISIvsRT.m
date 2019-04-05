@@ -8,6 +8,11 @@ args = getopt(varargin, {{'monkey=',{'D','E'}}});
 NUM_SESSION = length(binfo);
 
 MIN_PER_BIN = 3; %minimum number of saccades per RT bin
+if (length(args.monkey) > 1) %multiple monkeys
+  MIN_NUM_SESS = 3; %for plotting SE bars
+else %one monkey
+  MIN_NUM_SESS = 2;
+end
 
 RT_FAST = (175 : 50 : 425);  NBIN_FAST = length(RT_FAST) - 1;
 RT_ACC = (450 : 50 : 800);   NBIN_ACC = length(RT_ACC) - 1;
@@ -73,10 +78,10 @@ for tt = 1:3
   NSEM_FAST{tt}(:) = sum(~isnan(isiFast{tt}), 1);
 end
 
-%remove data points with < 3 sessions
+%remove data points with < MIN_NUM_SESS sessions
 for tt = 1:3
-  isiAcc{tt}(:,(NSEM_ACC{tt} < 3)) = NaN;
-  isiFast{tt}(:,(NSEM_FAST{tt} < 3)) = NaN;
+  isiAcc{tt}(:,(NSEM_ACC{tt} < MIN_NUM_SESS)) = NaN;
+  isiFast{tt}(:,(NSEM_FAST{tt} < MIN_NUM_SESS)) = NaN;
 end
 
 figure(); hold on

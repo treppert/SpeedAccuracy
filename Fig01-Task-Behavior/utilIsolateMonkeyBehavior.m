@@ -1,4 +1,4 @@
-function [binfo, moves, movesPP] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, monkey)
+function [binfo, varargout] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, monkey)
 %utilIsolateMonkeyBehavior Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -28,6 +28,13 @@ idxNumTrials = ([binfo.num_trials] > MIN_NUM_TRIALS);
 binfo = binfo(idxMonkey & idxNumTrials);
 moves = moves(idxMonkey & idxNumTrials);
 movesPP = movesPP(idxMonkey & idxNumTrials);
+
+if (nargout > 1)
+  varargout{1} = moves;
+  if (nargout > 2)
+    varargout{2} = movesPP;
+  end
+end
 
 end%util:utilIsolateMonkeyBehavior()
 

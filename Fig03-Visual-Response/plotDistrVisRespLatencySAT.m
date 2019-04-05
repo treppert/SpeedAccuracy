@@ -20,8 +20,9 @@ ccAgF = ([nstats.VReffect] == -1); %cells with VR Acc > Fast
 
 figure(); hold on
 histogram(latDiff, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
-histogram(latDiff(ccFgA), 'BinWidth',5, 'FaceColor',[0 .7 0], 'Normalization','count')
-histogram(latDiff(ccAgF), 'BinWidth',5, 'FaceColor','r', 'Normalization','count')
+% histogram(latDiff(ccFgA), 'BinWidth',5, 'FaceColor',[0 .7 0], 'Normalization','count')
+% histogram(latDiff(ccAgF), 'BinWidth',5, 'FaceColor','r', 'Normalization','count')
+plot(mean(latDiff)*ones(1,2), [0 5], 'k--') %mark the mean
 ppretty([5,5])
 
 fprintf('Difference in latency (Acc-Fast) = %g +- %g\n', mean(latDiff), std(latDiff))

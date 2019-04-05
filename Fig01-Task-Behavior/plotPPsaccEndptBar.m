@@ -43,6 +43,7 @@ bar((1:2:7), yyMeanT1, 'BarWidth',0.4, 'FaceColor',[.7 .7 .7])
 bar((2:2:8), yyMeanT2, 'BarWidth',0.4, 'FaceColor',[.3 .3 .3])
 errorbar((1:2:7), yyMeanT1, yySE1, 'Color','k', 'LineWidth',0.75, 'CapSize',0)
 errorbar((2:2:8), yyMeanT2, yySE2, 'Color',[.5 .5 .5], 'LineWidth',0.75, 'CapSize',0)
+xticks([]); ytickformat('%2.1f')
 ppretty([5,4])
 
 end%fxn:plotPPsaccEndptBar()

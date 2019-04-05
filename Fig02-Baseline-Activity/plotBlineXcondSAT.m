@@ -26,8 +26,6 @@ for cc = 1:NUM_CELLS
   %index by condition
   idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   idxFast = ((binfo(kk).condition == 3) & ~idxIso);
-  %index by trial outcome
-%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   
   %compute SDFs
   sdfAcc(cc,:) = nanmean(sdfKK(idxAcc, T_BASE));
@@ -52,8 +50,8 @@ blineDiff = [nstats.blineFastMEAN] - [nstats.blineAccMEAN];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
-histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
-histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==-1), 'BinWidth',2, 'FaceColor','r')
+% histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
+% histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==-1), 'BinWidth',2, 'FaceColor','r')
 ppretty([5,4])
 
 end%fxn:plotBlineXcondSAT()
