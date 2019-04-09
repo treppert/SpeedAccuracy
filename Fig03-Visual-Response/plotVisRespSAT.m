@@ -8,7 +8,7 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ismember({ninfo.visType}, {'phasic','sustained'});
+idxVis = ismember({ninfo.visType}, {'sustained'});
 %index by finite RF (required for test of target selection)
 idxTStest = (cellfun(@length, {ninfo.visField}) < 8);
 
@@ -30,6 +30,8 @@ for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
   ccNS = ninfo(cc).unitNum;
   
+%   if (isnan(nstats(ccNS).VRTSTAcc) || isnan(nstats(ccNS).VRTSTFast) || (binfo(kk).taskType == 2)); continue; end
+  
   RTkk = double(moves(kk).resptime);
   
   %compute spike density function
@@ -48,36 +50,36 @@ for cc = 1:NUM_CELLS
   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   
   %isolate single-trial SDFs
-  VRAccTin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);     SMAccTin = sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP);
-  VRAccDin = sdfKKstim(idxAcc & idxCorr & ~idxRF, T_STIM);    SMAccDin = sdfKKresp(idxAcc & idxCorr & ~idxRF, T_RESP);
-  VRFastTin = sdfKKstim(idxFast & idxCorr & idxRF, T_STIM);   SMFastTin = sdfKKresp(idxFast & idxCorr & idxRF, T_RESP);
-  VRFastDin = sdfKKstim(idxFast & idxCorr & ~idxRF, T_STIM);  SMFastDin = sdfKKresp(idxFast & idxCorr & ~idxRF, T_RESP);
+  VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);     SMAcc.Tin = sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP);
+  VRAcc.Din = sdfKKstim(idxAcc & idxCorr & ~idxRF, T_STIM);    SMAcc.Din = sdfKKresp(idxAcc & idxCorr & ~idxRF, T_RESP);
+  VRFast.Tin = sdfKKstim(idxFast & idxCorr & idxRF, T_STIM);   SMFast.Tin = sdfKKresp(idxFast & idxCorr & idxRF, T_RESP);
+  VRFast.Din = sdfKKstim(idxFast & idxCorr & ~idxRF, T_STIM);  SMFast.Din = sdfKKresp(idxFast & idxCorr & ~idxRF, T_RESP);
   
   %compute mean SDFs
-  visResp(cc).AccTin(:) = mean(VRAccTin);    visResp(cc).AccDin(:) = mean(VRAccDin);
-  visResp(cc).FastTin(:) = mean(VRFastTin);  visResp(cc).FastDin(:) = mean(VRFastDin);
-  sdfMove(cc).AccTin(:) = mean(SMAccTin);    sdfMove(cc).AccDin(:) = mean(SMAccDin);
-  sdfMove(cc).FastTin(:) = mean(SMFastTin);  sdfMove(cc).FastDin(:) = nanmean(SMFastDin);
+  visResp(cc).AccTin(:) = mean(VRAcc.Tin);    visResp(cc).AccDin(:) = mean(VRAcc.Din);
+  visResp(cc).FastTin(:) = mean(VRFast.Tin);  visResp(cc).FastDin(:) = mean(VRFast.Din);
+  sdfMove(cc).AccTin(:) = mean(SMAcc.Tin);    sdfMove(cc).AccDin(:) = mean(SMAcc.Din);
+  sdfMove(cc).FastTin(:) = mean(SMFast.Tin);  sdfMove(cc).FastDin(:) = nanmean(SMFast.Din);
   
   %% Parameterize the visual response
-  %latency
+  %latency -- DONE
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
-  VRlatAcc = nstats(ccNS).VRlatAcc; %already computed
-  VRlatFast = nstats(ccNS).VRlatFast;
   
-  %magnitude
+  %magnitude -- DONE
 %   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), VRlatAcc, VRlatFast, nstats(ccNS));
-%   nstats(ccNS).VRmagAcc = VRmagAcc;
-%   nstats(ccNS).VRmagFast = VRmagFast;
+  
+  %target selection -- DONE
+%   OFFSET = 100; %tell computeTST() how much of the SDF to cut out as pre-array stimulus
+%   [TSTAcc,TSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
   
   %normalization factor
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
-  print(['C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\SDF-VisResp-TST\', ...
-    ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  pause(0.25); close()
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+%   print(['C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\SDF-VisResp-TST\', ...
+%     ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   pause(0.25); close()
   
 end%for:cells(cc)
 
@@ -86,45 +88,26 @@ if (nargout > 0)
 end
 
 %% Plotting - Across cells
-% visRespAcc = transpose([visResp.Acc]);
-% visRespFast = transpose([visResp.Fast]);
-% latVRAcc = [nstats(idxArea & idxMonkey & idxVis).VRlatAcc];
-% latVRFast = [nstats(idxArea & idxMonkey & idxVis).VRlatFast];
-% 
-% %normalization
-% visRespAcc = visRespAcc ./ max(visRespFast,[],2);
-% visRespFast = visRespFast ./ max(visRespFast,[],2);
-% 
-% %sort neurons by visual response latency in the Fast condition
-% [latVRFast,idxVRFast] = sort(latVRFast);
-% visRespFast = visRespFast(idxVRFast,:);
-% visRespAcc = visRespAcc(idxVRFast,:);
-% latVRAcc = latVRAcc(idxVRFast);
-% ninfo = ninfo(idxVRFast);
+NUM_SEM = 8; %efficient
+% NUM_SEM = 3; %inefficient
 
-% figure() %plot Fast and Acc separately
-% 
-% subplot(1,2,1); hold on %Fast
-% imagesc(T_STIM-3500, (1:NUM_CELLS), visRespFast); %colorbar
-% plot(latVRFast, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
-% text((T_STIM(1)-3500)*ones(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.sess})
-% text(zeros(1,NUM_CELLS), (1:NUM_CELLS), {ninfo.unit})
-% xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
-% ylim([0 NUM_CELLS+1])
-% cLim1 = caxis(gca);
-% 
-% subplot(1,2,2); hold on %Acc
-% imagesc(T_STIM-3500, (1:NUM_CELLS), visRespAcc); %colorbar
-% plot(latVRAcc, (1:NUM_CELLS), 'k.', 'MarkerSize',15)
-% xlim([T_STIM(1)-5, T_STIM(end)+5] - 3500)
-% ylim([0 NUM_CELLS+1])
-% cLim2 = caxis(gca);
-% 
-% %set color limits to match
-% cLim = [min([cLim1 cLim2]), max([cLim1 cLim2])];
-% subplot(1,2,1); caxis(cLim)
-% subplot(1,2,2); caxis(cLim)
-% 
-% ppretty([12,8])
+visRespAccTin = transpose([visResp.AccTin]);
+visRespAccDin = transpose([visResp.AccDin]);
+visRespFastTin = transpose([visResp.FastTin]);
+visRespFastDin = transpose([visResp.FastDin]);
+
+%normalization
+normFactor = max(visRespFastTin,[],2);
+visRespAccTin = visRespAccTin ./ normFactor;
+visRespAccDin = visRespAccDin ./ normFactor;
+visRespFastTin = visRespFastTin ./ normFactor;
+visRespFastDin = visRespFastDin ./ normFactor;
+
+figure(); hold on
+shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.5, 'LineStyle','--'})
+shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.75})
+shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.5, 'LineStyle','--'})
+shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.75})
+ppretty([6.4,4])
 
 end%fxn:plotVisRespSAT()
