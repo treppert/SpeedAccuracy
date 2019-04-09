@@ -5,6 +5,7 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 % 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\'; %for printing figs
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -76,10 +77,8 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
-%   print(['C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\SDF-VisResp-TST\', ...
-%     ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-%   pause(0.25); close()
+  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+  print([ROOT_DIR,'Visual-Response\SDF-VisResp-TST\',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
   
 end%for:cells(cc)
 
