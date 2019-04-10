@@ -6,12 +6,13 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxVis = ([ninfo.visGrade] >= 0.5);
 
-ninfo = ninfo(idxArea & idxMonkey);
-spikes = spikes(idxArea & idxMonkey);
+ninfo = ninfo(idxArea & idxMonkey & idxVis);
+spikes = spikes(idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = length(spikes);
-T_BASE  = 3500 + (-100 : 20);
+T_BASE  = 3500 + (-200 : 20);
 
 sdfAcc = NaN(NUM_CELLS,length(T_BASE));
 sdfFast = NaN(NUM_CELLS,length(T_BASE));
@@ -32,11 +33,11 @@ for cc = 1:NUM_CELLS
   sdfFast(cc,:) = nanmean(sdfKK(idxFast, T_BASE));
   
   %parameterize baseline activity
-  idxStats = ninfo(cc).unitNum; %index nstats correctly
-  nstats(idxStats).blineAccMEAN = mean(sdfAcc(cc,:));
-  nstats(idxStats).blineFastMEAN = mean(sdfFast(cc,:));
-  nstats(idxStats).blineAccSD = std(sdfAcc(cc,:));
-  nstats(idxStats).blineFastSD = std(sdfFast(cc,:));
+  ccNS = ninfo(cc).unitNum; %index nstats correctly
+  nstats(ccNS).blineAccMEAN = mean(sdfAcc(cc,:));
+  nstats(ccNS).blineFastMEAN = mean(sdfFast(cc,:));
+  nstats(ccNS).blineAccSD = std(sdfAcc(cc,:));
+  nstats(ccNS).blineFastSD = std(sdfFast(cc,:));
   
 end%for:cells(cc)
 
@@ -46,12 +47,14 @@ end
 
 %% Plotting
 
-blineDiff = [nstats.blineFastMEAN] - [nstats.blineAccMEAN];
+blineDiff = [nstats(idxArea & idxMonkey & idxVis).blineFastMEAN] - [nstats(idxArea & idxMonkey & idxVis).blineAccMEAN];
+blineEffect = [nstats(idxArea & idxMonkey & idxVis).blineEffect];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
-% histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
-% histogram(blineDiff([nstats(idxArea & idxMonkey).blineEffect]==-1), 'BinWidth',2, 'FaceColor','r')
+histogram(blineDiff(blineEffect==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
+histogram(blineDiff(blineEffect==-1), 'BinWidth',2, 'FaceColor','r')
+plot(mean(blineDiff)*ones(1,2), [0 10], 'k:', 'LineWidth',1.5)
 ppretty([5,4])
 
 end%fxn:plotBlineXcondSAT()

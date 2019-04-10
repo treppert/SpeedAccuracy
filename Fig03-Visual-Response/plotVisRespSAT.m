@@ -9,14 +9,20 @@ ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\'; %for 
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ismember({ninfo.visType}, {'sustained'});
-%index by finite RF (required for test of target selection)
-idxTStest = (cellfun(@length, {ninfo.visField}) < 8);
+idxVis = ([ninfo.visGrade] >= 0.5);
+% idxVis = ismember({ninfo.visType}, {'sustained'});
+% idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
+idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-ninfo = ninfo(idxArea & idxMonkey & idxVis & idxTStest);
-spikes = spikes(idxArea & idxMonkey & idxVis & idxTStest);
+idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficient);
 
+ninfo = ninfo(idxKeep);
+spikes = spikes(idxKeep);
+
+NUM_SEM = sum(idxKeep);
 NUM_CELLS = length(spikes);
+
 T_STIM = 3500 + (-100 : 300);
 T_RESP = 3500 + (-300 : 100);
 
@@ -29,9 +35,6 @@ sdfMove = populate_struct(sdfMove, {'AccTin','AccDin','FastTin','FastDin'}, NaN(
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  ccNS = ninfo(cc).unitNum;
-  
-%   if (isnan(nstats(ccNS).VRTSTAcc) || isnan(nstats(ccNS).VRTSTFast) || (binfo(kk).taskType == 2)); continue; end
   
   RTkk = double(moves(kk).resptime);
   
@@ -63,22 +66,28 @@ for cc = 1:NUM_CELLS
   sdfMove(cc).FastTin(:) = mean(SMFast.Tin);  sdfMove(cc).FastDin(:) = nanmean(SMFast.Din);
   
   %% Parameterize the visual response
-  %latency -- DONE
-%   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), nstats(ccNS));
+  ccNS = ninfo(cc).unitNum;
+  OFFSET = 100; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
   
-  %magnitude -- DONE
+  %latency
+%   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+%   nstats(ccNS).VRlatAcc = VRlatAcc;
+%   nstats(ccNS).VRlatFast = VRlatFast;
+  
+  %magnitude
 %   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), VRlatAcc, VRlatFast, nstats(ccNS));
   
-  %target selection -- DONE
-%   OFFSET = 100; %tell computeTST() how much of the SDF to cut out as pre-array stimulus
-%   [TSTAcc,TSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+  %target selection
+  [VRTSTAcc,VRTSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+  nstats(ccNS).VRTSTAcc = VRTSTAcc;
+  nstats(ccNS).VRTSTFast = VRTSTFast;
   
   %normalization factor
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
-  print([ROOT_DIR,'Visual-Response\SDF-VisResp-TST\',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
+  print([ROOT_DIR,'Visual-Response\SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
   
 end%for:cells(cc)
 
@@ -87,9 +96,6 @@ if (nargout > 0)
 end
 
 %% Plotting - Across cells
-NUM_SEM = 8; %efficient
-% NUM_SEM = 3; %inefficient
-
 visRespAccTin = transpose([visResp.AccTin]);
 visRespAccDin = transpose([visResp.AccDin]);
 visRespFastTin = transpose([visResp.FastTin]);
@@ -107,6 +113,8 @@ shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sq
 shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.75})
 shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.5, 'LineStyle','--'})
 shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.75})
+ylabel('Normalized activity')
+xlabel('Time from array (ms)')
 ppretty([6.4,4])
 
 end%fxn:plotVisRespSAT()

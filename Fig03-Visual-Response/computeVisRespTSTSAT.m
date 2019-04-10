@@ -20,6 +20,7 @@ end%computeVisRespTSTSAT()
 
 function [ TST ] = computeTST( sdfVR )
 DEBUG = false;
+MIN_NUM_TRIAL = 5;
 
 %initializations
 MIN_DUR = 50; %minimum duration (ms) of target selection
@@ -28,6 +29,12 @@ FILT_HALFWIN = 2; %half-width of averaging window to smooth SDF
 
 sdfTin = sdfVR.Tin;  [NUM_Tin,NUM_SAMP] = size(sdfTin);
 sdfDin = sdfVR.Din;   NUM_Din = size(sdfDin,1);
+
+if ((NUM_Tin < MIN_NUM_TRIAL) || (NUM_Din < MIN_NUM_TRIAL))
+  fprintf('*** Not enough trials to compute TST\n')
+  TST = NaN; return
+end
+
 
 %% Mann-Whitney U-test
 %perform a Mann-Whitney U-test at each timepoint to accept or reject the

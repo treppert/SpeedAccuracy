@@ -1,4 +1,4 @@
-function [ VRlatAcc , VRlatFast ] = computeVisRespLatSAT(sdfVRAcc, sdfVRFast, nstats)
+function [ VRlatAcc , VRlatFast ] = computeVisRespLatSAT(sdfVRAcc, sdfVRFast, nstats, offset)
 %computeVisRespLatSAT Summary of this function goes here
 %   Detailed explanation goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
@@ -13,13 +13,17 @@ CUTOFF = [3, 6]; %number of SDs above mean baseline firing rate
 cutoffAcc = nstats.blineAccMEAN + CUTOFF * nstats.blineAccSD;
 cutoffFast = nstats.blineFastMEAN + CUTOFF * nstats.blineFastSD;
 
+%use trials for both Target In and Distractor In to compute latency
+sdfVRAcc = [sdfVRAcc.Tin ; sdfVRAcc.Din];
+sdfVRFast = [sdfVRFast.Tin ; sdfVRFast.Din];
+
 %compute the mean spike density function for each condition
 sdfVRAcc = mean(sdfVRAcc);
 sdfVRFast = mean(sdfVRFast);
 
 %only consider time points beyond MIN_LATENCY
-sdfVRAcc = sdfVRAcc(MIN_LATENCY+1:end);
-sdfVRFast = sdfVRFast(MIN_LATENCY+1:end);
+sdfVRAcc = sdfVRAcc(offset+MIN_LATENCY+1:end);
+sdfVRFast = sdfVRFast(offset+MIN_LATENCY+1:end);
 
 VRlatAcc = computeLatency(sdfVRAcc, cutoffAcc, MIN_DURATION) + MIN_LATENCY;
 VRlatFast = computeLatency(sdfVRFast, cutoffFast, MIN_DURATION) + MIN_LATENCY;
