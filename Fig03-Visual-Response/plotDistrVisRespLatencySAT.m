@@ -7,6 +7,7 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 idxVis = ismember({ninfo.visType}, {'sustained'});
+% idxVis = ([ninfo.visGrade] >= 0.5);
 
 nstats = nstats(idxArea & idxMonkey & idxVis);
 
@@ -25,7 +26,7 @@ histogram(latDiff, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count'
 plot(mean(latDiff)*ones(1,2), [0 5], 'k--') %mark the mean
 ppretty([5,5])
 
-fprintf('Difference in latency (Acc-Fast) = %g +- %g\n', mean(latDiff), std(latDiff))
+fprintf('Acc: %g +- %g\n', mean(latDiff), std(latDiff))
 
 if (nargout > 0) %if desired, compute across-neuron stats
   [~,p,~,tstat] = ttest(latDiff);
