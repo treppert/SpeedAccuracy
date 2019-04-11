@@ -1,4 +1,4 @@
-function [ varargout ] = plotDistrVisRespLatencySAT( ninfo , nstats , varargin )
+function [  ] = plotDistrVisRespLatencySAT( ninfo , nstats , varargin )
 %plotDistrVisRespLatencySAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -6,32 +6,38 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ismember({ninfo.visType}, {'sustained'});
-% idxVis = ([ninfo.visGrade] >= 0.5);
+% idxVis = ismember({ninfo.visType}, {'sustained'});
+idxVis = ([ninfo.visGrade] >= 0.5);
 
 nstats = nstats(idxArea & idxMonkey & idxVis);
 
 latAcc = [nstats.VRlatAcc];
 latFast = [nstats.VRlatFast];
-latDiff = latAcc - latFast;
 
-%plot distribution of difference in response magnitude
-ccFgA = ([nstats.VReffect] == 1); %cells with VR Fast > Acc
-ccAgF = ([nstats.VReffect] == -1); %cells with VR Acc > Fast
+%% Histogram of difference
+latDiff = latAcc - latFast;
 
 figure(); hold on
 histogram(latDiff, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
-% histogram(latDiff(ccFgA), 'BinWidth',5, 'FaceColor',[0 .7 0], 'Normalization','count')
-% histogram(latDiff(ccAgF), 'BinWidth',5, 'FaceColor','r', 'Normalization','count')
 plot(mean(latDiff)*ones(1,2), [0 5], 'k--') %mark the mean
 ppretty([5,5])
+pause(0.1)
 
-fprintf('Acc: %g +- %g\n', mean(latDiff), std(latDiff))
+%% Cumulative distribution
+latAcc = sort(latAcc);    yyCum = (1:length(latAcc)) / length(latAcc);
+latFast = sort(latFast);
 
-if (nargout > 0) %if desired, compute across-neuron stats
-  [~,p,~,tstat] = ttest(latDiff);
-  varargout{1} = struct('pval',p, 'tstat',tstat);
-end
+figure(); hold on
+plot(latFast, yyCum, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(latAcc, yyCum, 'r-', 'LineWidth',1.0)
+ytickformat('%2.1f')
+ppretty([5 5])
+
+fprintf('Acc: %g +- %g\n', mean(latAcc), std(latAcc))
+fprintf('Fast: %g +- %g\n', mean(latFast), std(latFast))
+[~,pval,~,stat] = ttest(latAcc - latFast);
+fprintf('Diff: p = %g  t_%d = %g\n', pval, stat.df, stat.tstat)
+
 
 end%util:plotDistrVisRespLatencySAT()
 
