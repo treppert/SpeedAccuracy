@@ -37,8 +37,10 @@ end%for:session(kk)
 if (PLOT_X_TASK)
   
   figure(); hold on
-  plot([rtFast(1,:);rtAcc(1,:)], [erFast(1,:);erAcc(1,:)], 'b-', 'LineWidth',0.75)
-  plot([rtFast(2,:);rtAcc(2,:)], [erFast(2,:);erAcc(2,:)], 'k-', 'LineWidth',1.75)
+  plot([rtFast(1,:);rtAcc(1,:)], [erFast(1,:);erAcc(1,:)], 'k-', 'LineWidth',0.75)
+  plot([rtFast(2,:);rtAcc(2,:)], [erFast(2,:);erAcc(2,:)], 'k-', 'LineWidth',1.5)
+  plot(rtFast, erFast, '.', 'Color',[0 .7 0], 'MarkerSize',25)
+  plot(rtAcc, erAcc, 'r.', 'MarkerSize',25)
   ytickformat('%3.2f')
   ppretty([4.8,3])
   
