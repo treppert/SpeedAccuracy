@@ -50,40 +50,21 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 nstats = nstats(idxKeep);
-
-%normalization -- equivalent for both efficiencies (!)
 normFactor = mean([[nstats.blineAccMEAN] ; [nstats.blineFastMEAN]])';
+
+%% Plotting - spike density function
+%normalization -- equivalent for both efficiencies (!)
 for tt = 1:2
   sdfAcc{tt} = sdfAcc{tt} ./ normFactor;
   sdfFast{tt} = sdfFast{tt} ./ normFactor;
 end%for:task-efficiency(tt)
 
-%split X task efficiency
+%split by task efficiency
 idxEff = ([ninfo.taskType] == 1);   idxIneff = ([ninfo.taskType] == 2);
 
 sdfAcc{1} = sdfAcc{1}(idxEff,:);    sdfAcc{2} = sdfAcc{2}(idxIneff,:);
 sdfFast{1} = sdfFast{1}(idxEff,:);  sdfFast{2} = sdfFast{2}(idxIneff,:);
 
-blineAccEff = [nstats(idxEff).blineAccMEAN];        blineFastEff = [nstats(idxEff).blineFastMEAN];
-blineAccIneff = [nstats(idxIneff).blineAccMEAN];    blineFastIneff = [nstats(idxIneff).blineFastMEAN];
-
-blineDiffEff = blineFastEff - blineAccEff;          blineEffectEff = [nstats(idxEff).blineEffect];
-blineDiffIneff = blineFastIneff - blineAccIneff;    blineEffectIneff = [nstats(idxIneff).blineEffect];
-
-%% Perform stats tests
-%independent variable - baseline discharge rate
-baseline = [blineAccEff, blineAccIneff, blineFastEff, blineFastIneff]';
-%two factors
-condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
-efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
-
-[~,ANtbl] = anovan(baseline, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
-
-if (nargout > 1)
-  varargout{2} = ANtbl;
-end
-
-%% Plotting - spike density function
 NSEM_EFF = sum(idxEff);   NSEM_INEFF = sum(idxIneff);
 
 figure()
@@ -104,6 +85,15 @@ ppretty([9,3]); pause(0.1)
 
 
 %% Plotting - histogram of avg baseline activity
+%split by task efficiency
+blineAccEff = [nstats(idxEff).blineAccMEAN];
+blineFastEff = [nstats(idxEff).blineFastMEAN];
+blineAccIneff = [nstats(idxIneff).blineAccMEAN];
+blineFastIneff = [nstats(idxIneff).blineFastMEAN];
+
+blineDiffEff = blineFastEff - blineAccEff;          blineEffectEff = [nstats(idxEff).blineEffect];
+blineDiffIneff = blineFastIneff - blineAccIneff;    blineEffectIneff = [nstats(idxIneff).blineEffect];
+
 figure()
 
 subplot(1,2,1); hold on %Efficient search
@@ -123,6 +113,27 @@ plot(mean(blineDiffIneff)*ones(1,2), [0 4], 'k:', 'LineWidth',2.0)
 title('Inefficient search', 'FontSize',8)
 
 ppretty([7,3])
+
+%% Perform stats tests
+blineAccEff = blineAccEff ./ normFactor(idxEff)';
+blineFastEff = blineFastEff ./ normFactor(idxEff)';
+blineAccIneff = blineAccIneff ./ normFactor(idxIneff)';
+blineFastIneff = blineFastIneff ./ normFactor(idxIneff)';
+
+%independent variable - NORMALIZED baseline discharge rate
+baseline = [blineAccEff, blineAccIneff, blineFastEff, blineFastIneff]';
+%two factors
+condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
+efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
+
+[~,ANtbl] = anovan(baseline, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
+
+if (nargout > 1)
+  varargout{2} = ANtbl;
+end
+
+blineDiff = [blineFastEff blineFastIneff] - [blineAccEff blineAccIneff];
+fprintf('Baseline difference: %g +/- %g\n', mean(blineDiff), std(blineDiff))
 
 end%fxn:plotBlineXcondSAT()
 
