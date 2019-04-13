@@ -6,8 +6,11 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-% idxVis = ([ninfo.visGrade] >= 0.5);
-idxVis = ismember({ninfo.visType}, {'sustained'});
+if strcmp(args.area, 'SEF')
+  idxVis = ismember({ninfo.visType}, {'sustained'});
+else
+  idxVis = ([ninfo.visGrade] >= 0.5);
+end
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
