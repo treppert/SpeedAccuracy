@@ -6,20 +6,25 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ([ninfo.visGrade] >= 0.5);
-idxKeep = (idxArea & idxMonkey & idxVis);
+
+if strcmp(args.area, 'SEF')
+  idxVis = ismember({ninfo.visType}, {'sustained'});
+else
+  idxVis = ([ninfo.visGrade] >= 0.5);
+end
+idxEfficient = ismember([ninfo.taskType], [1]);
+idxKeep = (idxArea & idxMonkey & idxVis & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
 NUM_CELLS = length(spikes);
-T_BASE  = 3500 + (-200 : 20);
+T_BASE  = 3500 + (-600 : 20);
 
 sdfAcc = NaN(NUM_CELLS,length(T_BASE));
 sdfFast = NaN(NUM_CELLS,length(T_BASE));
 
 for cc = 1:NUM_CELLS
-%   if ~(ninfo(cc).baseLine); continue; end %make sure we have modulation Fast > Acc
   kk = ismember({binfo.session}, ninfo(cc).sess);
   sdfKK = compute_spike_density_fxn(spikes(cc).SAT);
 
@@ -47,17 +52,32 @@ if (nargout > 0)
 end
 
 %% Plotting
-blineAcc = [nstats(idxKeep).blineAccMEAN];
-blineFast = [nstats(idxKeep).blineFastMEAN];
+nstats = nstats(idxKeep);   NUM_SEM = sum(idxKeep);
 
-blineDiff = blineFast - blineAcc;
-blineEffect = [nstats(idxKeep).blineEffect];
+%spike density function
+% normFactor = mean([[nstats.blineAccMEAN] ; [nstats.blineFastMEAN]])';
+% sdfAcc = sdfAcc ./ normFactor;
+% sdfFast = sdfFast ./ normFactor;
+% 
+% figure(); hold on
+% shaded_error_bar(T_BASE-3500, mean(sdfFast), std(sdfFast)/sqrt(NUM_SEM), {'-', 'Color',[0 .7 0], 'LineWidth',1.0})
+% shaded_error_bar(T_BASE-3500, mean(sdfAcc), std(sdfAcc)/sqrt(NUM_SEM), {'r-', 'LineWidth',1.0})
+% xlabel('Time from array (ms)')
+% ylabel('Normalized activity')
+% ppretty([4.8,3])
+
+%histogram of difference in discharge rate X condition
+pause(0.1)
+blineDiff = [nstats.blineFastMEAN] - [nstats.blineAccMEAN];
+blineEffect = [nstats.blineEffect];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
 histogram(blineDiff(blineEffect==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
 histogram(blineDiff(blineEffect==-1), 'BinWidth',2, 'FaceColor','r')
-plot(mean(blineDiff)*ones(1,2), [0 10], 'k:', 'LineWidth',1.5)
+plot(mean(blineDiff)*ones(1,2), [0 4], 'k:', 'LineWidth',2.0)
+xlabel('Discharge rate diff. (sp/s')
+ylabel('Number of neurons')
 ppretty([5,4])
 
 

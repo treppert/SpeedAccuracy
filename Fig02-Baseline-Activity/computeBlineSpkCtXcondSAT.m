@@ -11,7 +11,7 @@ ninfo = ninfo(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(spikes);
-T_BASE  = 3500 + [-700, -1];
+T_BASE  = 3500 + [-600, 20];
 
 spkCtAcc = cell(1,NUM_CELLS); %baseline spike counts
 spkCtFast = cell(1,NUM_CELLS);

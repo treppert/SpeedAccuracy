@@ -9,10 +9,13 @@ ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\'; %for 
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ([ninfo.visGrade] >= 0.5);
-% idxVis = ismember({ninfo.visType}, {'sustained'});
-% idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
+if strcmp(args.area, 'SEF')
+  idxVis = ismember({ninfo.visType}, {'sustained'});
+else
+  idxVis = ([ninfo.visGrade] >= 0.5);
+end
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+% idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
 idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficient);
