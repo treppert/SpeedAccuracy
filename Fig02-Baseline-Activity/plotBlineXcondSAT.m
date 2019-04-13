@@ -7,9 +7,10 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 idxVis = ([ninfo.visGrade] >= 0.5);
+idxKeep = (idxArea & idxMonkey & idxVis);
 
-ninfo = ninfo(idxArea & idxMonkey & idxVis);
-spikes = spikes(idxArea & idxMonkey & idxVis);
+ninfo = ninfo(idxKeep);
+spikes = spikes(idxKeep);
 
 NUM_CELLS = length(spikes);
 T_BASE  = 3500 + (-200 : 20);
@@ -46,9 +47,11 @@ if (nargout > 0)
 end
 
 %% Plotting
+blineAcc = [nstats(idxKeep).blineAccMEAN];
+blineFast = [nstats(idxKeep).blineFastMEAN];
 
-blineDiff = [nstats(idxArea & idxMonkey & idxVis).blineFastMEAN] - [nstats(idxArea & idxMonkey & idxVis).blineAccMEAN];
-blineEffect = [nstats(idxArea & idxMonkey & idxVis).blineEffect];
+blineDiff = blineFast - blineAcc;
+blineEffect = [nstats(idxKeep).blineEffect];
 
 figure(); hold on
 histogram(blineDiff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
@@ -56,6 +59,13 @@ histogram(blineDiff(blineEffect==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
 histogram(blineDiff(blineEffect==-1), 'BinWidth',2, 'FaceColor','r')
 plot(mean(blineDiff)*ones(1,2), [0 10], 'k:', 'LineWidth',1.5)
 ppretty([5,4])
+
+
+%stats
+fprintf('Baseline Acc: %g +/- %g\n', mean(blineAcc), std(blineAcc))
+fprintf('Baseline Fast: %g +/- %g\n', mean(blineFast), std(blineFast))
+[~,pval,~,stat] = ttest(blineAcc, blineFast, 'Alpha',.05, 'Tail','both');
+fprintf('Diff: p = %g  t_%d = %g\n', pval, stat.df, stat.tstat)
 
 end%fxn:plotBlineXcondSAT()
 
