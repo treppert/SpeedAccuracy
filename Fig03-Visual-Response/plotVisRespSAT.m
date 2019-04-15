@@ -14,11 +14,11 @@ if strcmp(args.area, 'SEF')
 else
   idxVis = ([ninfo.visGrade] >= 0.5);
 end
-idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+% idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 % idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
-idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxEfficient = ismember([ninfo.taskType], 2);
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxVis & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -26,7 +26,7 @@ spikes = spikes(idxKeep);
 NUM_SEM = sum(idxKeep);
 NUM_CELLS = length(spikes);
 
-T_STIM = 3500 + (-100 : 300);
+T_STIM = 3500 + (0 : 300);
 T_RESP = 3500 + (-300 : 100);
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
@@ -54,7 +54,8 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by response dir re. response field
-  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+%   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+  idxRF = ismember(moves(kk).octant, (1:8)); %for plotting w/o TST
   
   %isolate single-trial SDFs
   VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);     SMAcc.Tin = sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP);
@@ -69,8 +70,8 @@ for cc = 1:NUM_CELLS
   sdfMove(cc).FastTin(:) = mean(SMFast.Tin);  sdfMove(cc).FastDin(:) = nanmean(SMFast.Din);
   
   %% Parameterize the visual response
-  ccNS = ninfo(cc).unitNum;
-  OFFSET = 100; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
+%   ccNS = ninfo(cc).unitNum;
+%   OFFSET = 100; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
   
   %latency
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
@@ -78,19 +79,21 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRlatFast = VRlatFast;
   
   %magnitude
-%   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAccCC(:,101:400), VRFastCC(:,101:400), VRlatAcc, VRlatFast, nstats(ccNS));
+%   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+%   nstats(ccNS).VRmagAcc = VRmagAcc;
+%   nstats(ccNS).VRmagFast = VRmagFast;
   
   %target selection
-  [VRTSTAcc,VRTSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
-  nstats(ccNS).VRTSTAcc = VRTSTAcc;
-  nstats(ccNS).VRTSTFast = VRTSTFast;
+%   [VRTSTAcc,VRTSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+%   nstats(ccNS).VRTSTAcc = VRTSTAcc;
+%   nstats(ccNS).VRTSTFast = VRTSTFast;
   
   %normalization factor
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
-  print([ROOT_DIR,'Visual-Response\SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+%   print([ROOT_DIR,'Visual-Response\SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
   
 end%for:cells(cc)
 
@@ -112,12 +115,17 @@ visRespFastTin = visRespFastTin ./ normFactor;
 visRespFastDin = visRespFastDin ./ normFactor;
 
 figure(); hold on
+% plot(T_STIM-3500, visRespFastTin, 'Color',[0 .7 0], 'LineWidth',0.75)
 shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.5, 'LineStyle','--'})
 shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.75})
 shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.5, 'LineStyle','--'})
 shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.75})
-ylabel('Normalized activity')
-xlabel('Time from array (ms)')
-ppretty([6.4,4])
+xlabel('Time from array (ms)'); ylabel('Normalized activity'); ytickformat('%2.1f')
+ppretty([4.8,3])
+
+% figure(); hold on
+% plot(T_STIM-3500, visRespAccTin, 'Color','r', 'LineWidth',0.75)
+% xlabel('Time from array (ms)'); ylabel('Normalized activity')
+% ppretty([4.8,3])
 
 end%fxn:plotVisRespSAT()

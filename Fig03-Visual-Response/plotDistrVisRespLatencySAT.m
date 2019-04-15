@@ -12,35 +12,53 @@ else
   idxVis = ([ninfo.visGrade] >= 0.5);
 end
 
-nstats = nstats(idxArea & idxMonkey & idxVis);
+idxKeep = (idxArea & idxMonkey & idxVis);
 
-latAcc = [nstats.VRlatAcc];
-latFast = [nstats.VRlatFast];
+ninfo = ninfo(idxKeep);
+nstats = nstats(idxKeep);
 
-%% Histogram of difference
-latDiff = latAcc - latFast;
+idxEff = ([ninfo.taskType] == 1);
+idxIneff = ([ninfo.taskType] == 2);
 
-figure(); hold on
-histogram(latDiff, 'BinWidth',5, 'FaceColor',[.4 .4 .4], 'Normalization','count')
-plot(mean(latDiff)*ones(1,2), [0 5], 'k--') %mark the mean
-ppretty([5,5])
-pause(0.1)
+latAccEff = [nstats(idxEff).VRlatAcc];
+latAccIneff = [nstats(idxIneff).VRlatAcc];
+latFastEff = [nstats(idxEff).VRlatFast];
+latFastIneff = [nstats(idxIneff).VRlatFast];
 
 %% Cumulative distribution
-latAcc = sort(latAcc);    yyCum = (1:length(latAcc)) / length(latAcc);
-latFast = sort(latFast);
-
 figure(); hold on
-plot(latFast, yyCum, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(latAcc, yyCum, 'r-', 'LineWidth',1.0)
-ytickformat('%2.1f')
+hAE = cdfplotTR(latAccEff, 'Color','r', 'LineWidth',0.5); hAE.YData = hAE.YData - .005;
+hAI = cdfplotTR(latAccIneff, 'Color','r', 'LineWidth',1.25); hAI.YData = hAI.YData - .005;
+hFE = cdfplotTR(latFastEff, 'Color',[0 .7 0], 'LineWidth',0.5); hFE.YData = hFE.YData + .005;
+hFI = cdfplotTR(latFastIneff, 'Color',[0 .7 0], 'LineWidth',1.25); hFI.YData = hFI.YData + .005;
+ylim([.05 .95]); ytickformat('%2.1f')
 ppretty([5 5])
 
-fprintf('Acc: %g +- %g\n', mean(latAcc), std(latAcc))
-fprintf('Fast: %g +- %g\n', mean(latFast), std(latFast))
-[~,pval,~,stat] = ttest(latAcc - latFast);
-fprintf('Diff: p = %g  t_%d = %g\n', pval, stat.df, stat.tstat)
+% fprintf('Efficient:\n')
+% fprintf('Acc: %g +- %g\n', mean(latAccEff), std(latAccEff))
+% fprintf('Fast: %g +- %g\n', mean(latFastEff), std(latFastEff))
+% % [~,pval,~,stat] = ttest(latAccEff - latFastEff);
+% % fprintf('Diff: p = %g  t_%d = %g\n', pval, stat.df, stat.tstat)
+% 
+% fprintf('Inefficient:\n')
+% fprintf('Acc: %g +- %g\n', mean(latAccIneff), std(latAccIneff))
+% fprintf('Fast: %g +- %g\n', mean(latFastIneff), std(latFastIneff))
+% % [~,pval,~,stat] = ttest(latAccIneff - latFastIneff);
+% % fprintf('Diff: p = %g  t_%d = %g\n', pval, stat.df, stat.tstat)
 
+%% Bar with error
+if strcmp(args.area, 'SC')
+  errPlot = [std(latFastEff)/sqrt(sum(idxEff)) std(latFastIneff)/sqrt(sum(idxIneff)) ...
+    std(latAccEff)/sqrt(sum(idxEff)) std(latAccIneff)/sqrt(sum(idxIneff))];
+  figure(); hold on
+  bar(1, mean(latFastEff), 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+  bar(2, mean(latFastIneff), 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+  bar(3, mean(latAccEff), 0.7, 'FaceColor','r', 'LineWidth',0.25)
+  bar(4, mean(latAccIneff), 0.7, 'FaceColor','r', 'LineWidth',1.25)
+  errorbar([mean(latFastEff) mean(latFastIneff) mean(latAccEff) mean(latAccIneff)], errPlot, 'Color','k', 'CapSize',0)
+  xticks(1:4); xticklabels([])
+  ppretty([3,5])
+end
 
 end%util:plotDistrVisRespLatencySAT()
 
