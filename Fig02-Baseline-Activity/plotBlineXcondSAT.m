@@ -86,10 +86,10 @@ ppretty([9,3]); pause(0.1)
 
 %% Plotting - histogram of avg baseline activity
 %split by task efficiency
-blineAccEff = [nstats(idxEff).blineAccMEAN];
-blineFastEff = [nstats(idxEff).blineFastMEAN];
-blineAccIneff = [nstats(idxIneff).blineAccMEAN];
-blineFastIneff = [nstats(idxIneff).blineFastMEAN];
+blineAccEff = [nstats(idxEff).blineAccMEAN] ./ normFactor(idxEff)';
+blineFastEff = [nstats(idxEff).blineFastMEAN] ./ normFactor(idxEff)';
+blineAccIneff = [nstats(idxIneff).blineAccMEAN] ./ normFactor(idxIneff)';
+blineFastIneff = [nstats(idxIneff).blineFastMEAN] ./ normFactor(idxIneff)';
 
 blineDiffEff = blineFastEff - blineAccEff;          blineEffectEff = [nstats(idxEff).blineEffect];
 blineDiffIneff = blineFastIneff - blineAccIneff;    blineEffectIneff = [nstats(idxIneff).blineEffect];
@@ -114,26 +114,19 @@ title('Inefficient search', 'FontSize',8)
 
 ppretty([7,3])
 
-%% Perform stats tests
-blineAccEff = blineAccEff ./ normFactor(idxEff)';
-blineFastEff = blineFastEff ./ normFactor(idxEff)';
-blineAccIneff = blineAccIneff ./ normFactor(idxIneff)';
-blineFastIneff = blineFastIneff ./ normFactor(idxIneff)';
 
-%independent variable - NORMALIZED baseline discharge rate
-baseline = [blineAccEff, blineAccIneff, blineFastEff, blineFastIneff]';
-%two factors
-condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
-efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
-
-[~,ANtbl] = anovan(baseline, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
-
-if (nargout > 1)
-  varargout{2} = ANtbl;
-end
-
-blineDiff = [blineFastEff blineFastIneff] - [blineAccEff blineAccIneff];
-fprintf('Baseline difference: %g +/- %g\n', mean(blineDiff), std(blineDiff))
+% %% Stats
+% if (nargout > 0)
+%   %dependent variable - visual response latency
+%   latency = [blineAccEff, blineAccIneff, blineFastEff, blineFastIneff]';
+%   %two factors
+%   condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
+%   efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
+% 
+%   [~,ANtbl] = anovan(latency, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
+%   varargout{1} = ANtbl;
+%   
+% end%if:(nargout > 0)
 
 end%fxn:plotBlineXcondSAT()
 

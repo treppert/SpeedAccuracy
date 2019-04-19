@@ -28,6 +28,14 @@ sdfVRFast = sdfVRFast(offset+MIN_LATENCY+1:end);
 VRlatAcc = computeLatency(sdfVRAcc, cutoffAcc, MIN_DURATION) + MIN_LATENCY;
 VRlatFast = computeLatency(sdfVRFast, cutoffFast, MIN_DURATION) + MIN_LATENCY;
 
+if isnan(VRlatAcc)
+  fprintf('*** VRlatAcc is NaN, so setting equal to VRlatFast\n')
+  VRlatAcc = VRlatFast;
+elseif isnan(VRlatFast)
+  fprintf('*** VRlatFast is NaN, so setting equal to VRlatAcc\n')
+  VRlatFast = VRlatAcc;
+end
+
 end%computeVisRespLatSAT()
 
 function [ latVR ] = computeLatency( sdfVR , cutoff , MIN_DURATION )

@@ -6,8 +6,10 @@ function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, n
 T_AVERAGE = 100; %amount of time (ms) used to estimate magnitude
 
 %use trials for both Target In and Distractor In to compute latency
-sdfVRAcc = [sdfVRAcc.Tin ; sdfVRAcc.Din];
-sdfVRFast = [sdfVRFast.Tin ; sdfVRFast.Din];
+if isstruct(sdfVRAcc)
+  sdfVRAcc = [sdfVRAcc.Tin ; sdfVRAcc.Din];
+  sdfVRFast = [sdfVRFast.Tin ; sdfVRFast.Din];
+end
 
 %compute the mean spike density function for each condition
 sdfVRAcc = mean(sdfVRAcc(:,offset+1:end));

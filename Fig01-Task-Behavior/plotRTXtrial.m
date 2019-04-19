@@ -21,10 +21,16 @@ trialSwitch = identify_condition_switch(binfo);
 
 for kk = 1:NUM_SESSION
   
-  trialA2F = trialSwitch(kk).A2F;  num_A2F = length(trialA2F);
-  trialF2A = trialSwitch(kk).F2A;  num_F2A = length(trialF2A);
+  jjA2F = trialSwitch(kk).A2F;
+  %if (Q or S), then add A2N trials to fill out A2F (!)
+  if sum(ismember(args.monkey, {'Q','S'}))
+    jjA2F = sort([jjA2F trialSwitch(kk).A2N]);
+  end
+  numA2F = length(jjA2F);
   
-  if ((num_A2F < MIN_NUM_TRIALS) || (num_F2A < MIN_NUM_TRIALS))
+  jjF2A = trialSwitch(kk).F2A;  numF2A = length(jjF2A);
+  
+  if ((numA2F < MIN_NUM_TRIALS) || (numF2A < MIN_NUM_TRIALS))
     fprintf('Session %d -- Less than %d trials\n', kk, MIN_NUM_TRIALS)
     continue
   end
@@ -34,8 +40,8 @@ for kk = 1:NUM_SESSION
   
   for jj = 1:NUM_TRIAL
     
-    rtA2F{tt}(kk,jj) = mean(moves(kk).resptime(trialA2F + TRIAL_PLOT(jj)));
-    rtF2A{tt}(kk,jj) = mean(moves(kk).resptime(trialF2A + TRIAL_PLOT(jj)));
+    rtA2F{tt}(kk,jj) = mean(moves(kk).resptime(jjA2F + TRIAL_PLOT(jj)));
+    rtF2A{tt}(kk,jj) = mean(moves(kk).resptime(jjF2A + TRIAL_PLOT(jj)));
     
   end%for:trials(jj)
   

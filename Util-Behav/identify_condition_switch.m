@@ -31,14 +31,8 @@ for kk = 1:NUM_SESSIONS
   tmp_A2F(tmp_A2F > (num_trials-4)) = [];
   
   if (DEBUG)
-    tmp = sort([tmp_F2A,tmp_A2F]);
-    tnp = diff(tmp);
-    
-    figure()
-    plot(tnp, 'ko-'); ylim([0 22])
-    title(binfo(kk).session(1:9))
-    ppretty('image_size',[3.2,2])
-    pause(0.25); print(['~/Dropbox/tmp/',binfo(kk).session(1:9),'.tif'], '-dtiff')
+    figure(); hold on
+    plot(condition, 'ko-')
   end%if:DEBUG
   
   trial_switch(kk).F2A = tmp_F2A;

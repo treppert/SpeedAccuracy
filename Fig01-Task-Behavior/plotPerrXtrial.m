@@ -21,9 +21,15 @@ trialSwitch = identify_condition_switch(binfo);
 
 for kk = 1:NUM_SESSION
   
-  jjErr = find(binfo(kk).err_time);
+  jjErr = find(binfo(kk).err_dir);
   
-  jjA2F = trialSwitch(kk).A2F;  numA2F = length(jjA2F);
+  jjA2F = trialSwitch(kk).A2F;
+  %if (Q or S), then add A2N trials to fill out A2F (!)
+  if sum(ismember(args.monkey, {'Q','S'}))
+    jjA2F = sort([jjA2F trialSwitch(kk).A2N]);
+  end
+  numA2F = length(jjA2F);
+  
   jjF2A = trialSwitch(kk).F2A;  numF2A = length(jjF2A);
   
   if ((numA2F < MIN_NUM_TRIALS) || (numF2A < MIN_NUM_TRIALS))
@@ -69,7 +75,6 @@ errorbar(TRIAL_PLOT-0.1, mean(pErrF2A{2}), std(pErrF2A{2})/sqrt(NUM_SEM(2)), 'Co
 errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(pErrA2F{2}), std(pErrA2F{2})/sqrt(NUM_SEM(2)), 'Color','k', 'LineWidth',1.75, 'CapSize',0)
 
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
-ytickformat('%3.2f')
 ppretty([6.4,4])
 
 end%function:plotPerrXtrial()
