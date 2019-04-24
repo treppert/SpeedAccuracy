@@ -13,7 +13,7 @@ if strcmp(args.area, 'SEF')
 else
   idxVis = ([ninfo.visGrade] >= 0.5);
 end
-idxEffect = ([nstats.VReffect] ~= 0); %average over both directions of modulation
+idxEffect = ([nstats.VReffect] == +1);
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxEffect);
 
@@ -42,19 +42,19 @@ for cc = 1:NUM_CELLS
   
   %compute SDFs
   sdfKKstim = compute_spike_density_fxn(spikes(cc).SAT);
-  sdfKKresp = align_signal_on_response(sdfKKstim, RTkk);
+%   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk);
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
-  %index by trial outcome
+  %index by trial outcome -- currently not used (to increase trial count)
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by trial number
   trialA2F = trialSwitch(kk).A2F;
   trialF2A = trialSwitch(kk).F2A;
   
   %combine indexing
-  trialA2F = intersect(trialA2F, find(~idxIso & idxCorr));
-  trialF2A = intersect(trialF2A, find(~idxIso & idxCorr));
+  trialA2F = intersect(trialA2F, find(~idxIso));
+  trialF2A = intersect(trialF2A, find(~idxIso));
   
   %compute median RT in Fast condition for plotting
 %   idxFast = (binfo(kk).condition == 3);
@@ -84,25 +84,27 @@ for cc = 1:NUM_CELLS
     
 end%for:cells(cc)
 
-%compute all single-trial activity estimates relative to mean in Acc cond.
-VRmagA2F = VRmagA2F - repmat([nstats.VRmagAcc]', 1,NUM_TRIAL);
-VRmagF2A = VRmagF2A - repmat([nstats.VRmagAcc]', 1,NUM_TRIAL);
+%normalize with respect to mean VR in Acc condition
+VRmagAvg = mean([[nstats.VRmagAcc] ; [nstats.VRmagFast]]);
+VRmagNorm = repmat(VRmagAvg', 1,NUM_TRIAL);
 
-%take the absolute value, so as to average over neurons with both effect
-%directions (Acc > Fast, Fast > Acc)
-VRmagA2F = abs(VRmagA2F);
-VRmagF2A = abs(VRmagF2A);
+VRmagA2F = VRmagA2F ./ VRmagNorm;
+VRmagF2A = VRmagF2A ./ VRmagNorm;
 
+% %take the absolute difference from 1.0
+% VRmagA2F = abs(VRmagA2F - 1.0);
+% VRmagF2A = abs(VRmagF2A - 1.0);
 
 %% Plotting
 
 %mean +/- SE change from mean in Accurate condition (sp/s)
 figure(); hold on
-% plot(-0.5*ones(1,2), [0 1], 'k--') %show points of condition switch
-% plot( 3.5*ones(1,2), [0 1], 'k--')
-plot([-4 7], [0 0], 'k--') %show mean in Acc condition
+plot(-0.5*ones(1,2), [0.7 1.3], 'k-') %show points of condition switch
+plot( 7.5*ones(1,2), [0.7 1.3], 'k-')
 shaded_error_bar(TRIAL, nanmean(VRmagA2F), nanstd(VRmagA2F)/sqrt(NUM_CELLS), {'k-', 'LineWidth',0.75})
 shaded_error_bar(TRIAL+NUM_TRIAL, nanmean(VRmagF2A), nanstd(VRmagF2A)/sqrt(NUM_CELLS), {'k-', 'LineWidth',0.75})
+xlabel('Trial'); xticks(-5:12); xticklabels([])
+ylabel('Norm. response magnitude'); ytickformat('%2.1f')
 ppretty([4.8,3])
 
 end%fxn:plotVRmagXtrialSAT()

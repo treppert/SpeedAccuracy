@@ -3,7 +3,7 @@ function [ varargout ] = plotDistrVRparamSAT( ninfo , nstats , param , varargin 
 %   args.writeMat -- Flag. Write a .mat file for stats analysis in R?
 % 
 
-args = getopt(varargin, {'writeMat', 'plot', {'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {'writeMat', 'plot', {'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -67,26 +67,26 @@ end
 if (args.plot)
 %% Plots of absolute values
 %cumulative distribution
-figure(); hold on
-hAE = cdfplotTR(paramAccEff, 'Color','r', 'LineWidth',0.5); hAE.YData = hAE.YData - .005;
-hAI = cdfplotTR(paramAccIneff, 'Color','r', 'LineWidth',1.25); hAI.YData = hAI.YData - .005;
-hFE = cdfplotTR(paramFastEff, 'Color',[0 .7 0], 'LineWidth',0.5); hFE.YData = hFE.YData + .005;
-hFI = cdfplotTR(paramFastIneff, 'Color',[0 .7 0], 'LineWidth',1.25); hFI.YData = hFI.YData + .005;
-ylim([0 1]); ytickformat('%2.1f')
-xlabel([param, ' ', unit])
-ylabel('Cumulative probability')
-ppretty([5 5])
+% figure(); hold on
+% hAE = cdfplotTR(paramAccEff, 'Color','r', 'LineWidth',0.5); hAE.YData = hAE.YData - .005;
+% hAI = cdfplotTR(paramAccIneff, 'Color','r', 'LineWidth',1.25); hAI.YData = hAI.YData - .005;
+% hFE = cdfplotTR(paramFastEff, 'Color',[0 .7 0], 'LineWidth',0.5); hFE.YData = hFE.YData + .005;
+% hFI = cdfplotTR(paramFastIneff, 'Color',[0 .7 0], 'LineWidth',1.25); hFI.YData = hFI.YData + .005;
+% ylim([0 1]); ytickformat('%2.1f')
+% xlabel([param, ' ', unit])
+% ylabel('Cumulative probability')
+% ppretty([5 5])
 
 %barplot
-figure(); hold on
-bar(1, meanFastEff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
-bar(2, meanFastIneff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
-bar(3, meanAccEff, 0.7, 'FaceColor','r', 'LineWidth',0.25)
-bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
-errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
-xticks(1:4); xticklabels([])
-ylabel([param, ' ', unit])
-ppretty([2,3])
+% figure(); hold on
+% bar(1, meanFastEff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+% bar(2, meanFastIneff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+% bar(3, meanAccEff, 0.7, 'FaceColor','r', 'LineWidth',0.25)
+% bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
+% errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
+% xticks([]); xticklabels([])
+% ylabel([param, ' ', unit])
+% ppretty([2,4])
 
 %% Plots of difference (Acc - Fast)
 parmDiffEff = paramFastEff - paramAccEff;        meanDiffEff = mean(parmDiffEff);     SEDiffEff = std(parmDiffEff) / sqrt(sum(idxEff));
