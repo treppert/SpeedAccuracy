@@ -4,19 +4,19 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 %   order to obtain estimates of mean and SD of baseline activity.
 % 
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\'; %for printing figs
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained'});
+  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
 else
   idxVis = ([ninfo.visGrade] >= 0.5);
 end
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 % idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
-idxEfficient = ismember([ninfo.taskType], 2);
+idxEfficient = ismember([ninfo.taskType], [2]);
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficient);
 
@@ -26,7 +26,7 @@ spikes = spikes(idxKeep);
 NUM_SEM = sum(idxKeep);
 NUM_CELLS = length(spikes);
 
-T_STIM = 3500 + (0 : 300);
+T_STIM = 3500 + (0 : 350);
 T_RESP = 3500 + (-300 : 100);
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
@@ -70,8 +70,8 @@ for cc = 1:NUM_CELLS
   sdfMove(cc).FastTin(:) = mean(SMFast.Tin);  sdfMove(cc).FastDin(:) = nanmean(SMFast.Din);
   
   %% Parameterize the visual response
-%   ccNS = ninfo(cc).unitNum;
-%   OFFSET = 0; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
+  ccNS = ninfo(cc).unitNum;
+  OFFSET = 0; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
   
   %latency
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
@@ -92,7 +92,7 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS))
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS));
 %   print([ROOT_DIR,'SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
   
 end%for:cells(cc)
