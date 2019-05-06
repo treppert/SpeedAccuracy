@@ -50,8 +50,7 @@ if (args.export)
   SAVE_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\R\';
   paramAcc = [paramAccEff paramAccIneff];  paramFast = [paramFastEff paramFastIneff];
   efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))];
-  rmanova_VR(paramAcc, paramFast, efficiency)
-%   save([SAVE_DIR, param, '-', args.area, '.mat'], 'paramAcc','paramFast','efficiency')
+  save([SAVE_DIR, param, '-', args.area, '.mat'], 'paramAcc','paramFast','efficiency')
   return
 end%if:export
 
@@ -125,26 +124,12 @@ end
 end%util:plotDistrVRparamSAT()
 
 
-function [ ] = rmanova_VR( paramAcc , paramFast , efficiency )
-
-between = table(paramAcc', paramFast', efficiency', 'VariableNames',{'pAcc','pFast','Efficiency'});
-within = table([1 2]', 'VariableNames', {'Condition'});
-
-rmVR = fitrm(between, 'pAcc-pFast ~ Efficiency', 'WithinDesign',within);
-ranova(rmVR, 'WithinModel','Condition')
-
-end%util:rmanova_VR()
-
-% %% Stats
-% if (nargout > 0)
-%   %dependent variable - visual response latency
-%   parm = [paramAccEff, paramAccIneff, paramFastEff, paramFastIneff]';
-%   %two factors
-%   condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
-%   efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
+% function [ ] = rmanova_VR( paramAcc , paramFast , efficiency )
 % 
-%   [~,ANtbl] = anovan(parm, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
-%   varargout{1} = ANtbl;
-%   
-% end%if:(nargout > 0)
-
+% between = table(paramAcc', paramFast', efficiency', 'VariableNames',{'pAcc','pFast','Efficiency'});
+% within = table([1 2]', 'VariableNames', {'Condition'});
+% 
+% rmVR = fitrm(between, 'pAcc-pFast ~ Efficiency', 'WithinDesign',within);
+% ranova(rmVR, 'WithinModel','Condition')
+% 
+% end%util:rmanova_VR()

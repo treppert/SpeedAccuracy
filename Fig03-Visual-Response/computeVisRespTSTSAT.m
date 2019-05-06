@@ -1,8 +1,10 @@
-function [ TSTAcc , TSTFast ] = computeVisRespTSTSAT(sdfVRAcc, sdfVRFast, nstats, offset)
+function [ TSTAcc , TSTFast , varargout ] = computeVisRespTSTSAT(sdfVRAcc, sdfVRFast, nstats, offset)
 %computeVisRespTSTSAT Summary of this function goes here
 %   Detailed explanation goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
 %   sdfVRFast - Single-trial visual response SDFs in the Fast condition
+%   varargout - Struct with fields Acc and Fast containing vectors of
+%   timestamps of significant diff. from the U-test
 % 
 
 MIN_TST = min([nstats.VRlatAcc, nstats.VRlatFast]) + 10; %min acceptable TST (re. VR latency)
@@ -12,19 +14,28 @@ sdfVRAcc.Din = sdfVRAcc.Din(:,offset+MIN_TST+1:end);
 sdfVRFast.Tin = sdfVRFast.Tin(:,offset+MIN_TST+1:end);
 sdfVRFast.Din = sdfVRFast.Din(:,offset+MIN_TST+1:end);
 
-TSTAcc = computeTST(sdfVRAcc) + MIN_TST;
-TSTFast = computeTST(sdfVRFast) + MIN_TST;
+if (nargout > 2) %output additional info, including timestamps of sig. diff. (Mann-Whitney)
+  [TSTAcc,tVecAcc] = computeTST(sdfVRAcc);
+  [TSTFast,tVecFast] = computeTST(sdfVRFast);
+  TSTAcc = TSTAcc + MIN_TST;
+  TSTFast = TSTFast + MIN_TST;
+  varargout{1} = struct('Acc',tVecAcc+MIN_TST, 'Fast',tVecFast+MIN_TST);
+else
+  TSTAcc = computeTST(sdfVRAcc) + MIN_TST;
+  TSTFast = computeTST(sdfVRFast) + MIN_TST;
+end
 
 end%computeVisRespTSTSAT()
 
 
-function [ TST ] = computeTST( sdfVR )
+function [ TST , varargout ] = computeTST( sdfVR )
 DEBUG = false;
-MIN_NUM_TRIAL = 5;
+MIN_NUM_TRIAL = 5; %min # of trials for each Tin and Din (otherwise do not test)
 
 %initializations
 MIN_DUR = 50; %minimum duration (ms) of target selection
-ALPHA = 0.05; %significance cutoff for Mann-Whitney U-test
+ALLOWANCE_TST = 5; %number of missed timepoints allowed within MIN_DUR 
+ALPHA = 0.01; %significance cutoff for Mann-Whitney U-test
 FILT_HALFWIN = 2; %half-width of averaging window to smooth SDF
 
 sdfTin = sdfVR.Tin;  [NUM_Tin,NUM_SAMP] = size(sdfTin);
@@ -62,7 +73,7 @@ for ii = 1:nCand %loop over candidate timepoints
   
   runLengthII = sum(dtH1_TS(ii:ii+MIN_DUR-1));
   
-  if (runLengthII == MIN_DUR)
+  if (runLengthII <= (MIN_DUR+ALLOWANCE_TST))
     %found a run of MIN_DURATION at level ALPHA
     TST = H1_TS(ii);
     break
@@ -70,15 +81,23 @@ for ii = 1:nCand %loop over candidate timepoints
   
 end%for:sample(ii)
 
+if (nargout > 1) %output vector of timestamps with sig. diff.
+  varargout{1} = H1_TS;
+end
+
 if (DEBUG)
   yLim = [min(mean(sdfTin)) max(mean(sdfTin))];
   figure(); hold on
+  
   plot(mean(sdfTin), 'k-')
   plot(mean(sdfDin), 'k--')
   plot(H1_TS, yLim(1), 'b.', 'MarkerSize',20)
   plot(TST*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
-  ppretty([6.4,4])
-  pause()
+  
+  yyaxis right; plot(-log(pval_TS), 'r-') %plot p-value of Mann-Whitney vs. time
+  plot(repmat([0 NUM_SAMP], 3,1)', (ones(2,1)*(-log([.001 .01 .05]))), 'r:') %plot p-value thresholds
+  
+  ppretty([6.4,4]); pause()
 end
 
 end%util:computeTST()

@@ -16,7 +16,7 @@ else
 end
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 % idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
-idxEfficient = ismember([ninfo.taskType], [2]);
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficient);
 
@@ -70,8 +70,8 @@ for cc = 1:NUM_CELLS
   sdfMove(cc).FastTin(:) = mean(SMFast.Tin);  sdfMove(cc).FastDin(:) = nanmean(SMFast.Din);
   
   %% Parameterize the visual response
-  ccNS = ninfo(cc).unitNum;
-  OFFSET = 0; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
+%   ccNS = ninfo(cc).unitNum;
+%   OFFSET = 0; %tell parameterization fxns how much of the SDF to cut out as pre-array stimulus
   
   %latency
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
@@ -84,7 +84,7 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRmagFast = VRmagFast;
   
   %target selection
-%   [VRTSTAcc,VRTSTFast] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+%   [VRTSTAcc,VRTSTFast,tVecTSH1] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
 %   nstats(ccNS).VRTSTAcc = VRTSTAcc;
 %   nstats(ccNS).VRTSTFast = VRTSTFast;
   
@@ -92,8 +92,8 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS));
-%   print([ROOT_DIR,'SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.15); close()
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS), 'tVec',tVecTSH1);
+%   print([ROOT_DIR,'SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-N',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 
@@ -104,8 +104,9 @@ end
 %% Plotting - Across cells
 nstats = nstats(idxKeep);
 
-quantTSTAcc = quantile([nstats.VRTSTAcc], [.1 .5 .9]); %plot median TST
-quantTSTFast = quantile([nstats.VRTSTFast], [.1 .5 .9]);
+% quantTSTAcc = quantile([nstats.VRTSTAcc], [.1 .5 .9]);
+quantTSTAcc = quantile([nstats.VRTSTAcc], 0.5); %plot median TST
+quantTSTFast = quantile([nstats.VRTSTFast], 0.5);
 
 visRespAccTin = transpose([visResp.AccTin]);
 visRespAccDin = transpose([visResp.AccDin]);
@@ -131,7 +132,7 @@ plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',0.75)
 plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.5, 'LineStyle','--')
 plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',0.75)
 
-for qq = 1:3
+for qq = 1:1%3
   plot(quantTSTAcc(qq)*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
   plot(quantTSTFast(qq)*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 end

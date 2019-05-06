@@ -1,4 +1,4 @@
-function [OLdist1, OLdist2,  RTmatchedSubtrials_1_noIndexMatch,  RTmatchedSubtrials_2_noIndexMatch] = DistOverlap_Amir(Array1, Array2, BinSize)
+function [OLdist1, OLdist2,  RTmatchedSubtrials_1_noIndexMatch,  RTmatchedSubtrials_2_noIndexMatch] = DistOverlap_Amir(Array1, Array2)
 
 % This function takes in two arrays. Bins each array and finds the
 % intersection of the two arrays, and index of chosen elements from the
@@ -31,15 +31,16 @@ function [OLdist1, OLdist2,  RTmatchedSubtrials_1_noIndexMatch,  RTmatchedSubtri
       % separated in time by 15 minutes! Which one to keep? We keep the one
       % that's closest in time to the trial in the other array.
 
-           
+BINSIZE = 10;
+
 SubTrials_1 = Array1(:,1);
 SubTrials_2 = Array2(:,1);
 
 dist1(:,1) = Array1(:,2);
 dist2(:,1) = Array2(:,2);
 
-dist1(:,2) = ceil(dist1(:,1)/BinSize);  % each value on dist(:,2) determines one of the increments used for bar graph or histogram.
-dist2(:,2) = ceil(dist2(:,1)/BinSize);
+dist1(:,2) = ceil(dist1(:,1)/BINSIZE);  % each value on dist(:,2) determines one of the increments used for bar graph or histogram.
+dist2(:,2) = ceil(dist2(:,1)/BINSIZE);
 
 if isempty(dist1) == 0  && isempty(dist2) == 0
 

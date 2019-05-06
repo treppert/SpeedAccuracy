@@ -1,158 +1,110 @@
-function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
-%plotSDFChoiceErrXisiSAT() Summary of this function goes here
+function [ tErr , medISI ] = plotSDFChoiceErrXISISAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+%plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr-xISI-Test\'; %for printing figs
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-ninfo = ninfo(idx_area & idx_monkey);
-spikes = spikes(idx_area & idx_monkey);
+idxKeep = (idxArea & idxMonkey & idxEfficient);
+
+ninfo = ninfo(idxKeep);
+spikes = spikes(idxKeep);
 
 NUM_CELLS = length(spikes);
-T_PLOT  = 3500 + (-400 : 800);
-OFFSET_TEST = 200;
+T_RESP = 3500 + (-200 : 400); %time from primary saccade
+OFFSET = 201;
+T_BASE = 3500 + (-300 : -1); %time from array
 
 %initializations
-sdfCorr = NaN(NUM_CELLS,length(T_PLOT));
-sdfErrNoPP = NaN(NUM_CELLS,length(T_PLOT)); %no PP saccade
-sdfErrISIs = NaN(NUM_CELLS,length(T_PLOT)); %short ISI
-sdfErrISIl = NaN(NUM_CELLS,length(T_PLOT)); %long ISI
-
-tStartErrISIs = NaN(1,NUM_CELLS); %start time of error encoding
-tStartErrISIl = NaN(1,NUM_CELLS);
-tVecErrISIs = cell(1,NUM_CELLS); %all time-points of error encoding
-tVecErrISIl = cell(1,NUM_CELLS);
-
-rtCorr = NaN(1,NUM_CELLS);
-rtErr = NaN(1,NUM_CELLS);
-isiErrS = NaN(1,NUM_CELLS);
-isiErrL = NaN(1,NUM_CELLS);
+tErr.sh = NaN(1,NUM_CELLS);   medISI.sh = NaN(1,NUM_CELLS);
+tErr.lo = NaN(1,NUM_CELLS);   medISI.lo = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  if (ninfo(cc).errGrade ~= 1); continue; end
+  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
   RTkk = double(moves(kk).resptime);
   ISIkk = double(movesPP(kk).resptime) - RTkk;
+  ISIkk(ISIkk < 0) = NaN;
   
-  %compute spike density function and align on primary response
-  sdfSess = compute_spike_density_fxn(spikes(cc).SAT);
-  sdfSess = align_signal_on_response(sdfSess, RTkk); 
+  %compute spike density function and align on primary and secondary sacc.
+  sdfStimKK = compute_spike_density_fxn(spikes(cc).SAT);
+  sdfRespKK = align_signal_on_response(sdfStimKK, RTkk);
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
-%   idxCond = ((binfo(kk).condition == 1) & ~idxIso);
-  idxCond = (ismember(binfo(kk).condition, [1,3]) & ~idxIso);
+  idxFast = (binfo(kk).condition == 3 & ~idxIso);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir);
-  idxCorr = ~(binfo(kk).err_dir);
-  %index by direction from error field
-  idxDir = ismember(moves(kk).octant, ninfo(cc).errField);
-  
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   %index by ISI
-  idxNoPP = (movesPP(kk).resptime == 0);
-  [idxISIs,idxISIl] = getIdxISI(ISIkk,(idxCond & idxErr & idxDir));
+  medISI_FE = nanmedian(ISIkk(idxFast & idxErr));
+  idxISIsh = (ISIkk <= medISI_FE);
+  idxISIlo = (ISIkk > medISI_FE);
   
-  sdfCorr(cc,:) = nanmean(sdfSess(idxCond & idxCorr & idxDir, T_PLOT));
-  sdfErrNoPP(cc,:) = nanmean(sdfSess(idxCond & idxErr & idxDir & idxNoPP, T_PLOT));
-  sdfErrISIs(cc,:) = nanmean(sdfSess(idxCond & idxErr & idxDir & idxISIs, T_PLOT));
-  sdfErrISIl(cc,:) = nanmean(sdfSess(idxCond & idxErr & idxDir & idxISIl, T_PLOT));
+  trialFC = find(idxFast & idxCorr);                    RTFC = RTkk(idxFast & idxCorr);
+  trialFE_ISIsh = find(idxFast & idxErr & idxISIsh);    RTFE_ISIsh = RTkk(idxFast & idxErr & idxISIsh);
+  trialFE_ISIlo = find(idxFast & idxErr & idxISIlo);    RTFE_ISIlo = RTkk(idxFast & idxErr & idxISIlo);  
+%   figure(); histogram(RTFE_ISIsh, 'BinWidth',10); hold on; histogram(RTFE_ISIlo, 'BinWidth',10)
   
-  %compute timing of error signal
-  sdfCorrTest = sdfSess(idxCond & idxCorr & idxDir, T_PLOT+OFFSET_TEST);
-  sdfErrISIsTest = sdfSess(idxCond & idxErr & idxDir & idxISIs, T_PLOT+OFFSET_TEST);
-  sdfErrISIlTest = sdfSess(idxCond & idxErr & idxDir & idxISIl, T_PLOT+OFFSET_TEST);
-  [tStartErrISIs(cc),tVecErrISIs{cc}] = calcTimeErrSignal(sdfCorrTest, sdfErrISIsTest, 0.05, 100, OFFSET_TEST);
-  [tStartErrISIl(cc),tVecErrISIl{cc}] = calcTimeErrSignal(sdfCorrTest, sdfErrISIlTest, 0.05, 100, OFFSET_TEST);
+  %perform (primary) RT matching - short ISI trials
+  [OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trialFC;RTFC]', [trialFE_ISIsh;RTFE_ISIsh]');
+  trialFC_ISIsh = OLdist1(:,1);   trialFE_ISIsh = OLdist2(:,1);
+  %perform (primary) RT matching - long ISI trials
+  [OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trialFC;RTFC]', [trialFE_ISIlo;RTFE_ISIlo]');
+  trialFC_ISIlo = OLdist1(:,1);   trialFE_ISIlo = OLdist2(:,1);
   
-  rtCorr(cc) = median(RTkk(idxCond & idxCorr & idxDir));
-  rtErr(cc) =  median(RTkk(idxCond & idxErr & idxDir));
-  isiErrS(cc) = median(ISIkk(idxCond & idxErr & idxDir & idxISIs));
-  isiErrL(cc) = median(ISIkk(idxCond & idxErr & idxDir & idxISIl));
-end%for:cells(cc)
-
-%dt-error encoding vs. dt-PP saccade latency
-dtEncode = tStartErrISIl - tStartErrISIs;
-dtSaccLatency = isiErrL - isiErrS;
-testStat = dtEncode ./ dtSaccLatency;
-
-%% Plotting
-if (1)
-for cc = 1:NUM_CELLS
-  if (ninfo(cc).errGrade ~= 1); continue; end
+  %isolate single-trial SDFs - short ISI trials
+  sdfCorrST_ISIsh = sdfRespKK(trialFC_ISIsh, T_RESP);   sdfErrST_ISIsh = sdfRespKK(trialFE_ISIsh, T_RESP);
+  baseCorrST_ISIsh = sdfStimKK(trialFC_ISIsh, T_BASE);  baseErrST_ISIsh = sdfStimKK(trialFE_ISIsh, T_BASE);
+  %isolate single-trial SDFs - long ISI trials
+  sdfCorrST_ISIlo = sdfRespKK(trialFC_ISIlo, T_RESP);   sdfErrST_ISIlo = sdfRespKK(trialFE_ISIlo, T_RESP);
+  baseCorrST_ISIlo = sdfStimKK(trialFC_ISIlo, T_BASE);  baseErrST_ISIlo = sdfStimKK(trialFE_ISIlo, T_BASE);
+  
+  %compute mean SDFs - short ISI
+  sdfCorr_ISIsh = nanmean(sdfCorrST_ISIsh);     sdfErr_ISIsh = nanmean(sdfErrST_ISIsh);
+  baseCorr_ISIsh = nanmean(baseCorrST_ISIsh);   baseErr_ISIsh = nanmean(baseErrST_ISIsh);
+  %compute mean SDFs - long ISI
+  sdfCorr_ISIlo = nanmean(sdfCorrST_ISIlo);     sdfErr_ISIlo = nanmean(sdfErrST_ISIlo);
+  baseCorr_ISIlo = nanmean(baseCorrST_ISIlo);   baseErr_ISIlo = nanmean(baseErrST_ISIlo);
+  
+  %compute latency of the error signal - short ISI
+  baseDiff_ISIsh = baseErr_ISIsh - baseCorr_ISIsh;
+  tErr_ISIsh = calcTimeErrSignal(sdfCorrST_ISIsh, sdfErrST_ISIsh, OFFSET, baseDiff_ISIsh);
+  %compute latency of the error signal - long ISI
+  baseDiff_ISIlo = baseErr_ISIlo - baseCorr_ISIlo;
+  tErr_ISIlo = calcTimeErrSignal(sdfCorrST_ISIlo, sdfErrST_ISIlo, OFFSET, baseDiff_ISIlo);
+  
+  %plot individual cell activity
   figure(); hold on
-  
-  tmp = [sdfCorr(cc,:), sdfErrISIs(cc,:)];
-  yLim = [min(min(tmp)) max(max(tmp))];
-  
-  if (testStat(cc) < 0.25)
-    plot([0 0], yLim, 'b-', 'LineWidth',1.0) %time of primary response
-  else
-    plot([0 0], yLim, 'k-', 'LineWidth',1.0)
-  end
-  
-  plot(-rtCorr(cc)*ones(1,2), yLim, 'k-') %median (primary) RT
-  plot(-rtErr(cc)*ones(1,2), yLim, 'k--')
-  
-  plot(isiErrS(cc)*ones(1,2), yLim, '--', 'Color','k') %median ISIs
-  plot(isiErrL(cc)*ones(1,2), yLim, '--', 'Color',[.5 .5 .5]) %median ISIl
-  
-  plot(tStartErrISIs(cc)*ones(1,2), yLim, '-.', 'Color','k') %onset of error encoding
-  plot(tVecErrISIs{cc}, yLim(1), 'k.', 'MarkerSize',8) %timepoints of error encoding
-  plot(tStartErrISIl(cc)*ones(1,2), yLim, '-.', 'Color',[.5 .5 .5])
-  plot(tVecErrISIl{cc}, yLim(1)-2, '.', 'Color',[.5 .5 .5], 'MarkerSize',8)
-  
-  plot(T_PLOT-3500, sdfCorr(cc,:), '-', 'Color',[0 0 0], 'LineWidth',1.5);
-  plot(T_PLOT-3500, sdfErrISIs(cc,:), '-', 'Color',[0 0 0], 'LineWidth',0.75);
-  plot(T_PLOT-3500, sdfErrISIl(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',0.75);
-%   plot(T_PLOT-3500, sdfErrNoPP(cc,:), '-', 'Color',[0 0 1], 'LineWidth',0.75);
-  
+  tmp = [sdfCorr_ISIsh sdfErr_ISIsh];% sdfCorr_ISIlo sdfErr_ISIlo];
+  yLim = [min(tmp) max(tmp)];
+  plot([0 0], yLim, 'k:')
+  plot(T_RESP-3500, sdfCorr_ISIsh, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
+  plot(T_RESP-3500, sdfErr_ISIsh, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+  plot(T_RESP-3500, sdfCorr_ISIlo, '-', 'Color',[0 .3 0], 'LineWidth',1.0)
+  plot(T_RESP-3500, sdfErr_ISIlo, ':', 'Color',[0 .3 0], 'LineWidth',1.0)
+  plot(tErr_ISIsh*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+  plot(tErr_ISIlo*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.5)
+  ISIFE = ISIkk(idxFast & idxErr);
+  ISIFE_sh = ISIFE(ISIFE <= medISI_FE);
+  ISIFE_lo = ISIFE(ISIFE >  medISI_FE);
+  plot(median(ISIFE_sh)*ones(1,2), yLim, '--', 'Color',[0 .7 0], 'LineWidth',1.0)
+  plot(median(ISIFE_lo)*ones(1,2), yLim, '--', 'Color',[0 .3 0], 'LineWidth',1.0)
+  xlim([T_RESP(1) T_RESP(end)]-3500)
+  xlabel('Time from primary saccade (ms)')
   ylabel('Activity (sp/sec)')
-  xlabel('Time from response (ms)')
+  print_session_unit(gca , ninfo(cc),[])
+  ppretty([8,5])
   
-  xlim([T_PLOT(1) T_PLOT(end)]-3500)
-  xticks((T_PLOT(1) : 200 : T_PLOT(end)) - 3500)
-  
-  print_session_unit(gca, ninfo(cc), binfo(kk), 'horizontal')
-  ppretty('image_size',[6.4,4])
-  pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/SDF-ChoiceErr-xISI-Test/', ...
-    ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.eps'], '-depsc2')
-  pause(0.1); close()
-%   pause()
-  
+  print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+  tErr.sh(cc) = tErr_ISIsh;   medISI.sh(cc) = median(ISIFE_sh);
+  tErr.lo(cc) = tErr_ISIlo;   medISI.lo(cc) = median(ISIFE_lo);
 end%for:cells(cc)
-end
 
-if (nargout > 0)
-  varargout{1} = dtSaccLatency;
-  if (nargout > 1)
-    varargout{2} = dtEncode;
-  end
-end
-
-%% Statistics - Test of effect of post-primary saccade on error encoding
-% figure(); hold on
-% plot([100 250], [0 0], 'k-')
-% plot([100 250], [100 250], 'k--')
-% plot([100 250], [50  125], 'k:')
-% plot(dtSaccLatency, dtEncode, 'ko', 'MarkerSize',6)
-% xlabel('Increase in saccade latency (ms)')
-% ylabel('Increase in onset of encoding (ms)')
-% title('alpha = .05 || minL = 100 ms')
-% ppretty('image_size',[6.4,4])
-
-end%fxn:plotSDFChoiceErrXisiSAT()
-
-function [ idxISIs , idxISIl ] = getIdxISI( ISIkk , idxCondErrDir )
-
-ISIkk(ISIkk < 0) = NaN;
-
-medISI = nanmedian(ISIkk(idxCondErrDir));
-
-idxISIs = (ISIkk <= medISI);
-idxISIl = (ISIkk >  medISI);
-
-end%util:getIdxISI()
+end%fxn:plotSDFChoiceErrXISISAT()
