@@ -1,14 +1,14 @@
-function [  ] = plotSDFChoiceErrXISISAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr-xISI-Test\'; %for printing figs
+ROOT_DIR = 'C:\Users\TDT\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr-xISI-Test\'; %for printing figs
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
+idxErrorGrade = ((abs([ninfo.errGrade]) >= 0.5) & ~isnan([nstats.A_ChcErr_tErr_ISIshort]));
 idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
@@ -81,31 +81,54 @@ for cc = 1:NUM_CELLS
   baseDiff_ISIlo = baseErr_ISIlo - baseCorr_ISIlo;
   tErr_ISIlo = calcTimeErrSignal(sdfCorrST_ISIlo, sdfErrST_ISIlo, OFFSET, baseDiff_ISIlo);
   
+  ccNS = ninfo(cc).unitNum;
+%   nstats(ccNS).A_ChcErr_tErr_ISIshort = tErr_ISIsh;
+%   nstats(ccNS).A_ChcErr_tErr_ISIlong = tErr_ISIlo;
+  
   %plot individual cell activity
-  figure(); hold on
-  tmp = [sdfCorr_ISIsh sdfErr_ISIsh sdfCorr_ISIlo sdfErr_ISIlo];
+  figure()
+  
+  ISIFE = ISIkk(idxFast & idxErr);
+  ISIFE_sh = ISIFE(ISIFE <= medISI_FE);
+  ISIFE_lo = ISIFE(ISIFE >  medISI_FE);
+  
+  subplot(2,1,1); hold on
+  tmp = [sdfCorr_ISIsh sdfErr_ISIsh];
   yLim = [min(tmp) max(tmp)];
   plot([0 0], yLim, 'k:')
   plot(T_RESP-3500, sdfCorr_ISIsh, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
   plot(T_RESP-3500, sdfErr_ISIsh, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+  plot(nstats(ccNS).A_ChcErr_tErr_ISIshort*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+  plot(median(ISIFE_sh)*ones(1,2), yLim, '--', 'Color',[0 .7 0], 'LineWidth',1.0)
+  xlim([T_RESP(1) T_RESP(end)]-3500)
+  xticks((T_RESP(1) : 50 : T_RESP(end)) - 3500)
+  ylabel('Activity (sp/sec)')
+  print_session_unit(gca , ninfo(cc),[])
+  title(['Ratio dtErr/dtISI = ', num2str(nstats(ccNS).A_ChcErr_dtErr_vs_dISI)])
+  grid on
+  
+  subplot(2,1,2); hold on
+  tmp = [sdfCorr_ISIlo sdfErr_ISIlo];
+  yLim = [min(tmp) max(tmp)];
+  plot([0 0], yLim, 'k:')
   plot(T_RESP-3500, sdfCorr_ISIlo, '-', 'Color',[0 .3 0], 'LineWidth',1.0)
   plot(T_RESP-3500, sdfErr_ISIlo, ':', 'Color',[0 .3 0], 'LineWidth',1.0)
-  plot(tErr_ISIsh*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.5)
-  plot(tErr_ISIlo*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.5)
-  ISIFE = ISIkk(idxFast & idxErr);
-  ISIFE_sh = ISIFE(ISIFE <= medISI_FE);
-  ISIFE_lo = ISIFE(ISIFE >  medISI_FE);
-  plot(median(ISIFE_sh)*ones(1,2), yLim, '--', 'Color',[0 .7 0], 'LineWidth',1.0)
+  plot(nstats(ccNS).A_ChcErr_tErr_ISIlong*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.5)
   plot(median(ISIFE_lo)*ones(1,2), yLim, '--', 'Color',[0 .3 0], 'LineWidth',1.0)
   xlim([T_RESP(1) T_RESP(end)]-3500)
   xticks((T_RESP(1) : 50 : T_RESP(end)) - 3500)
   xlabel('Time from primary saccade (ms)')
   ylabel('Activity (sp/sec)')
   print_session_unit(gca , ninfo(cc),[])
-  ppretty([8,5])
   grid on
+  
+  ppretty([8,6])
   
   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
 end%for:cells(cc)
 
-end%fxn:plotSDFChoiceErrXISISAT()
+if (nargout > 0)
+  varargout{1} = nstats;
+end
+
+end%fxn:plotSDFChoiceErrXisiSAT()
