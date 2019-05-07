@@ -1,4 +1,4 @@
-function [ tErr , medISI ] = plotSDFChoiceErrXISISAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [  ] = plotSDFChoiceErrXISISAT( binfo , moves , movesPP , ninfo , spikes , varargin )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,21 +7,22 @@ ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Ch
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
+
+idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
 idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
 NUM_CELLS = length(spikes);
-T_RESP = 3500 + (-200 : 400); %time from primary saccade
-OFFSET = 201;
+T_RESP = 3500 + (-200 : 400); OFFSET = 201; %time from primary saccade
 T_BASE = 3500 + (-300 : -1); %time from array
 
 %initializations
-tErr.sh = NaN(1,NUM_CELLS);   medISI.sh = NaN(1,NUM_CELLS);
-tErr.lo = NaN(1,NUM_CELLS);   medISI.lo = NaN(1,NUM_CELLS);
+% tErr.sh = NaN(1,NUM_CELLS);   medISI.sh = NaN(1,NUM_CELLS);
+% tErr.lo = NaN(1,NUM_CELLS);   medISI.lo = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -82,7 +83,7 @@ for cc = 1:NUM_CELLS
   
   %plot individual cell activity
   figure(); hold on
-  tmp = [sdfCorr_ISIsh sdfErr_ISIsh];% sdfCorr_ISIlo sdfErr_ISIlo];
+  tmp = [sdfCorr_ISIsh sdfErr_ISIsh sdfCorr_ISIlo sdfErr_ISIlo];
   yLim = [min(tmp) max(tmp)];
   plot([0 0], yLim, 'k:')
   plot(T_RESP-3500, sdfCorr_ISIsh, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
@@ -97,14 +98,14 @@ for cc = 1:NUM_CELLS
   plot(median(ISIFE_sh)*ones(1,2), yLim, '--', 'Color',[0 .7 0], 'LineWidth',1.0)
   plot(median(ISIFE_lo)*ones(1,2), yLim, '--', 'Color',[0 .3 0], 'LineWidth',1.0)
   xlim([T_RESP(1) T_RESP(end)]-3500)
+  xticks((T_RESP(1) : 50 : T_RESP(end)) - 3500)
   xlabel('Time from primary saccade (ms)')
   ylabel('Activity (sp/sec)')
   print_session_unit(gca , ninfo(cc),[])
   ppretty([8,5])
+  grid on
   
   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
-  tErr.sh(cc) = tErr_ISIsh;   medISI.sh(cc) = median(ISIFE_sh);
-  tErr.lo(cc) = tErr_ISIlo;   medISI.lo(cc) = median(ISIFE_lo);
 end%for:cells(cc)
 
 end%fxn:plotSDFChoiceErrXISISAT()

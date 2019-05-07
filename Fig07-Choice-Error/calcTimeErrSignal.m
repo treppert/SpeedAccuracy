@@ -2,7 +2,7 @@ function [ tFast ] = calcTimeErrSignal( SDFcorr , SDFerr , offset , dSDFbase )
 %calcTimeErrSignal Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_LAT = 0; %min acceptable latency (re. RT)
+MIN_LAT = 5; %min acceptable latency (re. RT)
 
 SDFcorr = SDFcorr(:,offset+MIN_LAT+1:end);
 SDFerr = SDFerr(:,offset+MIN_LAT+1:end);
@@ -94,7 +94,7 @@ if (DEBUG)
   plot(find(sampH1mag), yLim(1), 'c.', 'MarkerSize',20)
   plot(tErr*ones(1,2), yLim, 'k:', 'LineWidth',1.5)
   
-  ppretty([6.4,6])
+  ppretty([6.4,6]); pause()
 end%if:(DEBUG)
 
 end%util:computeTErr()
