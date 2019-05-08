@@ -1,5 +1,5 @@
-function [ ] = plotDistrVRparamSAT( ninfo , nstats , param , varargin )
-%plotDistrVRparamSAT Summary of this function goes here
+function [ ] = plotDistrParamSAT( ninfo , nstats , param , varargin )
+%plotDistrParamSAT Summary of this function goes here
 %   args.export -- Write a .mat file for stats analysis in R
 % 
 
@@ -7,17 +7,20 @@ args = getopt(varargin, {'export', {'area=','SEF'}, {'monkey=',{'D','E','Q','S'}
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
 if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
+  idxVisGrade = ismember({ninfo.visType}, {'sustained','phasic'});
 else
-  idxVis = ([ninfo.visGrade] >= 0.5);
+  idxVisGrade = ([ninfo.visGrade] >= 0.5);
 end
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 
 if strcmp(param, 'TST')
-  idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
-elseif ismember(param, {'Latency','Magnitude'})
-  idxKeep = (idxArea & idxMonkey & idxVis);
+  idxKeep = (idxArea & idxMonkey & idxVisGrade & idxTST);
+elseif ismember(param, {'VisLat','VisMag'})
+  idxKeep = (idxArea & idxMonkey & idxVisGrade);
+elseif ismember(param, {'ErrLat','ErrMag'})
+  idxKeep = (idxArea & idxMonkey & idxErrorGrade);
 else
   error('Input "param" not recognized')
 end
@@ -25,18 +28,21 @@ end
 ninfo = ninfo(idxKeep);
 nstats = nstats(idxKeep);
 
-if strcmp(param, 'Latency')
+if strcmp(param, 'VisLat')
   paramAcc = [nstats.VRlatAcc];
   paramFast = [nstats.VRlatFast];
-  unit = '(ms)';
-elseif strcmp(param, 'Magnitude')
+elseif strcmp(param, 'VisMag')
   paramAcc = [nstats.VRmagAcc];
   paramFast = [nstats.VRmagFast];
-  unit = '(sp/s)';
 elseif strcmp(param, 'TST')
   paramAcc = [nstats.VRTSTAcc];
   paramFast = [nstats.VRTSTFast];
-  unit = '(ms)';
+elseif strcmp(param, 'ErrLat')
+  paramAcc = [nstats.A_ChcErr_tErr_Acc];
+  paramFast = [nstats.A_ChcErr_tErr_Fast];
+elseif strcmp(param, 'ErrMag')
+  paramAcc = [nstats.A_ChcErr_magErr_Acc];
+  paramFast = [nstats.A_ChcErr_magErr_Fast];
 end
 
 %split by task efficiency
@@ -61,16 +67,15 @@ meanFastEff = mean(paramFastEff);     SEFastEff = std(paramFastEff)/sqrt(sum(idx
 meanFastIneff = mean(paramFastIneff); SEFastIneff = std(paramFastIneff)/sqrt(sum(idxIneff));
 
 %cumulative distribution
-if (0)
+if (1)
 figure(); hold on
 hAE = cdfplotTR(paramAccEff, 'Color','r', 'LineWidth',0.5); hAE.YData = hAE.YData - .005;
 hAI = cdfplotTR(paramAccIneff, 'Color','r', 'LineWidth',1.25); hAI.YData = hAI.YData - .005;
 hFE = cdfplotTR(paramFastEff, 'Color',[0 .7 0], 'LineWidth',0.5); hFE.YData = hFE.YData + .005;
 hFI = cdfplotTR(paramFastIneff, 'Color',[0 .7 0], 'LineWidth',1.25); hFI.YData = hFI.YData + .005;
-ylim([0 1]); ytickformat('%2.1f')
-xlabel([param, ' ', unit])
-ylabel('Cumulative probability')
-ppretty([5 5])
+ylim([0 1]); ytickformat('%2.1f'); ylabel('Cumulative probability')
+xlabel(param)
+ppretty([5 5]); pause(0.1)
 end
 
 %barplot
@@ -82,12 +87,12 @@ bar(3, meanAccEff, 0.7, 'FaceColor','r', 'LineWidth',0.25)
 bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
 xticks([]); xticklabels([])
-ylabel([param, ' ', unit])
-ppretty([2,4])
+ylabel(param)
+ppretty([2,4]); pause(0.1)
 end
 
 %% Plots of difference (Acc - Fast)
-if strcmp(param, 'Magnitude')
+if ismember(param, {'VisMag','ErrMag'})
   parmDiffEff = paramFastEff - paramAccEff;
   parmDiffIneff = paramFastIneff - paramAccIneff;
 else
@@ -105,9 +110,9 @@ cdfplotTR(parmDiffEff, 'Color','k', 'LineWidth',0.5)
 cdfplotTR(parmDiffIneff, 'Color','k', 'LineWidth',1.25)
 plot([0 0], [0 1], 'k:')
 ylim([0 1]); ytickformat('%2.1f')
-xlabel([param, ' diff. ', unit])
+xlabel([param, ' difference'])
 ylabel('Cumulative probability')
-ppretty([5 5])
+ppretty([5 5]); pause(0.1)
 end
 
 %barplot
@@ -117,19 +122,8 @@ bar(1, meanDiffEff, 0.7, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
 bar(2, meanDiffIneff, 0.7, 'FaceColor',[.4 .4 .4], 'LineWidth',1.25)
 errorbar([meanDiffEff meanDiffIneff], [SEDiffEff SEDiffIneff], 'Color','k', 'CapSize',0)
 xticks([1,2]); xticklabels([])
-ylabel([param, ' diff. ', unit])
-ppretty([2,3])
+ylabel([param, ' difference'])
+ppretty([1.5,4])
 end
 
-end%util:plotDistrVRparamSAT()
-
-
-% function [ ] = rmanova_VR( paramAcc , paramFast , efficiency )
-% 
-% between = table(paramAcc', paramFast', efficiency', 'VariableNames',{'pAcc','pFast','Efficiency'});
-% within = table([1 2]', 'VariableNames', {'Condition'});
-% 
-% rmVR = fitrm(between, 'pAcc-pFast ~ Efficiency', 'WithinDesign',within);
-% ranova(rmVR, 'WithinModel','Condition')
-% 
-% end%util:rmanova_VR()
+end%util:plotDistrParamSAT()

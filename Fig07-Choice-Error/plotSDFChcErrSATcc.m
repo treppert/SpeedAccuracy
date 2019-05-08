@@ -1,49 +1,77 @@
-function [ ] = plotSDFChcErrSATcc( T_1 , T_2 , SDFcc , ninfo , nstats )
+function [ ] = plotSDFChcErrSATcc( TIME , sdfPlot , ninfo , nstats )
 %plotSDFChcErrSATcc Summary of this function goes here
-%   T_1 - Time from primary saccade (ms)
-%   T_2 - Time from secondary saccade (ms)
+%   TIME.PRIMARY - Time from primary saccade (ms)
+%   TIME.SECONDARY - Time from secondary saccade (ms)
 %   SDFcc - Struct with fields CorrRe1, ErrRe1, CorrRe2, ErrRe2
 % 
 
-figure()
-
-tmp = [SDFcc.CorrRe1 SDFcc.CorrRe2 SDFcc.ErrRe1 SDFcc.ErrRe2];
+%compute y-limits for vertical lines
+tmp = [sdfPlot.AccCorr.RePrimary ; sdfPlot.AccCorr.ReSecondary ; sdfPlot.AccErr.RePrimary ; sdfPlot.AccErr.ReSecondary ; ...
+  sdfPlot.FastCorr.RePrimary ; sdfPlot.FastCorr.ReSecondary ; sdfPlot.FastErr.RePrimary ; sdfPlot.FastErr.ReSecondary];
 yLim = [min(tmp) max(tmp)];
 
-%% Time from primary saccade
-subplot(1,2,1); hold on
+figure()
+
+%% Fast condition
+
+%Time from primary saccade
+subplot(2,2,1); hold on
 plot([0 0], yLim, 'k:')
 
-plot(T_1-3500, SDFcc.CorrRe1, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(T_1-3500, SDFcc.ErrRe1, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdfPlot.FastCorr.RePrimary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdfPlot.FastErr.RePrimary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
-plot(nstats.tChcErrFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 
-% plot(RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-% plot(RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-
-xlim([T_1(1) T_1(end)]-3500)
-xlabel('Time from primary saccade (ms)')
+grid on
+xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
-
-title(['Eff. = ',num2str(ninfo.taskType)], 'FontSize',8)
 print_session_unit(gca , ninfo,[])
+title(['Magnitude = ', num2str(round(nstats.A_ChcErr_magErr_Fast)), ' sp/s'])
 
-%% Time from secondary saccade
-subplot(1,2,2); hold on
-plot([0 0], yLim, 'k--')
 
-% plot(T_2-3500, SDFcc.CorrRe2, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(T_2-3500, SDFcc.ErrRe2, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+%Time from secondary saccade
+subplot(2,2,2); hold on
+plot([0 0], yLim, 'k:')
 
-% plot(-RT.Acc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
-% plot(-RT.Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+plot(TIME.SECONDARY-3500, sdfPlot.FastCorr.ReSecondary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(TIME.SECONDARY-3500, sdfPlot.FastErr.ReSecondary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
-xlim([T_2(1) T_2(end)]-3500)
+xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
+set(gca, 'YAxisLocation','right')
+
+
+%% Accurate condition
+
+%Time from primary saccade
+subplot(2,2,3); hold on
+plot([0 0], yLim, 'k:')
+
+plot(TIME.PRIMARY-3500, sdfPlot.AccCorr.RePrimary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdfPlot.AccErr.RePrimary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
+
+plot(nstats.A_ChcErr_tErr_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',0.5)
+
+grid on
+xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
+ylabel('Activity (sp/sec)')
+xlabel('Time from primary saccade (ms)')
+title(['Magnitude = ', num2str(round(nstats.A_ChcErr_magErr_Acc)), ' sp/s'])
+
+
+%Time from secondary saccade
+subplot(2,2,4); hold on
+plot([0 0], yLim, 'k:')
+
+plot(TIME.SECONDARY-3500, sdfPlot.AccCorr.ReSecondary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
+plot(TIME.SECONDARY-3500, sdfPlot.AccErr.ReSecondary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
+
+xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
 xlabel('Time from secondary saccade (ms)')
 set(gca, 'YAxisLocation','right')
 
-ppretty([8,3])
+
+ppretty([12,4.8])
 
 end%util:plotSDFChcErrSATcc()
 

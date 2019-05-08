@@ -3,40 +3,38 @@ function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , 
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxEfficient);
+idxErrorGrade = (([ninfo.errGrade]) >= 0.5);
+idxEfficient = ismember([ninfo.taskType], [1]);
+
+idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-
 NUM_CELLS = length(spikes);
-T_1 = 3500 + (-200 : 400); %time from primary saccade
-T_2 = 3500 + (-200 : 400); %time from secondary saccade
-T_BASE = 3500 + (-300 : -1); %time from array
+
+TIME.PRIMARY = 3500 + (-200 : 400); OFFSET = 201; %time from primary saccade
+TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
+TIME.BASELINE = 3500 + (-300 : -1); %time from array
+
+T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
 
 %output initializations
-sdf1Corr = NaN(NUM_CELLS, length(T_1)); %aligned on primary
-sdf1Err = NaN(NUM_CELLS, length(T_1));
-sdf2Corr = NaN(NUM_CELLS, length(T_1)); %aligned on secondary
-sdf2Err = NaN(NUM_CELLS, length(T_1));
+sdfAcc = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
+sdfAcc = struct('Corr',sdfAcc, 'Err',sdfAcc);
+sdfFast = sdfAcc;
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-%   if (ninfo(cc).errGrade ~= 1); continue; end
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
   RTkk = double(moves(kk).resptime);
   ISIkk = double(movesPP(kk).resptime) - RTkk;
   ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
-  
-  %compute spike density function and align on primary and secondary sacc.
-  sdfKK = compute_spike_density_fxn(spikes(cc).SAT);
-  sdf1KK = align_signal_on_response(sdfKK, RTkk); %primary saccade
-  sdf2KK = align_signal_on_response(sdfKK, RTkk + ISIkk); %secondary sacc.
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
@@ -47,39 +45,41 @@ for cc = 1:NUM_CELLS
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   
-  %perform RT matching
-  trialFC = find(idxFast & idxCorr);    RTFC = RTkk(idxFast & idxCorr);
-  trialFE = find(idxFast & idxErr);     RTFE = RTkk(idxFast & idxErr);
-  [OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trialFC;RTFC]', [trialFE;RTFE]');
-  trialFC = OLdist1(:,1);   RTFC = OLdist1(:,2);
-  trialFE = OLdist2(:,1);   RTFE = OLdist2(:,2);
-%   figure(); histogram(RTFC, 'FaceColor','k', 'BinWidth',5); hold on; histogram(RTFE, 'FaceColor','r', 'BinWidth',5)
+  %set "ISI" on correct trials as median ISI of choice error trials
+  ISIkk(idxFast & idxCorr) = round(nanmedian(ISIkk(idxFast & idxErr)));
+  ISIkk(idxAcc & idxCorr) = round(nanmedian(ISIkk(idxAcc & idxErr)));
   
-  %isolate single-trial SDFs
-  sdf1CorrST = sdf1KK(trialFC, T_1); %aligned on primary
-  sdf1ErrST = sdf1KK(trialFE, T_1);
-  sdf2CorrST = sdf2KK(trialFC, T_2); %aligned on secondary
-  sdf2ErrST = sdf2KK(trialFE, T_2);
-  sdfBaseCorrST = sdfKK(trialFC, T_BASE); %aligned on array
-  sdfBaseErrST = sdfKK(trialFE, T_BASE);
+  %perform RT matching and group trials by condition and outcome
+  trials = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, idxErr);
+  
+  %get single-trials SDFs
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trials, TIME);
   
   %compute mean SDFs
-  sdf1Corr(cc,:) = nanmean(sdf1CorrST);   sdf2Corr(cc,:) = nanmean(sdf2CorrST);
-  sdf1Err(cc,:) = nanmean(sdf1ErrST);     sdf2Err(cc,:) = nanmean(sdf2ErrST);
-  sdfBaseCorr = nanmean(sdfBaseCorrST);   sdfBaseErr = nanmean(sdfBaseErrST);
-  
+  [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
+  [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
+    
   %% Parameterize the SDF
   ccNS = ninfo(cc).unitNum;
-  OFFSET = 201;
   
   %latency
-  sdfBaseDiff = sdfBaseErr - sdfBaseCorr;
-  tErrFast = calcTimeErrSignal(sdf1CorrST, sdf1ErrST, OFFSET, sdfBaseDiff);
-  nstats(ccNS).tChcErrFast = tErrFast;
+%   tErrOnset = calcTimeErrSignal(sdfCorrSTreP, sdfErrSTreP, OFFSET, sdfBaseErr - sdfBaseCorr);
+%   nstats(ccNS).A_ChcErr_tErr_Fast = tErrOnset;
+  
+  %magnitude
+%   latAcc = nstats(ccNS).A_ChcErr_tErr_Acc + OFFSET;
+%   latFast = nstats(ccNS).A_ChcErr_tErr_Fast + OFFSET;
+%   ACorr_Acc = sdfAcc.Corr(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
+%   AErr_Acc = sdfAcc.Err(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
+%   ACorr_Fast = sdfFast.Corr(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
+%   AErr_Fast = sdfFast.Err(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
+%   nstats(ccNS).A_ChcErr_magErr_Acc = sum( AErr_Acc - ACorr_Acc ) / T_INTERVAL_ESTIMATE_MAG;
+%   nstats(ccNS).A_ChcErr_magErr_Fast = sum( AErr_Fast - ACorr_Fast ) / T_INTERVAL_ESTIMATE_MAG;
   
   %plot individual cell activity
-  SDFcc = struct('CorrRe1',sdf1Corr(cc,:), 'ErrRe1',sdf1Err(cc,:), 'CorrRe2',sdf2Corr(cc,:), 'ErrRe2',sdf2Err(cc,:));
-  plotSDFChcErrSATcc(T_1, T_2, SDFcc, ninfo(cc), nstats(ccNS))
+%   sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
+%   plotSDFChcErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
+%   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 
@@ -88,3 +88,61 @@ if (nargout > 0)
 end
 
 end%fxn:plotSDFChoiceErrSAT()
+
+function [ trialsGrouped ] = groupTrialsRTmatched(RT, idxAcc, idxFast, idxCorr, idxErr)
+
+%Fast condition
+trial_FC = find(idxFast & idxCorr);    RT_FC = RT(idxFast & idxCorr);
+trial_FE = find(idxFast & idxErr);     RT_FE = RT(idxFast & idxErr);
+[OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trial_FC;RT_FC]', [trial_FE;RT_FE]');
+trial_FC = OLdist1(:,1);
+trial_FE = OLdist2(:,1);
+
+%Accurate condition
+trial_AC = find(idxAcc & idxCorr);    RT_AC = RT(idxAcc & idxCorr);
+trial_AE = find(idxAcc & idxErr);     RT_AE = RT(idxAcc & idxErr);
+[OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trial_AC;RT_AC]', [trial_AE;RT_AE]');
+trial_AC = OLdist1(:,1);
+trial_AE = OLdist2(:,1);
+
+%output
+trialsGrouped = struct('AccCorr',trial_AC, 'AccErr',trial_AE, 'FastCorr',trial_FC, 'FastErr',trial_FE);
+
+end%util:groupTrialsRTmatched()
+
+function [sdfAccST, sdfFastST] = getSingleTrialSDF(RT, ISI, spikes, trials, time)
+
+%compute SDFs and align on primary and secondary saccades
+sdfReSTIM = compute_spike_density_fxn(spikes);
+sdfRePRIMARY = align_signal_on_response(sdfReSTIM, RT);
+sdfReSECONDARY = align_signal_on_response(sdfReSTIM, RT + ISI);
+
+%isolate single-trial SDFs per group - Fast condition
+sdfFastST.Corr.RePrimary = sdfRePRIMARY(trials.FastCorr, time.PRIMARY); %aligned on primary
+sdfFastST.Err.RePrimary = sdfRePRIMARY(trials.FastErr, time.PRIMARY);
+sdfFastST.Corr.ReSecondary = sdfReSECONDARY(trials.FastCorr, time.SECONDARY); %aligned on secondary
+sdfFastST.Err.ReSecondary = sdfReSECONDARY(trials.FastErr, time.SECONDARY);
+sdfFastST.Corr.ReStim = sdfReSTIM(trials.FastCorr, time.BASELINE); %aligned on array
+sdfFastST.Err.ReStim = sdfReSTIM(trials.FastErr, time.BASELINE);
+
+%isolate single-trial SDFs per group - Accurate condition
+sdfAccST.Corr.RePrimary = sdfRePRIMARY(trials.AccCorr, time.PRIMARY); %aligned on primary
+sdfAccST.Err.RePrimary = sdfRePRIMARY(trials.AccErr, time.PRIMARY);
+sdfAccST.Corr.ReSecondary = sdfReSECONDARY(trials.AccCorr, time.SECONDARY); %aligned on secondary
+sdfAccST.Err.ReSecondary = sdfReSECONDARY(trials.AccErr, time.SECONDARY);
+sdfAccST.Corr.ReStim = sdfReSTIM(trials.AccCorr, time.BASELINE); %aligned on array
+sdfAccST.Err.ReStim = sdfReSTIM(trials.AccErr, time.BASELINE);
+
+end%util:getSingleTrialSDF()
+
+function [ sdfCorr , sdfErr ] = computeMeanSDF( sdfSingleTrial )
+
+sdfCorr.RePrimary = nanmean(sdfSingleTrial.Corr.RePrimary)';
+sdfCorr.ReSecondary = nanmean(sdfSingleTrial.Corr.ReSecondary)';
+sdfCorr.Baseline = nanmean(sdfSingleTrial.Corr.ReStim)';
+
+sdfErr.RePrimary = nanmean(sdfSingleTrial.Err.RePrimary)';
+sdfErr.ReSecondary = nanmean(sdfSingleTrial.Err.ReSecondary)';
+sdfErr.Baseline = nanmean(sdfSingleTrial.Err.ReStim)';
+
+end%util:computeMeanSDF()

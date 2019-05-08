@@ -8,7 +8,7 @@ ROOT_DIR = 'C:\Users\TDT\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-Ch
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = ((abs([ninfo.errGrade]) >= 0.5) & ~isnan([nstats.A_ChcErr_tErr_ISIshort]));
+idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
 idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
@@ -124,7 +124,7 @@ for cc = 1:NUM_CELLS
   
   ppretty([8,6])
   
-  print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+%   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
 end%for:cells(cc)
 
 if (nargout > 0)

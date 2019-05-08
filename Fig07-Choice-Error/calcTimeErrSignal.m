@@ -2,7 +2,7 @@ function [ tFast ] = calcTimeErrSignal( SDFcorr , SDFerr , offset , dSDFbase )
 %calcTimeErrSignal Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_LAT = 5; %min acceptable latency (re. RT)
+MIN_LAT = -10; %min acceptable latency (re. RT)
 
 SDFcorr = SDFcorr(:,offset+MIN_LAT+1:end);
 SDFerr = SDFerr(:,offset+MIN_LAT+1:end);
