@@ -8,8 +8,8 @@ ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Ch
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = (([ninfo.errGrade]) >= 0.5);
-idxEfficient = ismember([ninfo.taskType], [1]);
+idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
 
@@ -17,7 +17,7 @@ ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 NUM_CELLS = length(spikes);
 
-TIME.PRIMARY = 3500 + (-200 : 400); OFFSET = 201; %time from primary saccade
+TIME.PRIMARY = 3500 + (-200 : 500); OFFSET = 201; %time from primary saccade
 TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
 TIME.BASELINE = 3500 + (-300 : -1); %time from array
 
@@ -63,8 +63,9 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum;
   
   %latency
-%   tErrOnset = calcTimeErrSignal(sdfCorrSTreP, sdfErrSTreP, OFFSET, sdfBaseErr - sdfBaseCorr);
-%   nstats(ccNS).A_ChcErr_tErr_Fast = tErrOnset;
+%   [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
+%   nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
+%   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
   
   %magnitude
 %   latAcc = nstats(ccNS).A_ChcErr_tErr_Acc + OFFSET;
@@ -77,8 +78,8 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).A_ChcErr_magErr_Fast = sum( AErr_Fast - ACorr_Fast ) / T_INTERVAL_ESTIMATE_MAG;
   
   %plot individual cell activity
-%   sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
-%   plotSDFChcErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
+  sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
+  plotSDFChcErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
 %   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)

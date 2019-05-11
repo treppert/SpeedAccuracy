@@ -18,6 +18,8 @@ NUM_CELLS = length(spikes);
 T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
 
 %output initializations
+pvalFast = NaN(1,NUM_CELLS);
+pvalAcc = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -39,21 +41,53 @@ for cc = 1:NUM_CELLS
   isiFast = ISIkk(idxFast & idxErr);
   isiAcc = ISIkk(idxAcc & idxErr);
   
-  endptFast = movesPP(kk).endpt(idxFast & idxErr);
-  endptAcc = movesPP(kk).endpt(idxAcc & idxErr);
+  trialFast = find(idxFast & idxErr);
+  trialAcc = find(idxAcc & idxErr);
+  if (trialFast(end) == binfo(kk).num_trials)
+    trialFast(end) = [];
+  end
+  if (trialAcc(end) == binfo(kk).num_trials)
+    trialAcc(end) = [];
+  end
+  dRT_Fast = RTkk(trialFast+1) - RTkk(trialFast);
+  dRT_Acc = RTkk(trialAcc+1) - RTkk(trialAcc);
+  
+%   endptFast = movesPP(kk).endpt(idxFast & idxErr);
+%   endptAcc = movesPP(kk).endpt(idxAcc & idxErr);
   
   tErrFast = nstats(cc).A_ChcErr_tErr_Fast + 3500;
   tErrAcc = nstats(cc).A_ChcErr_tErr_Acc + 3500;
   
-  spCtFast = cellfun(@(x) sum((x > tErrFast) & (x <= (tErrFast+T_INTERVAL_ESTIMATE_MAG))), spikes(cc).SAT(idxFast & idxErr));
-  spCtAcc = cellfun(@(x) sum((x > tErrAcc) & (x <= (tErrAcc+T_INTERVAL_ESTIMATE_MAG))), spikes(cc).SAT(idxAcc & idxErr));
+  spCtFast = cellfun(@(x) sum((x > tErrFast) & (x <= (tErrFast+T_INTERVAL_ESTIMATE_MAG))), spikes(cc).SAT(trialFast));
+  spCtAcc = cellfun(@(x) sum((x > tErrAcc) & (x <= (tErrAcc+T_INTERVAL_ESTIMATE_MAG))), spikes(cc).SAT(trialAcc));
   
-  fprintf('FAST: Secondary saccade to Target -- %3.1f spikes\n', mean(spCtFast(endptFast == 1)))
-  fprintf('FAST: Secondary saccade to Distractor/Fixation -- %3.1f spikes\n', mean(spCtFast(ismember(endptFast,[2,3]))))
-  fprintf('ACC: Secondary saccade to Target -- %3.1f spikes\n', mean(spCtAcc(endptAcc == 1)))
-  fprintf('ACC: Secondary saccade to Distractor/Fixation -- %3.1f spikes\n', mean(spCtAcc(ismember(endptAcc,[2,3]))))
-  pause()
+%   [~,tmpFast] = corr([spCtFast(~inanFast) ; isiFast(~inanFast)]', 'Type','Spearman');   pvalFast(cc) = tmpFast(1,2);
+%   [~,tmpAcc] = corr([spCtAcc(~inanAcc) ; isiAcc(~inanAcc)]', 'Type','Spearman');        pvalAcc(cc) = tmpAcc(1,2);
+  [~,tmpFast] = corr([spCtFast ; dRT_Fast]', 'Type','Spearman');   pvalFast(cc) = tmpFast(1,2);
+  [~,tmpAcc] = corr([spCtAcc ; dRT_Acc]', 'Type','Spearman');      pvalAcc(cc) = tmpAcc(1,2);
+  
+%   figure()
+%   subplot(1,2,1); hold on
+%   scatter(spCtFast, dRT_Fast, 10, [0 .7 0], 'filled')
+% %   plot(spCtFastVec, isiFastVec, '.-', 'MarkerSize',15, 'Color',[0 .3 0])
+%   xlabel('Spike count'); ylabel('ISI (ms)')
+%   print_session_unit(gca , ninfo(cc), [])
+%   
+%   subplot(1,2,2); hold on
+%   scatter(spCtAcc, dRT_Acc, 10, 'r', 'filled')
+% %   plot(spCtAccVec, isiAccVec, '.-', 'MarkerSize',15, 'Color',[.4 0 0])
+%   xlabel('Spike count')
+%   ppretty([8 4])
+  
 end%for:cells(cc)
+
+figure()
+subplot(2,1,1); hold on
+histogram(-log(pvalFast), 'BinWidth',.5)
+subplot(2,1,2); hold on
+histogram(-log(pvalAcc), 'BinWidth',.5)
+ppretty([4.8,4])
+
 
 end%plotISIvsErrMagSAT()
 
@@ -74,14 +108,4 @@ end%plotISIvsErrMagSAT()
 %     end
 %   end
 %   
-%   figure()
-%   subplot(1,2,1); hold on
-%   scatter(spCtFast, isiFast, 10, [0 .7 0], 'filled')
-%   plot(spCtFastVec, isiFastVec, '.-', 'MarkerSize',15, 'Color',[0 .3 0])
-%   xlabel('Spike count'); ylabel('ISI (ms)')
-%   
-%   subplot(1,2,2); hold on
-%   scatter(spCtAcc, isiAcc, 10, 'r', 'filled')
-%   plot(spCtAccVec, isiAccVec, '.-', 'MarkerSize',15, 'Color',[.4 0 0])
-%   xlabel('Spike count')
-%   ppretty([8 4])
+

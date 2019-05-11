@@ -75,7 +75,7 @@ hFE = cdfplotTR(paramFastEff, 'Color',[0 .7 0], 'LineWidth',0.5); hFE.YData = hF
 hFI = cdfplotTR(paramFastIneff, 'Color',[0 .7 0], 'LineWidth',1.25); hFI.YData = hFI.YData + .005;
 ylim([0 1]); ytickformat('%2.1f'); ylabel('Cumulative probability')
 xlabel(param)
-ppretty([5 5]); pause(0.1)
+ppretty([4.8 3]); pause(0.1)
 end
 
 %barplot
@@ -88,7 +88,7 @@ bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
 xticks([]); xticklabels([])
 ylabel(param)
-ppretty([2,4]); pause(0.1)
+ppretty([1.5 3]); pause(0.1)
 end
 
 %% Plots of difference (Acc - Fast)
@@ -104,7 +104,7 @@ meanDiffEff = mean(parmDiffEff);     SEDiffEff = std(parmDiffEff) / sqrt(sum(idx
 meanDiffIneff = mean(parmDiffIneff); SEDiffIneff = std(parmDiffIneff) / sqrt(sum(idxIneff));
 
 %cumulative distribution
-if (1)
+if (0)
 figure(); hold on
 cdfplotTR(parmDiffEff, 'Color','k', 'LineWidth',0.5)
 cdfplotTR(parmDiffIneff, 'Color','k', 'LineWidth',1.25)
@@ -112,7 +112,7 @@ plot([0 0], [0 1], 'k:')
 ylim([0 1]); ytickformat('%2.1f')
 xlabel([param, ' difference'])
 ylabel('Cumulative probability')
-ppretty([5 5]); pause(0.1)
+ppretty([4.8 3]); pause(0.1)
 end
 
 %barplot
@@ -123,7 +123,7 @@ bar(2, meanDiffIneff, 0.7, 'FaceColor',[.4 .4 .4], 'LineWidth',1.25)
 errorbar([meanDiffEff meanDiffIneff], [SEDiffEff SEDiffIneff], 'Color','k', 'CapSize',0)
 xticks([1,2]); xticklabels([])
 ylabel([param, ' difference'])
-ppretty([1.5,4])
+ppretty([1 3])
 end
 
 end%util:plotDistrParamSAT()
