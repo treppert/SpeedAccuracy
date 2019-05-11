@@ -2,7 +2,7 @@ function [ ] = plotPPsaccEndptBar( binfo , movesPP , varargin )
 %plotPPsaccEndptBar Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'monkey=',{'D','E'}}});
+args = getopt(varargin, {'export', {'monkey=',{'D','E'}}});
 
 [binfo, ~, movesPP] = utilIsolateMonkeyBehavior(binfo, cell(1,length(binfo)), movesPP, args.monkey);
 NUM_SESSION = length(binfo);
@@ -46,5 +46,16 @@ errorbar((2:2:8), yyMeanT2, yySE2, 'Color',[.5 .5 .5], 'LineWidth',0.75, 'CapSiz
 xticks([]); ytickformat('%2.1f')
 ppretty([5,4])
 
+%% Stats - two-way between-subjects ANOVA
+if (args.export)
+  SAVE_DIR = 'C:\Users\thoma\Dropbox\SAT-Me\Data\';
+  
+  idxMoreE = ([binfo.taskType] == 1);
+  idxLessE = ([binfo.taskType] == 2);
+  
+  endptOut = struct('Targ_More',endptT(1,idxMoreE), 'Targ_Less',endptT(2,idxLessE), ...
+    'Distr_More',endptD(1,idxMoreE), 'Distr_Less',endptD(2,idxLessE));
+  save([SAVE_DIR, 'Fig1K.mat'], 'endptOut')
+end
 end%fxn:plotPPsaccEndptBar()
 

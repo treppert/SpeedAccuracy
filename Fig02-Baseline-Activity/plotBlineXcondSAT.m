@@ -2,131 +2,118 @@ function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , nstats , spikes , va
 %plotBlineXcondSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained'});
+  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
 else
   idxVis = ([ninfo.visGrade] >= 0.5);
 end
-idxKeep = (idxArea & idxMonkey & idxVis);
+idxBlineRate = ([nstats.blineAccMEAN] >= 5); %minimum baseline discharge rate
+idxKeep = (idxArea & idxMonkey & idxVis & idxBlineRate);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-
 NUM_CELLS = length(spikes);
+
+idxMoreE = ([ninfo.taskType] == 1);   NUM_MORE = sum(idxMoreE);
+idxLessE = ([ninfo.taskType] == 2);   NUM_LESS = sum(idxLessE);
+
 T_BASE  = 3500 + (-600 : 20);
 
-sdfAcc{1} = NaN(NUM_CELLS,length(T_BASE));    sdfAcc{2} = sdfAcc{1}; %split X efficiency
-sdfFast{1} = NaN(NUM_CELLS,length(T_BASE));   sdfFast{2} = sdfFast{1};
+sdfAccMore = NaN(NUM_MORE,length(T_BASE)); sdfFastMore = sdfAccMore;
+sdfAccLess = NaN(NUM_LESS,length(T_BASE)); sdfFastLess = sdfAccLess;
+
+jjMore = 0; %counter for more efficient sessions
+jjLess = 0; %counter for less efficient sessions
 
 for cc = 1:NUM_CELLS
-  sdfCC = compute_spike_density_fxn(spikes(cc).SAT);
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  tt = ninfo(cc).taskType;
+  
+  sdfCC = compute_spike_density_fxn(spikes(cc).SAT);
 
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by condition
   idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  %index by trial outcome
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   
-  %compute SDFs
-  sdfAcc{tt}(cc,:) = nanmean(sdfCC(idxAcc, T_BASE));
-  sdfFast{tt}(cc,:) = nanmean(sdfCC(idxFast, T_BASE));
+  if (idxMoreE(cc)) %more efficient session
+    jjMore = jjMore + 1;
+    sdfAccMore(jjMore,:) = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
+    sdfFastMore(jjMore,:) = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
+  else %less efficient session
+    jjLess = jjLess + 1;
+    sdfAccLess(jjLess,:) = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
+    sdfFastLess(jjLess,:) = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
+  end
   
   %parameterize baseline activity
-  ccNS = ninfo(cc).unitNum; %index nstats correctly
-  nstats(ccNS).blineAccMEAN = mean(sdfAcc{tt}(cc,:));
-  nstats(ccNS).blineFastMEAN = mean(sdfFast{tt}(cc,:));
-  nstats(ccNS).blineAccSD = std(sdfAcc{tt}(cc,:));
-  nstats(ccNS).blineFastSD = std(sdfFast{tt}(cc,:));
+%   ccNS = ninfo(cc).unitNum; %index nstats correctly
+%   nstats(ccNS).blineAccMEAN = mean(sdfBaseAcc(cc,:));
+%   nstats(ccNS).blineFastMEAN = mean(sdfBaseFast(cc,:));
+%   nstats(ccNS).blineAccSD = std(sdfBaseAcc(cc,:));
+%   nstats(ccNS).blineFastSD = std(sdfBaseFast(cc,:));
   
 end%for:cells(cc)
+
+if ((jjMore ~= NUM_MORE) || (jjLess ~= NUM_LESS))
+  error('Check on search efficiency counters failed')
+end
 
 if (nargout > 0)
   varargout{1} = nstats;
 end
-nstats = nstats(idxKeep);
-normFactor = mean([[nstats.blineAccMEAN] ; [nstats.blineFastMEAN]])';
+
+%% Plotting - histogram of baseline difference
+% blineDiff = mean(sdfBaseFast,2) - mean(sdfBaseAcc,2);
+% 
+% figure(); hold on
+% histogram(blineDiff, 'FaceColor',[.5 .5 .5])
+% % histogram(blineDiff(blineEffect==1), 'FaceColor',[0 .7 0])
+% plot(mean(blineDiff)*ones(1,2), [0 4], 'k:', 'LineWidth',2.0)
+% xlabel('Discharge rate diff. (sp/s')
+% ylabel('Number of neurons')
+% 
+% ppretty([4.8,3]); pause(0.05)
 
 %% Plotting - spike density function
-%normalization -- equivalent for both efficiencies (!)
-for tt = 1:2
-  sdfAcc{tt} = sdfAcc{tt} ./ normFactor;
-  sdfFast{tt} = sdfFast{tt} ./ normFactor;
-end%for:task-efficiency(tt)
+nstats = nstats(idxKeep);
 
-%split by task efficiency
-idxEff = ([ninfo.taskType] == 1);   idxIneff = ([ninfo.taskType] == 2);
-
-sdfAcc{1} = sdfAcc{1}(idxEff,:);    sdfAcc{2} = sdfAcc{2}(idxIneff,:);
-sdfFast{1} = sdfFast{1}(idxEff,:);  sdfFast{2} = sdfFast{2}(idxIneff,:);
-
-NSEM_EFF = sum(idxEff);   NSEM_INEFF = sum(idxIneff);
+%normalization
+normFactor = mean([[nstats.blineAccMEAN] ; [nstats.blineFastMEAN]])';
+sdfAccMore = sdfAccMore ./ normFactor(idxMoreE);
+sdfFastMore = sdfFastMore ./ normFactor(idxMoreE);
+sdfAccLess = sdfAccLess ./ normFactor(idxLessE);
+sdfFastLess = sdfFastLess ./ normFactor(idxLessE);
 
 figure()
 
-subplot(1,2,1); hold on %Efficient search
-shaded_error_bar(T_BASE-3500, mean(sdfFast{1}), std(sdfFast{1})/sqrt(NSEM_EFF), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
-shaded_error_bar(T_BASE-3500, mean(sdfAcc{1}), std(sdfAcc{1})/sqrt(NSEM_EFF), {'r-', 'LineWidth',0.75})
+subplot(1,2,1); hold on %more efficient
+title('More efficient', 'FontSize',8)
+shaded_error_bar(T_BASE-3500, mean(sdfFastMore), std(sdfFastMore)/sqrt(NUM_CELLS), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
+shaded_error_bar(T_BASE-3500, mean(sdfAccMore), std(sdfAccMore)/sqrt(NUM_CELLS), {'r-', 'LineWidth',0.75})
 xlabel('Time from array (ms)')
 ylabel('Normalized activity')
-xlim([T_BASE(1)-20, T_BASE(end)]-3500); title('Efficient search', 'FontSize',8)
+xlim([T_BASE(1)-20, T_BASE(end)]-3500);
+yLimMore = get(gca, 'ylim');
 
-subplot(1,2,2); hold on %Inefficient search
-shaded_error_bar(T_BASE-3500, mean(sdfFast{2}), std(sdfFast{2})/sqrt(NSEM_INEFF), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
-shaded_error_bar(T_BASE-3500, mean(sdfAcc{2}), std(sdfAcc{2})/sqrt(NSEM_INEFF), {'r-', 'LineWidth',1.25})
-xlim([T_BASE(1)-20, T_BASE(end)]-3500); title('Inefficient search', 'FontSize',8)
+subplot(1,2,2); hold on %less efficient
+title('Less efficient', 'FontSize',8)
+shaded_error_bar(T_BASE-3500, mean(sdfFastLess), std(sdfFastLess)/sqrt(NUM_CELLS), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
+shaded_error_bar(T_BASE-3500, mean(sdfAccLess), std(sdfAccLess)/sqrt(NUM_CELLS), {'r-', 'LineWidth',1.5})
+xlabel('Time from array (ms)')
+xlim([T_BASE(1)-20, T_BASE(end)]-3500);
+yLimLess = get(gca, 'ylim');
 
-ppretty([9,3]); pause(0.1)
+ppretty([10,3])
 
-
-%% Plotting - histogram of avg baseline activity
-%split by task efficiency
-blineAccEff = [nstats(idxEff).blineAccMEAN] ./ normFactor(idxEff)';
-blineFastEff = [nstats(idxEff).blineFastMEAN] ./ normFactor(idxEff)';
-blineAccIneff = [nstats(idxIneff).blineAccMEAN] ./ normFactor(idxIneff)';
-blineFastIneff = [nstats(idxIneff).blineFastMEAN] ./ normFactor(idxIneff)';
-
-blineDiffEff = blineFastEff - blineAccEff;          blineEffectEff = [nstats(idxEff).blineEffect];
-blineDiffIneff = blineFastIneff - blineAccIneff;    blineEffectIneff = [nstats(idxIneff).blineEffect];
-
-figure()
-
-subplot(1,2,1); hold on %Efficient search
-histogram(blineDiffEff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
-histogram(blineDiffEff(blineEffectEff==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
-histogram(blineDiffEff(blineEffectEff==-1), 'BinWidth',2, 'FaceColor','r')
-plot(mean(blineDiffEff)*ones(1,2), [0 4], 'k:', 'LineWidth',2.0)
-xlabel('Discharge rate diff. (sp/s')
-ylabel('Number of neurons')
-title('Efficient search', 'FontSize',8)
-
-subplot(1,2,2); hold on %Inefficient search
-histogram(blineDiffIneff, 'BinWidth',2, 'FaceColor',[.5 .5 .5])
-histogram(blineDiffIneff(blineEffectIneff==1), 'BinWidth',2, 'FaceColor',[0 .7 0])
-histogram(blineDiffIneff(blineEffectIneff==-1), 'BinWidth',2, 'FaceColor','r')
-plot(mean(blineDiffIneff)*ones(1,2), [0 4], 'k:', 'LineWidth',2.0)
-title('Inefficient search', 'FontSize',8)
-
-ppretty([7,3])
-
-
-% %% Stats
-% if (nargout > 0)
-%   %dependent variable - visual response latency
-%   latency = [blineAccEff, blineAccIneff, blineFastEff, blineFastIneff]';
-%   %two factors
-%   condition = [ones(1,sum(idxEff | idxIneff)), 2*ones(1,sum(idxEff | idxIneff))]';
-%   efficiency = [ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff)), ones(1,sum(idxEff)), 2*ones(1,sum(idxIneff))]';
-% 
-%   [~,ANtbl] = anovan(latency, {condition efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'}, 'display','off');
-%   varargout{1} = ANtbl;
-%   
-% end%if:(nargout > 0)
+yLim = [min([yLimMore(1), yLimLess(1)]), max([yLimMore(2), yLimLess(2)])];
+set(gca, 'ylim',yLim); subplot(1,2,1); set(gca, 'ylim',yLim)
 
 end%fxn:plotBlineXcondSAT()
 
