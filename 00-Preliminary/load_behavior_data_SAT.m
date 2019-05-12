@@ -31,11 +31,11 @@ NUM_SESSIONS = length(sessions.SAT);
 %% Initialize outputs
 
 FIELDS_GAZE = {'x','y','vx','vy','v'}; 
-FIELDS_INFO = {'session','num_trials','condition', ...
+FIELDS_INFO = {'session','monkey','num_trials','condition', ...
   'tgt_octant','tgt_eccen','deadline', ...
   'err_dir','err_time','err_hold','err_nosacc', ...
   'octant','resptime','fixtime','rewtime', ...
-  'durReward','stimuli','taskType'};
+  'durReward','stimuli','taskType','clearDisplayFast'};
 
 binfo = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); binfo = orderfields(binfo);
 gaze = new_struct(FIELDS_GAZE, 'dim',[1,NUM_SESSIONS]); gaze = orderfields(gaze);
@@ -57,8 +57,8 @@ binfo.SAT = index_timing_errors_SAT(binfo.SAT);
 
 %% Load saccade data
 
-gaze.MG = load_gaze_data(binfo.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
-gaze.SAT = load_gaze_data(binfo.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
+% gaze.MG = load_gaze_data(binfo.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
+% gaze.SAT = load_gaze_data(binfo.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 end%function:load_behavior_data_SAT()
 
@@ -113,9 +113,11 @@ for kk = 1:NUM_SESSIONS
   if strcmp(type, 'MG')
     file_kk = [sessions.MG(kk).folder,'/',sessions.MG(kk).name(1:16),type,'.mat'];
     info(kk).session = sessions.MG(kk).name(1:12);
+    info(kk).monkey = sessions.MG(kk).name(1);
   else %(SAT)
     file_kk = [sessions.SAT(kk).folder,'/',sessions.SAT(kk).name(1:16),type,'.mat'];
     info(kk).session = sessions.SAT(kk).name(1:12);
+    info(kk).monkey = sessions.MG(kk).name(1);
   end
   
   load(file_kk, 'Errors_','FixAcqTime_','JuiceOn_','SAT_','Target_','SRT','saccLoc','Stimuli_')
@@ -125,6 +127,7 @@ for kk = 1:NUM_SESSIONS
   info(kk).condition = uint8(SAT_(:,1))'; %1==accurate, 3==fast
   info(kk).deadline = SAT_(:,3)'; info(kk).deadline(info(kk).deadline > 1000) = NaN;
   info(kk).durReward = SAT_(:,5)';
+  info(kk).clearDisplayFast = SAT_(:,11)'; %clear display at deadline in Fast condition
   
   %parse array Stimuli_
   info(kk).stimuli = Stimuli_';

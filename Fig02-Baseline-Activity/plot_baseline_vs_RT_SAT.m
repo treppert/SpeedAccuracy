@@ -1,91 +1,147 @@
-function [ ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , spikes , condition )
+function [ varargout ] = plot_baseline_vs_RT_SAT( binfo , moves , ninfo , nstats , spikes , varargin )
 %plot_baseline_vs_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 MIN_NUM_CELLS = 3; %for plotting across all cells
 PLOT_INDIV_CELLS = false;
-LIM_RT = [100,1200];
+LIM_RT = [100,1000];
 
-if strcmp(condition, 'acc')
-  BIN_RT = (400 : 40 : 700);
-elseif strcmp(condition, 'fast')
-  BIN_RT = (200 : 30 : 400);
+args = getopt(varargin, {'export', {'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
+if strcmp(args.area, 'SEF')
+  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
 else
-  error('Input "condition" is incorrect')
+  idxVis = ([ninfo.visGrade] >= 0.5);
 end
+idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
+idxBlineRate = ([nstats.blineAccMEAN] >= 5); %minimum baseline discharge rate
+idxBlineEffect = ([nstats.blineEffect] == 1);
 
-RT_PLOT = BIN_RT(1:end-1) + diff(BIN_RT)/2;
-NUM_BIN = length(RT_PLOT);
-MIN_PER_BIN = 10; %minimum number of trials per RT bin
+idxKeep = (idxArea & idxMonkey & idxBlineRate & idxBlineEffect);
 
-TIME_BASE = ( -700 : -1 );
-IDX_BASE = TIME_BASE([1,end]) + 3500;
-
+ninfo = ninfo(idxKeep);
+spikes = spikes(idxKeep);
 NUM_CELLS = length(spikes);
 
-binfo = index_timing_errors_SAT(binfo);
+BIN_RT_ACC = (400 : 40 : 700);
+BIN_RT_FAST = (200 : 30 : 400);
+
+RT_PLOT_ACC = BIN_RT_ACC(1:end-1) + diff(BIN_RT_ACC)/2;     NUM_BIN_ACC = length(RT_PLOT_ACC);
+RT_PLOT_FAST = BIN_RT_FAST(1:end-1) + diff(BIN_RT_FAST)/2;  NUM_BIN_FAST = length(RT_PLOT_FAST);
+
+TIME_BASE = ( -600 : 20 );
+IDX_BASE = TIME_BASE([1,end]) + 3500;
 
 %initializations
-sp_Corr = NaN(NUM_CELLS,NUM_BIN);
+spkCtAcc = NaN(NUM_CELLS,NUM_BIN_ACC);
+spkCtFast = NaN(NUM_CELLS,NUM_BIN_FAST);
 
 %stats
-rho = NaN(1,NUM_CELLS);
-pval = NaN(1,NUM_CELLS);
+rhoAcc = NaN(1,NUM_CELLS);    rhoFast = NaN(1,NUM_CELLS);
+pvalAcc = NaN(1,NUM_CELLS);   pvalFast = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  TRIAL_POOR_ISOLATION = false(1,binfo(kk).num_trials); %initialize NaN indexing for this cell
-  
-  idx_A = (binfo(kk).condition == 1);
-  idx_F = (binfo(kk).condition == 3);
-  
-  if strcmp(condition, 'fast')
-    idx_corr = (~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold) & idx_F);
-  else
-    idx_corr = (~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold) & idx_A);
-  end
+  rtKK = double(moves(kk).resptime);
   
   %remove outlier values for RT
-  RT = double(moves(kk).resptime);
-  RT((RT > LIM_RT(2)) | (RT < LIM_RT(1))) = NaN;
+  rtKK((rtKK > LIM_RT(2)) | (rtKK < LIM_RT(1))) = NaN;
+  idxNaN = isnan(rtKK);
   
-  num_sp_bline = NaN(1,binfo(kk).num_trials);
+  %get spike counts for each trial
+  spkCtKK = NaN(1,binfo(kk).num_trials);
   for jj = 1:binfo(kk).num_trials
-    num_sp_bline(jj) = sum((spikes(cc).SAT{jj} > IDX_BASE(1)) & (spikes(cc).SAT{jj} > IDX_BASE(2)));
+    spkCtKK(jj) = sum((spikes(cc).SAT{jj} > IDX_BASE(1)) & (spikes(cc).SAT{jj} > IDX_BASE(2)));
   end
   
-  %remove trials based on poor isolation
-  if (ninfo(cc).iRem1)
-    TRIAL_POOR_ISOLATION(ninfo(cc).iRem1 : ninfo(cc).iRem2) = true;
-    num_sp_bline(TRIAL_POOR_ISOLATION) = NaN;
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  %index by condition
+  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
+  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  %index by trial outcome
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+  
+  rtAccKK = rtKK(idxAcc & idxCorr & ~idxIso & ~idxNaN);
+  spkCtAccCC = spkCtKK(idxAcc & idxCorr & ~idxIso & ~idxNaN);
+  rtFastKK = rtKK(idxFast & idxCorr & ~idxIso & ~idxNaN);
+  spkCtFastCC = spkCtKK(idxFast & idxCorr & ~idxIso & ~idxNaN);
+  
+  fitLinAcc = fit(rtAccKK', spkCtAccCC', 'poly1');
+  fitLinFast = fit(rtFastKK', spkCtFastCC', 'poly1');
+  
+  %linear regression to determine cells that show a postive relationship
+  [rhoAcc(cc),pvalAcc(cc)] = corr(rtAccKK', spkCtAccCC', 'type','Spearman');
+  [rhoFast(cc),pvalFast(cc)] = corr(rtFastKK', spkCtFastCC', 'type','Spearman');
+  
+  %save the statistics from the Spearman rank correlation test
+  ccNS = ninfo(cc).unitNum;
+  if (pvalAcc(cc) < 0.054)
+    nstats(ccNS).blineRhoRTvsSpkCt_Acc = rhoAcc(cc);
+  else
+    nstats(ccNS).blineRhoRTvsSpkCt_Acc = NaN;
+  end
+  if (pvalFast(cc) < 0.054)
+    nstats(ccNS).blineRhoRTvsSpkCt_Fast = rhoFast(cc);
+  else
+    nstats(ccNS).blineRhoRTvsSpkCt_Fast = NaN;
   end
   
   if (PLOT_INDIV_CELLS)
-    fit_lin = fit(RT(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', 'poly1');
-    figure(); hold on
-    plot(RT(idx_corr & ~TRIAL_POOR_ISOLATION), num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION), 'ko')
-    plot([BIN_RT(1),BIN_RT(end)], fit_lin([BIN_RT(1),BIN_RT(end)]), 'k-')
-    ppretty()
-    pause(1.0)
+    figure()
+    subplot(2,1,1); hold on
+    scatter(rtAccKK, spkCtAccCC, 20, 'r', 'filled')
+    plot([BIN_RT_ACC(1),BIN_RT_ACC(end)], fitLinAcc([BIN_RT_ACC(1),BIN_RT_ACC(end)]), 'k-')
+    ylabel('Baseline spike count')
+    title(['R = ',num2str(rhoAcc(cc)),'  p = ',num2str(pvalAcc(cc))])
+    print_session_unit(gca, ninfo(cc), [])
+    
+    subplot(2,1,2); hold on
+    scatter(rtFastKK, spkCtFastCC, 20, [0 .7 0], 'filled')
+    plot([BIN_RT_FAST(1),BIN_RT_FAST(end)], fitLinFast([BIN_RT_FAST(1),BIN_RT_FAST(end)]), 'k-')
+    xlabel('Response time (ms)')
+    title(['R = ',num2str(rhoFast(cc)),'  p = ',num2str(pvalFast(cc))])
+    
+    ppretty([4.8,7])
+    pause()
   end
   
-  %linear regression to determine cells that show a postive relationship
-  [rho(cc),pval(cc)] = corr(RT(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', num_sp_bline(idx_corr & ~TRIAL_POOR_ISOLATION & ~isnan(RT))', 'type','Spearman');
-  
-  %use the regression results to exclude neurons
-  if ~((rho(cc) > 0) && (pval(cc) < .05)); continue; end
-  
-  %bin spike counts by RT
-  for jj = 1:NUM_BIN
-    idx_jj = (((RT > BIN_RT(jj)) & (RT < BIN_RT(jj+1))) & idx_corr & ~TRIAL_POOR_ISOLATION);
-    
-    if (sum(idx_jj) >= MIN_PER_BIN) %enforce min number of trials
-      sp_Corr(cc,jj) = mean(num_sp_bline(idx_jj)) - mean(num_sp_bline(~TRIAL_POOR_ISOLATION & (idx_A | idx_F)));
-    end
-  end%for:RT_bins(jj)
-  
 end%for:cells(cc)
+
+figure()
+subplot(2,2,1); hold on
+histogram(-log(pvalAcc), 'FaceColor','r', 'BinWidth',1)
+plot(-log(.05)*ones(1,2), [0 10], 'k--', 'LineWidth',1.25)
+plot(-log(.01)*ones(1,2), [0 10], 'k--', 'LineWidth',1.25)
+ylabel('Number of neurons')
+
+subplot(2,2,2); hold on
+histogram(rhoAcc(pvalAcc<.054), 'FaceColor','r', 'BinWidth',.05)
+xLimAcc = get(gca, 'xlim');
+
+subplot(2,2,3); hold on
+histogram(-log(pvalFast), 'FaceColor',[0 .7 0], 'BinWidth',1)
+plot(-log(.05)*ones(1,2), [0 10], 'k--', 'LineWidth',1.25)
+plot(-log(.01)*ones(1,2), [0 10], 'k--', 'LineWidth',1.25)
+xlabel('-log(p)')
+
+subplot(2,2,4); hold on
+histogram(rhoFast(pvalFast<.054), 'FaceColor',[0 .7 0], 'BinWidth',.05)
+xlabel('Spearman correlation coefficient')
+xLimFast = get(gca, 'xlim');
+
+xLim = [min([xLimAcc(1) xLimFast(1)]) max([xLimAcc(2) xLimFast(2)])];
+set(gca, 'xlim', xLim); subplot(2,2,2); set(gca, 'xlim',xLim)
+
+ppretty([6.4,4])
+
+if (nargout > 0)
+  varargout{1} = nstats;
+end
+
+return
 
 %% Plotting
 if strcmp(condition, 'acc')
@@ -94,21 +150,21 @@ else
   COLOR_PLOT = [0 .7 0];
 end
 
-sp_Corr(:,sum(~isnan(sp_Corr),1) < MIN_NUM_CELLS) = NaN;
-NUM_SEM = sum(~isnan(sp_Corr),1);
+spkCtAcc(:,sum(~isnan(spkCtAcc),1) < MIN_NUM_CELLS) = NaN;
+NUM_SEM = sum(~isnan(spkCtAcc),1);
 
 %perform a linear fit to the data
-xx_fit = repmat(RT_PLOT', NUM_CELLS,1);
-yy_fit = reshape(sp_Corr', NUM_CELLS*NUM_BIN,1);
+xx_fit = repmat(RT_PLOT_ACC', NUM_CELLS,1);
+yy_fit = reshape(spkCtAcc', NUM_CELLS*NUM_BIN,1);
 i_nan = isnan(yy_fit);
 xx_fit(i_nan) = [];
 yy_fit(i_nan) = [];
-[fit_lin,gof_lin] = fit(xx_fit, yy_fit, 'poly1');
+[fitLinAcc,gof_lin] = fit(xx_fit, yy_fit, 'poly1');
 
 figure(); hold on
 % plot(RT_PLOT, sp_Corr, 'ko')
-plot(RT_PLOT, fit_lin(RT_PLOT), '-', 'color',COLOR_PLOT)
-errorbar_no_caps(RT_PLOT, nanmean(sp_Corr), 'err',nanstd(sp_Corr)./sqrt(NUM_SEM), 'color',COLOR_PLOT)
+plot(RT_PLOT_ACC, fitLinAcc(RT_PLOT_ACC), '-', 'color',COLOR_PLOT)
+errorbar_no_caps(RT_PLOT_ACC, nanmean(spkCtAcc), 'err',nanstd(spkCtAcc)./sqrt(NUM_SEM), 'color',COLOR_PLOT)
 ppretty()
 
 pause(0.25)
@@ -117,7 +173,7 @@ figure(); hold on
 plot([-.2 .3], -log(.05)*ones(1,2), '-', 'Color',[.5 .5 .5])
 plot([-.2 .3], -log(.01)*ones(1,2), '-', 'Color',[.5 .5 .5])
 plot([-.2 .3], -log(.001)*ones(1,2), '-', 'Color',[.5 .5 .5])
-plot(rho, -log(pval), 'ko')
+plot(rhoAcc, -log(pvalAcc), 'ko')
 ppretty('image_size',[3.2,5])
 
 end%fxn:plot_baseline_vs_RT_SAT()
