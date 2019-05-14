@@ -22,7 +22,7 @@ T_STIM = 3500 + (-100 : 300);
 T_RESP = 3500 + (-300 : 100);
 
 %sort visual response by trial number
-TRIAL = (-1 : 1); %from condition switch
+TRIAL = (-3 : 4); %from condition switch
 NUM_TRIAL = length(TRIAL);
 COLORA2F = {[1 0 0], [.4 .7 .4], [0 .7 0]}; %colors for plotting
 COLORF2A = {[0 .7 0], [1 .5 .5], [1 0 0]};
@@ -96,7 +96,7 @@ for cc = 1:NUM_CELLS
   end%for:trial(jj)
   
   %plotting - individual neurons
-  if (1)
+  if (0)
   yLim = [min(min([visRespA2F visRespF2A sdfMoveA2F sdfMoveF2A])), max(max([visRespA2F visRespF2A sdfMoveA2F sdfMoveF2A]))];
   figure()
   

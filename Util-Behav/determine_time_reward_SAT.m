@@ -10,22 +10,18 @@ for kk = 1:NUM_SESSIONS
   
   RT_kk = double(binfo(kk).resptime);
   rewtime_kk = binfo(kk).rewtime;
+  rewtime_kk(rewtime_kk > 2e3) = NaN;
   
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-  idxErr = (binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-%   idx_errtime = (~binfo(kk).err_dir & binfo(kk).err_time);
-%   idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  binfo(kk).rewtime = rewtime_kk - RT_kk;
   
-  %get estimate of expected time of reward on error trials
-  med_t_rew_kk = round(nanmedian(rewtime_kk));
+  %set "time of reward" on error trials to be the median time of reward
+  %delivered on correct trials
+  idxNaN = isnan(binfo(kk).rewtime);
+  binfo(kk).rewtime(idxNaN) = median(binfo(kk).rewtime(~idxNaN));
   
-  binfo(kk).rewtime(idxCorr) = rewtime_kk(idxCorr) - RT_kk(idxCorr);
-  binfo(kk).rewtime(idxErr) = med_t_rew_kk - RT_kk(idxErr);
-%   binfo(kk).rewtime(~(idxCorr | idxErr)) = NaN;
-  
-  %make sure times are reasonable
-  idxNan = ((binfo(kk).rewtime < LIM_TREW(1)) | (binfo(kk).rewtime > LIM_TREW(2)));
-  binfo(kk).rewtime(idxNan) = NaN;
+  %make sure times of reward relative to RT are reasonable
+  idxNaN = ((binfo(kk).rewtime < LIM_TREW(1)) | (binfo(kk).rewtime > LIM_TREW(2)));
+  binfo(kk).rewtime(idxNaN) = NaN;
   
 end%for:sessions(kk)
 

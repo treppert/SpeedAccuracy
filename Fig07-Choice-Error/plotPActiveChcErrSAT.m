@@ -8,7 +8,7 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
-idxEfficient = ismember([ninfo.taskType], [2]);
+idxEfficient = ismember([ninfo.taskType], [1]);
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
 
