@@ -3,12 +3,13 @@ function [  ] = plotSDFXdirSAT( binfo , moves , ninfo , spikes , varargin )
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\1-Classification\SDFXdir-SAT\';
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
-spikes = spikes(idx_area & idx_monkey);
+ninfo = ninfo(idxArea & idxMonkey);
+spikes = spikes(idxArea & idxMonkey);
 
 NUM_CELLS = length(spikes);
 T_STIM = 3500 + (-400 : 400);
@@ -18,6 +19,7 @@ IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
 for cc = 1:NUM_CELLS
+  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   RTkk = double(moves(kk).resptime);
   
@@ -25,9 +27,11 @@ for cc = 1:NUM_CELLS
   sdfKKstim = compute_spike_density_fxn(spikes(cc).SAT);
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
+  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   
@@ -96,12 +100,9 @@ for cc = 1:NUM_CELLS
     pause(.05)
   end%for:direction(dd)
   
-  ppretty([14,8])
-%   pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Memory-Guided\SDFXdir\', ...
-%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/1-Classification/SDFXdir-SAT/', ...
-%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-%   pause(0.1); close()
-  pause()
+  ppretty([16,8])
+  pause(0.1); print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
 

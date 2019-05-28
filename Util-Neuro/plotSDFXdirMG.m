@@ -2,13 +2,14 @@ function [  ] = plotSDFXdirMG( binfo , moves , ninfo , spikes , varargin )
 %plotSDFXdirMG() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\1-Classification\SDFXdir-MG\';
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
-spikes = spikes(idx_area & idx_monkey);
+ninfo = ninfo(idxArea & idxMonkey);
+spikes = spikes(idxArea & idxMonkey);
 
 MIN_RT = 550; %enforce hard minimum on MG RT
 
@@ -20,6 +21,7 @@ IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
 for cc = 1:NUM_CELLS
+  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   RTkk = double(moves(kk).resptime);
   
@@ -27,6 +29,8 @@ for cc = 1:NUM_CELLS
   sdfKKstim = compute_spike_density_fxn(spikes(cc).MG);
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','MG');
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc);
   %index by hard min RT
@@ -38,8 +42,8 @@ for cc = 1:NUM_CELLS
   RT = NaN(1,8);
   for dd = 1:8 %loop over response directions
     idxDir = (moves(kk).octant == dd);
-    sdfStim(dd,:) = nanmean(sdfKKstim(idxCorr & idxRT & idxDir, T_STIM));
-    sdfResp(dd,:) = nanmean(sdfKKresp(idxCorr & idxRT & idxDir, T_RESP));
+    sdfStim(dd,:) = nanmean(sdfKKstim(~idxIso & idxCorr & idxRT & idxDir, T_STIM));
+    sdfResp(dd,:) = nanmean(sdfKKresp(~idxIso & idxCorr & idxRT & idxDir, T_RESP));
     RT(dd) = median(RTkk(idxCorr & idxRT & idxDir));
   end%for:direction(dd)
   
@@ -86,12 +90,9 @@ for cc = 1:NUM_CELLS
     pause(.05)
   end%for:direction(dd)
   
-  ppretty([14,8])
-%   pause(0.1); print(['C:\Users\thoma\Dropbox\Speed Accuracy\SEF_SAT\Figs\Memory-Guided\SDFXdir\', ...
-%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/1-Classification/SDFXdir-MG/', ...
-%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-%   pause(0.1); close()
-  pause()
+  ppretty([16,8])
+  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
 

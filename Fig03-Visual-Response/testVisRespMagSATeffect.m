@@ -4,15 +4,11 @@ function [ nstats ] = testVisRespMagSATeffect( binfo , moves , ninfo , nstats , 
 %   baseline) across conditions Fast and Accurate.
 % 
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained'});
-else
-  idxVis = ([ninfo.visGrade] >= 0.5);
-end
+idxVis = ([ninfo.visGrade] >= 0.5);
 
 idxKeep = (idxArea & idxMonkey & idxVis);
 

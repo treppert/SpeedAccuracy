@@ -1,17 +1,17 @@
-function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
-%plotSDFChoiceErrSAT() Summary of this function goes here
+function [ varargout ] = plotSDFChoiceErrXisiSAT2( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+%plotSDFChoiceErrXisiSAT2() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\SDF-ChoiceErr-xISI-Test-2\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxErrorGrade = (abs([ninfo.errGrade]) >= 1);
 
-% idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
 % idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey);% & idxErrorGrade & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxErrorGrade);% & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -24,9 +24,11 @@ TIME.BASELINE = 3500 + (-300 : -1); %time from array
 T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
 
 %output initializations
-sdfAcc = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
-sdfAcc = struct('Corr',sdfAcc, 'Err',sdfAcc);
-sdfFast = sdfAcc;
+sdfAccSH = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
+sdfAccSH = struct('Corr',sdfAccSH, 'Err',sdfAccSH); %short ISI
+sdfAccLO = sdfAccSH; %long ISI
+sdfFastSH = sdfAccSH; %short ISI
+sdfFastLO = sdfAccSH; %long ISI
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -44,20 +46,34 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
-  
-  %set "ISI" on correct trials as median ISI of choice error trials
-  ISIkk(idxFast & idxCorr) = round(nanmedian(ISIkk(idxFast & idxErr)));
-  ISIkk(idxAcc & idxCorr) = round(nanmedian(ISIkk(idxAcc & idxErr)));
+  %index by ISI
+  medISI = nanmedian(ISIkk(idxErr));
+  idxSH = (ISIkk <= medISI);
+  idxLO = (ISIkk > medISI);
   
   %perform RT matching and group trials by condition and outcome
-  trials = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, idxErr);
+  trialsSH = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxSH));
+  trialsLO = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxLO));
+  
+  %set "ISI" on correct trials as median ISI of choice error trials
+  ISIkk(trialsSH.FastCorr) = round(nanmedian(ISIkk(trialsSH.FastErr)));
+  ISIkk(trialsSH.AccCorr)  = round(nanmedian(ISIkk(trialsSH.AccErr)));
+  ISIkk(trialsLO.FastCorr) = round(nanmedian(ISIkk(trialsLO.FastErr)));
+  ISIkk(trialsLO.AccCorr)  = round(nanmedian(ISIkk(trialsLO.AccErr)));
+  
+  %save ISI for plotting
+%   ISIplot = struct('AccSH',ISIkk(trialsSH.AccCorr(1)), 'FastSH',ISIkk(trialsSH.FastCorr(1)), ...
+%     'AccLO',ISIkk(trialsLO.AccCorr(1)), 'FastLO',ISIkk(trialsLO.FastCorr(1)));
   
   %get single-trials SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trials, TIME);
+  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsSH, TIME);
+  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsLO, TIME);
   
   %compute mean SDFs
-  [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
-  [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
+  [sdfAccSH.Corr(cc),sdfAccSH.Err(cc)] = computeMeanSDF( sdfAccST_SH );
+  [sdfFastSH.Corr(cc),sdfFastSH.Err(cc)] = computeMeanSDF( sdfFastST_SH );
+  [sdfAccLO.Corr(cc),sdfAccLO.Err(cc)] = computeMeanSDF( sdfAccST_LO );
+  [sdfFastLO.Corr(cc),sdfFastLO.Err(cc)] = computeMeanSDF( sdfFastST_LO );
     
   %% Parameterize the SDF
   ccNS = ninfo(cc).unitNum;
@@ -67,20 +83,14 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
 %   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
   
-  %magnitude
-%   latAcc = nstats(ccNS).A_ChcErr_tErr_Acc + OFFSET;
-%   latFast = nstats(ccNS).A_ChcErr_tErr_Fast + OFFSET;
-%   ACorr_Acc = sdfAcc.Corr(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Acc = sdfAcc.Err(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   ACorr_Fast = sdfFast.Corr(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Fast = sdfFast.Err(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   nstats(ccNS).A_ChcErr_magErr_Acc = sum( AErr_Acc - ACorr_Acc ) / T_INTERVAL_ESTIMATE_MAG;
-%   nstats(ccNS).A_ChcErr_magErr_Fast = sum( AErr_Fast - ACorr_Fast ) / T_INTERVAL_ESTIMATE_MAG;
-  
   %plot individual cell activity
-  sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
-  plotSDFChcErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+  sdfPlotCC = struct('AccCorrSH',sdfAccSH.Corr(cc), 'AccErrSH',sdfAccSH.Err(cc), ... %short ISI
+    'FastCorrSH',sdfFastSH.Corr(cc), 'FastErrSH',sdfFastSH.Err(cc), ...
+  	'AccCorrLO',sdfAccLO.Corr(cc), 'AccErrLO',sdfAccLO.Err(cc), ... %long ISI
+    'FastCorrLO',sdfFastLO.Corr(cc), 'FastErrLO',sdfFastLO.Err(cc));
+  plotSDFChcErrXisiSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
+  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
 
@@ -88,7 +98,7 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
-end%fxn:plotSDFChoiceErrSAT()
+end%fxn:plotSDFChoiceErrXisiSAT2()
 
 function [ trialsGrouped ] = groupTrialsRTmatched(RT, idxAcc, idxFast, idxCorr, idxErr)
 

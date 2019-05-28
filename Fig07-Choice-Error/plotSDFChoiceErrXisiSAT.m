@@ -3,15 +3,15 @@ function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninf
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOT_DIR = 'C:\Users\TDT\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr-xISI-Test\'; %for printing figs
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\SDF-ChoiceErr-xISI-Test-2\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
-idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxErrorGrade = (abs([ninfo.errGrade]) >= 1);
+% idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxErrorGrade);% & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -30,7 +30,7 @@ for cc = 1:NUM_CELLS
   
   RTkk = double(moves(kk).resptime);
   ISIkk = double(movesPP(kk).resptime) - RTkk;
-  ISIkk(ISIkk < 0) = NaN;
+  ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
   
   %compute spike density function and align on primary and secondary sacc.
   sdfStimKK = compute_spike_density_fxn(spikes(cc).SAT);
@@ -122,9 +122,9 @@ for cc = 1:NUM_CELLS
   print_session_unit(gca , ninfo(cc),[])
   grid on
   
-  ppretty([8,6])
+  ppretty([10,4])
   
-%   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
 end%for:cells(cc)
 
 if (nargout > 0)
