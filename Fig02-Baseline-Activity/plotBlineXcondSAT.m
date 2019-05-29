@@ -2,19 +2,30 @@ function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , nstats , spikes , va
 %plotBlineXcondSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {'export', {'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+args = getopt(varargin, {{'area=',{'SEF'}}, {'type=',{'Vis'}}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
-else
-  idxVis = ([ninfo.visGrade] >= 0.5);
-end
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
-idxBlineRate = ([nstats.blineAccMEAN] >= 5); %minimum baseline discharge rate
+idxBlineRate = ([nstats.blineAccMEAN] >= 5); %!!! minimum baseline discharge rate
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxBlineRate);
+idxVis = ([ninfo.visGrade] >= 2);
+idxMove = ([ninfo.moveGrade] >= 2);
+idxError = (abs([ninfo.errGrade]) >= 2);
+idxReward = (abs([ninfo.rewGrade]) >= 2);
+
+idxKeep = (idxArea & idxMonkey & idxBlineRate);
+if ismember(args.type, 'Vis')
+  idxKeep = (idxKeep & idxVis);
+end
+if ismember(args.type, 'Move')
+  idxKeep = (idxKeep & idxMove);
+end
+if ismember(args.type, 'Error')
+  idxKeep = (idxKeep & idxError);
+end
+if ismember(args.type, 'Reward')
+  idxKeep = (idxKeep & idxReward);
+end
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -25,8 +36,8 @@ idxLessE = ([ninfo.taskType] == 2);   NUM_LESS = sum(idxLessE);
 
 T_BASE  = 3500 + (-600 : 20);
 
-sdfAccMore = NaN(NUM_MORE,length(T_BASE)); sdfFastMore = sdfAccMore;
-sdfAccLess = NaN(NUM_LESS,length(T_BASE)); sdfFastLess = sdfAccLess;
+sdfAccMore = NaN(NUM_MORE,length(T_BASE));    sdfFastMore = sdfAccMore;
+sdfAccLess = NaN(NUM_LESS,length(T_BASE));    sdfFastLess = sdfAccLess;
 
 jjMore = 0; %counter for more efficient sessions
 jjLess = 0; %counter for less efficient sessions
@@ -71,28 +82,6 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
-if (args.export) %prepare for stats tests in R
-  
-  DischargeRate = [mean(sdfAccMore,2); mean(sdfAccLess,2); mean(sdfFastMore,2); mean(sdfFastLess,2)];
-  Condition = cell(2*NUM_CELLS,1);
-  Condition(1:NUM_CELLS) = {'Accurate'};
-  Condition(NUM_CELLS+1:end) = {'Fast'};
-  Efficiency = cell(NUM_CELLS,1);
-  Efficiency(1:NUM_MORE) = {'More'};
-  Efficiency(NUM_MORE+1:end) = {'Less'};
-  Efficiency = [Efficiency; Efficiency];
-  Neuron = [(1:NUM_CELLS), (1:NUM_CELLS)]';
-%   tableOut = table(Neuron, DischargeRate, Condition, Efficiency);
-  structOut = struct('Neuron',Neuron', 'DischargeRate',DischargeRate');
-  for cc = 1:(2*NUM_CELLS)
-    structOut.Condition(cc) = Condition(cc);
-    structOut.Efficiency(cc) = Efficiency(cc);
-  end
-  
-  save(['C:\Users\Thomas Reppert\Dropbox\SAT-Me\Data\',args.area,'-Vis-Baseline.mat'], 'structOut')
-  return
-end%if:(export)
-
 %% Plotting - spike density function
 nstats = nstats(idxKeep);
 
@@ -122,7 +111,7 @@ ytickformat('%3.2f')
 xlim([T_BASE(1)-20, T_BASE(end)]-3500);
 yLimLess = get(gca, 'ylim');
 
-ppretty([10,3]); pause(0.05)
+ppretty([10,1.5]); pause(0.05)
 
 yLim = [min([yLimMore(1), yLimLess(1)]), max([yLimMore(2), yLimLess(2)])];
 set(gca, 'ylim',yLim); subplot(1,2,1); set(gca, 'ylim',yLim)
@@ -146,7 +135,9 @@ plot(mean(blineDiffLess)*ones(1,2), [0 4], 'k:', 'LineWidth',1.5)
 xlabel('Discharge rate diff. (sp/s'); xtickformat('%2.1f')
 xLimLess = get(gca, 'xlim');
 
-ppretty([4.8,3])
+ppretty([4.8,1.8])
+subplot(2,1,1); set(gca, 'YMinorTick','off')
+subplot(2,1,2); set(gca, 'YMinorTick','off')
 
 xLim = [min([xLimMore(1) xLimLess(1)]) , max([xLimMore(2) xLimLess(2)])];
 set(gca, 'xlim',xLim); subplot(2,1,1); set(gca, 'xlim',xLim)

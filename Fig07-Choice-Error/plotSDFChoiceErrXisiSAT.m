@@ -1,5 +1,5 @@
-function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
-%plotSDFChoiceErrSAT() Summary of this function goes here
+function [ varargout ] = plotSDFChoiceErrXisiSAT2( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+%plotSDFChoiceErrXisiSAT2() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
@@ -7,22 +7,28 @@ ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\S
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-
 idxErrorGrade = (abs([ninfo.errGrade]) >= 1);
+
 % idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade);% & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-
 NUM_CELLS = length(spikes);
-T_RESP = 3500 + (-200 : 400); OFFSET = 201; %time from primary saccade
-T_BASE = 3500 + (-300 : -1); %time from array
 
-%initializations
-% tErr.sh = NaN(1,NUM_CELLS);   medISI.sh = NaN(1,NUM_CELLS);
-% tErr.lo = NaN(1,NUM_CELLS);   medISI.lo = NaN(1,NUM_CELLS);
+TIME.PRIMARY = 3500 + (-200 : 200); OFFSET = 200; %time from primary saccade
+TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
+TIME.BASELINE = 3500 + (-300 : -1); %time from array
+
+T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
+
+%output initializations
+sdfAccSH = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
+sdfAccSH = struct('Corr',sdfAccSH, 'Err',sdfAccSH); %short ISI
+sdfAccLO = sdfAccSH; %long ISI
+sdfFastSH = sdfAccSH; %short ISI
+sdfFastLO = sdfAccSH; %long ISI
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
@@ -32,103 +38,122 @@ for cc = 1:NUM_CELLS
   ISIkk = double(movesPP(kk).resptime) - RTkk;
   ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
   
-  %compute spike density function and align on primary and secondary sacc.
-  sdfStimKK = compute_spike_density_fxn(spikes(cc).SAT);
-  sdfRespKK = align_signal_on_response(sdfStimKK, RTkk);
-  
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
   %index by condition
-  idxFast = (binfo(kk).condition == 3 & ~idxIso);
+  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
+  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   %index by ISI
-  medISI_FE = nanmedian(ISIkk(idxFast & idxErr));
-  idxISIsh = (ISIkk <= medISI_FE);
-  idxISIlo = (ISIkk > medISI_FE);
+  medISI = nanmedian(ISIkk(idxErr));
+  idxSH = (ISIkk <= medISI);
+  idxLO = (ISIkk > medISI);
   
-  trialFC = find(idxFast & idxCorr);                    RTFC = RTkk(idxFast & idxCorr);
-  trialFE_ISIsh = find(idxFast & idxErr & idxISIsh);    RTFE_ISIsh = RTkk(idxFast & idxErr & idxISIsh);
-  trialFE_ISIlo = find(idxFast & idxErr & idxISIlo);    RTFE_ISIlo = RTkk(idxFast & idxErr & idxISIlo);  
-%   figure(); histogram(RTFE_ISIsh, 'BinWidth',10); hold on; histogram(RTFE_ISIlo, 'BinWidth',10)
+  %perform RT matching and group trials by condition and outcome
+  trialsSH = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxSH));
+  trialsLO = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxLO));
   
-  %perform (primary) RT matching - short ISI trials
-  [OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trialFC;RTFC]', [trialFE_ISIsh;RTFE_ISIsh]');
-  trialFC_ISIsh = OLdist1(:,1);   trialFE_ISIsh = OLdist2(:,1);
-  %perform (primary) RT matching - long ISI trials
-  [OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trialFC;RTFC]', [trialFE_ISIlo;RTFE_ISIlo]');
-  trialFC_ISIlo = OLdist1(:,1);   trialFE_ISIlo = OLdist2(:,1);
+  %set "ISI" on correct trials as median ISI of choice error trials
+  ISIkk(trialsSH.FastCorr) = round(nanmedian(ISIkk(trialsSH.FastErr)));
+  ISIkk(trialsSH.AccCorr)  = round(nanmedian(ISIkk(trialsSH.AccErr)));
+  ISIkk(trialsLO.FastCorr) = round(nanmedian(ISIkk(trialsLO.FastErr)));
+  ISIkk(trialsLO.AccCorr)  = round(nanmedian(ISIkk(trialsLO.AccErr)));
   
-  %isolate single-trial SDFs - short ISI trials
-  sdfCorrST_ISIsh = sdfRespKK(trialFC_ISIsh, T_RESP);   sdfErrST_ISIsh = sdfRespKK(trialFE_ISIsh, T_RESP);
-  baseCorrST_ISIsh = sdfStimKK(trialFC_ISIsh, T_BASE);  baseErrST_ISIsh = sdfStimKK(trialFE_ISIsh, T_BASE);
-  %isolate single-trial SDFs - long ISI trials
-  sdfCorrST_ISIlo = sdfRespKK(trialFC_ISIlo, T_RESP);   sdfErrST_ISIlo = sdfRespKK(trialFE_ISIlo, T_RESP);
-  baseCorrST_ISIlo = sdfStimKK(trialFC_ISIlo, T_BASE);  baseErrST_ISIlo = sdfStimKK(trialFE_ISIlo, T_BASE);
+  %save ISI for plotting
+%   ISIplot = struct('AccSH',ISIkk(trialsSH.AccCorr(1)), 'FastSH',ISIkk(trialsSH.FastCorr(1)), ...
+%     'AccLO',ISIkk(trialsLO.AccCorr(1)), 'FastLO',ISIkk(trialsLO.FastCorr(1)));
   
-  %compute mean SDFs - short ISI
-  sdfCorr_ISIsh = nanmean(sdfCorrST_ISIsh);     sdfErr_ISIsh = nanmean(sdfErrST_ISIsh);
-  baseCorr_ISIsh = nanmean(baseCorrST_ISIsh);   baseErr_ISIsh = nanmean(baseErrST_ISIsh);
-  %compute mean SDFs - long ISI
-  sdfCorr_ISIlo = nanmean(sdfCorrST_ISIlo);     sdfErr_ISIlo = nanmean(sdfErrST_ISIlo);
-  baseCorr_ISIlo = nanmean(baseCorrST_ISIlo);   baseErr_ISIlo = nanmean(baseErrST_ISIlo);
+  %get single-trials SDFs
+  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsSH, TIME);
+  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsLO, TIME);
   
-  %compute latency of the error signal - short ISI
-  baseDiff_ISIsh = baseErr_ISIsh - baseCorr_ISIsh;
-  tErr_ISIsh = calcTimeErrSignal(sdfCorrST_ISIsh, sdfErrST_ISIsh, OFFSET, baseDiff_ISIsh);
-  %compute latency of the error signal - long ISI
-  baseDiff_ISIlo = baseErr_ISIlo - baseCorr_ISIlo;
-  tErr_ISIlo = calcTimeErrSignal(sdfCorrST_ISIlo, sdfErrST_ISIlo, OFFSET, baseDiff_ISIlo);
-  
+  %compute mean SDFs
+  [sdfAccSH.Corr(cc),sdfAccSH.Err(cc)] = computeMeanSDF( sdfAccST_SH );
+  [sdfFastSH.Corr(cc),sdfFastSH.Err(cc)] = computeMeanSDF( sdfFastST_SH );
+  [sdfAccLO.Corr(cc),sdfAccLO.Err(cc)] = computeMeanSDF( sdfAccST_LO );
+  [sdfFastLO.Corr(cc),sdfFastLO.Err(cc)] = computeMeanSDF( sdfFastST_LO );
+    
+  %% Parameterize the SDF
   ccNS = ninfo(cc).unitNum;
-%   nstats(ccNS).A_ChcErr_tErr_ISIshort = tErr_ISIsh;
-%   nstats(ccNS).A_ChcErr_tErr_ISIlong = tErr_ISIlo;
+  
+  %latency
+%   [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
+%   nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
+%   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
   
   %plot individual cell activity
-  figure()
+  sdfPlotCC = struct('AccCorrSH',sdfAccSH.Corr(cc), 'AccErrSH',sdfAccSH.Err(cc), ... %short ISI
+    'FastCorrSH',sdfFastSH.Corr(cc), 'FastErrSH',sdfFastSH.Err(cc), ...
+  	'AccCorrLO',sdfAccLO.Corr(cc), 'AccErrLO',sdfAccLO.Err(cc), ... %long ISI
+    'FastCorrLO',sdfFastLO.Corr(cc), 'FastErrLO',sdfFastLO.Err(cc));
+  plotSDFChcErrXisiSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
+  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  pause(0.1); close(); pause(0.1)
   
-  ISIFE = ISIkk(idxFast & idxErr);
-  ISIFE_sh = ISIFE(ISIFE <= medISI_FE);
-  ISIFE_lo = ISIFE(ISIFE >  medISI_FE);
-  
-  subplot(2,1,1); hold on
-  tmp = [sdfCorr_ISIsh sdfErr_ISIsh];
-  yLim = [min(tmp) max(tmp)];
-  plot([0 0], yLim, 'k:')
-  plot(T_RESP-3500, sdfCorr_ISIsh, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-  plot(T_RESP-3500, sdfErr_ISIsh, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-  plot(nstats(ccNS).A_ChcErr_tErr_ISIshort*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.5)
-  plot(median(ISIFE_sh)*ones(1,2), yLim, '--', 'Color',[0 .7 0], 'LineWidth',1.0)
-  xlim([T_RESP(1) T_RESP(end)]-3500)
-  xticks((T_RESP(1) : 50 : T_RESP(end)) - 3500)
-  ylabel('Activity (sp/sec)')
-  print_session_unit(gca , ninfo(cc),[])
-  title(['Ratio dtErr/dtISI = ', num2str(nstats(ccNS).A_ChcErr_dtErr_vs_dISI)])
-  grid on
-  
-  subplot(2,1,2); hold on
-  tmp = [sdfCorr_ISIlo sdfErr_ISIlo];
-  yLim = [min(tmp) max(tmp)];
-  plot([0 0], yLim, 'k:')
-  plot(T_RESP-3500, sdfCorr_ISIlo, '-', 'Color',[0 .3 0], 'LineWidth',1.0)
-  plot(T_RESP-3500, sdfErr_ISIlo, ':', 'Color',[0 .3 0], 'LineWidth',1.0)
-  plot(nstats(ccNS).A_ChcErr_tErr_ISIlong*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.5)
-  plot(median(ISIFE_lo)*ones(1,2), yLim, '--', 'Color',[0 .3 0], 'LineWidth',1.0)
-  xlim([T_RESP(1) T_RESP(end)]-3500)
-  xticks((T_RESP(1) : 50 : T_RESP(end)) - 3500)
-  xlabel('Time from primary saccade (ms)')
-  ylabel('Activity (sp/sec)')
-  print_session_unit(gca , ninfo(cc),[])
-  grid on
-  
-  ppretty([10,4])
-  
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
 end%for:cells(cc)
 
 if (nargout > 0)
   varargout{1} = nstats;
 end
 
-end%fxn:plotSDFChoiceErrXisiSAT()
+end%fxn:plotSDFChoiceErrXisiSAT2()
+
+function [ trialsGrouped ] = groupTrialsRTmatched(RT, idxAcc, idxFast, idxCorr, idxErr)
+
+%Fast condition
+trial_FC = find(idxFast & idxCorr);    RT_FC = RT(idxFast & idxCorr);
+trial_FE = find(idxFast & idxErr);     RT_FE = RT(idxFast & idxErr);
+[OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trial_FC;RT_FC]', [trial_FE;RT_FE]');
+trial_FC = OLdist1(:,1);
+trial_FE = OLdist2(:,1);
+
+%Accurate condition
+trial_AC = find(idxAcc & idxCorr);    RT_AC = RT(idxAcc & idxCorr);
+trial_AE = find(idxAcc & idxErr);     RT_AE = RT(idxAcc & idxErr);
+[OLdist1, OLdist2, ~,~] = DistOverlap_Amir([trial_AC;RT_AC]', [trial_AE;RT_AE]');
+trial_AC = OLdist1(:,1);
+trial_AE = OLdist2(:,1);
+
+%output
+trialsGrouped = struct('AccCorr',trial_AC, 'AccErr',trial_AE, 'FastCorr',trial_FC, 'FastErr',trial_FE);
+
+end%util:groupTrialsRTmatched()
+
+function [sdfAccST, sdfFastST] = getSingleTrialSDF(RT, ISI, spikes, trials, time)
+
+%compute SDFs and align on primary and secondary saccades
+sdfReSTIM = compute_spike_density_fxn(spikes);
+sdfRePRIMARY = align_signal_on_response(sdfReSTIM, RT);
+sdfReSECONDARY = align_signal_on_response(sdfReSTIM, RT + ISI);
+
+%isolate single-trial SDFs per group - Fast condition
+sdfFastST.Corr.RePrimary = sdfRePRIMARY(trials.FastCorr, time.PRIMARY); %aligned on primary
+sdfFastST.Err.RePrimary = sdfRePRIMARY(trials.FastErr, time.PRIMARY);
+sdfFastST.Corr.ReSecondary = sdfReSECONDARY(trials.FastCorr, time.SECONDARY); %aligned on secondary
+sdfFastST.Err.ReSecondary = sdfReSECONDARY(trials.FastErr, time.SECONDARY);
+sdfFastST.Corr.ReStim = sdfReSTIM(trials.FastCorr, time.BASELINE); %aligned on array
+sdfFastST.Err.ReStim = sdfReSTIM(trials.FastErr, time.BASELINE);
+
+%isolate single-trial SDFs per group - Accurate condition
+sdfAccST.Corr.RePrimary = sdfRePRIMARY(trials.AccCorr, time.PRIMARY); %aligned on primary
+sdfAccST.Err.RePrimary = sdfRePRIMARY(trials.AccErr, time.PRIMARY);
+sdfAccST.Corr.ReSecondary = sdfReSECONDARY(trials.AccCorr, time.SECONDARY); %aligned on secondary
+sdfAccST.Err.ReSecondary = sdfReSECONDARY(trials.AccErr, time.SECONDARY);
+sdfAccST.Corr.ReStim = sdfReSTIM(trials.AccCorr, time.BASELINE); %aligned on array
+sdfAccST.Err.ReStim = sdfReSTIM(trials.AccErr, time.BASELINE);
+
+end%util:getSingleTrialSDF()
+
+function [ sdfCorr , sdfErr ] = computeMeanSDF( sdfSingleTrial )
+
+sdfCorr.RePrimary = nanmean(sdfSingleTrial.Corr.RePrimary)';
+sdfCorr.ReSecondary = nanmean(sdfSingleTrial.Corr.ReSecondary)';
+sdfCorr.Baseline = nanmean(sdfSingleTrial.Corr.ReStim)';
+
+sdfErr.RePrimary = nanmean(sdfSingleTrial.Err.RePrimary)';
+sdfErr.ReSecondary = nanmean(sdfSingleTrial.Err.ReSecondary)';
+sdfErr.Baseline = nanmean(sdfSingleTrial.Err.ReStim)';
+
+end%util:computeMeanSDF()

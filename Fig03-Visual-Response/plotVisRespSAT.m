@@ -5,25 +5,26 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 % 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\'; %for printing figs
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Response\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
+
 idxVis = ([ninfo.visGrade] >= 2);
-% idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-% idxTStest = (cellfun(@length, {ninfo.visField}) < 8); %index by finite RF
-% idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxVis);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-
-NUM_SEM = sum(idxKeep);
 NUM_CELLS = length(spikes);
 
 T_STIM = 3500 + (-50 : 350);  OFFSET = 50;
 T_RESP = 3500 + (-300 : 100);
+
+%if desired, isolate one neuron of interest
+sessionPlot = [];   unitPlot = [];
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
 visResp = new_struct({'AccTin','AccDin','FastTin','FastDin'}, 'dim',[1,NUM_CELLS]);
@@ -32,6 +33,9 @@ sdfMove = new_struct({'AccTin','AccDin','FastTin','FastDin'}, 'dim',[1,NUM_CELLS
 sdfMove = populate_struct(sdfMove, {'AccTin','AccDin','FastTin','FastDin'}, NaN(length(T_RESP),1));
 
 for cc = 1:NUM_CELLS
+  if ~isempty(sessionPlot) && ~(ismember(ninfo(cc).sess, sessionPlot) && ismember(ninfo(cc).unit, unitPlot))
+    continue %if desired, isolate one neuron of interest
+  end
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
@@ -96,6 +100,7 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
+return
 %% Plotting - Across cells
 nstats = nstats(idxKeep);
 
@@ -117,10 +122,10 @@ visRespFastDin = visRespFastDin ./ normFactor;
 
 figure(); hold on
 % plot(T_STIM-3500, visRespFastTin, 'Color',[0 .7 0], 'LineWidth',0.75)
-shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.01, 'LineStyle','--'})
-shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_SEM), {'Color',[0 .7 0], 'LineWidth',0.01})
-shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.01, 'LineStyle','--'})
-shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_SEM), {'Color','r', 'LineWidth',0.01})
+shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sqrt(NUM_CELLS), {'Color',[0 .7 0], 'LineWidth',0.01, 'LineStyle','--'})
+shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_CELLS), {'Color',[0 .7 0], 'LineWidth',0.01})
+shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_CELLS), {'Color','r', 'LineWidth',0.01, 'LineStyle','--'})
+shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_CELLS), {'Color','r', 'LineWidth',0.01})
 
 plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.5, 'LineStyle','--')
 plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',0.75)
