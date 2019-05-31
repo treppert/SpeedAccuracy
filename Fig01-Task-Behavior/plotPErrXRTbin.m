@@ -28,8 +28,8 @@ for kk = 1:NUM_SESSION
   idxFast = (binfo(kk).condition == 3);
   
   %get mean response deadline per condition
-  dlineAcc(kk) = nanmean(binfo(kk).tgt_dline(idxAcc));
-  dlineFast(kk) = nanmean(binfo(kk).tgt_dline(idxFast));
+  dlineAcc(kk) = nanmean(binfo(kk).deadline(idxAcc));
+  dlineFast(kk) = nanmean(binfo(kk).deadline(idxFast));
   
   for jj = 1:NUM_BIN %loop over RT bins
     

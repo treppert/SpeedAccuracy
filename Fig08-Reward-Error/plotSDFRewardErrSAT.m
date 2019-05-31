@@ -1,4 +1,4 @@
-function [ varargout ] = plotSDFRewardErrSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+function [ varargout ] = plotSDFRewardErrSAT( binfo , moves , ninfo , nstats , spikes , varargin )
 %plotSDFRewardErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -9,10 +9,10 @@ ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\6-Reward
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxReward = ~isnan([nstats.A_Reward_tErrStart_Acc]);
-idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxRew = (abs([ninfo.rewGrade]) >= 2);
+% idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & ~idxReward & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxRew);% & idxEfficient);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -84,8 +84,8 @@ for cc = 1:NUM_CELLS
   sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), ...
     'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
   plotSDFRewErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
-  print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  pause(0.1); close()
+%   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   pause(0.1); close()
   
 end%for:cells(cc)
 

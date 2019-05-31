@@ -44,6 +44,7 @@ plot(nstats.A_Reward_tErrStart_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'Lin
 plot(nstats.A_Reward_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
 
 xlim([TIME.REWARD(1) TIME.REWARD(end)]-3500); xticks((TIME.REWARD(1):50:TIME.REWARD(end))-3500)
+print_session_unit(gca , ninfo,[])
 
 %% Accurate condition
 

@@ -22,6 +22,8 @@ plot(nstats.VRlatAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(nstats.VRlatFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 plot(nstats.VRTSTAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(nstats.VRTSTFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+plot([T_STIM(1) T_STIM(end)]-3500, nstats.blineAccMEAN*ones(1,2), 'r:', 'LineWidth',0.5)
+plot([T_STIM(1) T_STIM(end)]-3500, nstats.blineFastMEAN*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 
 if ~isempty(args.tVec) %plot vector of timestamps of target selection
   plot(args.tVec.Acc, yLim(1)+diff(yLim)*.1, '.', 'MarkerSize',10, 'Color',[.5 0 0])
@@ -52,7 +54,7 @@ xlim([T_RESP(1) T_RESP(end)]-3500)
 xlabel('Time from response (ms)')
 set(gca, 'YAxisLocation','right')
 
-ppretty([8,3])
+ppretty([10,2.5])
 
 end%util:plotVisRespSATcc()
 

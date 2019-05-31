@@ -72,6 +72,7 @@ if (args.export)
     structOut.Efficiency(cc) = Efficiency(cc);
   end
   save([ROOTDIR, args.area,'-', param,'.mat'], 'structOut')
+  return
 end%if:export
 
 %% Plots of absolute values

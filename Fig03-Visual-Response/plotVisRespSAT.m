@@ -12,9 +12,9 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxEfficiency = ismember([ninfo.taskType], [1]);
 
-idxKeep = (idxArea & idxMonkey & idxVis);
+idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficiency);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -78,9 +78,9 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRlatFast = VRlatFast;
   
   %magnitude
-  [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
-  nstats(ccNS).VRmagAcc = VRmagAcc;
-  nstats(ccNS).VRmagFast = VRmagFast;
+%   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
+%   nstats(ccNS).VRmagAcc = VRmagAcc;
+%   nstats(ccNS).VRmagFast = VRmagFast;
   
   %target selection
 %   [VRTSTAcc,VRTSTFast,tVecTSH1] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
@@ -91,7 +91,7 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
   
   %plot individual cell activity
-  plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS));
+%   plotVisRespSATcc(T_STIM, T_RESP, visResp(cc), sdfMove(cc), ninfo(cc), nstats(ccNS));
 %   print([ROOTDIR,'SDF-VisResp\',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-N',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
@@ -100,13 +100,13 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
-return
+
 %% Plotting - Across cells
 nstats = nstats(idxKeep);
 
 % quantTSTAcc = quantile([nstats.VRTSTAcc], [.1 .5 .9]);
-quantTSTAcc = quantile([nstats.VRTSTAcc], 0.5); %plot median TST
-quantTSTFast = quantile([nstats.VRTSTFast], 0.5);
+medTSTAcc = median([nstats.VRTSTAcc]); %plot median TST
+medTSTFast = median([nstats.VRTSTFast]);
 
 visRespAccTin = transpose([visResp.AccTin]);
 visRespAccDin = transpose([visResp.AccDin]);
@@ -121,23 +121,17 @@ visRespFastTin = visRespFastTin ./ normFactor;
 visRespFastDin = visRespFastDin ./ normFactor;
 
 figure(); hold on
-% plot(T_STIM-3500, visRespFastTin, 'Color',[0 .7 0], 'LineWidth',0.75)
-shaded_error_bar(T_STIM-3500, nanmean(visRespFastDin), nanstd(visRespFastDin)/sqrt(NUM_CELLS), {'Color',[0 .7 0], 'LineWidth',0.01, 'LineStyle','--'})
-shaded_error_bar(T_STIM-3500, nanmean(visRespFastTin), nanstd(visRespFastTin)/sqrt(NUM_CELLS), {'Color',[0 .7 0], 'LineWidth',0.01})
-shaded_error_bar(T_STIM-3500, nanmean(visRespAccDin), nanstd(visRespAccDin)/sqrt(NUM_CELLS), {'Color','r', 'LineWidth',0.01, 'LineStyle','--'})
-shaded_error_bar(T_STIM-3500, nanmean(visRespAccTin), nanstd(visRespAccTin)/sqrt(NUM_CELLS), {'Color','r', 'LineWidth',0.01})
 
-plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.5, 'LineStyle','--')
-plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',0.75)
-plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.5, 'LineStyle','--')
-plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',0.75)
+plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
+plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',1.25)
+plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
+plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',1.25)
 
-for qq = 1:1%3
-  plot(quantTSTAcc(qq)*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
-  plot(quantTSTFast(qq)*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-end
+plot(medTSTAcc*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
+plot(medTSTFast*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+
 xlabel('Time from array (ms)'); ylabel('Normalized activity'); ytickformat('%2.1f')
-ppretty([4.8,3])
+ppretty([4.8,2.5])
 
 % figure(); hold on
 % plot(T_STIM-3500, visRespAccTin, 'Color','r', 'LineWidth',0.75)

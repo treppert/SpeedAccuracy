@@ -1,5 +1,5 @@
-function [ varargout ] = plotSDFChoiceErrXisiSAT2( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
-%plotSDFChoiceErrXisiSAT2() Summary of this function goes here
+function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+%plotSDFChoiceErrXisiSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});

@@ -8,7 +8,7 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ([ninfo.visGrade] >= 0.5);
+idxVis = ([ninfo.visGrade] >=2);
 
 ninfo = ninfo(idxArea & idxMonkey & idxVis);
 spikes = spikes(idxArea & idxMonkey & idxVis);
