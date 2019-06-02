@@ -3,13 +3,13 @@ function [ varargout ] = plotSDFBuildupSAT( binfo , moves , ninfo , nstats , spi
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Me\Figs-Buildup\';
+ROOTDIR = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Figs\4-Buildup\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxMove = ([ninfo.moveGrade] >= 2);
-idxEfficiency = ([ninfo.taskType] == 2);
+idxEfficiency = ismember([ninfo.taskType], [2]);
 
 idxKeep = (idxArea & idxMonkey & idxMove & idxEfficiency);
 
@@ -63,13 +63,13 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum;
   
   %discharge rate at saccade initiation
-%   nstats(ccNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
+  nstats(ccNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
+  nstats(ccNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
+  nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
+  nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
   
   %plot individual cell activity
-  plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, ninfo(cc), nstats(ccNS), IDX_PLOT)
+%   plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, ninfo(cc), nstats(ccNS), IDX_PLOT)
 %   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
 %   pause(0.05); close()
   
@@ -105,7 +105,7 @@ muAE = nanmean(sdfAll.AccErr);    seAE = nanstd(sdfAll.AccErr)/sqrt(NSEM_ACC_ERR
 figure(); hold on
 tVec.Resp = tVec.Resp(IDX_PLOT) - 3500;
 
-plot([0 0], [.21 1.09], 'k:')
+plot([0 0], [.4 .8], 'k:', 'LineWidth',1.25)
 
 plot(tVec.Resp, muFC(IDX_PLOT), 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(tVec.Resp, muFE(IDX_PLOT), 'Color',[0 .7 0], 'LineWidth',1.0, 'LineStyle',':')
@@ -198,15 +198,13 @@ plot(tVec.Resp, sdfAcc.Resp.Err(IDX_PLOT), 'r:', 'LineWidth',1.0)
 plot(tVec.Resp, sdfFast.Resp.Err(IDX_PLOT), ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
 xlim([tVec.Resp(1) 25])
-% xlabel('Time from response (ms)')
+xlabel('Time from response (ms)')
 print_session_unit(gca , ninfo, [], 'horizontal')
-set(gca, 'YAxisLocation','right')
 
-% title(['Threshold Acc=', num2str(nstats.A_Buildup_Threshold_AccCorr), '   Fast=', ...
-%   num2str(nstats.A_Buildup_Threshold_FastCorr), ' sp/s'], 'FontSize',8)
+title(['Acc=', num2str(nstats.A_Buildup_Threshold_AccCorr), '   Fast=', ...
+  num2str(nstats.A_Buildup_Threshold_FastCorr), ' sp/s'], 'FontSize',8)
 
-% ppretty([8,2])
-ppretty([6,3])
+ppretty([6,3],'yRight')
 
 end%util:plotSDFcc()
 
