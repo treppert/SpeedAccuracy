@@ -3,25 +3,23 @@ function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , 
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Choice\SDF-ChoiceErr\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\SDF-ChoiceErr\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-% idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
+idxErrorGrade = (abs([ninfo.errGrade]) >= 2);
 % idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey);% & idxErrorGrade & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxErrorGrade);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 NUM_CELLS = length(spikes);
 
-TIME.PRIMARY = 3500 + (-200 : 200); OFFSET = 200; %time from primary saccade
+TIME.PRIMARY = 3500 + (-200 : 450); OFFSET = 200; %time from primary saccade
 TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
 TIME.BASELINE = 3500 + (-300 : -1); %time from array
-
-T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
 
 %output initializations
 sdfAcc = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
@@ -58,29 +56,26 @@ for cc = 1:NUM_CELLS
   %compute mean SDFs
   [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
   [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
+  sdfCombined = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
     
   %% Parameterize the SDF
   ccNS = ninfo(cc).unitNum;
   
   %latency
-%   [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
-%   nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
-%   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
+  if isempty(nstats(ccNS).A_ChcErr_tErr_Fast)
+    [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
+    nstats(ccNS).A_ChcErr_tErr_Acc = tErrAcc.Start;     nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
+    nstats(ccNS).A_ChcErr_tErr_Fast = tErrFast.Start;   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
+  end
   
   %magnitude
-%   latAcc = nstats(ccNS).A_ChcErr_tErr_Acc + OFFSET;
-%   latFast = nstats(ccNS).A_ChcErr_tErr_Fast + OFFSET;
-%   ACorr_Acc = sdfAcc.Corr(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Acc = sdfAcc.Err(cc).RePrimary(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   ACorr_Fast = sdfFast.Corr(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Fast = sdfFast.Err(cc).RePrimary(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   nstats(ccNS).A_ChcErr_magErr_Acc = sum( AErr_Acc - ACorr_Acc ) / T_INTERVAL_ESTIMATE_MAG;
-%   nstats(ccNS).A_ChcErr_magErr_Fast = sum( AErr_Fast - ACorr_Fast ) / T_INTERVAL_ESTIMATE_MAG;
+  [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
+  nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
+  nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
   
   %plot individual cell activity
-  sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
-  plotSDFChcErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+  plotSDFChcErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
+  print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 
