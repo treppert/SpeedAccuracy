@@ -9,9 +9,9 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxErrorGrade = (abs([ninfo.errGrade]) >= 2);
-% idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxEfficiency = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade);
+idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficiency);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -69,13 +69,13 @@ for cc = 1:NUM_CELLS
   end
   
   %magnitude
-  [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
-  nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
-  nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
+%   [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
+%   nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
+%   nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
   
   %plot individual cell activity
   plotSDFChcErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
-  print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 

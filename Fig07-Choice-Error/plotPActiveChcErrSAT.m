@@ -7,10 +7,10 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
+idxError = ((abs([ninfo.errGrade]) >= 2) & ~isnan([nstats.A_ChcErr_tErr_Acc]));
 idxEfficient = ismember([ninfo.taskType], [1]);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxError & idxEfficient);
 
 nstats = nstats(idxKeep);
 NUM_CELLS = sum(idxKeep);
@@ -39,20 +39,24 @@ PActiveAcc = sum(PActiveAcc,1) / NUM_CELLS;
 PActiveFast = sum(PActiveFast,1) / NUM_CELLS;
 
 %% Plotting
+tCDFAcc = sort([nstats.A_ChcErr_tErr_Acc]);
+tCDFFast = sort([nstats.A_ChcErr_tErr_Fast]);
+yCDF = (1 : NUM_CELLS) / NUM_CELLS;
 
-figure()
-
-subplot(2,1,1); hold on
+figure(); hold on
+plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
+plot(median(tCDFAcc)*ones(1,2), [0 1], 'r:', 'LineWidth',1.5)
+plot(median(tCDFFast)*ones(1,2), [0 1], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
 plot(T_RE_PRIMARY, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-xticks([])
-ylabel('P (active)')
-
-subplot(2,1,2); hold on
 plot(T_RE_PRIMARY, PActiveAcc, 'r-', 'LineWidth',1.5)
+scatter(tCDFFast, yCDF, 40, [0 .7 0], 'filled')
+scatter(tCDFAcc, yCDF, 40, 'r', 'filled')
+xlim([-150 448])
 xlabel('Time from primary saccade (ms)')
 ylabel('P (active)')
+ytickformat('%2.1f')
 
-ppretty([6,4.8])
+ppretty([6,2.5])
 
 end%fxn:plotPActiveChcErrSAT()
 

@@ -7,12 +7,12 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxRewAcc = ~isnan([nstats.A_Reward_tErrStart_Acc]);
-idxRewFast = ~isnan([nstats.A_Reward_tErrStart_Fast]);
-idxEfficient = ([ninfo.taskType] == 2);
+idxRewAcc = (abs([ninfo.rewGrade]) >= 2);
+idxRewFast = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
+idxEfficiency = ([ninfo.taskType] == 2);
 
-idxKeepAcc = (idxArea & idxMonkey & idxRewAcc & idxEfficient);
-idxKeepFast = (idxArea & idxMonkey & idxRewFast & idxEfficient);
+idxKeepAcc = (idxArea & idxMonkey & idxRewAcc & idxEfficiency);
+idxKeepFast = (idxArea & idxMonkey & idxRewFast & idxEfficiency);
 
 nstatsAcc = nstats(idxKeepAcc);
 nstatsFast = nstats(idxKeepFast);
@@ -43,19 +43,22 @@ end%for:cells-Fast(cc)
 PActiveFast = sum(PActiveFast,1) / NUM_FAST;
 
 %% Plotting
+tCDFAcc = sort([nstatsAcc.A_Reward_tErrStart_Acc]);      yCDFAcc = (1 : NUM_ACC) / NUM_ACC;
+tCDFFast = sort([nstatsFast.A_Reward_tErrStart_Fast]);   yCDFFast = (1 : NUM_FAST) / NUM_FAST;
 
-figure()
-
-subplot(2,1,1); hold on
+figure(); hold on
+plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
+plot(median(tCDFAcc)*ones(1,2), [0 1], 'r:', 'LineWidth',1.5)
+plot(median(tCDFFast)*ones(1,2), [0 1], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
 plot(T_RE_PRIMARY, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-xticks([])
-ylabel('P (active)')
-
-subplot(2,1,2); hold on
 plot(T_RE_PRIMARY, PActiveAcc, 'r-', 'LineWidth',1.5)
+scatter(tCDFFast, yCDFFast, 40, [0 .7 0], 'filled')
+scatter(tCDFAcc, yCDFAcc, 40, 'r', 'filled')
 xlabel('Time from reward (ms)')
+ylabel('P (active)')
+ytickformat('%2.1f')
 
-ppretty([6,4.8])
+ppretty([6,2.5])
 
 end%fxn:plotPActiveRewErrSAT()
 

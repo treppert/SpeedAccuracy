@@ -43,8 +43,10 @@ plot(TIME.REWARD-3500, sdfPlot.FastErr.Reward, ':', 'Color',[0 .7 0], 'LineWidth
 plot(nstats.A_Reward_tErrStart_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
 plot(nstats.A_Reward_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
 
-xlim([TIME.REWARD(1) TIME.REWARD(end)]-3500); xticks((TIME.REWARD(1):50:TIME.REWARD(end))-3500)
+xlim([TIME.REWARD(1) TIME.REWARD(end)]-3500)
+title(['Magnitude = ', num2str(nstats.A_Reward_magErr_Fast), ' sp'])
 print_session_unit(gca , ninfo,[])
+xticklabels([])
 
 %% Accurate condition
 
@@ -80,7 +82,8 @@ plot(TIME.REWARD-3500, sdfPlot.AccErr.Reward, 'r:', 'LineWidth',1.0)
 plot(nstats.A_Reward_tErrStart_Acc*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
 plot(nstats.A_Reward_tErrEnd_Acc*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
 
-xlim([TIME.REWARD(1) TIME.REWARD(end)]-3500); xticks((TIME.REWARD(1):50:TIME.REWARD(end))-3500)
+title(['Magnitude = ', num2str(nstats.A_Reward_magErr_Acc), ' sp'])
+xlim([TIME.REWARD(1) TIME.REWARD(end)]-3500)
 xlabel('Time from reward (ms)')
 
 ppretty([4.8,3])

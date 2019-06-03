@@ -3,16 +3,15 @@ function [ varargout ] = plotSDFRewardErrSAT( binfo , moves , ninfo , nstats , s
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-% ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Error-Reward\';
-ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\6-Reward\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\6-Reward\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxRew = (abs([ninfo.rewGrade]) >= 2);
-% idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxEfficiency = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxRew);% & idxEfficient);
+idxKeep = (idxArea & idxMonkey & idxRew & idxEfficiency);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -20,12 +19,10 @@ NUM_CELLS = length(spikes);
 
 binfo = determine_time_reward_SAT( binfo );
 
-TIME.REWARD = 3500 + (-200 : 800); OFFSET = 201;
+TIME.REWARD = 3500 + (-400 : 800); OFFSET = 401;
 TIME.RESPONSE = 3500 + (-300 : 400);
 TIME.STIMULUS = 3500 + (-400 : 300);
 TIME.BASELINE = 3500 + (-300 : -1);
-
-T_INTERVAL_ESTIMATE_MAG = 200;
 
 %output initializations
 tmp = new_struct({'Baseline','Stimulus','Response','Reward'}, 'dim',[1,NUM_CELLS]);
@@ -59,6 +56,8 @@ for cc = 1:NUM_CELLS
   %compute mean SDFs
   [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
   [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
+  sdfCombined = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), ...
+    'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
     
   %% Parameterize the SDF
   ccNS = ninfo(cc).unitNum;
@@ -71,20 +70,13 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).A_Reward_tErrEnd_Fast = tErrFast.End;
   
   %magnitude
-%   latAcc = nstats(ccNS).A_ChcErr_tErr_Acc + OFFSET;
-%   latFast = nstats(ccNS).A_ChcErr_tErr_Fast + OFFSET;
-%   ACorr_Acc = sdfAcc.Corr(cc).Reward(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Acc = sdfAcc.Err(cc).Reward(latAcc : latAcc + T_INTERVAL_ESTIMATE_MAG);
-%   ACorr_Fast = sdfFast.Corr(cc).Reward(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   AErr_Fast = sdfFast.Err(cc).Reward(latFast : latFast + T_INTERVAL_ESTIMATE_MAG);
-%   nstats(ccNS).A_ChcErr_magErr_Acc = sum( AErr_Acc - ACorr_Acc ) / T_INTERVAL_ESTIMATE_MAG;
-%   nstats(ccNS).A_ChcErr_magErr_Fast = sum( AErr_Fast - ACorr_Fast ) / T_INTERVAL_ESTIMATE_MAG;
+%   [magAcc,magFast] = calcMagRewSignal(sdfCombined, OFFSET, nstats(ccNS));
+%   nstats(ccNS).A_Reward_magErr_Acc = magAcc;
+%   nstats(ccNS).A_Reward_magErr_Fast = magFast;
   
   %plot individual cell activity
-  sdfPlotCC = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), ...
-    'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
-  plotSDFRewErrSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
-%   print([ROOT_DIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  plotSDFRewErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
+%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
 %   pause(0.1); close()
   
 end%for:cells(cc)

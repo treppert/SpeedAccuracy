@@ -5,8 +5,8 @@ function [ ] = plotDistrParamSAT( ninfo , nstats , param , varargin )
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
-ROOTDIR_FIG = 'C:\Users\Tom\Dropbox\ZZtmp\';
-ROOTDIR_STAT = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
+ROOTDIR_FIG = 'C:\Users\Thomas Reppert\Dropbox\ZZtmp\';
+ROOTDIR_STAT = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -14,8 +14,8 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 idxVis = ([ninfo.visGrade] >= 2);
 idxMove = ([ninfo.moveGrade] >= 2);
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxError = (abs([ninfo.errGrade]) >= 2);
-idxReward = (abs([ninfo.rewGrade]) >= 2);
+idxError = ((abs([ninfo.errGrade]) >= 2) & ~isnan([nstats.A_ChcErr_tErr_Acc]));
+idxReward = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
 
 if strcmp(param, 'TST')
   idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
@@ -53,6 +53,9 @@ elseif strcmp(param, 'ErrMag')
 elseif strcmp(param, 'RewLat')
   fieldAcc = 'A_Reward_tErrStart_Acc';
   fieldFast = 'A_Reward_tErrStart_Fast';
+elseif strcmp(param, 'RewMag')
+  fieldAcc = 'A_Reward_magErr_Acc';
+  fieldFast = 'A_Reward_magErr_Fast';
 elseif strcmp(param, 'Buildup')
   fieldAcc = 'A_Buildup_Threshold_AccCorr';
   fieldFast = 'A_Buildup_Threshold_FastCorr';
@@ -61,9 +64,9 @@ end
 paramAcc = [nstats.(fieldAcc)];
 paramFast = [nstats.(fieldFast)];
 
-inan = (isnan(paramAcc) | isnan(paramFast));
-ninfo(inan) = []; paramAcc(inan) = []; paramFast(inan) = [];
-NUM_CELLS = NUM_CELLS - sum(inan);
+% inan = (isnan(paramAcc) | isnan(paramFast));
+% ninfo(inan) = []; paramAcc(inan) = []; paramFast(inan) = [];
+% NUM_CELLS = NUM_CELLS - sum(inan);
 
 %split by task efficiency
 idxMore = ([ninfo.taskType] == 1);  NUM_MORE = sum(idxMore);
