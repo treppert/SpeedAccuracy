@@ -6,9 +6,9 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade);
+idxError = (abs([ninfo.errGrade]) >= 2);
+idxKeep = (idxArea & idxMonkey & idxError);
 
 ninfo = ninfo(idxKeep);
 nstats = nstats(idxKeep);
@@ -107,5 +107,5 @@ end%plotISIvsErrMagSAT()
 %       isiAccVec(jj) = nanmedian(isiAcc(idxJJ));
 %     end
 %   end
-%   
+  
 
