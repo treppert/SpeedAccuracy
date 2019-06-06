@@ -1,4 +1,4 @@
-function [ ] = plotChcErrRateXRT( binfo , moves , varargin )
+function [ varargout ] = plotChcErrRateXRT( binfo , moves , varargin )
 %plotChcErrRateXRT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -49,19 +49,47 @@ end%for:session(kk)
 
 
 %% Plotting
-NUM_SE_ACC = sum(~isnan(chcErrRateAcc),1);
-NUM_SE_FAST = sum(~isnan(chcErrRateFast),1);
+% NUM_SE_ACC = sum(~isnan(chcErrRateAcc),1);
+% NUM_SE_FAST = sum(~isnan(chcErrRateFast),1);
+% 
+% mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NUM_SE_ACC);
+% mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NUM_SE_FAST);
+% 
+% figure(); hold on
+% plot([0 0], [0 .9], 'k:')
+% errorbar(RT_PLOT_ACC, mu_ERAcc, SE_ERAcc, 'r-', 'CapSize',0, 'LineWidth',0.75)
+% errorbar(RT_PLOT_FAST, mu_ERFast, SE_ERFast, '-', 'Color',[0 .7 0], 'CapSize',0, 'LineWidth',0.75)
+% xlabel('Response time from deadline (ms)')
+% ylabel('Choice error rate'); ytickformat('%2.1f')
+% ppretty([4,6])
 
-mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NUM_SE_ACC);
-mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NUM_SE_FAST);
+%% Stats
+%prepare session averages for Pearson correlation analysis
+errRateFC = reshape(chcErrRateFast(:,1:10), 10*NUM_SESSION,1);
+errRateFE = reshape(chcErrRateFast(:,11:19), 9*NUM_SESSION,1);
+errRateAC = reshape(chcErrRateAcc(:,6:15), 10*NUM_SESSION,1);
+errRateAE = reshape(chcErrRateAcc(:,1:5), 5*NUM_SESSION,1);
+RTFC = repmat(RT_PLOT_FAST(1:10), 1,14)';
+RTFE = repmat(RT_PLOT_FAST(11:19), 1,14)';
+RTAC = repmat(RT_PLOT_ACC(6:15), 1,14)';
+RTAE = repmat(RT_PLOT_ACC(1:5), 1,14)';
 
-figure(); hold on
-plot([0 0], [0 .9], 'k:')
-errorbar(RT_PLOT_ACC, mu_ERAcc, SE_ERAcc, 'r-', 'CapSize',0, 'LineWidth',0.75)
-errorbar(RT_PLOT_FAST, mu_ERFast, SE_ERFast, '-', 'Color',[0 .7 0], 'CapSize',0, 'LineWidth',0.75)
-xlabel('Response time from deadline (ms)')
-ylabel('Choice error rate'); ytickformat('%2.1f')
-ppretty([4,6])
+%remove all NaNs
+inan = isnan(errRateFC);  RTFC(inan) = [];  errRateFC(inan) = [];
+inan = isnan(errRateFE);  RTFE(inan) = [];  errRateFE(inan) = [];
+inan = isnan(errRateAC);  RTAC(inan) = [];  errRateAC(inan) = [];
+inan = isnan(errRateAE);  RTAE(inan) = [];  errRateAE(inan) = [];
+
+[pvalFC,rhoFC] = corr(RTFC, errRateFC, 'Type','Pearson');
+[pvalFE,rhoFE] = corr(RTFE, errRateFE, 'Type','Pearson');
+[pvalAC,rhoAC] = corr(RTAC, errRateAC, 'Type','Pearson');
+[pvalAE,rhoAE] = corr(RTAE, errRateAE, 'Type','Pearson');
+
+statCorr = struct('FastTCorr',[pvalFC, rhoFC], 'FastTErr',[pvalFE, rhoFE], ...
+  'AccTCorr',[pvalAC, rhoAC], 'AccTErr',[pvalAE, rhoAE]);
+if (nargout > 0)
+  varargout{1} = statCorr;
+end
 
 end%fxn:plotChcErrRateXRT()
 
