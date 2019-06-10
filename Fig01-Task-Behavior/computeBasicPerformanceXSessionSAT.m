@@ -3,6 +3,7 @@ function [ ] = computeBasicPerformanceXSessionSAT(binfo, moves, movesPP, varargi
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
+SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
 
 [binfo, moves, movesPP] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, args.monkey);
 NUM_SESSION = length(binfo);
@@ -79,12 +80,11 @@ PerrChc = [PerrChcAcc, PerrChcFast]';
 PerrTime = [PerrTimeAcc, PerrTimeFast]';
 
 %two factors
-condition = [ones(1,NUM_SESSION), 2*ones(1,NUM_SESSION)]';
-taskType = repmat([binfo.taskType],1,2)';
+Condition = [ones(1,NUM_SESSION), 2*ones(1,NUM_SESSION)]';
+Efficiency = repmat([binfo.taskType],1,2)';
 
-[~,ANtbl] = anovan(RT, {condition taskType}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
-[~,ANtbl] = anovan(ISI, {condition taskType}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
-[~,ANtbl] = anovan(PerrChc, {condition taskType}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
-[~,ANtbl] = anovan(PerrTime, {condition taskType}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
+[~,ANtbl] = anovan(RT, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
+structOut = struct('Parameter',RT, 'Condition',Condition, 'Efficiency',Efficiency);
+save([SAVEDIR, 'Behavior-RT.mat'], 'structOut')
 
 end%fxn:computeBasicPerformanceXSessionSAT()

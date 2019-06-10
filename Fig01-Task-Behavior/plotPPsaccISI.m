@@ -3,6 +3,7 @@ function [ ] = plotPPsaccISI( binfo , moves , movesPP , varargin )
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
+SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
 
 [binfo, moves, movesPP] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, args.monkey);
 NUM_SESSION = length(binfo);
@@ -53,6 +54,16 @@ errorbar(QUANT-.01, mean(isiAcc{2}), std(isiAcc{2})/sqrt(NUM_SESS_T2), 'Color','
 errorbar(QUANT-.01, mean(isiFast{2}), std(isiFast{2})/sqrt(NUM_SESS_T2), 'Color',[0 .7 0], 'LineWidth',1.75, 'CapSize',0)
 xlim([.05 .95])
 ppretty([5,6.4])
+
+%% Stats - Two-way ANOVA with factors task condition and search efficiency
+%save median ISI from each session
+medAccMore = isiAcc{1}(:,5);    medAccLess = isiAcc{2}(:,5);
+medFastMore = isiFast{1}(:,5);  medFastLess = isiFast{2}(:,5);
+ISI = [medAccMore; medAccLess; medFastMore; medFastLess];
+tmp = ones(NUM_SESS_T1 + NUM_SESS_T2, 1);             Condition = [tmp; 2.*tmp];
+tmp = [ones(NUM_SESS_T1,1); 2*ones(NUM_SESS_T2,1)];   Efficiency = [tmp; tmp];
+structOut = struct('ISI',ISI, 'Condition',Condition, 'Efficiency',Efficiency);
+save([SAVEDIR, 'ISIXcondXeff.mat'], 'structOut')
 
 end%fxn:plotPPsaccISI()
 
