@@ -11,10 +11,10 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);
-idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxEfficiency = ismember([ninfo.taskType], [1]);
+idxTST = (isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+idxEff = ([ninfo.taskType] == 2);
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEfficiency);
+idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEff);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -54,8 +54,8 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by response dir re. response field
-  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
-%   idxRF = ismember(moves(kk).octant, (1:8)); %for plotting w/o TST
+%   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+  idxRF = ismember(moves(kk).octant, (1:8)); %for plotting w/o TST
   
   %isolate single-trial SDFs
   VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);     SMAcc.Tin = sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP);
@@ -108,17 +108,13 @@ nstats = nstats(idxKeep);
 medTSTAcc = median([nstats.VRTSTAcc]); %plot median TST
 medTSTFast = median([nstats.VRTSTFast]);
 
-visRespAccTin = transpose([visResp.AccTin]);
-visRespAccDin = transpose([visResp.AccDin]);
-visRespFastTin = transpose([visResp.FastTin]);
-visRespFastDin = transpose([visResp.FastDin]);
+visRespAccTin = transpose([visResp.AccTin]);    visRespAccDin = transpose([visResp.AccDin]);
+visRespFastTin = transpose([visResp.FastTin]);  visRespFastDin = transpose([visResp.FastDin]);
 
 %normalization
 normFactor = max(visRespFastTin,[],2);
-visRespAccTin = visRespAccTin ./ normFactor;
-visRespAccDin = visRespAccDin ./ normFactor;
-visRespFastTin = visRespFastTin ./ normFactor;
-visRespFastDin = visRespFastDin ./ normFactor;
+visRespAccTin = visRespAccTin ./ normFactor;    visRespAccDin = visRespAccDin ./ normFactor;
+visRespFastTin = visRespFastTin ./ normFactor;  visRespFastDin = visRespFastDin ./ normFactor;
 
 figure(); hold on
 
