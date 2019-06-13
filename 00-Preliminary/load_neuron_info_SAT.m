@@ -1,11 +1,11 @@
-function [ ninfoSAT ] = load_neuron_info_SAT( OS )
+function [ ninfoSAT ] = load_neuron_info_SAT( OS , binfo )
 %load_neuron_info_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 if strcmp(OS, 'Linux')
   FILE = '~/Dropbox/Speed Accuracy/SEF_SAT/Info/Unit-Info-SAT.xlsx';
 elseif strcmp(OS, 'Windows')
-  FILE = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
+  FILE = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Info\Unit-Info-SAT.xlsx';
 end
 MONKEY = {'Darwin','Euler','Quincy','Seymour'};
 
@@ -68,22 +68,22 @@ for mm = 1:4
     trRemMG{cc} = str2num(trRemMG{cc});
     
     visField{cc} = str2num(visField{cc});
-    if (visField{cc} == 9); visField{cc} = (1:8); end
+%     if (visField{cc} == 9); visField{cc} = (1:8); end
     
     moveField{cc} = str2num(moveField{cc});
-    if (moveField{cc} == 9); moveField{cc} = (1:8); end
+%     if (moveField{cc} == 9); moveField{cc} = (1:8); end
     
     errField{cc} = str2num(errField{cc});
-    if (errField{cc} == 9); errField{cc} = (1:8); end
+%     if (errField{cc} == 9); errField{cc} = (1:8); end
     
     if ismember(area{cc}, {'FEF','SC'})
       %increment RF from 0-7 (Rich) to 1-8 (Thomas) convention
       visField{cc} = visField{cc} + 1;
       moveField{cc} = moveField{cc} + 1;
       
-      if (visField{cc} == 9); visField{cc} = (1:8); end
-      if (moveField{cc} == 9); moveField{cc} = (1:8); end
-      if (errField{cc} == 9); errField{cc} = (1:8); end
+%       if (visField{cc} == 9); visField{cc} = (1:8); end
+%       if (moveField{cc} == 9); moveField{cc} = (1:8); end
+%       if (errField{cc} == 9); errField{cc} = (1:8); end
       
     end
     
@@ -105,6 +105,12 @@ end%for:monkey(mm)
 %mark all units with unacceptable isolation quality
 for cc = 1:sum(NUM_UNIT)
   ninfoSAT(cc).poorIso = poorIso(cc);
+end
+
+%label neurons by session type: more efficient or less efficient
+for cc = 1:sum(NUM_UNIT)
+  kk = ismember({binfo.session}, ninfoSAT(cc).sess);
+  ninfoSAT(cc).taskType = binfo(kk).taskType;
 end
 
 ninfoSAT = transpose(ninfoSAT);

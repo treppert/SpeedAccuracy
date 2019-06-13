@@ -10,11 +10,13 @@ ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Re
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);
+% idxVis = ([ninfo.visGrade] >= 2);
+idxVis = ([ninfo.visGrade] >= 2 & ismember({ninfo.visType}, 'sustained'));
 idxTST = (isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxEff = ([ninfo.taskType] == 2);
+idxRF = ([ninfo.visField] == 9);
+idxEff = ([ninfo.taskType] == 1);
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEff);
+idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxRF & idxEff);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -118,13 +120,13 @@ visRespFastTin = visRespFastTin ./ normFactor;  visRespFastDin = visRespFastDin 
 
 figure(); hold on
 
-plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
+% plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
 plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',1.25)
-plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
+% plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
 plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',1.25)
 
-plot(medTSTAcc*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
-plot(medTSTFast*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+% plot(medTSTAcc*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
+% plot(medTSTFast*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
 xlabel('Time from array (ms)'); ylabel('Normalized activity'); ytickformat('%2.1f')
 ppretty([4.8,2.5])
