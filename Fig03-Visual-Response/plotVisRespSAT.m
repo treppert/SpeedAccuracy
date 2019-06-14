@@ -10,17 +10,22 @@ ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\Visual-Re
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-% idxVis = ([ninfo.visGrade] >= 2);
-idxVis = ([ninfo.visGrade] >= 2 & ismember({ninfo.visType}, 'sustained'));
-idxTST = (isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxRF = ([ninfo.visField] == 9);
-idxEff = ([ninfo.taskType] == 1);
+idxVis = ([ninfo.visGrade] >= 2);
+idxSustained = ismember({ninfo.visType}, 'sustained');
+idxPhasic = ismember({ninfo.visType}, 'phasic');
+idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+idxEff = ([ninfo.taskType] == 2);
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxRF & idxEff);
+idxRF = false(1,length(ninfo)); %has a finite RF (not the entire screen)
+for cc = 1:length(ninfo)
+  if ~ismember(ninfo(cc).visField, 9); idxRF(cc) = true; end
+end
 
+idxKeep = (idxArea & idxMonkey & idxVis & (idxSustained | idxPhasic) & ~idxTST & idxRF & idxEff);
+
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-NUM_CELLS = length(spikes);
 
 T_STIM = 3500 + (-50 : 350);  OFFSET = 50;
 T_RESP = 3500 + (-300 : 100);
@@ -56,8 +61,8 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by response dir re. response field
-%   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
-  idxRF = ismember(moves(kk).octant, (1:8)); %for plotting w/o TST
+  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+%   idxRF = true(1,binfo(kk).num_trials); %**for plotting RF=9
   
   %isolate single-trial SDFs
   VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);     SMAcc.Tin = sdfKKresp(idxAcc & idxCorr & idxRF, T_RESP);
@@ -120,9 +125,9 @@ visRespFastTin = visRespFastTin ./ normFactor;  visRespFastDin = visRespFastDin 
 
 figure(); hold on
 
-% plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
+plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
 plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',1.25)
-% plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
+plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
 plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',1.25)
 
 % plot(medTSTAcc*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)

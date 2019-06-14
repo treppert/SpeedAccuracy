@@ -47,23 +47,31 @@ isiAcc{2}(idxTT1,:) = []; isiFast{2}(idxTT1,:) = [];
 NUM_SESS_T1 = size(isiAcc{1}, 1);
 NUM_SESS_T2 = size(isiAcc{2}, 1);
 
-figure(); hold on
-errorbar(QUANT+.01, mean(isiAcc{1}), std(isiAcc{1})/sqrt(NUM_SESS_T1), 'Color','r', 'LineWidth',0.75, 'CapSize',0)
-errorbar(QUANT+.01, mean(isiFast{1}), std(isiFast{1})/sqrt(NUM_SESS_T1), 'Color',[0 .7 0], 'LineWidth',0.75, 'CapSize',0)
-errorbar(QUANT-.01, mean(isiAcc{2}), std(isiAcc{2})/sqrt(NUM_SESS_T2), 'Color','r', 'LineWidth',1.75, 'CapSize',0)
-errorbar(QUANT-.01, mean(isiFast{2}), std(isiFast{2})/sqrt(NUM_SESS_T2), 'Color',[0 .7 0], 'LineWidth',1.75, 'CapSize',0)
-xlim([.05 .95])
-ppretty([5,6.4])
+%cumulative distribution
+% figure(); hold on
+% errorbar(QUANT+.01, mean(isiAcc{1}), std(isiAcc{1})/sqrt(NUM_SESS_T1), 'Color','r', 'LineWidth',0.75, 'CapSize',0)
+% errorbar(QUANT+.01, mean(isiFast{1}), std(isiFast{1})/sqrt(NUM_SESS_T1), 'Color',[0 .7 0], 'LineWidth',0.75, 'CapSize',0)
+% errorbar(QUANT-.01, mean(isiAcc{2}), std(isiAcc{2})/sqrt(NUM_SESS_T2), 'Color','r', 'LineWidth',1.75, 'CapSize',0)
+% errorbar(QUANT-.01, mean(isiFast{2}), std(isiFast{2})/sqrt(NUM_SESS_T2), 'Color',[0 .7 0], 'LineWidth',1.75, 'CapSize',0)
+% xlim([.05 .95])
+% ppretty([5,6.4])
 
-%% Stats - Two-way ANOVA with factors task condition and search efficiency
-%save median ISI from each session
-medAccMore = isiAcc{1}(:,5);    medAccLess = isiAcc{2}(:,5);
-medFastMore = isiFast{1}(:,5);  medFastLess = isiFast{2}(:,5);
-ISI = [medAccMore; medAccLess; medFastMore; medFastLess];
-tmp = ones(NUM_SESS_T1 + NUM_SESS_T2, 1);             Condition = [tmp; 2.*tmp];
-tmp = [ones(NUM_SESS_T1,1); 2*ones(NUM_SESS_T2,1)];   Efficiency = [tmp; tmp];
-structOut = struct('ISI',ISI, 'Condition',Condition, 'Efficiency',Efficiency);
-save([SAVEDIR, 'ISIXcondXeff.mat'], 'structOut')
+%barplot
+muFM = mean(isiFast{1}(:,5));   muAM = mean(isiAcc{1}(:,5));
+muFL = mean(isiFast{2}(:,5));   muAL = mean(isiAcc{2}(:,5));
+seAM = std(isiAcc{1}(:,5)) / sqrt(NUM_SESS_T1); %standard error -- Accurate / More efficient
+seAL = std(isiAcc{2}(:,5)) / sqrt(NUM_SESS_T2);
+seFM = std(isiFast{1}(:,5)) / sqrt(NUM_SESS_T1);
+seFL = std(isiFast{2}(:,5)) / sqrt(NUM_SESS_T2);
+
+figure(); hold on
+bar(1, muFM, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+bar(2, muFL, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+bar(3, muAM, 0.7, 'FaceColor','r', 'LineWidth',0.25)
+bar(4, muAL, 0.7, 'FaceColor','r', 'LineWidth',1.25)
+errorbar([muFM muFL muAM muAL], [seFM seFL seAM seAL], 'Color','k', 'CapSize',0)
+xticks([]); ylabel('ISI (ms)')
+ppretty([1,2], 'yRight')
 
 end%fxn:plotPPsaccISI()
 

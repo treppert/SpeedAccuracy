@@ -17,10 +17,15 @@ idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 idxError = ((abs([ninfo.errGrade]) >= 2) & ~isnan([nstats.A_ChcErr_tErr_Acc]));
 idxReward = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
 
+idxRF = false(1,length(ninfo)); %has a finite RF (not the entire screen)
+for cc = 1:length(ninfo)
+  if ~ismember(ninfo(cc).visField, 9); idxRF(cc) = true; end
+end
+
 if strcmp(param, 'TST')
   idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
 elseif ismember(param, {'VisLat','VisMag'})
-  idxKeep = (idxArea & idxMonkey & idxVis);
+  idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
 elseif ismember(param, {'ErrLat','ErrMag'})
   idxKeep = (idxArea & idxMonkey & idxError);
 elseif ismember(param, {'RewLat','RewMag'})
@@ -31,9 +36,9 @@ else
   error('Input "param" not recognized')
 end
 
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 nstats = nstats(idxKeep);
-NUM_CELLS = sum(idxKeep);
 
 if strcmp(param, 'VisLat')
   fieldAcc = 'VRlatAcc';
@@ -75,7 +80,7 @@ idxLess = ([ninfo.taskType] == 2);  NUM_LESS = sum(idxLess);
 paramAccMore = paramAcc(idxMore);   paramFastMore = paramFast(idxMore);
 paramAccLess = paramAcc(idxLess);   paramFastLess = paramFast(idxLess);
 
-  
+
 %% Plots of absolute values
 meanAccEff = nanmean(paramAccMore);      SEAccEff = nanstd(paramAccMore)/sqrt(sum(idxMore));
 meanAccIneff = nanmean(paramAccLess);    SEAccIneff = nanstd(paramAccLess)/sqrt(sum(idxLess));

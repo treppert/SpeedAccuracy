@@ -68,23 +68,13 @@ for mm = 1:4
     trRemMG{cc} = str2num(trRemMG{cc});
     
     visField{cc} = str2num(visField{cc});
-%     if (visField{cc} == 9); visField{cc} = (1:8); end
-    
     moveField{cc} = str2num(moveField{cc});
-%     if (moveField{cc} == 9); moveField{cc} = (1:8); end
-    
     errField{cc} = str2num(errField{cc});
-%     if (errField{cc} == 9); errField{cc} = (1:8); end
     
     if ismember(area{cc}, {'FEF','SC'})
       %increment RF from 0-7 (Rich) to 1-8 (Thomas) convention
       visField{cc} = visField{cc} + 1;
       moveField{cc} = moveField{cc} + 1;
-      
-%       if (visField{cc} == 9); visField{cc} = (1:8); end
-%       if (moveField{cc} == 9); moveField{cc} = (1:8); end
-%       if (errField{cc} == 9); errField{cc} = (1:8); end
-      
     end
     
   end%for:unit(cc)
