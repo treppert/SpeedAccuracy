@@ -6,15 +6,12 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained','phasic'});
-else
-  idxVis = ([ninfo.visGrade] >= 0.5);
-end
-idxErrorGrade = (abs([ninfo.errGrade]) >= 0.5);
-idxBlineRate = ([nstats.blineAccMEAN] >= 5); %minimum baseline discharge rate
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxBlineRate);
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxEff = ([ninfo.taskType] == 2);
+
+idxKeep = (idxArea & idxMonkey);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -60,7 +57,7 @@ for cc = 1:NUM_CELLS
   
   %Mann-Whitney U test for the difference between conditions (independent samples)
   ccNS = ninfo(cc).unitNum; %index nstats correctly
-  [pVal(cc),hVal,tmp] = ranksum(spkCtFast{cc}, spkCtAcc{cc});
+  [pVal(cc),hVal,tmp] = ranksum(spkCtFast{cc}, spkCtAcc{cc}, 'alpha',0.06);
   if (hVal == 1)
     if (tmp.zval < 0) %Acc > Fast
       nstats(ccNS).blineEffect = -1;

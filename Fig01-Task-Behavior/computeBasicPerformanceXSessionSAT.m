@@ -3,7 +3,7 @@ function [ ] = computeBasicPerformanceXSessionSAT(binfo, moves, movesPP, varargi
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
-SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
+SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
 
 [binfo, moves, movesPP] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, args.monkey);
 NUM_SESSION = length(binfo);
@@ -83,7 +83,7 @@ PerrTime = [PerrTimeAcc, PerrTimeFast]';
 Condition = [ones(1,NUM_SESSION), 2*ones(1,NUM_SESSION)]';
 Efficiency = repmat([binfo.taskType],1,2)';
 
-[~,ANtbl] = anovan(RT, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Task Type'}, 'display','off');
+[~,ANtbl] = anovan(RT, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Task Type'});
 structOut = struct('Parameter',RT, 'Condition',Condition, 'Efficiency',Efficiency);
 save([SAVEDIR, 'Behavior-RT.mat'], 'structOut')
 

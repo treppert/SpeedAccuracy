@@ -3,19 +3,19 @@ function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , 
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\SDF-ChoiceErr\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-ChcErr-SEF\SDF-Final\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxErrorGrade = (abs([ninfo.errGrade]) >= 2);
-idxEfficiency = ismember([ninfo.taskType], [1,2]);
+idxError = (([ninfo.errGrade]) >= 2);
+idxEff = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade & idxEfficiency);
+idxKeep = (idxArea & idxMonkey & idxError & idxEff);
 
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-NUM_CELLS = length(spikes);
 
 TIME.PRIMARY = 3500 + (-200 : 450); OFFSET = 200; %time from primary saccade
 TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
@@ -30,9 +30,10 @@ for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
-  RTkk = double(moves(kk).resptime);
-  ISIkk = double(movesPP(kk).resptime) - RTkk;
-  ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
+  RTPkk = double(moves(kk).resptime); %RT of primary saccade
+  RTPkk(RTPkk > 900) = NaN; %hard limit on primary RT
+  RTSkk = double(movesPP(kk).resptime) - RTPkk; %RT of secondary saccade
+  RTSkk(RTSkk < 0) = NaN; %trials with no secondary saccade
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
@@ -44,14 +45,14 @@ for cc = 1:NUM_CELLS
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   
   %set "ISI" on correct trials as median ISI of choice error trials
-  ISIkk(idxFast & idxCorr) = round(nanmedian(ISIkk(idxFast & idxErr)));
-  ISIkk(idxAcc & idxCorr) = round(nanmedian(ISIkk(idxAcc & idxErr)));
+  RTSkk(idxFast & idxCorr) = round(nanmedian(RTSkk(idxFast & idxErr)));
+  RTSkk(idxAcc & idxCorr) = round(nanmedian(RTSkk(idxAcc & idxErr)));
   
   %perform RT matching and group trials by condition and outcome
-  trials = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, idxErr);
+  trials = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, idxErr);
   
   %get single-trials SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trials, TIME);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTPkk, RTSkk, spikes(cc).SAT, trials, TIME);
   
   %compute mean SDFs
   [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
@@ -62,11 +63,11 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum;
   
   %latency
-  if isempty(nstats(ccNS).A_ChcErr_tErr_Fast)
-    [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
-    nstats(ccNS).A_ChcErr_tErr_Acc = tErrAcc.Start;     nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
-    nstats(ccNS).A_ChcErr_tErr_Fast = tErrFast.Start;   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
-  end
+%   if isempty(nstats(ccNS).A_ChcErr_tErr_Fast)
+%     [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
+%     nstats(ccNS).A_ChcErr_tErr_Acc = tErrAcc.Start;     nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
+%     nstats(ccNS).A_ChcErr_tErr_Fast = tErrFast.Start;   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
+%   end
   
   %magnitude
 %   [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
@@ -75,7 +76,7 @@ for cc = 1:NUM_CELLS
   
   %plot individual cell activity
   plotSDFChcErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 

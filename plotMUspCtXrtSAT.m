@@ -4,7 +4,7 @@ function [ ] = plotMUspCtXrtSAT( binfo , moves , ninfo , nstats , spikes , varar
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}, {'interval=','baseline'}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\0-SpkXRT\';
-NUM_SESSION = 16;%length(binfo);
+NUM_SESSION = length(binfo);
 
 if ~ismember(args.interval, {'baseline','visresp','presacc'})
   error('Input "interval" not recognized')
@@ -14,17 +14,18 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 2);   idxRew = ([ninfo.rewGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxEff = ([ninfo.taskType] == 2);
 
 if strcmp(args.interval, 'baseline')
-  idxKeep = (idxArea & idxMonkey & (idxVis | idxMove | idxErr | idxRew));
+  idxKeep = (idxArea & idxMonkey & (idxRew) & idxEff);
 %   idxKeep = (idxArea & idxMonkey & idxVis);
   saveDir = 'Baseline\';
 elseif strcmp(args.interval, 'visresp')
-  idxKeep = (idxArea & idxMonkey & idxVis);
+  idxKeep = (idxArea & idxMonkey & idxVis & idxEff);
   saveDir = 'VisResp\';
 else %pre-saccadic
-  idxKeep = (idxArea & idxMonkey & idxMove);
+  idxKeep = (idxArea & idxMonkey & idxMove & idxEff);
   saveDir = 'PreSacc\';
 end
 
@@ -41,7 +42,7 @@ T_PRESACC = [-150, 0]; %from primary saccade
 rhoAcc = NaN(1,NUM_SESSION);    pvalAcc = NaN(1,NUM_SESSION);
 rhoFast = NaN(1,NUM_SESSION);   pvalFast = NaN(1,NUM_SESSION);
 
-RTBIN_FAST = (200 : 25 : 400);  NBIN_FAST = length(RTBIN_FAST) - 1;   zSpkCtFast = NaN(NUM_SESSION,NBIN_FAST);
+RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;   zSpkCtFast = NaN(NUM_SESSION,NBIN_FAST);
 RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;     zSpkCtAcc = NaN(NUM_SESSION,NBIN_ACC);
 MIN_PER_BIN = 10; %minimum number of trials per RT bin
 
@@ -156,7 +157,7 @@ figure(); hold on
 errorbar(RTPLOT_ACC, nanmean(zSpkCtAcc), nanstd(zSpkCtAcc)./NSEM_ACC, 'capsize',0, 'Color','r')
 errorbar(RTPLOT_FAST, nanmean(zSpkCtFast), nanstd(zSpkCtFast)./NSEM_FAST, 'capsize',0, 'Color',[0 .7 0])
 xlabel('Response time (ms)')
-ylabel('z-score of spike count')
+ylabel('Spike count (z)'); ytickformat('%3.2f')
 ppretty([6.4,4])
 
 %% Compute stats on session averages
@@ -167,9 +168,9 @@ zSpkCtFast = reshape(zSpkCtFast', 1,NUM_SESSION*NBIN_FAST)';  rtFast = repmat(RT
 inanAcc = isnan(zSpkCtAcc);     zSpkCtAcc(inanAcc) = [];   rtAcc(inanAcc) = [];
 inanFast = isnan(zSpkCtFast);   zSpkCtFast(inanFast) = [];  rtFast(inanFast) = [];
 
-[rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');
-[rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');
-fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
-fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
+[rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');      tvalAcc = convertPearsonR_to_tStat(rhoAcc, length(rtAcc));
+[rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');  tvalFast = convertPearsonR_to_tStat(rhoFast, length(rtFast));
+fprintf('Accurate: R = %g  p = %g  n = %d  t = %g\n', rhoAcc, pvalAcc, length(rtAcc), tvalAcc)
+fprintf('Fast: R = %g  p = %g  n = %d  t = %g\n', rhoFast, pvalFast, length(rtFast), tvalFast)
 
 end%fxn:plotMUspCtXrtSAT()

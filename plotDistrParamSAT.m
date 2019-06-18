@@ -1,4 +1,4 @@
-function [ ] = plotDistrParamSAT( ninfo , nstats , param , varargin )
+function [ ] = plotDistrParamSAT( ninfo , nstats , parmName , varargin )
 %plotDistrParamSAT Summary of this function goes here
 %   args.export -- Write a .mat file for stats analysis in R
 % 
@@ -6,32 +6,32 @@ function [ ] = plotDistrParamSAT( ninfo , nstats , param , varargin )
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 ROOTDIR_FIG = 'C:\Users\Thomas Reppert\Dropbox\ZZtmp\';
-ROOTDIR_STAT = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Stats\';
+ROOTDIR_STAT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);
-idxMove = ([ninfo.moveGrade] >= 2);
-idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxError = ((abs([ninfo.errGrade]) >= 2) & ~isnan([nstats.A_ChcErr_tErr_Acc]));
-idxReward = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
 
 idxRF = false(1,length(ninfo)); %has a finite RF (not the entire screen)
 for cc = 1:length(ninfo)
   if ~ismember(ninfo(cc).visField, 9); idxRF(cc) = true; end
 end
 
-if strcmp(param, 'TST')
+if strcmp(parmName, 'TST')
+  idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
   idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
-elseif ismember(param, {'VisLat','VisMag'})
-  idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
-elseif ismember(param, {'ErrLat','ErrMag'})
-  idxKeep = (idxArea & idxMonkey & idxError);
-elseif ismember(param, {'RewLat','RewMag'})
-  idxKeep = (idxArea & idxMonkey & idxReward);
-elseif ismember(param, {'Buildup'})
+elseif ismember(parmName, {'VisLat','VisMag'})
+  idxKeep = (idxArea & idxMonkey & idxVis);
+elseif ismember(parmName, {'ErrLat','ErrMag'})
+  idxKeep = (idxArea & idxMonkey & idxErr);
+elseif ismember(parmName, {'RewLat','RewMag'})
+  idxKeep = (idxArea & idxMonkey & idxRew);
+elseif ismember(parmName, {'Buildup'})
   idxKeep = (idxArea & idxMonkey & idxMove);
+elseif ismember(parmName, {'Baseline'})
+  idxKeep = (idxArea & idxMonkey & (idxVis | idxMove | idxErr | idxRew));
 else
   error('Input "param" not recognized')
 end
@@ -40,52 +40,55 @@ NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 nstats = nstats(idxKeep);
 
-if strcmp(param, 'VisLat')
+if strcmp(parmName, 'VisLat')
   fieldAcc = 'VRlatAcc';
   fieldFast = 'VRlatFast';
-elseif strcmp(param, 'VisMag')
+elseif strcmp(parmName, 'VisMag')
   fieldAcc = 'VRmagAcc';
   fieldFast = 'VRmagFast';
-elseif strcmp(param, 'TST')
+elseif strcmp(parmName, 'TST')
   fieldAcc = 'VRTSTAcc';
   fieldFast = 'VRTSTFast';
-elseif strcmp(param, 'ErrLat')
+elseif strcmp(parmName, 'ErrLat')
   fieldAcc = 'A_ChcErr_tErr_Acc';
   fieldFast = 'A_ChcErr_tErr_Fast';
-elseif strcmp(param, 'ErrMag')
+elseif strcmp(parmName, 'ErrMag')
   fieldAcc = 'A_ChcErr_magErr_Acc';
   fieldFast = 'A_ChcErr_magErr_Fast';
-elseif strcmp(param, 'RewLat')
+elseif strcmp(parmName, 'RewLat')
   fieldAcc = 'A_Reward_tErrStart_Acc';
   fieldFast = 'A_Reward_tErrStart_Fast';
-elseif strcmp(param, 'RewMag')
+elseif strcmp(parmName, 'RewMag')
   fieldAcc = 'A_Reward_magErr_Acc';
   fieldFast = 'A_Reward_magErr_Fast';
-elseif strcmp(param, 'Buildup')
+elseif strcmp(parmName, 'Buildup')
   fieldAcc = 'A_Buildup_Threshold_AccCorr';
   fieldFast = 'A_Buildup_Threshold_FastCorr';
+elseif strcmp(parmName, 'Baseline')
+  fieldAcc = 'blineAccMEAN';
+  fieldFast = 'blineFastMEAN';
 end
 
 paramAcc = [nstats.(fieldAcc)];
 paramFast = [nstats.(fieldFast)];
 
-% inan = (isnan(paramAcc) | isnan(paramFast));
-% ninfo(inan) = []; paramAcc(inan) = []; paramFast(inan) = [];
-% NUM_CELLS = NUM_CELLS - sum(inan);
+inan = (isnan(paramAcc) | isnan(paramFast));
+ninfo(inan) = []; paramAcc(inan) = []; paramFast(inan) = [];
+NUM_CELLS = NUM_CELLS - sum(inan);
 
 %split by task efficiency
 idxMore = ([ninfo.taskType] == 1);  NUM_MORE = sum(idxMore);
 idxLess = ([ninfo.taskType] == 2);  NUM_LESS = sum(idxLess);
 
-paramAccMore = paramAcc(idxMore);   paramFastMore = paramFast(idxMore);
-paramAccLess = paramAcc(idxLess);   paramFastLess = paramFast(idxLess);
+param.AccMore = paramAcc(idxMore);   param.FastMore = paramFast(idxMore);
+param.AccLess = paramAcc(idxLess);   param.FastLess = paramFast(idxLess);
 
 
 %% Plots of absolute values
-meanAccEff = nanmean(paramAccMore);      SEAccEff = nanstd(paramAccMore)/sqrt(sum(idxMore));
-meanAccIneff = nanmean(paramAccLess);    SEAccIneff = nanstd(paramAccLess)/sqrt(sum(idxLess));
-meanFastEff = nanmean(paramFastMore);    SEFastEff = nanstd(paramFastMore)/sqrt(sum(idxMore));
-meanFastIneff = nanmean(paramFastLess);  SEFastIneff = nanstd(paramFastLess)/sqrt(sum(idxLess));
+meanAccEff = nanmean(param.AccMore);      SEAccEff = nanstd(param.AccMore)/sqrt(sum(idxMore));
+meanAccIneff = nanmean(param.AccLess);    SEAccIneff = nanstd(param.AccLess)/sqrt(sum(idxLess));
+meanFastEff = nanmean(param.FastMore);    SEFastEff = nanstd(param.FastMore)/sqrt(sum(idxMore));
+meanFastIneff = nanmean(param.FastLess);  SEFastIneff = nanstd(param.FastLess)/sqrt(sum(idxLess));
 
 %barplot
 figure(); hold on
@@ -96,46 +99,61 @@ bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
 xticks([]); xticklabels([])
 ylabel(param)
-ppretty([1,2], 'yRight')
-print([ROOTDIR_FIG,args.area,'-',param,'-ZBar.pdf'], '-dpdf'); pause(0.1)
+ppretty([1,2])
+% print([ROOTDIR_FIG,args.area,'-',param,'-ZBar.pdf'], '-dpdf'); pause(0.1)
 
 %% Plots of difference (Acc - Fast)
-if ismember(param, {'VisMag','ErrMag','RewMag'})
-  parmDiffEff = paramFastMore - paramAccMore;
-  parmDiffIneff = paramFastLess - paramAccLess;
+if ismember(parmName, {'VisMag','ErrMag','RewMag'})
+  parmDiffEff = param.FastMore - param.AccMore;
+  parmDiffIneff = param.FastLess - param.AccLess;
 else
-  parmDiffEff = paramAccMore - paramFastMore;
-  parmDiffIneff = paramAccLess - paramFastLess;
+  parmDiffEff = param.AccMore - param.FastMore;
+  parmDiffIneff = param.AccLess - param.FastLess;
 end
 
 % meanDiffEff = nanmean(parmDiffEff);     SEDiffEff = nanstd(parmDiffEff) / sqrt(sum(idxMore));
 % meanDiffIneff = nanmean(parmDiffIneff); SEDiffIneff = nanstd(parmDiffIneff) / sqrt(sum(idxLess));
 
 %cumulative distribution
-figure(); hold on
-cdfplotTR(parmDiffEff, 'Color','k', 'LineWidth',0.5)
-cdfplotTR(parmDiffIneff, 'Color','k', 'LineWidth',1.25)
-plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
-ylim([0 1]); ytickformat('%2.1f')
-xlabel([param, ' difference'])
-ylabel('Cumulative probability')
-yticklabels({'0.0','','0.2','','0.4','','0.6','','0.8','','1.0'})
-ppretty([4.8,3])
-print([ROOTDIR_FIG,args.area,'-',param,'-CDF.pdf'], '-dpdf')
+% figure(); hold on
+% cdfplotTR(parmDiffEff, 'Color','k', 'LineWidth',0.5)
+% cdfplotTR(parmDiffIneff, 'Color','k', 'LineWidth',1.25)
+% plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
+% ylim([0 1]); ytickformat('%2.1f')
+% xlabel([param, ' difference'])
+% ylabel('Cumulative probability')
+% yticklabels({'0.0','','0.2','','0.4','','0.6','','0.8','','1.0'})
+% ppretty([4.8,3])
+% print([ROOTDIR_FIG,args.area,'-',param,'-CDF.pdf'], '-dpdf')
 
-%% Prep for ANOVA
+%% Write data for ANOVA
 if (length(args.monkey) > 1) %don't save stats for single monkeys
-  Parameter = [paramAccMore, paramAccLess, paramFastMore, paramFastLess]';
-  Condition = cell(2*NUM_CELLS,1); Condition(1:NUM_CELLS) = {'Accurate'}; Condition(NUM_CELLS+1:end) = {'Fast'};
-  Efficiency = cell(NUM_CELLS,1); Efficiency(1:NUM_MORE) = {'More'};
-  Efficiency(NUM_MORE+1:end) = {'Less'}; Efficiency = [Efficiency; Efficiency];
-  Neuron = [(1:NUM_CELLS), (1:NUM_CELLS)]';
-  structOut = struct('Neuron',Neuron', 'Parameter',Parameter');
-  for cc = 1:(2*NUM_CELLS)
-    structOut.Condition(cc) = Condition(cc);
-    structOut.Efficiency(cc) = Efficiency(cc);
-  end
-  save([ROOTDIR_STAT, args.area,'-', param,'.mat'], 'structOut')
+  writeFile = [ROOTDIR_STAT, args.area,'-', parmName,'.mat'];
+  writeData( param , writeFile )
 end
 
 end%util:plotDistrParamSAT()
+
+
+function [ ] = writeData( param , writeFile )
+
+N_MORE_EFF = length(param.AccMore);
+N_LESS_EFF = length(param.AccLess);
+N_CELL = N_MORE_EFF + N_LESS_EFF;
+
+%dependent variable
+DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
+
+%factors
+F_Condition = [ ones(1,N_CELL) 2*ones(1,N_CELL) ]';
+F_Efficiency = [ ones(1,N_MORE_EFF) 2*ones(1,N_LESS_EFF) ones(1,N_MORE_EFF) 2*ones(1,N_LESS_EFF) ]';
+
+%write data
+save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency')
+
+end%util:writeData()
+
+
+
+
+

@@ -6,12 +6,10 @@ args = getopt(varargin, {{'area=',{'SEF'}}, {'type=',{'Vis'}}, {'monkey=',{'D','
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxBlineRate = ([nstats.blineAccMEAN] >= 5); %!!! minimum baseline discharge rate
+idxBlineRate = ([nstats.blineAccMEAN] >= 3); %!!! minimum baseline discharge rate
 
-idxVis = ([ninfo.visGrade] >= 2);
-idxMove = ([ninfo.moveGrade] >= 2);
-idxError = (abs([ninfo.errGrade]) >= 2);
-idxReward = (abs([ninfo.rewGrade]) >= 2);
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxError = ([ninfo.errGrade] >= 2); idxReward = (abs([ninfo.rewGrade]) >= 2);
 
 idxKeep = (idxArea & idxMonkey & idxBlineRate);
 if ismember(args.type, 'Vis')
@@ -27,12 +25,12 @@ if ismember(args.type, 'Reward')
   idxKeep = (idxKeep & idxReward);
 end
 
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-NUM_CELLS = length(spikes);
 
-idxMoreE = ([ninfo.taskType] == 1);   NUM_MORE = sum(idxMoreE);
-idxLessE = ([ninfo.taskType] == 2);   NUM_LESS = sum(idxLessE);
+idxMore = ([ninfo.taskType] == 1);   NUM_MORE = sum(idxMore);
+idxLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(idxLess);
 
 T_BASE  = 3500 + (-600 : 20);
 
@@ -55,22 +53,25 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   
-  if (idxMoreE(cc)) %more efficient session
+  sdfAccCC = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
+  sdfFastCC = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
+  
+  if (idxMore(cc)) %more efficient session
     jjMore = jjMore + 1;
-    sdfAccMore(jjMore,:) = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
-    sdfFastMore(jjMore,:) = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
+    sdfAccMore(jjMore,:) = sdfAccCC;
+    sdfFastMore(jjMore,:) = sdfFastCC;
   else %less efficient session
     jjLess = jjLess + 1;
-    sdfAccLess(jjLess,:) = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
-    sdfFastLess(jjLess,:) = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
+    sdfAccLess(jjLess,:) = sdfAccCC;
+    sdfFastLess(jjLess,:) = sdfFastCC;
   end
   
   %parameterize baseline activity
 %   ccNS = ninfo(cc).unitNum; %index nstats correctly
-%   nstats(ccNS).blineAccMEAN = mean(sdfBaseAcc(cc,:));
-%   nstats(ccNS).blineFastMEAN = mean(sdfBaseFast(cc,:));
-%   nstats(ccNS).blineAccSD = std(sdfBaseAcc(cc,:));
-%   nstats(ccNS).blineFastSD = std(sdfBaseFast(cc,:));
+%   nstats(ccNS).blineAccMEAN = mean(sdfAccCC);
+%   nstats(ccNS).blineFastMEAN = mean(sdfFastCC);
+%   nstats(ccNS).blineAccSD = std(sdfAccCC);
+%   nstats(ccNS).blineFastSD = std(sdfFastCC);
   
 end%for:cells(cc)
 
@@ -87,15 +88,14 @@ nstats = nstats(idxKeep);
 
 %normalization
 normFactor = mean([[nstats.blineAccMEAN] ; [nstats.blineFastMEAN]])';
-sdfAccMore = sdfAccMore ./ normFactor(idxMoreE);
-sdfFastMore = sdfFastMore ./ normFactor(idxMoreE);
-sdfAccLess = sdfAccLess ./ normFactor(idxLessE);
-sdfFastLess = sdfFastLess ./ normFactor(idxLessE);
+sdfAccMore = sdfAccMore ./ normFactor(idxMore);
+sdfFastMore = sdfFastMore ./ normFactor(idxMore);
+sdfAccLess = sdfAccLess ./ normFactor(idxLess);
+sdfFastLess = sdfFastLess ./ normFactor(idxLess);
 
 figure()
 
 subplot(1,2,1); hold on %more efficient
-title('More efficient', 'FontSize',8)
 shaded_error_bar(T_BASE-3500, mean(sdfFastMore), std(sdfFastMore)/sqrt(NUM_CELLS), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
 shaded_error_bar(T_BASE-3500, mean(sdfAccMore), std(sdfAccMore)/sqrt(NUM_CELLS), {'r-', 'LineWidth',0.75})
 xlabel('Time from array (ms)')
@@ -104,44 +104,16 @@ xlim([T_BASE(1)-20, T_BASE(end)]-3500);
 yLimMore = get(gca, 'ylim');
 
 subplot(1,2,2); hold on %less efficient
-title('Less efficient', 'FontSize',8)
 shaded_error_bar(T_BASE-3500, mean(sdfFastLess), std(sdfFastLess)/sqrt(NUM_CELLS), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
 shaded_error_bar(T_BASE-3500, mean(sdfAccLess), std(sdfAccLess)/sqrt(NUM_CELLS), {'r-', 'LineWidth',1.5})
 ytickformat('%3.2f')
 xlim([T_BASE(1)-20, T_BASE(end)]-3500);
 yLimLess = get(gca, 'ylim');
 
-ppretty([10,1.5]); pause(0.05)
+ppretty([8,1.5]); pause(0.05)
 
 yLim = [min([yLimMore(1), yLimLess(1)]), max([yLimMore(2), yLimLess(2)])];
 set(gca, 'ylim',yLim); subplot(1,2,1); set(gca, 'ylim',yLim)
-
-%% Plotting - histogram of baseline difference
-blineDiffMore = mean(sdfFastMore,2) - mean(sdfAccMore,2);
-blineDiffLess = mean(sdfFastLess,2) - mean(sdfAccLess,2);
-
-figure()
-
-subplot(2,1,1); hold on
-histogram(blineDiffMore, 'BinWidth',.05, 'FaceColor',[.4 .4 .4], 'LineWidth',0.75)
-plot(mean(blineDiffMore)*ones(1,2), [0 4], 'k:', 'LineWidth',1.5)
-ylabel('Number of neurons')
-xtickformat('%2.1f')
-xLimMore = get(gca, 'xlim');
-
-subplot(2,1,2); hold on
-histogram(blineDiffLess, 'BinWidth',.05, 'FaceColor',[.4 .4 .4], 'LineWidth',1.5)
-plot(mean(blineDiffLess)*ones(1,2), [0 4], 'k:', 'LineWidth',1.5)
-xlabel('Discharge rate diff. (sp/s'); xtickformat('%2.1f')
-xLimLess = get(gca, 'xlim');
-
-ppretty([4.8,1.8])
-subplot(2,1,1); set(gca, 'YMinorTick','off')
-subplot(2,1,2); set(gca, 'YMinorTick','off')
-
-xLim = [min([xLimMore(1) xLimLess(1)]) , max([xLimMore(2) xLimLess(2)])];
-set(gca, 'xlim',xLim); subplot(2,1,1); set(gca, 'xlim',xLim)
-
 
 end%fxn:plotBlineXcondSAT()
 

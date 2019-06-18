@@ -7,13 +7,13 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxError = ((abs([ninfo.errGrade]) >= 2) & ~isnan([nstats.A_ChcErr_tErr_Acc]));
-idxEfficient = ismember([ninfo.taskType], [1]);
+idxError = ([ninfo.errGrade] >= 2);
+idxEfficient = ([ninfo.taskType] == 2);
 
 idxKeep = (idxArea & idxMonkey & idxError & idxEfficient);
 
-nstats = nstats(idxKeep);
 NUM_CELLS = sum(idxKeep);
+nstats = nstats(idxKeep);
 
 T_RE_PRIMARY = (-200 : 500);  OFFSET = 200;
 NUM_SAMP = length(T_RE_PRIMARY);
@@ -51,7 +51,7 @@ plot(T_RE_PRIMARY, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
 plot(T_RE_PRIMARY, PActiveAcc, 'r-', 'LineWidth',1.5)
 scatter(tCDFFast, yCDF, 40, [0 .7 0], 'filled')
 scatter(tCDFAcc, yCDF, 40, 'r', 'filled')
-xlim([-150 448])
+xlim([-200 450])
 xlabel('Time from primary saccade (ms)')
 ylabel('P (active)')
 ytickformat('%2.1f')

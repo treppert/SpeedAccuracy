@@ -3,7 +3,7 @@ function [ ] = plotDistrBuildupThresholdSAT( ninfo , nstats , varargin )
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\R\';
+ROOTDIR_STAT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -64,7 +64,7 @@ if (length(args.monkey) > 1) %don't save stats for single monkeys
     structOut.Condition(cc) = Condition(cc);
     structOut.Efficiency(cc) = Outcome(cc);
   end
-  save([ROOTDIR, args.area,'-BuildupActivity.mat'], 'structOut')
+  save([ROOTDIR_STAT, args.area,'-BuildupActivity.mat'], 'structOut')
 end
 
 end%fxn:plotDistrBuildupThresholdSAT()

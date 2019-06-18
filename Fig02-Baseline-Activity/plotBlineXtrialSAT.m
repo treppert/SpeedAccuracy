@@ -2,18 +2,17 @@ function [ ] = plotBlineXtrialSAT( binfo , ninfo , nstats , spikes , varargin )
 %plotBlineXtrialSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-if strcmp(args.area, 'SEF')
-  idxVis = ismember({ninfo.visType}, {'sustained'});
-else
-  idxVis = ([ninfo.visGrade] >= 0.5);
-end
-idxBlineEffect = ([nstats.blineEffect] == 1); %Fast > Acc
-idxEfficient = ismember([ninfo.taskType], [1,2]);
-idxKeep = (idxArea & idxMonkey & idxVis & idxBlineEffect & idxEfficient);
+
+idxBlineEffect = ([nstats.blineEffect] == 1);
+idxVis = ([ninfo.visGrade] >= 2);
+idxMove = ([ninfo.moveGrade] >= 2);
+idxEff = ([ninfo.taskType] == 2);
+
+idxKeep = (idxArea & idxMonkey & idxBlineEffect & idxEff);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
