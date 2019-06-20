@@ -1,17 +1,18 @@
-function [ varargout ] = plotBlineXcondSAT( binfo , ninfo , nstats , spikes , varargin )
-%plotBlineXcondSAT Summary of this function goes here
+function [ varargout ] = plotBaselineSDFSAT( binfo , ninfo , nstats , spikes , varargin )
+%plotBaselineSDFSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=',{'SEF'}}, {'type=',{'Vis'}}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxBlineRate = ([nstats.blineAccMEAN] >= 3); %!!! minimum baseline discharge rate
+idxBlineRate = ([nstats.blineAccMEAN] >= 3); %minimum baseline discharge rate
 
 idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxError = ([ninfo.errGrade] >= 2); idxReward = (abs([ninfo.rewGrade]) >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
 
-idxKeep = (idxArea & idxMonkey & idxBlineRate);
+% idxKeep = (idxArea & idxMonkey);% & idxBlineRate);
+idxKeep = (idxArea & idxMonkey & (idxVis | idxMove | idxErr | idxRew) & idxBlineRate);
 if ismember(args.type, 'Vis')
   idxKeep = (idxKeep & idxVis);
 end
@@ -19,10 +20,10 @@ if ismember(args.type, 'Move')
   idxKeep = (idxKeep & idxMove);
 end
 if ismember(args.type, 'Error')
-  idxKeep = (idxKeep & idxError);
+  idxKeep = (idxKeep & idxErr);
 end
 if ismember(args.type, 'Reward')
-  idxKeep = (idxKeep & idxReward);
+  idxKeep = (idxKeep & idxRew);
 end
 
 NUM_CELLS = sum(idxKeep);
@@ -51,7 +52,7 @@ for cc = 1:NUM_CELLS
   idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
   idxFast = ((binfo(kk).condition == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   
   sdfAccCC = nanmean(sdfCC(idxAcc & idxCorr, T_BASE));
   sdfFastCC = nanmean(sdfCC(idxFast & idxCorr, T_BASE));
@@ -67,11 +68,11 @@ for cc = 1:NUM_CELLS
   end
   
   %parameterize baseline activity
-%   ccNS = ninfo(cc).unitNum; %index nstats correctly
-%   nstats(ccNS).blineAccMEAN = mean(sdfAccCC);
-%   nstats(ccNS).blineFastMEAN = mean(sdfFastCC);
-%   nstats(ccNS).blineAccSD = std(sdfAccCC);
-%   nstats(ccNS).blineFastSD = std(sdfFastCC);
+  ccNS = ninfo(cc).unitNum; %index nstats correctly
+  nstats(ccNS).blineAccMEAN = mean(sdfAccCC);
+  nstats(ccNS).blineFastMEAN = mean(sdfFastCC);
+  nstats(ccNS).blineAccSD = std(sdfAccCC);
+  nstats(ccNS).blineFastSD = std(sdfFastCC);
   
 end%for:cells(cc)
 
@@ -115,5 +116,5 @@ ppretty([8,1.5]); pause(0.05)
 yLim = [min([yLimMore(1), yLimLess(1)]), max([yLimMore(2), yLimLess(2)])];
 set(gca, 'ylim',yLim); subplot(1,2,1); set(gca, 'ylim',yLim)
 
-end%fxn:plotBlineXcondSAT()
+end%fxn:plotBaselineSDFSAT()
 

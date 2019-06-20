@@ -1,0 +1,141 @@
+function [ ] = plotBaselineMUCount_X_RT_SAT( binfo , moves , ninfo , spikes , varargin )
+%plotBaselineMUCount_X_RT_SAT Summary of this function goes here
+%   Detailed explanation goes here
+
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+
+if ~any(ismember(args.monkey, {'Q','S'}))
+  binfo = binfo(1:16);
+end
+
+NUM_SESSION = length(binfo);
+
+idxArea = ismember({ninfo.area}, args.area);
+idxMonkey = ismember({ninfo.monkey}, args.monkey);
+
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
+
+idxKeep = (idxArea & idxMonkey & idxErr);
+
+ninfo = ninfo(idxKeep);
+spikes = spikes(idxKeep);
+
+RTLIM_ACC = [390 800];
+RTLIM_FAST = [150 450];
+
+T_BLINE = 3500 + [-600 20];
+
+RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
+RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;
+MIN_PER_BIN = 10; %minimum number of trials per RT bin
+
+%initializations
+zSpkCtAcc = NaN(NUM_SESSION,NBIN_ACC);
+zSpkCtFast = NaN(NUM_SESSION,NBIN_FAST);
+
+for kk = 1:NUM_SESSION
+  fprintf('Session %s\n', binfo(kk).session)
+  ccKK = find(ismember({ninfo.sess}, binfo(kk).session));  numCells = length(ccKK);
+  RTkk = double(moves(kk).resptime);
+  
+  %make sure we have neurons from this session
+  if (numCells == 0); continue; end
+  %print units
+  for cc = 1:numCells; fprintf('Unit %s - %s\n', ninfo(ccKK(cc)).sess, ninfo(ccKK(cc)).unit); end
+  
+  %session-specific initializations
+  spkCount = NaN(numCells,binfo(kk).num_trials);
+  idxPoorIso = false(numCells,binfo(kk).num_trials);
+  
+  %loop over all neurons from this session to compute spike counts
+  for cc = 1:numCells
+    spikesCC = spikes(ccKK(cc)).SAT;
+    
+    %ref spikes to time of array
+    spkCount(cc,:) = cellfun(@(x) sum((x > T_BLINE(1)) & (x < T_BLINE(2))), spikesCC);
+    
+    %account for trials with poor isolation
+    idxPoorIso(cc,:) = identify_trials_poor_isolation_SAT(ninfo(ccKK(cc)), binfo(kk).num_trials);
+    
+  end%for:cells(cc)
+  
+  %remove trials with poor unit isolation
+  idxPoorIso = logical(sum(idxPoorIso,1));
+  
+  %index by trial outcome
+%   idxTimeErr = (binfo(kk).err_time);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
+  %index by task condition
+  idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~(idxPoorIso | RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk)));
+  idxFast = ((binfo(kk).condition == 3) & idxCorr & ~(idxPoorIso | RTkk < RTLIM_FAST(1) | RTkk > RTLIM_FAST(2) | isnan(RTkk)));
+  
+  %sum discharge rate across all units from this session
+  spkCountAcc = sum(spkCount(:,idxAcc), 1);
+  spkCountFast = sum(spkCount(:,idxFast), 1);
+  
+  %cut outlier values for spike count
+  idxCutAcc = estimate_spread(spkCountAcc, 3.5);    spkCountAcc(idxCutAcc) = [];
+  idxCutFast = estimate_spread(spkCountFast, 3.5);  spkCountFast(idxCutFast) = [];
+  
+  %split RT by task condition
+  RTacc = RTkk(idxAcc);   RTacc(idxCutAcc) = [];
+  RTfast = RTkk(idxFast); RTfast(idxCutFast) = [];
+  
+  %z-score spike counts
+  muSpkCt = mean([spkCountAcc spkCountFast]);
+  sdSpkCt = std([spkCountAcc spkCountFast]);
+  spkCountAcc = (spkCountAcc - muSpkCt) / sdSpkCt;
+  spkCountFast = (spkCountFast - muSpkCt) / sdSpkCt;
+  
+  %save for across-session average
+  for ii = 1:NBIN_ACC
+    idxII = ((RTacc > RTBIN_ACC(ii)) & (RTacc < RTBIN_ACC(ii+1)));
+    if (sum(idxII) >= MIN_PER_BIN)
+      zSpkCtAcc(kk,ii) = mean(spkCountAcc(idxII));
+    end
+  end%for:bin-Accurate
+  for ii = 1:NBIN_FAST
+    idxII = ((RTfast > RTBIN_FAST(ii)) & (RTfast < RTBIN_FAST(ii+1)));
+    if (sum(idxII) >= MIN_PER_BIN)
+      zSpkCtFast(kk,ii) = mean(spkCountFast(idxII));
+    end
+  end%for:bin-Fast
+  
+end%for:session(kk)
+
+%% Plotting - Across sessions
+RTPLOT_ACC = RTBIN_ACC(1:end-1) + diff(RTBIN_ACC)/2;
+RTPLOT_FAST = RTBIN_FAST(1:end-1) + diff(RTBIN_FAST)/2;
+
+kkMore = ([binfo.taskType] == 1);   kkLess = ([binfo.taskType] == 2);
+zSpkAcc_More = zSpkCtAcc(kkMore,:);   zSpkAcc_Less = zSpkCtAcc(kkLess,:);
+zSpkFast_More = zSpkCtFast(kkMore,:); zSpkFast_Less = zSpkCtFast(kkLess,:);
+
+NSEM_ACC_MORE = sum(~isnan(zSpkAcc_More), 1);   NSEM_ACC_LESS = sum(~isnan(zSpkAcc_Less), 1);
+NSEM_FAST_MORE = sum(~isnan(zSpkFast_More), 1);   NSEM_FAST_LESS = sum(~isnan(zSpkFast_Less), 1);
+
+figure(); hold on
+errorbar(RTPLOT_ACC, nanmean(zSpkAcc_More), nanstd(zSpkAcc_More)./NSEM_ACC_MORE, 'capsize',0, 'Color','r')
+errorbar(RTPLOT_FAST, nanmean(zSpkFast_More), nanstd(zSpkFast_More)./NSEM_FAST_MORE, 'capsize',0, 'Color',[0 .7 0])
+errorbar(RTPLOT_ACC, nanmean(zSpkAcc_Less), nanstd(zSpkAcc_Less)./NSEM_ACC_LESS, 'capsize',0, 'Color','r', 'LineWidth',1.25)
+errorbar(RTPLOT_FAST, nanmean(zSpkFast_Less), nanstd(zSpkFast_Less)./NSEM_FAST_LESS, 'capsize',0, 'Color',[0 .7 0], 'LineWidth',1.25)
+xlabel('Response time (ms)')
+ylabel('Multi-unit spike count (z)'); ytickformat('%3.2f')
+ppretty([6.4,4])
+
+%% Compute stats on session averages
+% zSpkCtAcc = reshape(zSpkCtAcc', 1,NUM_SESSION*NBIN_ACC)';     rtAcc = repmat(RTPLOT_ACC, 1,NUM_SESSION)';
+% zSpkCtFast = reshape(zSpkCtFast', 1,NUM_SESSION*NBIN_FAST)';  rtFast = repmat(RTPLOT_FAST, 1,NUM_SESSION)';
+% 
+% %remove all NaNs
+% inanAcc = isnan(zSpkCtAcc);     zSpkCtAcc(inanAcc) = [];   rtAcc(inanAcc) = [];
+% inanFast = isnan(zSpkCtFast);   zSpkCtFast(inanFast) = [];  rtFast(inanFast) = [];
+% 
+% [rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');      tvalAcc = convertPearsonR_to_tStat(rhoAcc, length(rtAcc));
+% [rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');  tvalFast = convertPearsonR_to_tStat(rhoFast, length(rtFast));
+% fprintf('Accurate: R = %g  p = %g  n = %d  t = %g\n', rhoAcc, pvalAcc, length(rtAcc), tvalAcc)
+% fprintf('Fast: R = %g  p = %g  n = %d  t = %g\n', rhoFast, pvalFast, length(rtFast), tvalFast)
+
+end%fxn:plotBaselineMUCount_X_RT_SAT()
