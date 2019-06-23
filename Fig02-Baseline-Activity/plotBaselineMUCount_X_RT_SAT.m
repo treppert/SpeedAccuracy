@@ -1,6 +1,9 @@
 function [ ] = plotBaselineMUCount_X_RT_SAT( binfo , moves , ninfo , spikes , varargin )
-%plotBaselineMUCount_X_RT_SAT Summary of this function goes here
-%   Detailed explanation goes here
+%plotBaselineMUCount_X_RT_SAT This function plots baseline discharge rate
+%(z-score) vs. RT separately for each task condition and level of search
+%efficiency. Statistics are drawn on a single-neuron basis by computing a
+%Spearman rank correlation coefficient for the relationship between
+%discharge rate and RT.
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
@@ -29,17 +32,13 @@ T_BLINE = 3500 + [-600 20];
 
 RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
 RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;
-MIN_PER_BIN = 8; %minimum number of trials per RT bin
+MIN_PER_BIN = 10; %minimum number of trials per RT bin
 
 %initializations
 zSpkCtAcc = NaN(NUM_SESSION,NBIN_ACC);
 zSpkCtFast = NaN(NUM_SESSION,NBIN_FAST);
-zMuAcc = NaN(1,NUM_SESSION); %avergae across RT bins
+zMuAcc = NaN(1,NUM_SESSION); %average across RT bins
 zMuFast = NaN(1,NUM_SESSION);
-
-%save all data to compute Pearson correlation coefficient
-zCtAccMORE = [];   rtAccMORE = [];      zCtAccLESS = [];   rtAccLESS = [];
-zCtFastMORE = [];  rtFastMORE = [];     zCtFastLESS = [];  rtFastLESS = [];
 
 for kk = 1:NUM_SESSION
   ccKK = find(ismember({ninfo.sess}, binfo(kk).session));  numCells = length(ccKK);
@@ -97,15 +96,6 @@ for kk = 1:NUM_SESSION
   spkCountAcc = (spkCountAcc - muSpkCt) / sdSpkCt;
   spkCountFast = (spkCountFast - muSpkCt) / sdSpkCt;
   
-  %save all data for Pearson correlation computation
-  if (binfo(kk).taskType == 1) %More efficient
-    rtAccMORE = cat(2, rtAccMORE, RTacc);     zCtAccMORE = cat(2, zCtAccMORE, spkCountAcc);
-    rtFastMORE = cat(2, rtFastMORE, RTfast);  zCtFastMORE = cat(2, zCtFastMORE, spkCountFast);
-  else %Less efficient
-    rtAccLESS = cat(2, rtAccLESS, RTacc);     zCtAccLESS = cat(2, zCtAccLESS, spkCountAcc);
-    rtFastLESS = cat(2, rtFastLESS, RTfast);  zCtFastLESS = cat(2, zCtFastLESS, spkCountFast);
-  end
-  
   %save average spike count (z) per condition
   zMuAcc(kk) = mean(spkCountAcc);
   zMuFast(kk) = mean(spkCountFast);
@@ -126,7 +116,7 @@ for kk = 1:NUM_SESSION
   
 end%for:session(kk)
 
-%% Plotting
+%% Plotting -- Mean multi-unit spike count
 kkMore = ([binfo.taskType] == 1) & ~isnan(zMuAcc);    NUM_MORE = sum(kkMore);
 kkLess = ([binfo.taskType] == 2) & ~isnan(zMuFast);   NUM_LESS = sum(kkLess);
 
@@ -139,49 +129,44 @@ muAccLess = mean(ctAccLess);      seAccLess = std(ctAccLess) / sqrt(NUM_LESS);
 muFastMore = mean(ctFastMore);    seFastMore = std(ctFastMore) / sqrt(NUM_MORE);
 muFastLess = mean(ctFastLess);    seFastLess = std(ctFastLess) / sqrt(NUM_LESS);
 
-% figure(); hold on
-% bar(1, muFastMore, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
-% bar(2, muFastLess, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
-% bar(3, muAccMore, 0.7, 'FaceColor','r', 'LineWidth',0.25)
-% bar(4, muAccLess, 0.7, 'FaceColor','r', 'LineWidth',1.25)
-% errorbar([muFastMore muFastLess muAccMore muAccLess], [seFastMore seFastLess seAccMore seAccLess], 'Color','k', 'CapSize',0)
-% xticks([]); xticklabels([])
-% ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
-% ppretty([2,3])
-% 
-% %stats - two-way between-subjects ANOVA
+figure(); hold on
+bar(1, muFastMore, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+bar(2, muFastLess, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+bar(3, muAccMore, 0.7, 'FaceColor','r', 'LineWidth',0.25)
+bar(4, muAccLess, 0.7, 'FaceColor','r', 'LineWidth',1.25)
+errorbar([muFastMore muFastLess muAccMore muAccLess], [seFastMore seFastLess seAccMore seAccLess], 'Color','k', 'CapSize',0)
+xticks([]); xticklabels([])
+ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
+ppretty([2,3]); pause(0.1)
+
+%stats - two-way between-subjects ANOVA
 % DV_spkCt = [[ctAccMore ctAccLess] ; [ctFastMore ctFastLess]]';
 % anova2(DV_spkCt, NUM_MORE);
 
-%multi-unit spike count vs. RT
+%% Plotting -- Multi-unit spike count vs. RT
+MIN_NUM_SESS = 3; %minimum number of sessions to plot a data point
 RTPLOT_ACC = RTBIN_ACC(1:end-1) + diff(RTBIN_ACC)/2;
 RTPLOT_FAST = RTBIN_FAST(1:end-1) + diff(RTBIN_FAST)/2;
 
 zSpkAcc_More = zSpkCtAcc(kkMore,:);   zSpkAcc_Less = zSpkCtAcc(kkLess,:);
 zSpkFast_More = zSpkCtFast(kkMore,:); zSpkFast_Less = zSpkCtFast(kkLess,:);
 
-NSEM_ACC_MORE = sum(~isnan(zSpkAcc_More), 1);   NSEM_ACC_LESS = sum(~isnan(zSpkAcc_Less), 1);
+%remove data points with low number of sessions
+nAccMore = sum(~isnan(zSpkAcc_More), 1);          nAccLess = sum(~isnan(zSpkAcc_Less), 1);
+nFastMore = sum(~isnan(zSpkFast_More), 1);        nFastLess = sum(~isnan(zSpkFast_Less), 1);
+zSpkAcc_More(:,nAccMore < MIN_NUM_SESS) = NaN;    zSpkAcc_Less(:,nAccLess < MIN_NUM_SESS) = NaN;
+zSpkFast_More(:,nFastMore < MIN_NUM_SESS) = NaN;  zSpkFast_Less(:,nFastLess < MIN_NUM_SESS) = NaN;
+
+NSEM_ACC_MORE = sum(~isnan(zSpkAcc_More), 1);     NSEM_ACC_LESS = sum(~isnan(zSpkAcc_Less), 1);
 NSEM_FAST_MORE = sum(~isnan(zSpkFast_More), 1);   NSEM_FAST_LESS = sum(~isnan(zSpkFast_Less), 1);
 
-figure(); hold on
-errorbar(RTPLOT_ACC, nanmean(zSpkAcc_More), nanstd(zSpkAcc_More)./NSEM_ACC_MORE, 'capsize',0, 'Color','r')
-errorbar(RTPLOT_FAST, nanmean(zSpkFast_More), nanstd(zSpkFast_More)./NSEM_FAST_MORE, 'capsize',0, 'Color',[0 .7 0])
-errorbar(RTPLOT_ACC, nanmean(zSpkAcc_Less), nanstd(zSpkAcc_Less)./NSEM_ACC_LESS, 'capsize',0, 'Color','r', 'LineWidth',1.25)
-errorbar(RTPLOT_FAST, nanmean(zSpkFast_Less), nanstd(zSpkFast_Less)./NSEM_FAST_LESS, 'capsize',0, 'Color',[0 .7 0], 'LineWidth',1.25)
-xlabel('Response time (ms)')
-ylabel('Multi-unit spike count (z)'); ytickformat('%3.2f')
-ppretty([6.4,4])
-
-%stats - Pearson correlation coefficient
-[rhoAcc,pvalAcc] = corr(rtAccMORE', zCtAccMORE', 'Type','Spearman');
-[rhoFast,pvalFast] = corr(rtFastMORE', zCtFastMORE', 'Type','Spearman');
-fprintf('More efficient:\n')
-fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
-fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
-[rhoAcc,pvalAcc] = corr(rtAccLESS', zCtAccLESS', 'Type','Spearman');
-[rhoFast,pvalFast] = corr(rtFastLESS', zCtFastLESS', 'Type','Spearman');
-fprintf('\nLess efficient:\n')
-fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
-fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
+% figure(); hold on
+% errorbar(RTPLOT_ACC, nanmean(zSpkAcc_More), nanstd(zSpkAcc_More)./NSEM_ACC_MORE, 'capsize',0, 'Color','r')
+% errorbar(RTPLOT_FAST, nanmean(zSpkFast_More), nanstd(zSpkFast_More)./NSEM_FAST_MORE, 'capsize',0, 'Color',[0 .7 0])
+% errorbar(RTPLOT_ACC, nanmean(zSpkAcc_Less), nanstd(zSpkAcc_Less)./NSEM_ACC_LESS, 'capsize',0, 'Color','r', 'LineWidth',1.25)
+% errorbar(RTPLOT_FAST, nanmean(zSpkFast_Less), nanstd(zSpkFast_Less)./NSEM_FAST_LESS, 'capsize',0, 'Color',[0 .7 0], 'LineWidth',1.25)
+% xlabel('Response time (ms)')
+% ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
+% ppretty([6.4,3])
 
 end%fxn:plotBaselineMUCount_X_RT_SAT()

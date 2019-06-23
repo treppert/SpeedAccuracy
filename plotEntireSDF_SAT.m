@@ -36,6 +36,10 @@ for cc = 1:NUM_CELLS
   rtKK = double(moves(kk).resptime);
   trewKK = double(binfo(kk).rewtime + binfo(kk).resptime);
   
+  if ~ismember(args.area, {'SEF'})
+    trewKK = zeros(1,binfo(kk).num_trials);
+  end
+  
   %compute single-trial SDF
   SDFstim = compute_spike_density_fxn(spikes(cc).SAT);
   SDFresp = align_signal_on_response(SDFstim, rtKK);
@@ -77,9 +81,9 @@ for cc = 1:NUM_CELLS
   nstats(ccNS).NormFactor_All  = max([nfVis nfMove nfRew]);
   
   %plotting
-  plotSDFcc(TIME, sdfAcc, sdfFast, ninfo(cc), nstats(ccNS))
-  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff');
-  pause(0.1); close()
+%   plotSDFcc(TIME, sdfAcc, sdfFast, ninfo(cc), nstats(ccNS)); pause(0.1)
+%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff');
+%   pause(0.1); close()
   
 end%for:cells(cc)
 

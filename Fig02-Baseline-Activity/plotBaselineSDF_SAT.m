@@ -86,13 +86,13 @@ TIME.STIM = TIME.STIM - 3500;
 TIME.RESP = TIME.RESP - 3500;
 
 %time from stimulus for plotting close-up of baseline
-T_FOCUSED = (-350 : -150);
+T_FOCUSED = (-350 : -250);
 IDX_FOCUSED = ismember(TIME.STIM, T_FOCUSED);
 
 %compute common y-axis scale
 tmp = [mean(sdfAcc.Stim.More) mean(sdfAcc.Resp.More) mean(sdfFast.Stim.More) mean(sdfFast.Resp.More) ...
   mean(sdfAcc.Stim.Less) mean(sdfAcc.Resp.Less) mean(sdfFast.Stim.Less) mean(sdfFast.Resp.Less)];
-yLim = [min(tmp) max(tmp)];
+yLim = [(min(tmp)-0.05) , (max(tmp)+0.05)];
 
 figure()
 
@@ -101,34 +101,42 @@ subplot(2,3,1); hold on %from stimulus
 plot([0 0], yLim, 'k:')
 shaded_error_bar(TIME.STIM, mean(sdfAcc.Stim.More), std(sdfAcc.Stim.More)/sqrt(NUM_MORE), {'r-', 'LineWidth',0.75})
 shaded_error_bar(TIME.STIM, mean(sdfFast.Stim.More), std(sdfFast.Stim.More)/sqrt(NUM_MORE), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
-xlabel('Time from array (ms)'); ylabel('Normalized activity')
+ylabel('Norm. activity'); ytickformat('%2.1f')
 
 subplot(2,3,2); hold on %from response
 plot([0 0], yLim, 'k:')
 shaded_error_bar(TIME.RESP, mean(sdfAcc.Resp.More), std(sdfAcc.Resp.More)/sqrt(NUM_MORE), {'r-', 'LineWidth',0.75})
 shaded_error_bar(TIME.RESP, mean(sdfFast.Resp.More), std(sdfFast.Resp.More)/sqrt(NUM_MORE), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
-xlabel('Time from response (ms)'); xlim([TIME.RESP(1) TIME.RESP(end)])
+xlim([TIME.RESP(1) TIME.RESP(end)])
 
 subplot(2,3,3); hold on %focused look at baseline
 plot(T_FOCUSED, mean(sdfAcc.Stim.More(:,IDX_FOCUSED)), 'r-', 'LineWidth',0.75)
 plot(T_FOCUSED, mean(sdfFast.Stim.More(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',0.75)
+yLimFocus_More = get(gca, 'ylim'); ytickformat('%3.2f')
 
 %Less efficient
-subplot(1,3,1); hold on %from stimulus
+subplot(2,3,4); hold on %from stimulus
 plot([0 0], yLim, 'k:')
 shaded_error_bar(TIME.STIM, mean(sdfAcc.Stim.Less), std(sdfAcc.Stim.Less)/sqrt(NUM_LESS), {'r-', 'LineWidth',1.25})
-shaded_error_bar(TIME.STIM, mean(sdfFast.Stim.Less), std(sdfFast.Stim.Less)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
-xlabel('Time from array (ms)')
+shaded_error_bar(TIME.STIM, nanmean(sdfFast.Stim.Less), nanstd(sdfFast.Stim.Less)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
+xlabel('Time from array (ms)'); ytickformat('%2.1f')
 
-subplot(1,3,2); hold on %from response
+subplot(2,3,5); hold on %from response
 plot([0 0], yLim, 'k:')
 shaded_error_bar(TIME.RESP, mean(sdfAcc.Resp.Less), std(sdfAcc.Resp.Less)/sqrt(NUM_LESS), {'r-', 'LineWidth',1.25})
 shaded_error_bar(TIME.RESP, mean(sdfFast.Resp.Less), std(sdfFast.Resp.Less)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
 xlabel('Time from response (ms)'); xlim([TIME.RESP(1) TIME.RESP(end)])
 
-subplot(1,3,3); hold on %focused look at baseline
+subplot(2,3,6); hold on %focused look at baseline
 plot(T_FOCUSED, mean(sdfAcc.Stim.Less(:,IDX_FOCUSED)), 'r-', 'LineWidth',1.25)
-plot(T_FOCUSED, mean(sdfFast.Stim.Less(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
+plot(T_FOCUSED, nanmean(sdfFast.Stim.Less(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
+yLimFocus_Less = get(gca, 'ylim'); ytickformat('%3.2f')
+
+%common y-limits for the focused plots
+tmp = [yLimFocus_More yLimFocus_Less];
+yLim = [min(tmp) max(tmp)];
+subplot(2,3,3); set(gca, 'ylim',yLim)
+subplot(2,3,6); set(gca, 'ylim',yLim)
 
 ppretty([12,1.4])
 
