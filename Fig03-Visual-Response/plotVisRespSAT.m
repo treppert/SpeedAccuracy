@@ -21,13 +21,13 @@ for cc = 1:length(ninfo)
   if ~ismember(ninfo(cc).visField, 9); idxRF(cc) = true; end
 end
 
-idxKeep = (idxArea & idxMonkey & idxVis & idxTST & idxEff);
+idxKeep = (idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_STIM = 3500 + (-50 : 350);  OFFSET = 50;
+T_STIM = 3500 + (-50 : 300);  OFFSET = 50;
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
 visResp = new_struct({'AccTin','AccDin','FastTin','FastDin'}, 'dim',[1,NUM_CELLS]);
@@ -47,7 +47,7 @@ for cc = 1:NUM_CELLS
   idxAcc = (binfo(kk).condition == 1 & ~idxIso);
   idxFast = (binfo(kk).condition == 3 & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   %index by response dir re. response field
   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
 %   idxRF = true(1,binfo(kk).num_trials); %**for plotting RF=9
@@ -81,7 +81,7 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRTSTFast = VRTSTFast;
   
   %normalization factor
-%   nstats(ccNS).visRespNormFactor = max(visResp(cc).Fast);
+  nstats(ccNS).NormFactor_Vis = max(visResp(cc).FastTin);
   
   %plot individual cell activity
 %   plotVisRespSATcc(T_STIM, visResp(cc), ninfo(cc), nstats(ccNS));
@@ -105,7 +105,7 @@ visRespAccTin = transpose([visResp.AccTin]);    visRespAccDin = transpose([visRe
 visRespFastTin = transpose([visResp.FastTin]);  visRespFastDin = transpose([visResp.FastDin]);
 
 %normalization
-normFactor = max(visRespFastTin,[],2);
+normFactor = [nstats.NormFactor_Vis];
 visRespAccTin = visRespAccTin ./ normFactor;    visRespAccDin = visRespAccDin ./ normFactor;
 visRespFastTin = visRespFastTin ./ normFactor;  visRespFastDin = visRespFastDin ./ normFactor;
 

@@ -98,7 +98,7 @@ bar(3, meanAccEff, 0.7, 'FaceColor','r', 'LineWidth',0.25)
 bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
 xticks([]); xticklabels([])
-ylabel(param)
+ylabel(parmName)
 ppretty([1,2])
 % print([ROOTDIR_FIG,args.area,'-',param,'-ZBar.pdf'], '-dpdf'); pause(0.1)
 
@@ -147,9 +147,10 @@ DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
 %factors
 F_Condition = [ ones(1,N_CELL) 2*ones(1,N_CELL) ]';
 F_Efficiency = [ ones(1,N_MORE_EFF) 2*ones(1,N_LESS_EFF) ones(1,N_MORE_EFF) 2*ones(1,N_LESS_EFF) ]';
+F_Neuron = [ (1:N_CELL) , (1:N_CELL) ]';
 
 %write data
-save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency')
+save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency','F_Neuron')
 
 end%util:writeData()
 

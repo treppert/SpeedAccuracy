@@ -1,5 +1,5 @@
-function [ ] = plotPErrXRT( binfo , moves, varargin )
-%plotPErrXRT Summary of this function goes here
+function [ ] = plotChcErrRate_X_RTavg( binfo , moves, varargin )
+%plotChcErrRate_X_RTavg Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -61,5 +61,5 @@ else %not splitting data by task type
 end%if:(PLOT_X_TASK)
 
 
-end%fxn:plotPErrXRT()
+end%fxn:plotChcErrRate_X_RTavg()
 

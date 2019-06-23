@@ -1,5 +1,5 @@
-function [ varargout ] = plotChcErrRateXRT( binfo , moves , varargin )
-%plotChcErrRateXRT Summary of this function goes here
+function [ varargout ] = plotChcErrRate_X_RTbin( binfo , moves , varargin )
+%plotChcErrRate_X_RTbin Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -49,19 +49,19 @@ end%for:session(kk)
 
 
 %% Plotting
-% NUM_SE_ACC = sum(~isnan(chcErrRateAcc),1);
-% NUM_SE_FAST = sum(~isnan(chcErrRateFast),1);
-% 
-% mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NUM_SE_ACC);
-% mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NUM_SE_FAST);
-% 
-% figure(); hold on
-% plot([0 0], [0 .9], 'k:')
-% errorbar(RT_PLOT_ACC, mu_ERAcc, SE_ERAcc, 'r-', 'CapSize',0, 'LineWidth',0.75)
-% errorbar(RT_PLOT_FAST, mu_ERFast, SE_ERFast, '-', 'Color',[0 .7 0], 'CapSize',0, 'LineWidth',0.75)
-% xlabel('Response time from deadline (ms)')
-% ylabel('Choice error rate'); ytickformat('%2.1f')
-% ppretty([4,6])
+NUM_SE_ACC = sum(~isnan(chcErrRateAcc),1);
+NUM_SE_FAST = sum(~isnan(chcErrRateFast),1);
+
+mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NUM_SE_ACC);
+mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NUM_SE_FAST);
+
+figure(); hold on
+plot([0 0], [0 .9], 'k:')
+errorbar(RT_PLOT_ACC, mu_ERAcc, SE_ERAcc, 'r-', 'CapSize',0, 'LineWidth',0.75)
+errorbar(RT_PLOT_FAST, mu_ERFast, SE_ERFast, '-', 'Color',[0 .7 0], 'CapSize',0, 'LineWidth',0.75)
+xlabel('Response time from deadline (ms)')
+ylabel('Choice error rate'); ytickformat('%2.1f')
+ppretty([4,6])
 
 %% Stats
 %prepare session averages for Pearson correlation analysis
@@ -91,5 +91,5 @@ if (nargout > 0)
   varargout{1} = statCorr;
 end
 
-end%fxn:plotChcErrRateXRT()
+end%fxn:plotChcErrRate_X_RTbin()
 

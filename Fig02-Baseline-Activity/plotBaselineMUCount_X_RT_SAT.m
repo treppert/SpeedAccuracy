@@ -17,7 +17,7 @@ idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
 idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
 idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
-idxKeep = (idxArea & idxMonkey & idxErr);
+idxKeep = (idxArea & idxMonkey & idxRew);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -29,21 +29,27 @@ T_BLINE = 3500 + [-600 20];
 
 RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
 RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;
-MIN_PER_BIN = 10; %minimum number of trials per RT bin
+MIN_PER_BIN = 8; %minimum number of trials per RT bin
 
 %initializations
 zSpkCtAcc = NaN(NUM_SESSION,NBIN_ACC);
 zSpkCtFast = NaN(NUM_SESSION,NBIN_FAST);
+zMuAcc = NaN(1,NUM_SESSION); %avergae across RT bins
+zMuFast = NaN(1,NUM_SESSION);
+
+%save all data to compute Pearson correlation coefficient
+zCtAccMORE = [];   rtAccMORE = [];      zCtAccLESS = [];   rtAccLESS = [];
+zCtFastMORE = [];  rtFastMORE = [];     zCtFastLESS = [];  rtFastLESS = [];
 
 for kk = 1:NUM_SESSION
-  fprintf('Session %s\n', binfo(kk).session)
   ccKK = find(ismember({ninfo.sess}, binfo(kk).session));  numCells = length(ccKK);
   RTkk = double(moves(kk).resptime);
   
   %make sure we have neurons from this session
   if (numCells == 0); continue; end
   %print units
-  for cc = 1:numCells; fprintf('Unit %s - %s\n', ninfo(ccKK(cc)).sess, ninfo(ccKK(cc)).unit); end
+  fprintf('Session %s\n', binfo(kk).session)
+%   for cc = 1:numCells; fprintf('Unit %s - %s\n', ninfo(ccKK(cc)).sess, ninfo(ccKK(cc)).unit); end
   
   %session-specific initializations
   spkCount = NaN(numCells,binfo(kk).num_trials);
@@ -65,7 +71,6 @@ for kk = 1:NUM_SESSION
   idxPoorIso = logical(sum(idxPoorIso,1));
   
   %index by trial outcome
-%   idxTimeErr = (binfo(kk).err_time);
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   %index by task condition
   idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~(idxPoorIso | RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk)));
@@ -74,6 +79,9 @@ for kk = 1:NUM_SESSION
   %sum discharge rate across all units from this session
   spkCountAcc = sum(spkCount(:,idxAcc), 1);
   spkCountFast = sum(spkCount(:,idxFast), 1);
+  
+  %skip sessions with extremely low spike count
+  if (mean(spkCountAcc) < 1.0); continue; end
   
   %cut outlier values for spike count
   idxCutAcc = estimate_spread(spkCountAcc, 3.5);    spkCountAcc(idxCutAcc) = [];
@@ -89,7 +97,20 @@ for kk = 1:NUM_SESSION
   spkCountAcc = (spkCountAcc - muSpkCt) / sdSpkCt;
   spkCountFast = (spkCountFast - muSpkCt) / sdSpkCt;
   
-  %save for across-session average
+  %save all data for Pearson correlation computation
+  if (binfo(kk).taskType == 1) %More efficient
+    rtAccMORE = cat(2, rtAccMORE, RTacc);     zCtAccMORE = cat(2, zCtAccMORE, spkCountAcc);
+    rtFastMORE = cat(2, rtFastMORE, RTfast);  zCtFastMORE = cat(2, zCtFastMORE, spkCountFast);
+  else %Less efficient
+    rtAccLESS = cat(2, rtAccLESS, RTacc);     zCtAccLESS = cat(2, zCtAccLESS, spkCountAcc);
+    rtFastLESS = cat(2, rtFastLESS, RTfast);  zCtFastLESS = cat(2, zCtFastLESS, spkCountFast);
+  end
+  
+  %save average spike count (z) per condition
+  zMuAcc(kk) = mean(spkCountAcc);
+  zMuFast(kk) = mean(spkCountFast);
+  
+  %save multi-unit spike counts vs. RT
   for ii = 1:NBIN_ACC
     idxII = ((RTacc > RTBIN_ACC(ii)) & (RTacc < RTBIN_ACC(ii+1)));
     if (sum(idxII) >= MIN_PER_BIN)
@@ -105,11 +126,37 @@ for kk = 1:NUM_SESSION
   
 end%for:session(kk)
 
-%% Plotting - Across sessions
+%% Plotting
+kkMore = ([binfo.taskType] == 1) & ~isnan(zMuAcc);    NUM_MORE = sum(kkMore);
+kkLess = ([binfo.taskType] == 2) & ~isnan(zMuFast);   NUM_LESS = sum(kkLess);
+
+%multi-unit spike count average
+ctAccMore = zMuAcc(kkMore);       ctAccLess = zMuAcc(kkLess);
+ctFastMore = zMuFast(kkMore);     ctFastLess = zMuFast(kkLess);
+
+muAccMore = mean(ctAccMore);      seAccMore = std(ctAccMore) / sqrt(NUM_MORE);
+muAccLess = mean(ctAccLess);      seAccLess = std(ctAccLess) / sqrt(NUM_LESS);
+muFastMore = mean(ctFastMore);    seFastMore = std(ctFastMore) / sqrt(NUM_MORE);
+muFastLess = mean(ctFastLess);    seFastLess = std(ctFastLess) / sqrt(NUM_LESS);
+
+% figure(); hold on
+% bar(1, muFastMore, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+% bar(2, muFastLess, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+% bar(3, muAccMore, 0.7, 'FaceColor','r', 'LineWidth',0.25)
+% bar(4, muAccLess, 0.7, 'FaceColor','r', 'LineWidth',1.25)
+% errorbar([muFastMore muFastLess muAccMore muAccLess], [seFastMore seFastLess seAccMore seAccLess], 'Color','k', 'CapSize',0)
+% xticks([]); xticklabels([])
+% ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
+% ppretty([2,3])
+% 
+% %stats - two-way between-subjects ANOVA
+% DV_spkCt = [[ctAccMore ctAccLess] ; [ctFastMore ctFastLess]]';
+% anova2(DV_spkCt, NUM_MORE);
+
+%multi-unit spike count vs. RT
 RTPLOT_ACC = RTBIN_ACC(1:end-1) + diff(RTBIN_ACC)/2;
 RTPLOT_FAST = RTBIN_FAST(1:end-1) + diff(RTBIN_FAST)/2;
 
-kkMore = ([binfo.taskType] == 1);   kkLess = ([binfo.taskType] == 2);
 zSpkAcc_More = zSpkCtAcc(kkMore,:);   zSpkAcc_Less = zSpkCtAcc(kkLess,:);
 zSpkFast_More = zSpkCtFast(kkMore,:); zSpkFast_Less = zSpkCtFast(kkLess,:);
 
@@ -125,17 +172,16 @@ xlabel('Response time (ms)')
 ylabel('Multi-unit spike count (z)'); ytickformat('%3.2f')
 ppretty([6.4,4])
 
-%% Compute stats on session averages
-% zSpkCtAcc = reshape(zSpkCtAcc', 1,NUM_SESSION*NBIN_ACC)';     rtAcc = repmat(RTPLOT_ACC, 1,NUM_SESSION)';
-% zSpkCtFast = reshape(zSpkCtFast', 1,NUM_SESSION*NBIN_FAST)';  rtFast = repmat(RTPLOT_FAST, 1,NUM_SESSION)';
-% 
-% %remove all NaNs
-% inanAcc = isnan(zSpkCtAcc);     zSpkCtAcc(inanAcc) = [];   rtAcc(inanAcc) = [];
-% inanFast = isnan(zSpkCtFast);   zSpkCtFast(inanFast) = [];  rtFast(inanFast) = [];
-% 
-% [rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');      tvalAcc = convertPearsonR_to_tStat(rhoAcc, length(rtAcc));
-% [rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');  tvalFast = convertPearsonR_to_tStat(rhoFast, length(rtFast));
-% fprintf('Accurate: R = %g  p = %g  n = %d  t = %g\n', rhoAcc, pvalAcc, length(rtAcc), tvalAcc)
-% fprintf('Fast: R = %g  p = %g  n = %d  t = %g\n', rhoFast, pvalFast, length(rtFast), tvalFast)
+%stats - Pearson correlation coefficient
+[rhoAcc,pvalAcc] = corr(rtAccMORE', zCtAccMORE', 'Type','Spearman');
+[rhoFast,pvalFast] = corr(rtFastMORE', zCtFastMORE', 'Type','Spearman');
+fprintf('More efficient:\n')
+fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
+fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
+[rhoAcc,pvalAcc] = corr(rtAccLESS', zCtAccLESS', 'Type','Spearman');
+[rhoFast,pvalFast] = corr(rtFastLESS', zCtFastLESS', 'Type','Spearman');
+fprintf('\nLess efficient:\n')
+fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
+fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
 
 end%fxn:plotBaselineMUCount_X_RT_SAT()

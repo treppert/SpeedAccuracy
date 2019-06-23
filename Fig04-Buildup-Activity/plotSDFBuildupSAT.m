@@ -3,12 +3,14 @@ function [ varargout ] = plotSDFBuildupSAT( binfo , moves , ninfo , nstats , spi
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Tom\Dropbox\Speed Accuracy\SEF_SAT\Figs\4-Buildup\';
+ROOTDIR = 'C:\Users\Tom\Dropbox\SAT\Figs-SDF-All-TaskRel';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
+idxVis = ([ninfo.visGrade] >= 2);
 idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 
 idxEfficiency = ismember([ninfo.taskType], [2]);
 
 idxKeep = (idxArea & idxMonkey & idxMove & idxEfficiency);
@@ -68,6 +70,9 @@ for cc = 1:NUM_CELLS
   nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
   nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
   
+  %normalization factor
+  nstats(ccNS).NormFactor_Move = max(sdfMeanFast.Resp.Corr);
+  
   %plot individual cell activity
 %   plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, ninfo(cc), nstats(ccNS), IDX_PLOT)
 %   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
@@ -84,12 +89,15 @@ if (nargout > 0)
 end
 
 %% Plotting - Across neurons
+nstats = nstats(idxKeep);
+
 NSEM_FAST_ERR = sum(~isnan(sdfAll.FastErr(:,1)));
 NSEM_ACC_ERR = sum(~isnan(sdfAll.AccErr(:,1)));
 
 %normalization
 for cc = 1:NUM_CELLS
-  normFactor = max(sdfAll.FastCorr(cc,:));
+%   normFactor = max(sdfAll.FastCorr(cc,:));
+  normFactor = nstats(cc).NormFactor_Move;
   sdfAll.AccCorr(cc,:) = sdfAll.AccCorr(cc,:) / normFactor;
   sdfAll.FastCorr(cc,:) = sdfAll.FastCorr(cc,:) / normFactor;
   sdfAll.AccErr(cc,:) = sdfAll.AccErr(cc,:) / normFactor;
