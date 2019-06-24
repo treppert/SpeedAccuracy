@@ -20,7 +20,7 @@ idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
 idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
 idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
-idxKeep = (idxArea & idxMonkey & idxRew);
+idxKeep = (idxArea & idxMonkey & idxVis);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -47,7 +47,7 @@ for kk = 1:NUM_SESSION
   %make sure we have neurons from this session
   if (numCells == 0); continue; end
   %print units
-  fprintf('Session %s\n', binfo(kk).session)
+%   fprintf('Session %s\n', binfo(kk).session)
 %   for cc = 1:numCells; fprintf('Unit %s - %s\n', ninfo(ccKK(cc)).sess, ninfo(ccKK(cc)).unit); end
   
   %session-specific initializations
@@ -139,9 +139,10 @@ xticks([]); xticklabels([])
 ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
 ppretty([2,3]); pause(0.1)
 
-%stats - two-way between-subjects ANOVA
-% DV_spkCt = [[ctAccMore ctAccLess] ; [ctFastMore ctFastLess]]';
-% anova2(DV_spkCt, NUM_MORE);
+%Stats - paired t-test of different means (Acc/Fast) at each level of
+%search efficiency
+fprintf('More efficient:\n'); ttestTom(ctAccMore', ctFastMore')
+fprintf('Less efficient:\n'); ttestTom(ctAccLess', ctFastLess')
 
 %% Plotting -- Multi-unit spike count vs. RT
 MIN_NUM_SESS = 3; %minimum number of sessions to plot a data point

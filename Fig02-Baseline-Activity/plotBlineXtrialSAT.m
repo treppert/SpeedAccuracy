@@ -13,7 +13,7 @@ idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
 idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 idxBlineEffect = ([nstats.blineEffect] == 1);
 
-idxKeep = (idxArea & idxMonkey & idxTaskRel & idxBlineEffect & idxBlineRate);
+idxKeep = (idxArea & idxMonkey & idxTaskRel & idxBlineEffect);
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
@@ -43,8 +43,8 @@ for cc = 1:NUM_CELLS
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   
   %isolate appropriate trials at condition cue switch
-  trialA2F = trialA2F(ismember(trialA2F, find(idxCorr & ~idxIso)));
-  trialF2A = trialF2A(ismember(trialF2A, find(idxCorr & ~idxIso)));
+  trialA2F = trialA2F(ismember(trialA2F, find(~idxIso)));
+  trialF2A = trialF2A(ismember(trialF2A, find(~idxIso)));
   
   blineA2F = NaN(1,NUM_TRIAL);
   blineF2A = NaN(1,NUM_TRIAL);
@@ -56,8 +56,9 @@ for cc = 1:NUM_CELLS
   end%for:trialFromSwitch(jj)
   
   %normalization
-  blineA2F = blineA2F / nstats(cc).blineAccMEAN;
-  blineF2A = blineF2A / nstats(cc).blineAccMEAN;
+  normFactor = mean([nstats(cc).blineAccMEAN nstats(cc).blineFastMEAN]);
+  blineA2F = blineA2F / normFactor;
+  blineF2A = blineF2A / normFactor;
   
   %increment counter depending on level of efficiency
   if (binfo(kk).taskType == 1)
@@ -83,5 +84,18 @@ xlabel('Trial from switch')
 ylabel('Normalized activity')
 xticklabels({})
 ppretty([4.8,3])
+
+%% Stats
+%Mann-Whitney U-test for significant difference in single-trial change in
+%normalized baseline activity
+dMoreA2F = blineMoreA2F(:,5) - blineMoreA2F(:,4);   dMoreF2A = blineMoreF2A(:,5) - blineMoreF2A(:,4);
+dLessA2F = blineLessA2F(:,5) - blineLessA2F(:,4);   dLessF2A = blineLessF2A(:,5) - blineLessF2A(:,4);
+
+fprintf('A2F vs. F2A:\n')
+ttestTom([dMoreA2F;dLessA2F], [dMoreF2A;dLessF2A])
+
+fprintf('\nMore A2F vs. Less A2F\n')
+[pval,~,stats] = ranksum(dMoreA2F, dLessA2F);
+fprintf('Z = %g, p = %g\n', stats.zval, pval)
 
 end%fxn:plotBlineXtrialSAT()
