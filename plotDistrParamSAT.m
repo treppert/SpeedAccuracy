@@ -23,7 +23,8 @@ if strcmp(parmName, 'TST')
   idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
   idxKeep = (idxArea & idxMonkey & idxVis & idxTST);
 elseif ismember(parmName, {'VisLat','VisMag'})
-  idxKeep = (idxArea & idxMonkey & idxVis);
+  idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
+  idxKeep = (idxArea & idxMonkey & idxVis & ~idxTST);
 elseif ismember(parmName, {'ErrLat','ErrMag'})
   idxKeep = (idxArea & idxMonkey & idxErr);
 elseif ismember(parmName, {'RewLat','RewMag'})
@@ -128,14 +129,16 @@ end
 
 %% Write data for ANOVA
 if (length(args.monkey) > 1) %don't save stats for single monkeys
-  writeFile = [ROOTDIR_STAT, args.area,'-', parmName,'.mat'];
-  writeData( param , writeFile )
+  writeFile = [ROOTDIR_STAT, 'Fig03-VisResponse\', args.area,'-', parmName,'-NoTST.mat'];
+  writeData( param , writeFile , 'ttest' )
 end
 
 end%util:plotDistrParamSAT()
 
 
-function [ ] = writeData( param , writeFile )
+function [ ] = writeData( param , writeFile , varargin )
+
+args = getopt(varargin, {'ttest'});
 
 N_MORE_EFF = length(param.AccMore);
 N_LESS_EFF = length(param.AccLess);
@@ -151,6 +154,15 @@ F_Neuron = [ (1:N_CELL) , (1:N_CELL) ]';
 
 %write data
 save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency','F_Neuron')
+
+%if desired, perform separate t-tests for main effect of SAT condition
+%during more efficient and less efficient search
+if (args.ttest)
+  fprintf('More efficient:\n')
+  ttestTom(param.AccMore, param.FastMore)
+  fprintf('\nLess efficient:\n')
+  ttestTom(param.AccLess, param.FastLess)
+end
 
 end%util:writeData()
 

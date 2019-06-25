@@ -1,9 +1,6 @@
-function [ ] = plotBaselineMUCount_X_RT_SAT( binfo , moves , ninfo , spikes , varargin )
-%plotBaselineMUCount_X_RT_SAT This function plots baseline discharge rate
-%(z-score) vs. RT separately for each task condition and level of search
-%efficiency. Statistics are drawn on a single-neuron basis by computing a
-%Spearman rank correlation coefficient for the relationship between
-%discharge rate and RT.
+function [ ] = plotVisRespMUCount_X_RT_SAT( binfo , moves , ninfo , nstats , spikes , varargin )
+%plotVisRespMUCount_X_RT_SAT Summary of this function goes here
+%   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
@@ -29,8 +26,6 @@ spikes = spikes(idxKeep);
 RTLIM_ACC = [390 800];
 RTLIM_FAST = [150 450];
 
-T_BLINE = 3500 + [-600 20];
-
 %binning by RT
 RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
 RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;
@@ -48,9 +43,6 @@ for kk = 1:NUM_SESSION
   
   %make sure we have neurons from this session
   if (numCells == 0); continue; end
-  %print units
-%   fprintf('Session %s\n', binfo(kk).session)
-%   for cc = 1:numCells; fprintf('Unit %s - %s\n', ninfo(ccKK(cc)).sess, ninfo(ccKK(cc)).unit); end
   
   %session-specific initializations
   spkCount = NaN(numCells,binfo(kk).num_trials);
@@ -60,8 +52,13 @@ for kk = 1:NUM_SESSION
   for cc = 1:numCells
     spikesCC = spikes(ccKK(cc)).SAT;
     
-    %ref spikes to time of array
-    spkCount(cc,:) = cellfun(@(x) sum((x > T_BLINE(1)) & (x < T_BLINE(2))), spikesCC);
+    %ref spikes to time of visual response
+    ccNS = ninfo(ccKK(cc)).unitNum;
+    visRespLatency = nstats(ccNS).VRlatAcc; %note: VRlatAcc = VRlatFast
+    T_VISRESP = 3500 + visRespLatency + [0 150];
+    
+    %compute spike counts in visual response interval [Latency + 150 ms]
+    spkCount(cc,:)  = cellfun(@(x) sum((x > T_VISRESP(1)) & (x < T_VISRESP(2))), spikesCC);
     
     %account for trials with poor isolation
     idxPoorIso(cc,:) = identify_trials_poor_isolation_SAT(ninfo(ccKK(cc)), binfo(kk).num_trials);
@@ -81,9 +78,6 @@ for kk = 1:NUM_SESSION
   spkCountAcc = sum(spkCount(:,idxAcc), 1);
   spkCountFast = sum(spkCount(:,idxFast), 1);
   
-  %skip sessions with extremely low spike count
-  if (mean(spkCountAcc) < 1.0); continue; end
-  
   %cut outlier values for spike count
   idxCutAcc = estimate_spread(spkCountAcc, 3.5);    spkCountAcc(idxCutAcc) = [];
   idxCutFast = estimate_spread(spkCountFast, 3.5);  spkCountFast(idxCutFast) = [];
@@ -102,7 +96,7 @@ for kk = 1:NUM_SESSION
   zMuAcc(kk) = mean(spkCountAcc);
   zMuFast(kk) = mean(spkCountFast);
   
-  %save multi-unit spike counts vs. RT
+  %save for across-session average
   for ii = 1:NBIN_ACC
     idxII = ((RTacc > RTBIN_ACC(ii)) & (RTacc < RTBIN_ACC(ii+1)));
     if (sum(idxII) >= MIN_PER_BIN)
@@ -173,4 +167,17 @@ xlabel('Response time (ms)')
 ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
 ppretty([6.4,3])
 
-end%fxn:plotBaselineMUCount_X_RT_SAT()
+%% Compute stats on session averages
+zSpkCtAcc = reshape(zSpkCtAcc', 1,NUM_SESSION*NBIN_ACC)';     rtAcc = repmat(RTPLOT_ACC, 1,NUM_SESSION)';
+zSpkCtFast = reshape(zSpkCtFast', 1,NUM_SESSION*NBIN_FAST)';  rtFast = repmat(RTPLOT_FAST, 1,NUM_SESSION)';
+
+%remove all NaNs
+inanAcc = isnan(zSpkCtAcc);     zSpkCtAcc(inanAcc) = [];   rtAcc(inanAcc) = [];
+inanFast = isnan(zSpkCtFast);   zSpkCtFast(inanFast) = [];  rtFast(inanFast) = [];
+
+[rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');
+[rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');
+fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
+fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
+
+end%fxn:plotVisRespMUCount_X_RT_SAT()

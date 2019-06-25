@@ -80,7 +80,7 @@ shaded_error_bar(TRIAL_PLOT, nanmean(blineMoreA2F), nanstd(blineMoreA2F)/sqrt(NU
 shaded_error_bar(TRIAL_PLOT+NUM_TRIAL+1, nanmean(blineMoreF2A), nanstd(blineMoreF2A)/sqrt(NUM_MORE), {'k-', 'LineWidth',0.75})
 shaded_error_bar(TRIAL_PLOT, nanmean(blineLessA2F), nanstd(blineLessA2F)/sqrt(NUM_LESS), {'k-', 'LineWidth',1.25})
 shaded_error_bar(TRIAL_PLOT+NUM_TRIAL+1, nanmean(blineLessF2A), nanstd(blineLessF2A)/sqrt(NUM_LESS), {'k-', 'LineWidth',1.25})
-xlabel('Trial from switch')
+xlabel('Trial')
 ylabel('Normalized activity')
 xticklabels({})
 ppretty([4.8,3])
