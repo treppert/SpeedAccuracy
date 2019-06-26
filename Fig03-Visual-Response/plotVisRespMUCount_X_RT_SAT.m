@@ -27,7 +27,7 @@ RTLIM_ACC = [390 800];
 RTLIM_FAST = [150 450];
 
 %binning by RT
-RTBIN_FAST = (200 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
+RTBIN_FAST = (190 : 25 : 350);  NBIN_FAST = length(RTBIN_FAST) - 1;
 RTBIN_ACC = (450 : 50 : 700);   NBIN_ACC = length(RTBIN_ACC) - 1;
 MIN_PER_BIN = 10; %minimum number of trials per RT bin
 
@@ -166,18 +166,5 @@ errorbar(RTPLOT_FAST, nanmean(zSpkFast_Less), nanstd(zSpkFast_Less)./NSEM_FAST_L
 xlabel('Response time (ms)')
 ylabel('Multi-unit spike count (z)'); ytickformat('%2.1f')
 ppretty([6.4,3])
-
-%% Compute stats on session averages
-zSpkCtAcc = reshape(zSpkCtAcc', 1,NUM_SESSION*NBIN_ACC)';     rtAcc = repmat(RTPLOT_ACC, 1,NUM_SESSION)';
-zSpkCtFast = reshape(zSpkCtFast', 1,NUM_SESSION*NBIN_FAST)';  rtFast = repmat(RTPLOT_FAST, 1,NUM_SESSION)';
-
-%remove all NaNs
-inanAcc = isnan(zSpkCtAcc);     zSpkCtAcc(inanAcc) = [];   rtAcc(inanAcc) = [];
-inanFast = isnan(zSpkCtFast);   zSpkCtFast(inanFast) = [];  rtFast(inanFast) = [];
-
-[rhoAcc,pvalAcc] = corr(rtAcc, zSpkCtAcc, 'Type','Pearson');
-[rhoFast,pvalFast] = corr(rtFast, zSpkCtFast, 'Type','Pearson');
-fprintf('Accurate: R = %g  p = %g\n', rhoAcc, pvalAcc)
-fprintf('Fast: R = %g  p = %g\n', rhoFast, pvalFast)
 
 end%fxn:plotVisRespMUCount_X_RT_SAT()

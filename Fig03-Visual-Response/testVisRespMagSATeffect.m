@@ -8,8 +8,8 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ([ninfo.visGrade] >= 0.5);
 
+idxVis = ([ninfo.visGrade] >= 2);
 idxKeep = (idxArea & idxMonkey & idxVis);
 
 ninfo = ninfo(idxKeep);
@@ -40,10 +40,10 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by response dir re. response field
-  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+%   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   %index by condition
-  trialAcc = find((binfo(kk).condition == 1) & ~idxIso & idxCorr & idxRF);
-  trialFast = find((binfo(kk).condition == 3) & ~idxIso & idxCorr & idxRF);
+  trialAcc = find((binfo(kk).condition == 1) & ~idxIso & idxCorr);
+  trialFast = find((binfo(kk).condition == 3) & ~idxIso & idxCorr);
   
   numTrialAcc = length(trialAcc);
   numTrialFast = length(trialFast);

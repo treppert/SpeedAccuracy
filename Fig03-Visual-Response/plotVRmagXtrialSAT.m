@@ -1,4 +1,4 @@
-function [ ] = plotVRmagXtrialSAT( binfo , moves , ninfo , nstats , spikes , varargin )
+function [ ] = plotVRmagXtrialSAT( binfo , ninfo , nstats , spikes , varargin )
 %plotVRmagXtrialSAT Summary of this function goes here
 %   Note - In order to use this function, first run testVRmagSAT() in
 %   order to obtain estimates of visual response latency and magnitude.
@@ -8,12 +8,13 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxVis = ([ninfo.visGrade] >= 0.5);
-idxEffect = ([nstats.VReffect] == +1);
+
+idxVis = ([ninfo.visGrade] >= 2);
+idxEffect = ([nstats.VReffect] == 1);
 
 idxKeep = (idxArea & idxMonkey & idxVis & idxEffect);
 
-NUM_CELLS = length(spikes);
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 nstats = nstats(idxKeep);
 spikes = spikes(idxKeep);
@@ -41,8 +42,8 @@ for cc = 1:NUM_CELLS
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   
   %isolate appropriate trials at condition cue switch
-  trialA2F = trialA2F(ismember(trialA2F, find(~idxIso)));
-  trialF2A = trialF2A(ismember(trialF2A, find(~idxIso)));
+  trialA2F = trialA2F(ismember(trialA2F, find(idxCorr & ~idxIso)));
+  trialF2A = trialF2A(ismember(trialF2A, find(idxCorr & ~idxIso)));
   
   VRmagA2F = NaN(1,NUM_TRIAL);
   VRmagF2A = NaN(1,NUM_TRIAL);
@@ -79,13 +80,25 @@ NUM_MORE = size(VRmagMoreA2F, 1);
 NUM_LESS = size(VRmagLessA2F, 1);
 
 figure(); hold on
+plot([-4 12], [1 1], 'k:')
 shaded_error_bar(TRIAL_PLOT, nanmean(VRmagMoreA2F), nanstd(VRmagMoreA2F)/sqrt(NUM_MORE), {'k-', 'LineWidth',0.75})
 shaded_error_bar(TRIAL_PLOT+NUM_TRIAL+1, nanmean(VRmagMoreF2A), nanstd(VRmagMoreF2A)/sqrt(NUM_MORE), {'k-', 'LineWidth',0.75})
 shaded_error_bar(TRIAL_PLOT, nanmean(VRmagLessA2F), nanstd(VRmagLessA2F)/sqrt(NUM_LESS), {'k-', 'LineWidth',1.25})
 shaded_error_bar(TRIAL_PLOT+NUM_TRIAL+1, nanmean(VRmagLessF2A), nanstd(VRmagLessF2A)/sqrt(NUM_LESS), {'k-', 'LineWidth',1.25})
-xlabel('Trial')
-ylabel('Norm. visual response')
-xticklabels({})
+xlabel('Trial'); ylabel('Norm. visual response'); xticklabels({}); ytickformat('%2.1f')
 ppretty([4.8,3])
+
+%% Stats
+%Mann-Whitney U-test for significant difference in single-trial change in
+%normalized baseline activity
+dMoreA2F = VRmagMoreA2F(:,5) - VRmagMoreA2F(:,4);   dMoreF2A = VRmagMoreF2A(:,5) - VRmagMoreF2A(:,4);
+dLessA2F = VRmagLessA2F(:,5) - VRmagLessA2F(:,4);   dLessF2A = VRmagLessF2A(:,5) - VRmagLessF2A(:,4);
+
+fprintf('A2F vs. F2A:\n')
+ttestTom([dMoreA2F;dLessA2F], [dMoreF2A;dLessF2A])
+
+fprintf('\nMore A2F vs. Less A2F\n')
+[pval,~,stats] = ranksum(dMoreA2F, dLessA2F, 'method','approximate');
+fprintf('Z = %g, p = %g\n', stats.zval, pval)
 
 end%fxn:plotVRmagXtrialSAT()

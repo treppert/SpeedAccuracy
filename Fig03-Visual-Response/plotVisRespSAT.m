@@ -5,7 +5,7 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 % 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-VisResp-SC-TST\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-VisResp-SEF\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -15,11 +15,6 @@ idxSustained = ismember({ninfo.visType}, 'sustained');
 idxPhasic = ismember({ninfo.visType}, 'phasic');
 idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
 idxEff = ([ninfo.taskType] == 2);
-
-idxRF = false(1,length(ninfo)); %has a finite RF (not the entire screen)
-for cc = 1:length(ninfo)
-  if ~ismember(ninfo(cc).visField, 9); idxRF(cc) = true; end
-end
 
 idxKeep = (idxArea & idxMonkey & idxVis);
 
@@ -49,8 +44,12 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   %index by response dir re. response field
-  idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
-%   idxRF = true(1,binfo(kk).num_trials); %**for plotting RF=9
+  if ismember(9, ninfo(cc).visField)
+    idxRF = true(1,binfo(kk).num_trials);
+  else %standard response field
+    idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
+  end
+  
   
   %isolate single-trial SDFs
   VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);
@@ -81,7 +80,7 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRTSTFast = VRTSTFast;
   
   %normalization factor
-  nstats(ccNS).NormFactor_Vis = max(visResp(cc).FastTin);
+%   nstats(ccNS).NormFactor_Vis = max(visResp(cc).FastTin);
   
   %plot individual cell activity
 %   plotVisRespSATcc(T_STIM, visResp(cc), ninfo(cc), nstats(ccNS));
