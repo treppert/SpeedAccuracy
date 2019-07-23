@@ -87,32 +87,32 @@ for cc = 1:NUM_CELLS
   nFast(cc) = length(dRT_Fast);
   nAcc(cc) = length(dRT_Acc);
   
-%   figure()
-%   subplot(1,2,1); hold on
-%   scatter(spCtFast, dRT_Fast, 20, [0 .7 0], 'filled')
-%   xlabel('Spike count'); ylabel('Change in RT (ms)')
-%   print_session_unit(gca , ninfo(cc), [])
-%   subplot(1,2,2); hold on
-%   scatter(spCtAcc, dRT_Acc, 20, 'r', 'filled')
-%   ppretty([8 4])
+  figure()
+  subplot(1,2,1); hold on
+  scatter(spCtFast, dRT_Fast, 20, [0 .7 0], 'filled')
+  xlabel('Spike count'); ylabel('Change in RT (ms)')
+  print_session_unit(gca , ninfo(cc), [])
+  subplot(1,2,2); hold on
+  scatter(spCtAcc, dRT_Acc, 20, 'r', 'filled')
+  ppretty([8 4])
   
 end%for:cells(cc)
 
-% figure()
-% subplot(2,1,1); hold on
-% histogram(-log(pvalFast), 'BinWidth',.5)
-% plot(-log(0.05)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
-% plot(-log(0.01)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
-% subplot(2,1,2); hold on
-% histogram(-log(pvalAcc), 'BinWidth',.5)
-% plot(-log(0.05)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
-% plot(-log(0.01)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
-% ppretty([4.8,4])
-% subplot(2,1,1); set(gca, 'YMinorTick','off')
-% subplot(2,1,2); set(gca, 'YMinorTick','off')
+figure()
+subplot(2,1,1); hold on
+histogram(-log(pvalFast), 'BinWidth',.5)
+plot(-log(0.05)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
+plot(-log(0.01)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
+subplot(2,1,2); hold on
+histogram(-log(pvalAcc), 'BinWidth',.5)
+plot(-log(0.05)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
+plot(-log(0.01)*ones(1,2), [0 8], 'k:', 'LineWidth',1.25)
+ppretty([4.8,4])
+subplot(2,1,1); set(gca, 'YMinorTick','off')
+subplot(2,1,2); set(gca, 'YMinorTick','off')
 
 %prepare to calculate corresponding BF in R
-save([ROOTDIR, 'TStatDRTxErrMag.mat'], 'tstatFast','tstatAcc','nFast','nAcc')
+% save([ROOTDIR, 'TStatDRTxErrMag.mat'], 'tstatFast','tstatAcc','nFast','nAcc')
 
 end%plotdRTvsChcErrMagSAT()
 

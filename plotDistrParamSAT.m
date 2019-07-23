@@ -86,52 +86,46 @@ param.AccLess = paramAcc(idxLess);   param.FastLess = paramFast(idxLess);
 
 
 %% Plots of absolute values
-meanAccEff = nanmean(param.AccMore);      SEAccEff = nanstd(param.AccMore)/sqrt(sum(idxMore));
-meanAccIneff = nanmean(param.AccLess);    SEAccIneff = nanstd(param.AccLess)/sqrt(sum(idxLess));
-meanFastEff = nanmean(param.FastMore);    SEFastEff = nanstd(param.FastMore)/sqrt(sum(idxMore));
-meanFastIneff = nanmean(param.FastLess);  SEFastIneff = nanstd(param.FastLess)/sqrt(sum(idxLess));
+meanAccMore = nanmean(param.AccMore);       SEAccMore = nanstd(param.AccMore)/sqrt(NUM_MORE);
+meanAccLess = nanmean(param.AccLess);       SEAccLess = nanstd(param.AccLess)/sqrt(NUM_LESS);
+meanFastMore = nanmean(param.FastMore);     SEFastMore = nanstd(param.FastMore)/sqrt(NUM_MORE);
+meanFastLess = nanmean(param.FastLess);     SEFastLess = nanstd(param.FastLess)/sqrt(NUM_LESS);
 
 %barplot
 figure(); hold on
-bar(1, meanFastEff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
-bar(2, meanFastIneff, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
-bar(3, meanAccEff, 0.7, 'FaceColor','r', 'LineWidth',0.25)
-bar(4, meanAccIneff, 0.7, 'FaceColor','r', 'LineWidth',1.25)
-errorbar([meanFastEff meanFastIneff meanAccEff meanAccIneff], [SEFastEff SEFastIneff SEAccEff SEAccIneff], 'Color','k', 'CapSize',0)
-xticks([]); xticklabels([])
-ylabel(parmName)
-ppretty([1,2])
+bar(1, meanFastMore, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',0.25)
+bar(3, meanFastLess, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
+bar(2, meanAccMore, 0.7, 'FaceColor','r', 'LineWidth',0.25)
+bar(4, meanAccLess, 0.7, 'FaceColor','r', 'LineWidth',1.25)
+errorbar([meanFastMore meanAccMore meanFastLess meanAccLess], ...
+  [SEFastMore SEAccMore SEFastLess SEAccLess], 'Color','k', 'CapSize',0)
+xticks([]); xticklabels([]); ylabel(parmName)
+ppretty([2,3]); pause(0.05)
 % print([ROOTDIR_FIG,args.area,'-',param,'-ZBar.pdf'], '-dpdf'); pause(0.1)
 
 %% Plots of difference (Acc - Fast)
-if ismember(parmName, {'VisMag','ErrMag','RewMag'})
-  parmDiffEff = param.FastMore - param.AccMore;
-  parmDiffIneff = param.FastLess - param.AccLess;
+if ismember(parmName, {'VisMag','ErrMag','RewMag','RewLat'})
+  parmDiffMore = param.FastMore - param.AccMore;
+  parmDiffLess = param.FastLess - param.AccLess;
 else
-  parmDiffEff = param.AccMore - param.FastMore;
-  parmDiffIneff = param.AccLess - param.FastLess;
+  parmDiffMore = param.AccMore - param.FastMore;
+  parmDiffLess = param.AccLess - param.FastLess;
 end
 
-% meanDiffEff = nanmean(parmDiffEff);     SEDiffEff = nanstd(parmDiffEff) / sqrt(sum(idxMore));
-% meanDiffIneff = nanmean(parmDiffIneff); SEDiffIneff = nanstd(parmDiffIneff) / sqrt(sum(idxLess));
+meanDiffMore = nanmean(parmDiffMore);    SEDiffMore = nanstd(parmDiffMore) / sqrt(sum(idxMore));
+meanDiffLess = nanmean(parmDiffLess);    SEDiffLess = nanstd(parmDiffLess) / sqrt(sum(idxLess));
 
-%cumulative distribution
-% figure(); hold on
-% cdfplotTR(parmDiffEff, 'Color','k', 'LineWidth',0.5)
-% cdfplotTR(parmDiffIneff, 'Color','k', 'LineWidth',1.25)
-% plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
-% ylim([0 1]); ytickformat('%2.1f')
-% xlabel([param, ' difference'])
-% ylabel('Cumulative probability')
-% yticklabels({'0.0','','0.2','','0.4','','0.6','','0.8','','1.0'})
-% ppretty([4.8,3])
-% print([ROOTDIR_FIG,args.area,'-',param,'-CDF.pdf'], '-dpdf')
+%barplot
+figure(); hold on
+bar(1, meanDiffMore, 0.7, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
+bar(2, meanDiffLess, 0.7, 'FaceColor',[.4 .4 .4], 'LineWidth',1.25)
+errorbar([meanDiffMore meanDiffLess], [SEDiffMore SEDiffLess], 'Color','k', 'CapSize',0)
+xticks([])
+ppretty([1,3])
 
 %% Write data for ANOVA
-if (length(args.monkey) > 1) %don't save stats for single monkeys
-  writeFile = [ROOTDIR_STAT, 'Fig03-VisResponse\', args.area,'-', parmName,'-NoTST.mat'];
-  writeData( param , writeFile , 'ttest' )
-end
+writeFile = [ROOTDIR_STAT, 'Fig03-VisResponse\', args.area,'-', parmName,'-NoTST.mat'];
+writeData( param , writeFile , 'ttest' )
 
 end%util:plotDistrParamSAT()
 

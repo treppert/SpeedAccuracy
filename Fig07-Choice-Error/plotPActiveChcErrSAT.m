@@ -2,15 +2,15 @@ function [ ] = plotPActiveChcErrSAT( ninfo , nstats , varargin )
 %plotPActiveChcErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-idxArea = ismember({ninfo.area}, args.area);
+idxSEF = ismember({ninfo.area}, {'SEF'});
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxError = ([ninfo.errGrade] >= 2);
-idxEfficient = ([ninfo.taskType] == 2);
+idxEfficient = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxError & idxEfficient);
+idxKeep = (idxSEF & idxMonkey & idxError & idxEfficient);
 
 NUM_CELLS = sum(idxKeep);
 nstats = nstats(idxKeep);
@@ -41,17 +41,14 @@ PActiveFast = sum(PActiveFast,1) / NUM_CELLS;
 %% Plotting
 tCDFAcc = sort([nstats.A_ChcErr_tErr_Acc]);
 tCDFFast = sort([nstats.A_ChcErr_tErr_Fast]);
-yCDF = (1 : NUM_CELLS) / NUM_CELLS;
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
-plot(median(tCDFAcc)*ones(1,2), [0 1], 'r:', 'LineWidth',1.5)
-plot(median(tCDFFast)*ones(1,2), [0 1], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+plot(median(tCDFAcc)*ones(1,2), [0 .4], 'r:', 'LineWidth',1.5)
+plot(median(tCDFFast)*ones(1,2), [0 .4], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
 plot(T_RE_PRIMARY, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
 plot(T_RE_PRIMARY, PActiveAcc, 'r-', 'LineWidth',1.5)
-scatter(tCDFFast, yCDF, 40, [0 .7 0], 'filled')
-scatter(tCDFAcc, yCDF, 40, 'r', 'filled')
-xlim([-200 450])
+xlim([-100 400])
 xlabel('Time from primary saccade (ms)')
 ylabel('P (active)')
 ytickformat('%2.1f')

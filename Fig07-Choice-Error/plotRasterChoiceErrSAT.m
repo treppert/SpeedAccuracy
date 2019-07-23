@@ -19,7 +19,7 @@ spikes = spikes(idxKeep);
 
 T_PLOT  = 3500 + (-200 : 450);
 
-for cc = 7:NUM_CELLS
+for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
@@ -77,7 +77,7 @@ for cc = 7:NUM_CELLS
   %% Plotting
   figure()
   
-  subplot(1,2,1); hold on %Fast condition
+  subplot(2,1,1); hold on %Fast condition
   
   plot(spTimesFC-3500, trialFC, '.', 'Color',[.3 .3 .3], 'MarkerSize',7)
   plot(spTimesFE-3500, trialFE, '.', 'Color',[0 .7 0], 'MarkerSize',7)
@@ -90,8 +90,9 @@ for cc = 7:NUM_CELLS
   xlim([T_PLOT(1) T_PLOT(end)]-3500)
 %   xticks((T_PLOT(1) : 200 : T_PLOT(end)) - 3500)
   yLimFast = get(gca, 'ylim');
+  print_session_unit(gca, ninfo(cc), binfo(kk), 'horizontal')
   
-  subplot(1,2,2); hold on %Accurate condition
+  subplot(2,1,2); hold on %Accurate condition
 
   plot(spTimesAC-3500, trialAC, '.', 'Color',[.3 .3 .3], 'MarkerSize',7)
   plot(spTimesAE-3500, trialAE, '.', 'Color',[1 0 0], 'MarkerSize',7)
