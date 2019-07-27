@@ -1,10 +1,12 @@
-function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , nstats , spikes )
+function [ varargout ] = plotSDFChoiceErrSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-ChcErr-SEF\SDF-Final\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\';
 
-idxSEF = ismember({ninfo.area}, args.area);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+idxSEF = ismember({ninfo.area}, {'SEF'});
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxErr = (([ninfo.errGrade]) >= 2);
@@ -16,8 +18,8 @@ NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-TIME.PRIMARY = 3500 + (-200 : 450); OFFSET = 200; %time from primary saccade
-TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
+TIME.PRIMARY = 3500 + (-300 : 500); OFFSET = 300; %time from primary saccade
+TIME.SECONDARY = 3500 + (-200 : 300); %time from secondary saccade
 TIME.BASELINE = 3500 + (-300 : -1); %time from array
 
 %output initializations
@@ -69,12 +71,12 @@ for cc = 1:NUM_CELLS
 %   end
   
   %magnitude
-%   [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
-%   nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
-%   nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
+  [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
+  nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
+  nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
   
   %plot individual cell activity
-  plotSDFChcErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
+%   plotSDFChcErrSATcc(TIME, sdfCombined, ninfo(cc), nstats(ccNS))
 %   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
@@ -163,26 +165,19 @@ figure()
 %Time from primary saccade
 subplot(2,2,1); hold on
 plot([0 0], yLim, 'k:')
-
 plot(TIME.PRIMARY-3500, sdfPlot.FastCorr.RePrimary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(TIME.PRIMARY-3500, sdfPlot.FastErr.RePrimary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-
 plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
-title(['Magnitude = ', num2str(nstats.A_ChcErr_magErr_Fast), ' sp'])
 print_session_unit(gca , ninfo,[])
 
 
 %Time from secondary saccade
 subplot(2,2,2); hold on
 plot([0 0], yLim, 'k:')
-
 plot(TIME.SECONDARY-3500, sdfPlot.FastCorr.ReSecondary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(TIME.SECONDARY-3500, sdfPlot.FastErr.ReSecondary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-
 xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
 set(gca, 'YAxisLocation','right')
 
@@ -192,26 +187,19 @@ set(gca, 'YAxisLocation','right')
 %Time from primary saccade
 subplot(2,2,3); hold on
 plot([0 0], yLim, 'k:')
-
 plot(TIME.PRIMARY-3500, sdfPlot.AccCorr.RePrimary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
 plot(TIME.PRIMARY-3500, sdfPlot.AccErr.RePrimary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-
 plot(nstats.A_ChcErr_tErr_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErrEnd_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
 xlabel('Time from primary saccade (ms)')
-title(['Magnitude = ', num2str(nstats.A_ChcErr_magErr_Acc), ' sp'])
 
 
 %Time from secondary saccade
 subplot(2,2,4); hold on
 plot([0 0], yLim, 'k:')
-
 plot(TIME.SECONDARY-3500, sdfPlot.AccCorr.ReSecondary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
 plot(TIME.SECONDARY-3500, sdfPlot.AccErr.ReSecondary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-
 xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
 xlabel('Time from secondary saccade (ms)')
 set(gca, 'YAxisLocation','right')

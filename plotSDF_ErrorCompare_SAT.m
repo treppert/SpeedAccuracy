@@ -71,24 +71,3 @@ ylabel('Contrast ratio - Timing error')
 ppretty([4.8,3])
 
 end%fxn:plotSDF_ErrorCompare_SAT()
-
-%   %plotting
-%   tmp = [sdfFastCorr sdfFastErr sdfAccCorr sdfAccErr];
-%   yLim = [min(tmp) max(tmp)];
-%   
-%   figure()
-%   subplot(1,2,1); hold on %Fast condition -- Choice error signaling
-%   plot([0 0], yLim, 'k:')
-%   plot(tplotResp, sdfFastCorr, '-', 'Color',[0 .7 0])
-%   plot(tplotResp, sdfFastErr, ':', 'Color',[0 .7 0])
-%   ylabel('Activity (sp/sec)'); xlabel('Time from response (ms)')
-%   xlim([tplotResp(1)-5 tplotResp(end)+5])
-%   print_session_unit(gca, ninfo(cc), binfo(kk))
-%   subplot(1,2,2); hold on %Accurate condition -- Timing error signaling
-%   plot([0 0], yLim, 'k:')
-%   plot(tplotRew, sdfAccCorr, 'r-')
-%   plot(tplotRew, sdfAccErr, 'r:')
-%   xlabel('Time from reward (ms)')
-%   xlim([tplotRew(1)-5 tplotRew(end)+5])
-%   ppretty([6.4,1.5])
-  

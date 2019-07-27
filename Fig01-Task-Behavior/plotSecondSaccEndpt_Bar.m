@@ -34,6 +34,14 @@ for kk = 1:NUM_SESSION
   
 end%for:session(kk)
 
+%% Stats - two-way between-subjects ANOVA
+writeData_TwoWayANOVA( Pr2tgt , 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\Behavior-SSendpt.mat' )
+
+DV_Pr2tgt = [Pr2tgt.AccMore Pr2tgt.AccLess Pr2tgt.FastMore Pr2tgt.FastLess]';
+Condition = [ones(1,NUM_SESSION) 2*ones(1,NUM_SESSION)]';
+Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
+anovan(DV_Pr2tgt, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
+
 %% Plotting
 muAccMore = mean(Pr2tgt.AccMore);     seAccMore = std(Pr2tgt.AccMore) / sqrt(NUM_MORE);
 muAccLess = mean(Pr2tgt.AccLess);     seAccLess = std(Pr2tgt.AccLess) / sqrt(NUM_LESS);
@@ -52,11 +60,22 @@ xticks([]); xticklabels([])
 ylabel('P (saccade to target)')
 ppretty([2,3])
 
-%% Stats - two-way between-subjects ANOVA
-DV_Pr2tgt = [Pr2tgt.AccMore Pr2tgt.AccLess Pr2tgt.FastMore Pr2tgt.FastLess]';
-Condition = [ones(1,NUM_SESSION) 2*ones(1,NUM_SESSION)]';
-Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
-anovan(DV_Pr2tgt, {Condition Efficiency});
-
 end%fxn:plotSecondSaccEndpt_Bar()
 
+function [ ] = writeData_TwoWayANOVA( param , writeFile )
+
+N_MORE = length(param.AccMore);
+N_LESS = length(param.AccLess);
+N_SESS = N_MORE + N_LESS;
+
+%dependent variable
+DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
+
+%factors
+F_Condition = [ ones(1,N_SESS) 2*ones(1,N_SESS) ]';
+F_Efficiency = [ ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS) ]';
+
+%write data
+save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency')
+
+end%util:writeData()

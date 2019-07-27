@@ -1,59 +1,48 @@
-function [ ] = plotPActiveRewErrSAT( ninfo , nstats , varargin )
+function [ ] = plotPActiveRewErrSAT( ninfo , nstats )
 %plotPActiveRewErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+idxArea = ismember({ninfo.area}, {'SEF'});
+idxMonkey = ismember({ninfo.monkey}, {'D','E'});
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxRew = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
+% idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxKeep = (idxArea & idxMonkey & idxRew);
 
-idxRewAcc = (abs([ninfo.rewGrade]) >= 2);
-idxRewFast = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
-idxEfficiency = ([ninfo.taskType] == 2);
+NUM_CELLS = sum(idxKeep)
+return
+nstats = nstats(idxKeep);
 
-idxKeepAcc = (idxArea & idxMonkey & idxRewAcc & idxEfficiency);
-idxKeepFast = (idxArea & idxMonkey & idxRewFast & idxEfficiency);
-
-nstatsAcc = nstats(idxKeepAcc);
-nstatsFast = nstats(idxKeepFast);
-NUM_ACC = sum(idxKeepAcc);
-NUM_FAST = sum(idxKeepFast);
-
-T_RE_PRIMARY = (-100 : 800);  OFFSET = 101;
-NUM_SAMP = length(T_RE_PRIMARY);
+T_VEC = (-100 : 800);  OFFSET = 101;
 
 %initializations
-PActiveAcc = false(NUM_ACC,NUM_SAMP);
-PActiveFast = false(NUM_FAST,NUM_SAMP);
+PActiveAcc = false(NUM_CELLS,length(T_VEC));
+PActiveFast = false(NUM_CELLS,length(T_VEC));
 
-for cc = 1:NUM_ACC
-  tErrStart_Acc = nstatsAcc(cc).A_Reward_tErrStart_Acc;
-  tErrEnd_Acc = nstatsAcc(cc).A_Reward_tErrEnd_Acc;
+for cc = 1:NUM_CELLS
+  tErrStart_Acc = nstats(cc).A_Reward_tErrStart_Acc;
+  tErrStart_Fast = nstats(cc).A_Reward_tErrStart_Fast;
+  
+  tErrEnd_Acc = nstats(cc).A_Reward_tErrEnd_Acc;
+  tErrEnd_Fast = nstats(cc).A_Reward_tErrEnd_Fast;
+  
   PActiveAcc(cc,(tErrStart_Acc : tErrEnd_Acc) + OFFSET) = true;
+  PActiveFast(cc,(tErrStart_Fast : tErrEnd_Fast) + OFFSET) = true;
 end%for:cells-Acc(cc)
 
-PActiveAcc = sum(PActiveAcc,1) / NUM_ACC;
-
-for cc = 1:NUM_FAST
-  tErrStart_Fast = nstatsFast(cc).A_Reward_tErrStart_Fast;
-  tErrEnd_Fast = nstatsFast(cc).A_Reward_tErrEnd_Fast;
-  PActiveFast(cc,(tErrStart_Fast : tErrEnd_Fast) + OFFSET) = true;
-end%for:cells-Fast(cc)
-
-PActiveFast = sum(PActiveFast,1) / NUM_FAST;
+PActiveAcc = sum(PActiveAcc,1) / NUM_CELLS;
+PActiveFast = sum(PActiveFast,1) / NUM_CELLS;
 
 %% Plotting
-tCDFAcc = sort([nstatsAcc.A_Reward_tErrStart_Acc]);      yCDFAcc = (1 : NUM_ACC) / NUM_ACC;
-tCDFFast = sort([nstatsFast.A_Reward_tErrStart_Fast]);   yCDFFast = (1 : NUM_FAST) / NUM_FAST;
+tCDFAcc = sort([nstats.A_Reward_tErrStart_Acc]);
+tCDFFast = sort([nstats.A_Reward_tErrStart_Fast]);
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
-plot(median(tCDFAcc)*ones(1,2), [0 1], 'r:', 'LineWidth',1.5)
-plot(median(tCDFFast)*ones(1,2), [0 1], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
-plot(T_RE_PRIMARY, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
-plot(T_RE_PRIMARY, PActiveAcc, 'r-', 'LineWidth',1.5)
-scatter(tCDFFast, yCDFFast, 40, [0 .7 0], 'filled')
-scatter(tCDFAcc, yCDFAcc, 40, 'r', 'filled')
+plot(median(tCDFAcc)*ones(1,2), [0 .4], 'r:', 'LineWidth',1.5)
+plot(median(tCDFFast)*ones(1,2), [0 .4], ':', 'Color',[0 .7 0], 'LineWidth',1.5)
+plot(T_VEC, PActiveFast, '-', 'Color',[0 .7 0], 'LineWidth',1.5)
+plot(T_VEC, PActiveAcc, 'r-', 'LineWidth',1.5)
 xlabel('Time from reward (ms)')
 ylabel('P (active)')
 ytickformat('%2.1f')

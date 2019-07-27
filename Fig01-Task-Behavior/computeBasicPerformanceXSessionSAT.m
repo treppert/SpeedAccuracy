@@ -72,19 +72,43 @@ fprintf('P[ChcErr] Fast: %g +/- %g\n', mean(PerrChcFast), std(PerrChcFast)/sqrt(
 fprintf('P[TimeErr] Acc: %g +/- %g\n', mean(PerrTimeAcc), std(PerrTimeAcc)/sqrt(NUM_SESSION))
 fprintf('P[TimeErr] Fast: %g +/- %g\n', mean(PerrTimeFast), std(PerrTimeFast)/sqrt(NUM_SESSION))
 
-%% Perform tests
-%independent variables
-RT = [RTAcc, RTFast]';
-ISI = [isiAcc, isiFast]';
-PerrChc = [PerrChcAcc, PerrChcFast]';
-PerrTime = [PerrTimeAcc, PerrTimeFast]';
+%% Split sessions by search efficiency
+kkMore = ([binfo.taskType] == 1);
+kkLess = ([binfo.taskType] == 2);
 
-%two factors
+parmAcc = RTAcc;
+parmFast = RTFast;
+
+parm = struct('AccMore',parmAcc(kkMore), 'AccLess',parmAcc(kkLess), ...
+  'FastMore',parmFast(kkMore), 'FastLess',parmFast(kkLess));
+writeData_TwoWayANOVA(parm, 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\Behavior-RT.mat')
+
+%two-way ANOVA in Matlab
+parm = [RTAcc, RTFast]'; %[RTAcc, RTFast]';
 Condition = [ones(1,NUM_SESSION), 2*ones(1,NUM_SESSION)]';
 Efficiency = repmat([binfo.taskType],1,2)';
-
-[~,ANtbl] = anovan(RT, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Task Type'});
-structOut = struct('Parameter',RT, 'Condition',Condition, 'Efficiency',Efficiency);
-save([SAVEDIR, 'Behavior-RT.mat'], 'structOut')
+[~,~] = anovan(parm, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
 
 end%fxn:computeBasicPerformanceXSessionSAT()
+
+
+
+function [ ] = writeData_TwoWayANOVA( param , writeFile )
+
+N_MORE = length(param.AccMore);
+N_LESS = length(param.AccLess);
+N_SESS = N_MORE + N_LESS;
+
+%dependent variable
+DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
+
+%factors
+F_Condition = [ ones(1,N_SESS) 2*ones(1,N_SESS) ]';
+F_Efficiency = [ ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS) ]';
+
+%write data
+save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency')
+
+end%util:writeData()
+
+

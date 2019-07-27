@@ -3,15 +3,13 @@ function [ varargout ] = plotSDFBuildupSAT( binfo , moves , ninfo , nstats , spi
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Tom\Dropbox\SAT\Figs-SDF-All-TaskRel';
+% ROOTDIR = 'C:\Users\Tom\Dropbox\SAT\Figs-SDF-All-TaskRel';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);
 idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 
-idxEfficiency = ismember([ninfo.taskType], [2]);
+idxEfficiency = ([ninfo.taskType] == 2);
 
 idxKeep = (idxArea & idxMonkey & idxMove & idxEfficiency);
 

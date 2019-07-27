@@ -1,11 +1,9 @@
-function [ ] = plotPActiveChcErrSAT( ninfo , nstats , varargin )
+function [ ] = plotPActiveChcErrSAT( ninfo , nstats )
 %plotPActiveChcErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'monkey=',{'D','E'}}});
-
 idxSEF = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxMonkey = ismember({ninfo.monkey}, {'D','E'});
 
 idxError = ([ninfo.errGrade] >= 2);
 idxEfficient = ismember([ninfo.taskType], [1,2]);

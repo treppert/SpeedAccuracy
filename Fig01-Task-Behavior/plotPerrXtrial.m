@@ -21,7 +21,7 @@ trialSwitch = identify_condition_switch(binfo);
 
 for kk = 1:NUM_SESSION
   
-  jjErr = find(binfo(kk).err_dir);
+  jjErr = find(binfo(kk).err_time);
   
   jjA2F = trialSwitch(kk).A2F;
   %if (Q or S), then add A2N trials to fill out A2F (!)
@@ -53,6 +53,15 @@ idxTT2 = ([binfo.taskType] == 2);
 pErrA2F{1}(idxTT2,:) = []; pErrF2A{1}(idxTT2,:) = [];
 pErrA2F{2}(idxTT1,:) = []; pErrF2A{2}(idxTT1,:) = [];
 
+%% Statistics -- One-way ANOVA with factor Trial Number (combine across more and less efficient)
+DV_ErrRate = [ [pErrF2A{1}(:,5:8) pErrA2F{1}(:,1:4)] ; [pErrF2A{2}(:,5:8) pErrA2F{2}(:,1:4)] ];
+DV_ErrRate = reshape(DV_ErrRate', NUM_SESSION*NUM_TRIAL,1);
+F_Trial = (1 : 8); F_Trial = repmat(F_Trial, 1,NUM_SESSION)';
+anovan(DV_ErrRate, {F_Trial});
+
+%save for ANOVA in R
+save('C:\Users\Thomas Reppert\Dropbox\SAT\Stats\ErrRateXTrial.mat', 'F_Trial','DV_ErrRate')
+return
 %% Plotting
 
 %remove sessions with insufficient number of "switch" trials
