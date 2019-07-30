@@ -19,13 +19,13 @@ NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_TEST = 3500 + [-600 20]; %baseline
+T_TEST = 3500 + [-500 20]; %baseline
 % T_TEST = 3500 + [75 200]; %visual response
 
 RTBIN_ACC = (0 : 30 : 300);     NBIN_ACC = length(RTBIN_ACC) - 1;
 RTBIN_FAST = (-200 : 20 : 0);   NBIN_FAST = length(RTBIN_FAST) - 1;
 
-MIN_PER_BIN = 25; %minimum number of trials per RT bin
+MIN_PER_BIN = 45; %minimum number of trials per RT bin
 
 RTLIM_ACC = [390 800]; %limits on acceptable RT (used for data cleaning)
 RTLIM_FAST = [150 450];
@@ -35,18 +35,15 @@ zSpkCtAcc = NaN(NUM_CELLS,NBIN_ACC);
 zSpkCtFast = NaN(NUM_CELLS,NBIN_FAST);
 
 for cc = 1:NUM_CELLS
-%   fprintf('Unit %s - %s\n', ninfo(cc).sess, ninfo(cc).unit);
+  kk = ismember({binfo.session}, ninfo(cc).sess);
+  RTkk = double(moves(kk).resptime);
   
   %compute spike count for all trials
   spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(cc).SAT);
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  RTkk = double(moves(kk).resptime);
-  
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
   %index by trial outcome
-%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   idxCorr = ~(binfo(kk).err_time | binfo(kk).err_nosacc);
   %index by RT limits
   idxCutAcc = (RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk));
@@ -59,10 +56,12 @@ for cc = 1:NUM_CELLS
   spkCountFast = spkCtCC(idxFast);  RTfast = RTkk(idxFast) - double(binfo(kk).deadline(idxFast));
   
   %remove outliers
-  idxCutAcc = estimate_spread(spkCountAcc, 3.5);
-  idxCutFast = estimate_spread(spkCountFast, 3.5);
-  spkCountAcc(idxCutAcc) = [];      RTacc(idxCutAcc) = [];
-  spkCountFast(idxCutFast) = [];    RTfast(idxCutFast) = [];
+  if (nanmedian(spkCountAcc) >= 1.0) %make sure we have a minimum spike count
+    idxCutAcc = estimate_spread(spkCountAcc, 3.5);
+    idxCutFast = estimate_spread(spkCountFast, 3.5);
+    spkCountAcc(idxCutAcc) = [];      RTacc(idxCutAcc) = [];
+    spkCountFast(idxCutFast) = [];    RTfast(idxCutFast) = [];
+  end
   
   %z-score spike counts
   muSpkCt = mean([spkCountAcc spkCountFast]);
@@ -87,7 +86,7 @@ for cc = 1:NUM_CELLS
 end%for:cell(cc)
 
 %% Plotting
-MIN_SEM = 3;
+MIN_SEM = 5;
 
 RTPLOT_ACC = RTBIN_ACC(1:end-1) + diff(RTBIN_ACC)/2;
 RTPLOT_FAST = RTBIN_FAST(1:end-1) + diff(RTBIN_FAST)/2;
@@ -96,16 +95,14 @@ RTPLOT_FAST = RTBIN_FAST(1:end-1) + diff(RTBIN_FAST)/2;
 binCutAcc = (sum(~isnan(zSpkCtAcc), 1) < MIN_SEM);    zSpkCtAcc(:,binCutAcc) = NaN;
 binCutFast = (sum(~isnan(zSpkCtFast), 1) < MIN_SEM);  zSpkCtFast(:,binCutFast) = NaN;
 
-NSEM_ACC_MORE = sum(~isnan(zSpkCtAcc), 1);
-NSEM_FAST_MORE = sum(~isnan(zSpkCtFast), 1);
+NSEM_ACC = sum(~isnan(zSpkCtAcc), 1);
+NSEM_FAST = sum(~isnan(zSpkCtFast), 1);
 
 figure(); hold on
-% plot(RTPLOT_ACC, (zSpkAcc_More), 'Color','r')
-% plot(RTPLOT_FAST, (zSpkFast_More), 'Color',[0 .7 0])
-errorbar(RTPLOT_ACC, nanmean(zSpkCtAcc), nanstd(zSpkCtAcc)./NSEM_ACC_MORE, 'capsize',0, 'Color','r')
-errorbar(RTPLOT_FAST, nanmean(zSpkCtFast), nanstd(zSpkCtFast)./NSEM_FAST_MORE, 'capsize',0, 'Color',[0 .7 0])
-% errorbar(RTPLOT_ACC, nanmean(zSpkAcc_Less), nanstd(zSpkAcc_Less)./NSEM_ACC_LESS, 'capsize',0, 'Color','r', 'LineWidth',1.25)
-% errorbar(RTPLOT_FAST, nanmean(zSpkFast_Less), nanstd(zSpkFast_Less)./NSEM_FAST_LESS, 'capsize',0, 'Color',[0 .7 0], 'LineWidth',1.25)
+% plot(RTPLOT_ACC, zSpkCtAcc, 'r-')
+% plot(RTPLOT_FAST, zSpkCtFast, 'g-')
+errorbar(RTPLOT_ACC, nanmean(zSpkCtAcc), nanstd(zSpkCtAcc)./NSEM_ACC, 'capsize',0, 'Color','r')
+errorbar(RTPLOT_FAST, nanmean(zSpkCtFast), nanstd(zSpkCtFast)./NSEM_FAST, 'capsize',0, 'Color',[0 .7 0])
 xlabel('Response time (ms)')
 ylabel('Spike count (z)')
 ppretty([6.4,4])
