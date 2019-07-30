@@ -65,6 +65,11 @@ ccLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(ccLess);
 scAccMore = spkCountAcc(ccMore);    scAccLess = spkCountAcc(ccLess);
 scFastMore = spkCountFast(ccMore);  scFastLess = spkCountFast(ccLess);
 
+%% Stats - Two-way split-plot ANOVA
+ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
+spikeCount = struct('AccMore',scAccMore, 'AccLess',scAccLess, 'FastMore',scFastMore, 'FastLess',scFastLess);
+writeData_TwoWayANOVA( spikeCount , [ROOT_DIR,args.area,'-Baseline.mat'] )
+
 %% Plotting
 
 muAccMore = mean(scAccMore);    seAccMore = std(scAccMore) / sqrt(NUM_MORE);
@@ -72,10 +77,33 @@ muAccLess = mean(scAccLess);    seAccLess = std(scAccLess) / sqrt(NUM_LESS);
 muFastMore = mean(scFastMore);    seFastMore = std(scFastMore) / sqrt(NUM_MORE);
 muFastLess = mean(scFastLess);    seFastLess = std(scFastLess) / sqrt(NUM_LESS);
 
-figure(); hold on
-bar((1:4), [muAccMore muFastMore muAccLess muFastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
-errorbar((1:4), [muAccMore muFastMore muAccLess muFastLess], [seAccMore seFastMore seAccLess seFastLess], 'Color','k', 'CapSize',0)
-ppretty([1.5,3])
+% figure(); hold on
+% bar((1:4), [muAccMore muFastMore muAccLess muFastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
+% errorbar((1:4), [muAccMore muFastMore muAccLess muFastLess], [seAccMore seFastMore seAccLess seFastLess], 'Color','k', 'CapSize',0)
+% ppretty([1.5,3])
 
 end%fxn:computeBline_X_Condition_SAT()
 
+function [ ] = writeData_TwoWayANOVA( param , writeFile )
+
+N_MORE = length(param.AccMore);
+N_LESS = length(param.AccLess);
+N_CELL = N_MORE + N_LESS;
+
+%dependent variable
+DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
+
+%factors
+F_Condition = [ ones(1,N_CELL) 2*ones(1,N_CELL) ]';
+F_Efficiency = [ ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS) ]';
+F_Neuron = linspace(1,N_CELL,N_CELL); F_Neuron = repmat(F_Neuron, 1,2)';
+
+%write data
+% save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency','F_Neuron')
+
+tmp = [param.AccMore param.AccLess param.FastMore param.FastLess]';
+Condition = [ones(1,N_CELL) 2*ones(1,N_CELL)]';
+Efficiency = [ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS)]';
+anovan(tmp, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
+
+end%util:writeData()

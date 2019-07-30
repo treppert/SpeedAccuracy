@@ -99,12 +99,14 @@ for cc = 1:NUM_CELLS
   
 end%for:cell(cc)
 
-%% Plotting
-MIN_SEM = 5;
+%% Stats - Single-trial modulation at cued condition switch
+tmp_A2F = [nanmean(zSpkCt_A2F(:,[3,4]),2) , nanmean(zSpkCt_A2F(:,[5,6]),2)];
+tmp_F2A = [nanmean(zSpkCt_F2A(:,[3,4]),2) , nanmean(zSpkCt_F2A(:,[5,6]),2)];
+diffA2F = diff(tmp_A2F, 1, 2);
+diffF2A = diff(tmp_F2A, 1, 2);
+ttestTom( diffA2F , diffF2A )
 
-%remove bins with too few sessions
-binCutAcc = (sum(~isnan(zSpkCt_A2F), 1) < MIN_SEM);     zSpkCt_A2F(:,binCutAcc) = NaN;
-binCutFast = (sum(~isnan(zSpkCt_F2A), 1) < MIN_SEM);    zSpkCt_F2A(:,binCutFast) = NaN;
+%% Plotting
 NSEM_A2F = sum(~isnan(zSpkCt_A2F), 1);
 NSEM_F2A = sum(~isnan(zSpkCt_F2A), 1);
 
