@@ -2,41 +2,46 @@ function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninf
 %plotSDFChoiceErrXisiSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\5-Error\SDF-ChoiceErr-xISI-Test-2\';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\xISI\';
 
-idxArea = ismember({ninfo.area}, args.area);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+idxSEF = ismember({ninfo.area}, {'SEF'});
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxErrorGrade = (abs([ninfo.errGrade]) >= 1);
 
-% idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxErr = (([ninfo.errGrade]) >= 1);
+idxEff = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxErrorGrade);% & idxEfficient);
+idxKeep = (idxSEF & idxMonkey & idxErr & idxEff);
 
+NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
-NUM_CELLS = length(spikes);
 
-TIME.PRIMARY = 3500 + (-200 : 200); OFFSET = 200; %time from primary saccade
-TIME.SECONDARY = 3500 + (-200 : 200); %time from secondary saccade
+TIME.PRIMARY = 3500 + (-200 : 500); OFFSET = 200; %time from primary saccade
+TIME.SECONDARY = 3500 + (-200 : 300); %time from secondary saccade
 TIME.BASELINE = 3500 + (-300 : -1); %time from array
 
-T_INTERVAL_ESTIMATE_MAG = 200; %interval over which we compute the integral of error signal
-
 %output initializations
-sdfAccSH = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
-sdfAccSH = struct('Corr',sdfAccSH, 'Err',sdfAccSH); %short ISI
-sdfAccLO = sdfAccSH; %long ISI
-sdfFastSH = sdfAccSH; %short ISI
-sdfFastLO = sdfAccSH; %long ISI
+sdfAcc_SH = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS]);
+sdfAcc_SH = struct('Corr',sdfAcc_SH, 'Err',sdfAcc_SH); %short ISI
+sdfAcc_LO = sdfAcc_SH; %long ISI
+sdfFast_SH = sdfAcc_SH;
+sdfFast_LO = sdfAcc_SH;
+
+rtSecond_SH = NaN(1,NUM_CELLS); %latency of the second saccade
+rtSecond_LO = NaN(1,NUM_CELLS);
+latSig_SH = NaN(1,NUM_CELLS); %latency of the error signal
+latSig_LO = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
-  RTkk = double(moves(kk).resptime);
-  ISIkk = double(movesPP(kk).resptime) - RTkk;
-  ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
+  RTPkk = double(moves(kk).resptime); %RT of primary saccade
+  RTPkk(RTPkk > 900) = NaN; %hard limit on primary RT
+  RTSkk = double(movesPP(kk).resptime) - RTPkk; %RT of secondary saccade
+  RTSkk(RTSkk < 0) = NaN; %trials with no secondary saccade
   
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
@@ -47,50 +52,54 @@ for cc = 1:NUM_CELLS
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
   %index by ISI
-  medISI = nanmedian(ISIkk(idxErr));
-  idxSH = (ISIkk <= medISI);
-  idxLO = (ISIkk > medISI);
+  medISI = nanmedian(RTSkk(idxErr));
+  idxSH = (RTSkk <= medISI);
+  idxLO = (RTSkk > medISI);
   
   %perform RT matching and group trials by condition and outcome
-  trialsSH = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxSH));
-  trialsLO = groupTrialsRTmatched(RTkk, idxAcc, idxFast, idxCorr, (idxErr & idxLO));
+  trials_SH = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, (idxErr & idxSH));
+  trials_LO = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, (idxErr & idxLO));
   
-  %set "ISI" on correct trials as median ISI of choice error trials
-  ISIkk(trialsSH.FastCorr) = round(nanmedian(ISIkk(trialsSH.FastErr)));
-  ISIkk(trialsSH.AccCorr)  = round(nanmedian(ISIkk(trialsSH.AccErr)));
-  ISIkk(trialsLO.FastCorr) = round(nanmedian(ISIkk(trialsLO.FastErr)));
-  ISIkk(trialsLO.AccCorr)  = round(nanmedian(ISIkk(trialsLO.AccErr)));
+  rtSecond_SH(cc) = nanmedian(RTSkk(trials_SH.FastErr));
+  rtSecond_LO(cc) = nanmedian(RTSkk(trials_LO.FastErr));
   
-  %save ISI for plotting
-%   ISIplot = struct('AccSH',ISIkk(trialsSH.AccCorr(1)), 'FastSH',ISIkk(trialsSH.FastCorr(1)), ...
-%     'AccLO',ISIkk(trialsLO.AccCorr(1)), 'FastLO',ISIkk(trialsLO.FastCorr(1)));
+  %set RT_second on correct trials as median ISI of choice error trials
+  RTSkk(trials_SH.FastCorr) = round(nanmedian(RTSkk(trials_SH.FastErr)));
+  RTSkk(trials_SH.AccCorr)  = round(nanmedian(RTSkk(trials_SH.AccErr)));
+  RTSkk(trials_LO.FastCorr) = round(nanmedian(RTSkk(trials_LO.FastErr)));
+  RTSkk(trials_LO.AccCorr)  = round(nanmedian(RTSkk(trials_LO.AccErr)));
   
   %get single-trials SDFs
-  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsSH, TIME);
-  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trialsLO, TIME);
+  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTPkk, RTSkk, spikes(cc).SAT, trials_SH, TIME);
+  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTPkk, RTSkk, spikes(cc).SAT, trials_LO, TIME);
   
   %compute mean SDFs
-  [sdfAccSH.Corr(cc),sdfAccSH.Err(cc)] = computeMeanSDF( sdfAccST_SH );
-  [sdfFastSH.Corr(cc),sdfFastSH.Err(cc)] = computeMeanSDF( sdfFastST_SH );
-  [sdfAccLO.Corr(cc),sdfAccLO.Err(cc)] = computeMeanSDF( sdfAccST_LO );
-  [sdfFastLO.Corr(cc),sdfFastLO.Err(cc)] = computeMeanSDF( sdfFastST_LO );
+  [sdfAcc_SH.Corr(cc),sdfAcc_SH.Err(cc)] = computeMeanSDF( sdfAccST_SH );
+  [sdfFast_SH.Corr(cc),sdfFast_SH.Err(cc)] = computeMeanSDF( sdfFastST_SH );
+  [sdfAcc_LO.Corr(cc),sdfAcc_LO.Err(cc)] = computeMeanSDF( sdfAccST_LO );
+  [sdfFast_LO.Corr(cc),sdfFast_LO.Err(cc)] = computeMeanSDF( sdfFastST_LO );
+  sdf_SH = struct('AccCorr',sdfAcc_SH.Corr(cc), 'AccErr',sdfAcc_SH.Err(cc), 'FastCorr',sdfFast_SH.Corr(cc), 'FastErr',sdfFast_SH.Err(cc));
+  sdf_LO = struct('AccCorr',sdfAcc_LO.Corr(cc), 'AccErr',sdfAcc_LO.Err(cc), 'FastCorr',sdfFast_LO.Corr(cc), 'FastErr',sdfFast_LO.Err(cc));
     
-  %% Parameterize the SDF
-  ccNS = ninfo(cc).unitNum;
+  %compute signal latency
+%   [~,tmp_SH] = calcTimeErrSignal(sdfAccST_SH, sdfFastST_SH, OFFSET);
+%   [~,tmp_LO] = calcTimeErrSignal(sdfAccST_LO, sdfFastST_LO, OFFSET);
+%   latSig_SH(cc) = tmp_SH.Start;
+%   latSig_LO(cc) = tmp_LO.Start;
+%   nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI = latSig_SH(cc);
+%   nstats(ccNS).A_ChcErr_tErr_Fast_LongISI = latSig_LO(cc);
   
-  %latency
-%   [tErrAcc,tErrFast] = calcTimeErrSignal(sdfAccST, sdfFastST, OFFSET);
-%   nstats(ccNS).A_ChcErr_tErrEnd_Acc = tErrAcc.End;
-%   nstats(ccNS).A_ChcErr_tErrEnd_Fast = tErrFast.End;
+  %compute the statistic used to determine "error-relatedness" of neuron
+  ccNS = ninfo(cc).unitNum;
+  dtSignal = ( nstats(ccNS).A_ChcErr_tErr_Fast_LongISI - nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI);
+  nstats(ccNS).A_ChcErr_dtErr_vs_dISI = dtSignal / (rtSecond_LO(cc) - rtSecond_SH(cc));
   
   %plot individual cell activity
-  sdfPlotCC = struct('AccCorrSH',sdfAccSH.Corr(cc), 'AccErrSH',sdfAccSH.Err(cc), ... %short ISI
-    'FastCorrSH',sdfFastSH.Corr(cc), 'FastErrSH',sdfFastSH.Err(cc), ...
-  	'AccCorrLO',sdfAccLO.Corr(cc), 'AccErrLO',sdfAccLO.Err(cc), ... %long ISI
-    'FastCorrLO',sdfFastLO.Corr(cc), 'FastErrLO',sdfFastLO.Err(cc));
-  plotSDFChcErrXisiSATcc(TIME, sdfPlotCC, ninfo(cc), nstats(ccNS))
-  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
-  pause(0.1); close(); pause(0.1)
+  statsTime = struct('isiSH',rtSecond_SH(cc), 'isiLO',rtSecond_LO(cc), ...
+    'latSH',nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI, 'latLO',nstats(ccNS).A_ChcErr_tErr_Fast_LongISI);
+  plotSDFChcErrXisiSATcc(TIME, sdf_SH, sdf_LO, statsTime, ninfo(cc))
+  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff')
+  pause(0.05); close()
   
 end%for:cells(cc)
 
@@ -98,7 +107,7 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
-end%fxn:plotSDFChoiceErrXisiSAT2()
+end%fxn:plotSDFChoiceErrXisiSAT()
 
 function [ trialsGrouped ] = groupTrialsRTmatched(RT, idxAcc, idxFast, idxCorr, idxErr)
 
@@ -159,7 +168,7 @@ sdfErr.Baseline = nanmean(sdfSingleTrial.Err.ReStim)';
 end%util:computeMeanSDF()
 
 
-function [ ] = plotSDFChcErrXisiSATcc( TIME , sdfPlot , ninfo , nstats )
+function [ ] = plotSDFChcErrXisiSATcc( TIME , sdf_SH , sdf_LO , stats , ninfo )
 %plotSDFChcErrXisiSATcc Summary of this function goes here
 %   TIME.PRIMARY - Time from primary saccade (ms)
 %   TIME.SECONDARY - Time from secondary saccade (ms)
@@ -167,82 +176,29 @@ function [ ] = plotSDFChcErrXisiSATcc( TIME , sdfPlot , ninfo , nstats )
 % 
 
 %compute y-limits for vertical lines
-tmp = [sdfPlot.AccCorrSH.RePrimary ; sdfPlot.AccCorrSH.ReSecondary ; sdfPlot.AccErrSH.RePrimary ; sdfPlot.AccErrSH.ReSecondary ; ...
-  sdfPlot.FastCorrSH.RePrimary ; sdfPlot.FastCorrSH.ReSecondary ; sdfPlot.FastErrSH.RePrimary ; sdfPlot.FastErrSH.ReSecondary ; ...
-  sdfPlot.AccCorrLO.RePrimary ; sdfPlot.AccCorrLO.ReSecondary ; sdfPlot.AccErrLO.RePrimary ; sdfPlot.AccErrLO.ReSecondary ; ...
-  sdfPlot.FastCorrLO.RePrimary ; sdfPlot.FastCorrLO.ReSecondary ; sdfPlot.FastErrLO.RePrimary ; sdfPlot.FastErrLO.ReSecondary];
-
+tmp = [sdf_SH.FastCorr.RePrimary ; sdf_SH.FastCorr.ReSecondary ; sdf_SH.FastErr.RePrimary ; sdf_SH.FastErr.ReSecondary ; ...
+  sdf_LO.FastCorr.RePrimary ; sdf_LO.FastCorr.ReSecondary ; sdf_LO.FastErr.RePrimary ; sdf_LO.FastErr.ReSecondary];
 yLim = [min(tmp) max(tmp)];
 
-figure()
+%compute dSig/dISI stat
+ratioSig = (stats.latLO - stats.latSH) / (stats.isiLO - stats.isiSH);
 
-%% Fast condition
-
-%Time from primary saccade
-subplot(2,2,1); hold on
-plot([0 0], yLim, 'k:')
-
-plot(TIME.PRIMARY-3500, sdfPlot.FastCorrSH.RePrimary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.FastErrSH.RePrimary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.FastCorrLO.RePrimary, '-', 'Color',[0 .4 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.FastErrLO.RePrimary, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
-
-% plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-% plot(nstats.A_ChcErr_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-
+figure(); hold on
+title(['Ratio dSig/dISI = ', num2str(ratioSig)], 'FontSize',8)
+plot(TIME.PRIMARY-3500, sdf_SH.FastCorr.RePrimary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdf_SH.FastErr.RePrimary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdf_LO.FastCorr.RePrimary, '-', 'Color',[0 .4 0], 'LineWidth',1.0)
+plot(TIME.PRIMARY-3500, sdf_LO.FastErr.RePrimary, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
+plot(stats.isiSH*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0) %plot median ISI
+plot(stats.isiLO*ones(1,2), yLim, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
+plot(stats.latSH*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0) %plot median signal latency
+plot(stats.latLO*ones(1,2), yLim, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
-% title(['Magnitude = ', num2str(round(nstats.A_ChcErr_magErr_Fast)), ' sp/s'])
 print_session_unit(gca , ninfo,[])
 
 
-%Time from secondary saccade
-subplot(2,2,2); hold on
-plot([0 0], yLim, 'k:')
-
-plot(TIME.SECONDARY-3500, sdfPlot.FastCorrSH.ReSecondary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.FastErrSH.ReSecondary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.FastCorrLO.ReSecondary, '-', 'Color',[0 .4 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.FastErrLO.ReSecondary, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
-
-xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
-set(gca, 'YAxisLocation','right')
-
-
-%% Accurate condition
-
-%Time from primary saccade
-subplot(2,2,3); hold on
-plot([0 0], yLim, 'k:')
-
-plot(TIME.PRIMARY-3500, sdfPlot.AccCorrSH.RePrimary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.AccErrSH.RePrimary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.AccCorrLO.RePrimary, '-', 'Color',[.5 0 0], 'LineWidth',1.0)
-plot(TIME.PRIMARY-3500, sdfPlot.AccErrLO.RePrimary, ':', 'Color',[.5 0 0], 'LineWidth',1.0)
-
-% plot(nstats.A_ChcErr_tErr_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-% plot(nstats.A_ChcErr_tErrEnd_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-
-xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
-ylabel('Activity (sp/sec)')
-xlabel('Time from primary saccade (ms)')
-% title(['Magnitude = ', num2str(round(nstats.A_ChcErr_magErr_Acc)), ' sp/s'])
-
-
-%Time from secondary saccade
-subplot(2,2,4); hold on
-plot([0 0], yLim, 'k:')
-
-plot(TIME.SECONDARY-3500, sdfPlot.AccCorrSH.ReSecondary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.AccErrSH.ReSecondary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.AccCorrLO.ReSecondary, '-', 'Color',[.5 0 0], 'LineWidth',1.0)
-plot(TIME.SECONDARY-3500, sdfPlot.AccErrLO.ReSecondary, ':', 'Color',[.5 0 0], 'LineWidth',1.0)
-
-xlim([TIME.SECONDARY(1) TIME.SECONDARY(end)]-3500); xticks((TIME.SECONDARY(1):50:TIME.SECONDARY(end))-3500)
-xlabel('Time from secondary saccade (ms)')
-set(gca, 'YAxisLocation','right')
-
-ppretty([12,4.8])
+ppretty([9,3])
 
 end%util:plotSDFChcErrXisiSATcc()
 

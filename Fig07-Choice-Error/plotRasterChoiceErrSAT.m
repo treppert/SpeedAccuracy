@@ -1,19 +1,18 @@
-function [  ] = plotRasterChoiceErrSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [  ] = plotRasterChoiceErrSAT( binfo , moves , movesPP , ninfo , spikes )
 %plotRasterChoiceErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-ChcErr-SEF\Raster\';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxSEF = ismember({ninfo.area}, {'SEF'});
+idxMonkey = ismember({ninfo.monkey}, {'D','E'});
 
-idxError = (abs([ninfo.errGrade]) >= 2);
+idxErr = (([ninfo.errGrade]) >= 2);
 idxEff = ismember([ninfo.taskType], [1,2]);
 
-idxKeep = (idxArea & idxMonkey & idxError & idxEff);
+idxKeep = (idxSEF & idxMonkey & idxErr & idxEff);
 
-NUM_CELLS = sum(idxKeep);
+NUM_CELLS = 1;%sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
