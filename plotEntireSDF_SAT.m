@@ -1,6 +1,8 @@
 function [ varargout ] = plotEntireSDF_SAT( binfo , moves , ninfo , nstats , spikes , varargin )
 %plotEntireSDF_SAT() Summary of this function goes here
-%   Detailed explanation goes here
+%   Note: Use this function to compute normalization factors for all
+%   task-related neurons.
+% 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-Entire-SDF\';
@@ -10,9 +12,9 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
 idxErr = ([ninfo.errGrade] >= 2);   idxRew = ([ninfo.rewGrade] >= 2);
-idxTaskrel = (idxVis | idxMove | idxErr | idxRew);
+idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
-idxKeep = (idxArea & idxMonkey & idxTaskrel);
+idxKeep = (idxArea & idxMonkey & idxTaskRel);
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);

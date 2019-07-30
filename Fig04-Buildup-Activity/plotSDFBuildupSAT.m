@@ -8,10 +8,11 @@ args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxMove = ([ninfo.moveGrade] >= 2);
-idxEfficiency = ([ninfo.taskType] == 2);
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
-idxKeep = (idxArea & idxMonkey & idxMove & idxEfficiency);
+idxKeep = (idxArea & idxMonkey & idxTaskRel);
 
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
@@ -23,15 +24,12 @@ IDX_PLOT = (1:300); %cut at time of saccade
 
 %if desired, isolate one neuron of interest
 % sessionPlot = {'E20130827001'};   unitPlot = {'16a'};
-sessionPlot = [];   unitPlot = [];
+% sessionPlot = [];   unitPlot = [];
 
 tmp = NaN(NUM_CELLS,length(tVec.Resp));
 sdfAll = struct('AccCorr',tmp, 'AccErr',tmp, 'FastCorr',tmp, 'FastErr',tmp);
 
 for cc = 1:NUM_CELLS
-  if ~isempty(sessionPlot) && ~(ismember(ninfo(cc).sess, sessionPlot) && ismember(ninfo(cc).unit, unitPlot))
-    continue %if desired, isolate one neuron of interest
-  end
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
@@ -46,7 +44,11 @@ for cc = 1:NUM_CELLS
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
   idxErr = (~(binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc) & binfo(kk).err_time);
   %index by saccade direction (relative to MF)
-  idxMF = ismember(moves(kk).octant, ninfo(cc).moveField);
+  if isempty(ninfo(cc).moveField)
+    idxMF = true(1,binfo(kk).num_trials);
+  else
+    idxMF = ismember(moves(kk).octant, ninfo(cc).moveField);
+  end
   %index by screen clear on Fast trials
 %   idxClear = logical(binfo(kk).clearDisplayFast);
   
@@ -63,13 +65,13 @@ for cc = 1:NUM_CELLS
   ccNS = ninfo(cc).unitNum;
   
   %discharge rate at saccade initiation
-  nstats(ccNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
-  nstats(ccNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
-  nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
-  nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
+%   nstats(ccNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
+%   nstats(ccNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
+%   nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
+%   nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
   
   %normalization factor
-  nstats(ccNS).NormFactor_Move = max(sdfMeanFast.Resp.Corr);
+%   nstats(ccNS).NormFactor_Move = max(sdfMeanFast.Resp.Corr);
   
   %plot individual cell activity
 %   plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, ninfo(cc), nstats(ccNS), IDX_PLOT)

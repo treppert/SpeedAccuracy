@@ -23,6 +23,7 @@ sdfAcc.Corr = NaN(NUM_CELLS,length(T_REW));   sdfAcc.Err = NaN(NUM_CELLS,length(
 sdfFast.Corr = NaN(NUM_CELLS,length(T_REW));  sdfFast.Err = NaN(NUM_CELLS,length(T_REW));
 
 for cc = 1:NUM_CELLS
+  if ~isempty(nstats(ninfo(cc).unitNum).NormFactor_Rew); continue; end
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   kk = ismember({binfo.session}, ninfo(cc).sess);
   
@@ -61,16 +62,21 @@ for cc = 1:NUM_CELLS
     nstats(ccNS).A_Reward_tErrEnd_Acc = tErrAcc.End;
     nstats(ccNS).A_Reward_tErrEnd_Fast = tErrFast.End;
   end
-  if isnan(nstats(ccNS).A_Reward_magErr_Fast) %magnitude
-    [magAcc,magFast] = calcMagRewSignal(sdfAll, OFFSET, nstats(ccNS));
-%     nstats(ccNS).A_Reward_magErr_Acc = magAcc;
-    nstats(ccNS).A_Reward_magErr_Fast = magFast;
+  
+  %magnitude
+%   [magAcc,magFast] = calcMagRewSignal(sdfAll, OFFSET, nstats(ccNS));
+%   nstats(ccNS).A_Reward_magErr_Acc = magAcc;
+%   nstats(ccNS).A_Reward_magErr_Fast = magFast;
+  
+  %normalization factor
+  if isempty(nstats(ccNS).NormFactor_Rew)
+    nstats(ccNS).NormFactor_All = max(sdfAcc.Corr(cc,:));
   end
   
   %plot individual cell activity
-  plotSDFRewErrSATcc(T_REW, sdfAll, ninfo(cc), nstats(ccNS))
-  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff')
-  pause(0.1); close()
+%   plotSDFRewErrSATcc(T_REW, sdfAll, ninfo(cc), nstats(ccNS))
+%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff')
+%   pause(0.1); close()
   
 end%for:cells(cc)
 

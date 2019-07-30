@@ -10,13 +10,11 @@ ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-VisResp-SEF\';
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);
-idxSustained = ismember({ninfo.visType}, 'sustained');
-idxPhasic = ismember({ninfo.visType}, 'phasic');
-idxTST = ~(isnan([nstats.VRTSTAcc]) | isnan([nstats.VRTSTFast]));
-idxEff = ([ninfo.taskType] == 2);
+idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
+idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
-idxKeep = (idxArea & idxMonkey & idxVis);
+idxKeep = (idxArea & idxMonkey & idxTaskRel);
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
@@ -30,6 +28,7 @@ visResp = populate_struct(visResp, {'AccTin','AccDin','FastTin','FastDin'}, NaN(
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
+  
   kk = ismember({binfo.session}, ninfo(cc).sess);
   RTkk = double(moves(kk).resptime);
   
@@ -46,10 +45,11 @@ for cc = 1:NUM_CELLS
   %index by response dir re. response field
   if ismember(9, ninfo(cc).visField)
     idxRF = true(1,binfo(kk).num_trials);
+  elseif isempty(ninfo(cc).visField)
+    idxRF = true(1,binfo(kk).num_trials);
   else %standard response field
     idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   end
-  
   
   %isolate single-trial SDFs
   VRAcc.Tin = sdfKKstim(idxAcc & idxCorr & idxRF, T_STIM);
