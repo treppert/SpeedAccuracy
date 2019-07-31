@@ -2,30 +2,27 @@ function [ ] = plotSpkCount_X_RT_ReStim_SAT( binfo , moves , ninfo , spikes , va
 %plotSpkCount_X_RT_ReStim_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-
-if ~any(ismember(args.monkey, {'Q','S'})); binfo = binfo(1:16); end
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
-idxTaskRel = (idxVis | idxMove); %baseline activity
-% idxTaskRel = (idxVis); %visual response
-idxKeep = (idxArea & idxMonkey & idxTaskRel);
+idxVis = ([ninfo.visGrade] >= 2);
+idxMove = ([ninfo.moveGrade] >= 2);
+% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
+idxKeep = (idxArea & idxMonkey & idxVis); %visual response
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_TEST = 3500 + [-500 20]; %baseline
-% T_TEST = 3500 + [75 200]; %visual response
+% T_TEST = 3500 + [-500 20]; %baseline
+T_TEST = 3500 + [75 200]; %visual response
 
 RTBIN_ACC = (0 : 30 : 300);     NBIN_ACC = length(RTBIN_ACC) - 1;
 RTBIN_FAST = (-200 : 20 : 0);   NBIN_FAST = length(RTBIN_FAST) - 1;
 
-MIN_PER_BIN = 45; %minimum number of trials per RT bin
+MIN_PER_BIN = 25; %minimum number of trials per RT bin
 
 RTLIM_ACC = [390 800]; %limits on acceptable RT (used for data cleaning)
 RTLIM_FAST = [150 450];
@@ -103,7 +100,7 @@ figure(); hold on
 % plot(RTPLOT_FAST, zSpkCtFast, 'g-')
 errorbar(RTPLOT_ACC, nanmean(zSpkCtAcc), nanstd(zSpkCtAcc)./NSEM_ACC, 'capsize',0, 'Color','r')
 errorbar(RTPLOT_FAST, nanmean(zSpkCtFast), nanstd(zSpkCtFast)./NSEM_FAST, 'capsize',0, 'Color',[0 .7 0])
-xlabel('Response time (ms)')
+xlabel('Response time from deadline (ms)')
 ylabel('Spike count (z)')
 ppretty([6.4,4])
 

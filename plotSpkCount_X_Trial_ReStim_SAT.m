@@ -9,16 +9,16 @@ idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);
 idxMove = ([ninfo.moveGrade] >= 2);
-idxTaskRel = (idxVis | idxMove);
 
-idxKeep = (idxArea & idxMonkey & idxTaskRel);
+% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
+idxKeep = (idxArea & idxMonkey & idxVis); %visual response
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_TEST = 3500 + [-500 20]; %baseline
-% T_TEST = 3500 + [75 200]; %visual response
+% T_TEST = 3500 + [-500 20]; %baseline
+T_TEST = 3500 + [75 200]; %visual response
 
 TRIAL_PLOT = (-4 : 3);  NUM_TRIAL = length(TRIAL_PLOT);
 trialSwitch = identify_condition_switch(binfo);
@@ -121,7 +121,7 @@ errorbar(TRIAL_PLOT, muA2F, seA2F, 'capsize',0, 'Color','k')
 errorbar(TRIAL_PLOT+NUM_TRIAL+1, muF2A, seF2A, 'capsize',0, 'Color','k')
 xlabel('Trial');  ylabel('Spike count (z)'); ytickformat('%2.1f')
 xticks(-4:12); xticklabels({}); xlim([-4.5 12.5])
-ppretty([4.8,3])
+ppretty([4.8,2.2])
 set(gca, 'XMinorTick','off')
 
 

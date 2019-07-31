@@ -4,23 +4,20 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 %   order to obtain estimates of mean and SD of baseline activity.
 % 
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-VisResp-SEF\';
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Figs-VisResp-SEF\';
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
-idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
-
-idxKeep = (idxArea & idxMonkey & idxTaskRel);
+idxVis = ([ninfo.visGrade] >= 2);
+idxKeep = (idxArea & idxMonkey & idxVis);
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_STIM = 3500 + (-50 : 300);  OFFSET = 50;
+T_STIM = 3500 + (0 : 250);  OFFSET = 0;
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
 visResp = new_struct({'AccTin','AccDin','FastTin','FastDin'}, 'dim',[1,NUM_CELLS]);
@@ -41,11 +38,10 @@ for cc = 1:NUM_CELLS
   idxAcc = (binfo(kk).condition == 1 & ~idxIso);
   idxFast = (binfo(kk).condition == 3 & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
+%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
+  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
   %index by response dir re. response field
   if ismember(9, ninfo(cc).visField)
-    idxRF = true(1,binfo(kk).num_trials);
-  elseif isempty(ninfo(cc).visField)
     idxRF = true(1,binfo(kk).num_trials);
   else %standard response field
     idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
@@ -92,39 +88,37 @@ if (nargout > 0)
   varargout{1} = nstats;
 end
 
-
-%% Plotting - Across cells
-nstats = nstats(idxKeep);
-
-% quantTSTAcc = quantile([nstats.VRTSTAcc], [.1 .5 .9]);
-medTSTAcc = median([nstats.VRTSTAcc]); %plot median TST
-medTSTFast = median([nstats.VRTSTFast]);
-
-visRespAccTin = transpose([visResp.AccTin]);    visRespAccDin = transpose([visResp.AccDin]);
-visRespFastTin = transpose([visResp.FastTin]);  visRespFastDin = transpose([visResp.FastDin]);
+vrAccTin = transpose([visResp.AccTin]);    vrAccDin = transpose([visResp.AccDin]);
+vrFastTin = transpose([visResp.FastTin]);  vrFastDin = transpose([visResp.FastDin]);
 
 %normalization
-normFactor = [nstats.NormFactor_Vis];
-visRespAccTin = visRespAccTin ./ normFactor;    visRespAccDin = visRespAccDin ./ normFactor;
-visRespFastTin = visRespFastTin ./ normFactor;  visRespFastDin = visRespFastDin ./ normFactor;
+normFactor = [nstats(idxKeep).NormFactor_Vis]';
+vrAccTin = vrAccTin ./ normFactor;    vrAccDin = vrAccDin ./ normFactor;
+vrFastTin = vrFastTin ./ normFactor;  vrFastDin = vrFastDin ./ normFactor;
 
-figure(); hold on
+%split on levels of search efficiency
+ccMore = ([ninfo.taskType] == 1);   NUM_MORE = sum(ccMore);
+ccLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(ccLess);
 
-plot(T_STIM-3500, nanmean(visRespFastDin), 'Color',[0 .7 0], 'LineWidth',0.75, 'LineStyle',':')
-plot(T_STIM-3500, nanmean(visRespFastTin), 'Color',[0 .7 0], 'LineWidth',1.25)
-plot(T_STIM-3500, nanmean(visRespAccDin), 'Color','r', 'LineWidth',0.75, 'LineStyle',':')
-plot(T_STIM-3500, nanmean(visRespAccTin), 'Color','r', 'LineWidth',1.25)
+vrAccMore = vrAccTin(ccMore,:);     vrAccLess = vrAccTin(ccLess,:);
+vrFastMore = vrFastTin(ccMore,:);   vrFastLess = vrFastTin(ccLess,:);
 
-plot(medTSTAcc*ones(1,2), [.25 .75], 'r:', 'LineWidth',1.0)
-plot(medTSTFast*ones(1,2), [.25 .75], ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+%% Plotting - Across cells
+figure()
 
+subplot(2,1,1); hold on %less efficient search
+% plot(T_STIM-3500, (vrFastTin), 'Color',[0 .7 0])
+% plot(T_STIM-3500, (vrAccTin), 'Color','r')
+shaded_error_bar(T_STIM-3500, nanmean(vrAccLess), nanstd(vrAccLess)/sqrt(NUM_LESS), {'r-', 'LineWidth',1.5})
+shaded_error_bar(T_STIM-3500, nanmean(vrFastLess), nanstd(vrFastLess)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.5})
+ytickformat('%2.1f')
+
+subplot(2,1,2); hold on %more efficient search
+shaded_error_bar(T_STIM-3500, nanmean(vrAccMore), nanstd(vrAccMore)/sqrt(NUM_MORE), {'r-'})
+shaded_error_bar(T_STIM-3500, nanmean(vrFastMore), nanstd(vrFastMore)/sqrt(NUM_MORE), {'-', 'Color',[0 .7 0]})
 xlabel('Time from array (ms)'); ylabel('Normalized activity'); ytickformat('%2.1f')
-ppretty([4.8,2.5])
 
-% figure(); hold on
-% plot(T_STIM-3500, visRespAccTin, 'Color','r', 'LineWidth',0.75)
-% xlabel('Time from array (ms)'); ylabel('Normalized activity')
-% ppretty([4.8,3])
+ppretty([4.8,4])
 
 end%fxn:plotVisRespSAT()
 
