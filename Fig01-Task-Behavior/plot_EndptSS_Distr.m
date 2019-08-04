@@ -1,14 +1,18 @@
-function [ ] = plotPPsaccEndptDistr( binfo , movesPP )
-%plotPPsaccEndptDistr Summary of this function goes here
+function [ ] = plot_EndptSS_Distr( binfo , movesPP , varargin )
+%plot_EndptSS_Distr Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESSION = length(movesPP);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+[binfo, ~, movesPP] = utilIsolateMonkeyBehavior(binfo, zeros(1,length(binfo)), movesPP, args.monkey);
+NUM_SESS = length(binfo);
+
 TGT_ECCEN = 8; %use a consistent eccentricity for plotting
 
 xFinPP = [];
 yFinPP = [];
 
-for kk = 1:NUM_SESSION
+for kk = 1:NUM_SESS
   
   %use a consistent target eccentricity
   if (binfo(kk).tgt_eccen(100) ~= TGT_ECCEN); continue; end
@@ -46,7 +50,7 @@ R_PPSACC = sqrt(xFinPP.*xFinPP + yFinPP.*yFinPP);
 
 figure(); polaraxes()
 polarscatter(TH_PPSACC, R_PPSACC, 40, [.3 .3 .3], 'filled', 'MarkerFaceAlpha',0.3)
-rlim([0 10]); thetaticks([])
-ppretty('image_size',[5,5])
+rlim([0 8]); thetaticks([])
+ppretty([5,5])
 
-end%fxn:plotPPsaccEndptDistr()
+end%fxn:plot_EndptSS_Distr()

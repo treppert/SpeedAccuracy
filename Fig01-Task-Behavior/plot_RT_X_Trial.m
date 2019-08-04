@@ -1,5 +1,5 @@
-function [  ] = plotRTXtrial( binfo , moves , varargin )
-%plotRTXtrial Summary of this function goes here
+function [  ] = plot_RT_X_Trial( binfo , moves , varargin )
+%plot_RT_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -74,5 +74,5 @@ errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(rtA2F{2}), std(rtA2F{2})/sqrt(NUM_SEM(2)
 xlim([-5 12]); xticks(-4:11); xticklabels(cell(1,12))
 ppretty([6.4,4])
 
-end%function:plotRTXtrial()
+end%function:plot_RT_X_Trial()
 

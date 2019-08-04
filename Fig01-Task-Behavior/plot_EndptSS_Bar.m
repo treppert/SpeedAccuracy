@@ -1,5 +1,5 @@
-function [ ] = plotSecondSaccEndpt_Bar( binfo , movesPP , varargin )
-%plotSecondSaccEndpt_Bar Summary of this function goes here
+function [ ] = plot_EndptSS_Bar( binfo , movesPP , varargin )
+%plot_EndptSS_Bar Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -35,7 +35,7 @@ for kk = 1:NUM_SESSION
 end%for:session(kk)
 
 %% Stats - two-way between-subjects ANOVA
-writeData_TwoWayANOVA( Pr2tgt , 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\Behavior-SSendpt.mat' )
+% writeData_TwoWayANOVA( Pr2tgt , 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\Behavior-SSendpt.mat' )
 
 DV_Pr2tgt = [Pr2tgt.AccMore Pr2tgt.AccLess Pr2tgt.FastMore Pr2tgt.FastLess]';
 Condition = [ones(1,NUM_SESSION) 2*ones(1,NUM_SESSION)]';
@@ -57,10 +57,10 @@ bar(4, muAccLess, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([muFastMore muFastLess muAccMore muAccLess], [seFastMore seFastLess seAccMore seAccLess], ...
   'Color','k', 'CapSize',0)
 xticks([]); xticklabels([])
-ylabel('P (saccade to target)')
+ylim([.6 .9]); ylabel('P (saccade to target)')
 ppretty([2,3])
 
-end%fxn:plotSecondSaccEndpt_Bar()
+end%fxn:plot_EndptSS_Bar()
 
 function [ ] = writeData_TwoWayANOVA( param , writeFile )
 

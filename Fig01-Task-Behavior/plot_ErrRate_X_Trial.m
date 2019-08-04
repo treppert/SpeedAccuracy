@@ -1,5 +1,5 @@
-function [  ] = plotPErrXtrial( binfo , varargin )
-%plotPerrXtrial Summary of this function goes here
+function [  ] = plot_ErrRate_X_Trial( binfo , varargin )
+%plot_ErrRate_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -86,5 +86,5 @@ errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(pErrA2F{2}), std(pErrA2F{2})/sqrt(NUM_SE
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 ppretty([6.4,4])
 
-end%function:plotPerrXtrial()
+end%function:plot_ErrRate_X_Trial()
 

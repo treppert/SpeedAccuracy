@@ -1,5 +1,5 @@
-function [ ] = plotPPsaccISI( binfo , moves , movesPP , varargin )
-%plotPPsaccISI Summary of this function goes here
+function [ ] = plot_ISI_Distr( binfo , moves , movesPP , varargin )
+%plot_ISI_Distr Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -48,13 +48,13 @@ NUM_SESS_T1 = size(isiAcc{1}, 1);
 NUM_SESS_T2 = size(isiAcc{2}, 1);
 
 %cumulative distribution
-% figure(); hold on
-% errorbar(QUANT+.01, mean(isiAcc{1}), std(isiAcc{1})/sqrt(NUM_SESS_T1), 'Color','r', 'LineWidth',0.75, 'CapSize',0)
-% errorbar(QUANT+.01, mean(isiFast{1}), std(isiFast{1})/sqrt(NUM_SESS_T1), 'Color',[0 .7 0], 'LineWidth',0.75, 'CapSize',0)
-% errorbar(QUANT-.01, mean(isiAcc{2}), std(isiAcc{2})/sqrt(NUM_SESS_T2), 'Color','r', 'LineWidth',1.75, 'CapSize',0)
-% errorbar(QUANT-.01, mean(isiFast{2}), std(isiFast{2})/sqrt(NUM_SESS_T2), 'Color',[0 .7 0], 'LineWidth',1.75, 'CapSize',0)
-% xlim([.05 .95])
-% ppretty([5,6.4])
+figure(); hold on
+errorbar(QUANT+.01, mean(isiAcc{1}), std(isiAcc{1})/sqrt(NUM_SESS_T1), 'Color','r', 'LineWidth',0.75, 'CapSize',0)
+errorbar(QUANT+.01, mean(isiFast{1}), std(isiFast{1})/sqrt(NUM_SESS_T1), 'Color',[0 .7 0], 'LineWidth',0.75, 'CapSize',0)
+errorbar(QUANT-.01, mean(isiAcc{2}), std(isiAcc{2})/sqrt(NUM_SESS_T2), 'Color','r', 'LineWidth',1.75, 'CapSize',0)
+errorbar(QUANT-.01, mean(isiFast{2}), std(isiFast{2})/sqrt(NUM_SESS_T2), 'Color',[0 .7 0], 'LineWidth',1.75, 'CapSize',0)
+xlim([.05 .95])
+ppretty([5,6.4])
 
 %barplot
 muFM = mean(isiFast{1}(:,5));   muAM = mean(isiAcc{1}(:,5));
@@ -70,8 +70,8 @@ bar(2, muFL, 0.7, 'FaceColor',[0 .7 0], 'LineWidth',1.25)
 bar(3, muAM, 0.7, 'FaceColor','r', 'LineWidth',0.25)
 bar(4, muAL, 0.7, 'FaceColor','r', 'LineWidth',1.25)
 errorbar([muFM muFL muAM muAL], [seFM seFL seAM seAL], 'Color','k', 'CapSize',0)
-xticks([]); ylabel('ISI (ms)')
-ppretty([1,2], 'yRight')
+xticks([]); ylabel('ISI (ms)'); ylim([200 300])
+ppretty([2,3])
 
-end%fxn:plotPPsaccISI()
+end%fxn:plot_ISI_Distr()
 

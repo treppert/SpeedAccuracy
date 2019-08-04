@@ -1,5 +1,5 @@
-function [ ] = computeBasicPerformanceXSessionSAT(binfo, moves, movesPP, varargin)
-%computeBasicPerformanceXSessionSAT Summary of this function goes here
+function [ ] = compute_Behavior_X_Sess(binfo, moves, movesPP, varargin)
+%compute_Behavior_X_Sess Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -89,7 +89,7 @@ Condition = [ones(1,NUM_SESSION), 2*ones(1,NUM_SESSION)]';
 Efficiency = repmat([binfo.taskType],1,2)';
 [~,~] = anovan(parm, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
 
-end%fxn:computeBasicPerformanceXSessionSAT()
+end%fxn:compute_Behavior_X_Sess()
 
 
 
