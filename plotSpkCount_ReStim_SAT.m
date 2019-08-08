@@ -8,15 +8,15 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
-idxKeep = (idxArea & idxMonkey & idxVis); %visual response
+idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
+% idxKeep = (idxArea & idxMonkey & idxVis); %visual response
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-% T_TEST = 3500 + [-600 20]; %baseline
-T_TEST = 3500 + [75 200]; %visual response
+T_TEST = 3500 + [-600 20]; %baseline
+% T_TEST = 3500 + [75 200]; %visual response
 
 %initializations
 spkCountAcc = NaN(1,NUM_CELLS);
@@ -66,7 +66,7 @@ scAccMore = spkCountAcc(ccMore);    scAccLess = spkCountAcc(ccLess);
 scFastMore = spkCountFast(ccMore);  scFastLess = spkCountFast(ccLess);
 
 %% Stats - Two-way split-plot ANOVA
-ROOT_DIR = 'C:\Users\Tom\Dropbox\SAT\Stats\';
+ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
 spikeCount = struct('AccMore',scAccMore, 'AccLess',scAccLess, 'FastMore',scFastMore, 'FastLess',scFastLess);
 writeData_TwoWayANOVA( spikeCount , [ROOT_DIR,args.area,'-VisResponse.mat'] )
 

@@ -13,7 +13,7 @@ nstats = nstats(idxKeep);
 spikes = spikes(idxKeep);
 
 T_COUNT_BASE = [-50, 50] + 3500; %interval over which to count baseline spikes as control
-T_COUNT_ERR = [0, 200] + 3500; %interval (re. primary sacc.) over which to count spikes
+T_COUNT_ERR = [0, 200] + 3500; %interval (re. signal onset) over which to count spikes
 MAX_ERR_TIME = 25; %maximum timing error for trials allowed
 
 %bin trials by error signal (z-score)
