@@ -11,9 +11,11 @@ KK_All = [ KK_Da , KK_Eu ];
 nPairSummary = nPairSummary(KK_All,:);
 N_SESS = size(nPairSummary, 1);
 
-T_BASE = 3500 + [-600 20]; %baseline (re. stimulus)
+% T_BASE = 3500 + [-600 20]; %baseline (re. stimulus)
+T_BASE = 3500 + [-350 20];
 T_VIS  = 3500 +  [75 200]; %visual response (re. stimulus)
-T_ERR  = 3500 + [100 300]; %error-related (re. saccade)
+% T_ERR  = 3500 + [100 300]; %error-related (re. saccade)
+T_ERR  = 3500 + [50 350];
 
 %function for curve fitting
 f_Fit = @(x,xdata) x(1) + x(2)*xdata + x(3)*xdata.^2 + x(4)*xdata.^3;
@@ -48,6 +50,7 @@ end%for:session(kk)
 nPairDB = nPairDB(iiPairKeep,:);
 
 %% Compute spike counts for intervals of interest
+CELL = {'X','Y'};
 N_PAIR = size(nPairDB, 1);
 
 logPVal_Acc_Base = NaN(1,N_PAIR); logPVal_Fast_Base = NaN(1,N_PAIR);
@@ -110,23 +113,17 @@ for ii = 1:N_PAIR
 %   trialAcc = find(idxAcc & idxErr & ~(X_idxIso | Y_idxIso));
 %   trialFast = find(idxFast & idxErr & ~(X_idxIso | Y_idxIso));
   
-  X_Acc_spikes = X_spikes(trialAcc);   X_Fast_spikes = X_spikes(trialFast);
-  Y_Acc_spikes = Y_spikes(trialAcc);   Y_Fast_spikes = Y_spikes(trialFast);
+  sp_Acc.X = X_spikes(trialAcc);    sp_Fast.X = X_spikes(trialFast);
+  sp_Acc.Y = Y_spikes(trialAcc);    sp_Fast.Y = Y_spikes(trialFast);
   
-  %compute spike counts for Baseline Period
+  %compute spike counts for Baseline Period and Visual Response Period
   %****************************************
-  X_Acc_sp_Base  = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), X_Acc_spikes);
-  X_Fast_sp_Base = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), X_Fast_spikes);
-  Y_Acc_sp_Base  = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), Y_Acc_spikes);
-  Y_Fast_sp_Base = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), Y_Fast_spikes);
-  %****************************************
-  
-  %compute spike counts for Visual Response Period
-  %****************************************
-  X_Acc_sp_Vis  = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), X_Acc_spikes);
-  X_Fast_sp_Vis = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), X_Fast_spikes);
-  Y_Acc_sp_Vis  = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), Y_Acc_spikes);
-  Y_Fast_sp_Vis = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), Y_Fast_spikes);
+  for cc = 1:2
+    sp_Acc_Base.(CELL{cc})  = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), sp_Acc.(CELL{cc}));
+    sp_Fast_Base.(CELL{cc}) = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), sp_Fast.(CELL{cc}));
+    sp_Acc_Vis.(CELL{cc})  = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), sp_Acc.(CELL{cc}));
+    sp_Fast_Vis.(CELL{cc}) = cellfun(@(x) sum((x > T_VIS(1)) & (x < T_VIS(2))), sp_Fast.(CELL{cc}));
+  end
   %****************************************
   
   %compute spike counts for Error Period
@@ -139,6 +136,9 @@ for ii = 1:N_PAIR
   
   for jj = 1:numAcc %Accurate condition
     t_Err_jj = RT_Acc(jj) + T_ERR;
+    for cc = 1:2
+      sp_Acc_Err.(CELL{cc})(jj)  = cellfun(@(x) sum((x > T_BASE(1)) & (x < T_BASE(2))), sp_Acc.(CELL{cc}));
+    end
     X_Acc_sp_Err(jj) = sum((X_Acc_spikes{jj} > t_Err_jj(1)) & (X_Acc_spikes{jj} < t_Err_jj(2)));
     Y_Acc_sp_Err(jj) = sum((Y_Acc_spikes{jj} > t_Err_jj(1)) & (Y_Acc_spikes{jj} < t_Err_jj(2)));
   end
@@ -150,6 +150,9 @@ for ii = 1:N_PAIR
   %****************************************
   
   %FIT THE SPIKE COUNT VS. TRIAL NUMBER DATA
+  sp_Base = struct('X',[], 'Y',[]);
+  
+  
   %combine data across conditions
   trialAll = [trialAcc trialFast];
   X_sp_Base = [X_Acc_sp_Base X_Fast_sp_Base];   Y_sp_Base = [Y_Acc_sp_Base Y_Fast_sp_Base];
