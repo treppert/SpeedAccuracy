@@ -2,10 +2,11 @@ function [ ] = plot_SpkCorr_SAT( nPairSummary , nPairDB , binfo , ninfo , spikes
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-DIR_PRINT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Spike-Correlation-SEF-SC\';
+DIR_PRINT = 'C:\Users\TDT\Dropbox\SAT\Figures\Spike-Correlation-SEF-FEF\';
+SecondArea = 'FEF';
 
-KK_Da = [2, 3, 4, 5, 8, 9];   KK_Eu = [11, 12, 13]; %SC & SEF
-% KK_Da = [2, 3, 4, 5, 6, 8, 9];   KK_Eu = []; %FEF & SEF
+% KK_Da = [2, 3, 4, 5, 8, 9];   KK_Eu = [11, 12, 13]; %SC & SEF
+KK_Da = [2, 3, 4, 5, 6, 8, 9];   KK_Eu = []; %FEF & SEF
 
 KK_All = [ KK_Da , KK_Eu ];
 nPairSummary = nPairSummary(KK_All,:);
@@ -37,7 +38,7 @@ for kk = 1:N_SESS
     X_area = nPairDB.X_area{ii};
     Y_area = nPairDB.Y_area{ii};
     
-    if ((strcmp(X_area,'SEF') && strcmp(Y_area,'SC')) || (strcmp(X_area,'SC') && strcmp(Y_area,'SEF')))
+    if ((strcmp(X_area,'SEF') && strcmp(Y_area,SecondArea)) || (strcmp(X_area,SecondArea) && strcmp(Y_area,'SEF')))
       iiPairKeep = cat(2, iiPairKeep, ii);
     end
     
@@ -340,19 +341,29 @@ for ii = 1:N_PAIR
 end%for:cellPair(ii)
 
 %% Save table of neuron types for classification
-% idxCorr_Acc  = (logPVal_Acc_Err >= -log(.06));
-% idxCorr_Fast = (logPVal_Fast_Err >= -log(.06));
-% 
-% cellData = table(Pair_UID, X_Area, Y_Area, X_Type, Y_Type);
+idxCorr_Acc  = (logPVal_Acc_Err >= -log(.06));
+idxCorr_Fast = (logPVal_Fast_Err >= -log(.06));
+
+cellData = table(Pair_UID, X_Area, Y_Area, X_Type, Y_Type);
 % cellData_Corr_Acc = cellData(idxCorr_Acc,:);      cellData_Corr_Fast = cellData(idxCorr_Fast,:);
 % cellData_NCorr_Acc = cellData(~idxCorr_Acc,:);    cellData_NCorr_Fast = cellData(~idxCorr_Fast,:);
-% 
-% %write to Excel
-% fileName = 'cellData-SEF-SC.xlsx';
+
+%organize table such that Neuron X is always from SEF
+idxFlip = ~ismember(cellData.X_Area, {'SEF'});
+cellData.tmp = cellData.X_Type;
+cellData.X_Type(idxFlip) = cellData.Y_Type(idxFlip);
+cellData.Y_Type(idxFlip) = cellData.tmp(idxFlip);
+cellData.tmp = [];
+cellData.X_Area(idxFlip) = {'SEF'};
+cellData.Y_Area(idxFlip) = {SecondArea};
+
+%write to Excel
+fileName = 'cellData-All-SEF-FEF.xlsx';
 % writetable(cellData_Corr_Acc, [DIR_PRINT, fileName], 'Sheet',1, 'Range','B3')
 % writetable(cellData_NCorr_Acc, [DIR_PRINT, fileName], 'Sheet',1, 'Range','H3')
 % writetable(cellData_Corr_Fast, [DIR_PRINT, fileName], 'Sheet',1, 'Range','N3')
 % writetable(cellData_NCorr_Fast, [DIR_PRINT, fileName], 'Sheet',1, 'Range','T3')
+writetable(cellData, [DIR_PRINT, fileName], 'Sheet',1, 'Range','B3')
 
 %% Plot summary statistics for all pairs
 figure()
