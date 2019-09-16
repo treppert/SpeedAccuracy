@@ -1,4 +1,4 @@
-function [ varargout ] = plot_ErrRate_X_RT( binfo , moves , varargin )
+function [ ] = plot_ErrRate_X_RT( binfo , moves , varargin )
 %plot_ErrRate_X_RT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -73,13 +73,11 @@ RTAC = repmat(RT_PLOT_ACC, 1,NUM_SESS)';
 inan = isnan(errRateFC);  RTFC(inan) = [];  errRateFC(inan) = [];
 inan = isnan(errRateAC);  RTAC(inan) = [];  errRateAC(inan) = [];
 
-[pvalFC,rhoFC] = corr(RTFC, errRateFC, 'Type','Pearson');
-[pvalAC,rhoAC] = corr(RTAC, errRateAC, 'Type','Pearson');
+[bfFC, rhoFC, pvalFC] = bf.corr(RTFC, errRateFC);
+[bfAC, rhoAC, pvalAC] = bf.corr(RTAC, errRateAC);
 
-stats = struct('Fast',[pvalFC, rhoFC], 'Acc',[pvalAC, rhoAC]);
-if (nargout > 0)
-  varargout{1} = stats;
-end
+fprintf('Accurate: R = %g  ||  p = %g || BF = %g\n', rhoAC, pvalAC, bfAC)
+fprintf('Fast: R = %g  ||  p = %g || BF = %g\n', rhoFC, pvalFC, bfFC)
 
 %fit line to the data
 fitFast = fit(RTFC, errRateFC, 'poly1');
