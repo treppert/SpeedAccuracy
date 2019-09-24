@@ -25,6 +25,8 @@ PerrTimeFast = NaN(1,NUM_SESSION);
 isiAcc = NaN(1,NUM_SESSION);
 isiFast = NaN(1,NUM_SESSION);
 
+numCorrect = NaN(1,NUM_SESSION);
+
 %% Collect data
 
 for kk = 1:NUM_SESSION
@@ -35,6 +37,8 @@ for kk = 1:NUM_SESSION
   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
   idxErrChc = binfo(kk).err_dir & ~binfo(kk).err_time;
   idxErrTime = binfo(kk).err_time & ~binfo(kk).err_dir;
+  
+  numCorrect(kk) = sum((idxAcc | idxFast) & idxCorr);
   
   dlineAcc(kk) = nanmedian(binfo(kk).deadline(idxAcc));
   dlineFast(kk) = median(binfo(kk).deadline(idxFast));
@@ -57,6 +61,8 @@ for kk = 1:NUM_SESSION
 end%for:session(kk)
 
 %% Print mean +/- SE
+fprintf('Number of correct responses per session: %g +/- %g\n\n', mean(numCorrect), std(numCorrect)/sqrt(NUM_SESSION));
+
 fprintf('Response deadline Acc: %g +/- %g\n', mean(dlineAcc), std(dlineAcc)/sqrt(NUM_SESSION))
 fprintf('Response deadline Fast: %g +/- %g\n\n', mean(dlineFast), std(dlineFast)/sqrt(NUM_SESSION))
 

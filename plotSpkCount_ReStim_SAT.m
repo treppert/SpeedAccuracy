@@ -8,15 +8,15 @@ idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
 
 idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
-% idxKeep = (idxArea & idxMonkey & idxVis); %visual response
+% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
+idxKeep = (idxArea & idxMonkey & idxVis); %visual response
 
 NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_TEST = 3500 + [-600 20]; %baseline
-% T_TEST = 3500 + [75 200]; %visual response
+% T_TEST = 3500 + [-600 20]; %baseline
+T_TEST = 3500 + [75 200]; %visual response
 
 %initializations
 spkCountAcc = NaN(1,NUM_CELLS);
@@ -72,14 +72,24 @@ writeData_TwoWayANOVA( spikeCount , [ROOT_DIR,args.area,'-VisResponse.mat'] )
 
 %% Plotting
 
-muAccMore = mean(scAccMore);    seAccMore = std(scAccMore) / sqrt(NUM_MORE);
-muAccLess = mean(scAccLess);    seAccLess = std(scAccLess) / sqrt(NUM_LESS);
-muFastMore = mean(scFastMore);    seFastMore = std(scFastMore) / sqrt(NUM_MORE);
-muFastLess = mean(scFastLess);    seFastLess = std(scFastLess) / sqrt(NUM_LESS);
+% muAccMore = mean(scAccMore);    seAccMore = std(scAccMore) / sqrt(NUM_MORE);
+% muAccLess = mean(scAccLess);    seAccLess = std(scAccLess) / sqrt(NUM_LESS);
+% muFastMore = mean(scFastMore);    seFastMore = std(scFastMore) / sqrt(NUM_MORE);
+% muFastLess = mean(scFastLess);    seFastLess = std(scFastLess) / sqrt(NUM_LESS);
 
-figure(); hold on
-bar((1:4), [muAccMore muFastMore muAccLess muFastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
-errorbar((1:4), [muAccMore muFastMore muAccLess muFastLess], [seAccMore seFastMore seAccLess seFastLess], 'Color','k', 'CapSize',0)
+% figure(); hold on
+% bar((1:4), [muAccMore muFastMore muAccLess muFastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
+% errorbar((1:4), [muAccMore muFastMore muAccLess muFastLess], [seAccMore seFastMore seAccLess seFastLess], 'Color','k', 'CapSize',0)
+% ppretty([1.5,3])
+
+%plot the SAT effect on spike count separately for more and less efficient
+dSAT_More = scFastMore - scAccMore;   se_More = std(dSAT_More) / sqrt(NUM_MORE);
+dSAT_Less = scFastLess - scAccLess;   se_Less = std(dSAT_Less) / sqrt(NUM_LESS);
+
+pause(0.25); figure(); hold on
+errorbar([mean(dSAT_More) mean(dSAT_Less)], [se_More se_Less], 'capsize',0, 'Color','k')
+xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
+ylabel('\Delta sp. ct. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
 end%fxn:plotSpkCount_ReStim_SAT()
