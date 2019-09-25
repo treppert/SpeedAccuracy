@@ -5,7 +5,7 @@ function [ varargout ] = plotVisRespSAT( binfo , moves , ninfo , nstats , spikes
 % 
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Figs-VisResp-SEF\';
+DIR_PRINT = ['C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Figs-VisResp-', args.area, '-TST\'];
 
 idxArea = ismember({ninfo.area}, args.area);
 idxMonkey = ismember({ninfo.monkey}, args.monkey);
@@ -17,17 +17,19 @@ NUM_CELLS = sum(idxKeep);
 ninfo = ninfo(idxKeep);
 spikes = spikes(idxKeep);
 
-T_STIM = 3500 + (0 : 250);  OFFSET = 0;
+T_STIM = 3500 + (0 : 350);  OFFSET = 0;
 
 %output initializations: Accurate, Fast, Target in (RF), Distractor in (RF)
 visResp = new_struct({'AccTin','AccDin','FastTin','FastDin'}, 'dim',[1,NUM_CELLS]);
 visResp = populate_struct(visResp, {'AccTin','AccDin','FastTin','FastDin'}, NaN(length(T_STIM),1));
 
 for cc = 1:NUM_CELLS
+  ccNS = ninfo(cc).unitNum;
+  if (ccNS ~= 44); continue; end
   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
   
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  RTkk = double(moves(kk).resptime);
+%   RTkk = double(moves(kk).resptime);
   
   %compute spike density function
   sdfKKstim = compute_spike_density_fxn(spikes(cc).SAT);
@@ -58,8 +60,6 @@ for cc = 1:NUM_CELLS
   visResp(cc).FastTin(:) = mean(VRFast.Tin);  visResp(cc).FastDin(:) = mean(VRFast.Din);
   
   %% Parameterize the visual response
-  ccNS = ninfo(cc).unitNum;
-  
   %latency
 %   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccNS), OFFSET);
 %   nstats(ccNS).VRlatAcc = VRlatAcc;
@@ -76,11 +76,11 @@ for cc = 1:NUM_CELLS
 %   nstats(ccNS).VRTSTFast = VRTSTFast;
   
   %normalization factor
-%   nstats(ccNS).NormFactor_Vis = max(visResp(cc).FastTin);
+  nstats(ccNS).NormFactor_Vis = max(visResp(cc).FastTin);
   
   %plot individual cell activity
-%   plotVisRespSATcc(T_STIM, visResp(cc), ninfo(cc), nstats(ccNS));
-%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
+  plotVisRespSATcc(T_STIM, visResp(cc), ninfo(cc), nstats(ccNS));
+%   print([DIR_PRINT, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff'); pause(0.1); close()
   
 end%for:cells(cc)
 
@@ -103,6 +103,7 @@ ccLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(ccLess);
 vrAccMore = vrAccTin(ccMore,:);     vrAccLess = vrAccTin(ccLess,:);
 vrFastMore = vrFastTin(ccMore,:);   vrFastLess = vrFastTin(ccLess,:);
 
+return
 %% Plotting - Across cells
 figure()
 
@@ -131,7 +132,17 @@ function [ ] = plotVisRespSATcc(T_STIM, visResp, ninfo, nstats, varargin)
 
 args = getopt(varargin, {{'tVec=',[]}});
 
-figure(); hold on
+% figure(); hold on %RESPONSIVENESS
+% plot(T_STIM-3500, visResp.FastTin, '-', 'Color',[0 .7 0])
+% plot(T_STIM-3500, visResp.AccTin, 'r-')
+% % plot([75 200], [1 1], 'k-', 'LineWidth',2.5)
+% xlabel('Time from array (ms)')
+% ylabel('Activity (sp/sec)')
+% print_session_unit(gca , ninfo,[])
+% ppretty([3.4,2])
+% return
+
+figure(); hold on %TARGET SELECTION
 
 tmp = [visResp.AccTin ; visResp.FastTin];
 yLim = [min(tmp) max(tmp)];
@@ -143,7 +154,7 @@ plot(T_STIM-3500, visResp.FastDin, '--', 'Color',[0 .7 0], 'LineWidth',0.5)
 plot(nstats.VRlatFast*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
 plot(nstats.VRTSTFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 % plot([T_STIM(1) T_STIM(end)]-3500, nstats.blineFastMEAN*ones(1,2), ':', 'Color',[0 .7 0], 'LineWidth',0.5)
-title(['mag(A) = ',num2str(nstats.VRmagAcc)], 'FontSize',8)
+% title(['mag(F) = ',num2str(nstats.VRmagAcc)], 'FontSize',8)
 print_session_unit(gca , ninfo,[])
 
 subplot(2,1,2); hold on %Accurate condition
@@ -153,7 +164,7 @@ plot(T_STIM-3500, visResp.AccDin, 'r--', 'LineWidth',0.5)
 plot(nstats.VRlatAcc*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
 plot(nstats.VRTSTAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 % plot([T_STIM(1) T_STIM(end)]-3500, nstats.blineAccMEAN*ones(1,2), 'r:', 'LineWidth',0.5)
-title(['mag(A) = ',num2str(nstats.VRmagFast)], 'FontSize',8)
+% title(['mag(A) = ',num2str(nstats.VRmagFast)], 'FontSize',8)
 xlabel('Time from array (ms)')
 ylabel('Activity (sp/sec)')
 
