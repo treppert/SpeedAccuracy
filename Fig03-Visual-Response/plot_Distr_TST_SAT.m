@@ -63,11 +63,20 @@ TST_Fast_Less = [nstats(ccLess).VRTSTFast]; TST_Fast_Less(isnan(TST_Fast_Less)) 
 % cdfplotTR(TST_Acc_Less, 'Color','r', 'LineWidth',1.75)
 % ppretty([3.6,2]); ytickformat('%2.1f')
 
-%stats -- unpaired t-test
+%Stats -- unpaired t-test -- SAT effect at each level of efficiency
+%Note - this *should* be post-hoc test after two-way ANOVA
 [~,pval_More] = ttest2(TST_Acc_More, TST_Fast_More);
 [~,pval_Less] = ttest2(TST_Acc_Less, TST_Fast_Less);
 fprintf('pval (unpaired) (More efficient) :: %g\n', pval_More)
 fprintf('pval (unpaired) (Less efficient) :: %g\n', pval_Less)
+
+%Stats -- two-way between-subjects ANOVA -- main effects of SAT/efficiency
+nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
+nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
+tmp = [TST_Acc_More TST_Acc_Less TST_Fast_More TST_Fast_Less]';
+Condition = [ones(1,nAM+nAL) 2*ones(1,nFM+nFL)]';
+Efficiency = [ones(1,nAM) 2*ones(1,nAL) ones(1,nFM) 2*ones(1,nFL)]';
+anovan(tmp, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
 
 %% Plotting - Barplot - TST
 y_AM = mean(TST_Acc_More);    se_AM = std(TST_Acc_More)/sqrt(NUM_MORE);
@@ -76,8 +85,8 @@ y_FM = mean(TST_Fast_More);   se_FM = std(TST_Fast_More)/sqrt(NUM_MORE);
 y_FL = mean(TST_Fast_Less);   se_FL = std(TST_Fast_Less)/sqrt(NUM_LESS);
 
 % figure(); hold on
-% bar([y_FM y_AM y_FL y_AL], 'FaceColor',[.3 .3 .3]);
-% errorbar(1:4, [y_FM y_AM y_FL y_AL], [se_FM se_AM se_FL se_AL], 'k-', 'CapSize',0)
+% bar([1,2,4,5], [y_FM y_AM y_FL y_AL], 'FaceColor',[.3 .3 .3]);
+% errorbar([1,2,4,5], [y_FM y_AM y_FL y_AL], [se_FM se_AM se_FL se_AL], 'k-', 'CapSize',0)
 % ppretty([2.4,3]); xticks([])
 
 end%fxn:plot_Distr_TST_SAT()
