@@ -1,6 +1,18 @@
-function [binfo, varargout] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, monkey)
+function [ binfo , varargout ] = utilIsolateMonkeyBehavior( monkey , binfo , varargin )
 %utilIsolateMonkeyBehavior Summary of this function goes here
 %   Detailed explanation goes here
+
+if (nargin > 2)
+  moves = varargin{1};
+else
+  moves = zeros(1,length(binfo));
+end
+
+if (nargin > 3)
+  movesPP = varargin{2};
+else
+  movesPP = zeros(1,length(binfo));
+end
 
 MIN_NUM_TRIALS = 500;
 
@@ -36,5 +48,5 @@ if (nargout > 1)
   end
 end
 
-end%util:utilIsolateMonkeyBehavior()
+end % util : utilIsolateMonkeyBehavior()
 

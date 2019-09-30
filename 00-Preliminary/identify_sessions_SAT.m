@@ -1,6 +1,12 @@
-function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , monkey , type )
-%initialize_behavior_data Summary of this function goes here
+function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , type , varargin )
+%identify_sessions_SAT Summary of this function goes here
 %   Detailed explanation goes here
+
+if (nargin > 2)
+  monkey = varargin{1};
+else
+  monkey = {''};
+end
 
 MIN_TOTAL_TRIALS_PER_SESSION = 700;
 
@@ -38,4 +44,4 @@ num_trials.SAT(kkRemove) = [];
 sessions.MG(kkRemove) = [];
 num_trials.MG(kkRemove) = [];
 
-end%function:identify_sessions_SAT
+end % util : identify_sessions_SAT()
