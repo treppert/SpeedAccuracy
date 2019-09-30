@@ -56,12 +56,18 @@ TST_Acc_Less = [nstats(ccLess).VRTSTAcc]; TST_Acc_Less(isnan(TST_Acc_Less)) = []
 TST_Fast_More = [nstats(ccMore).VRTSTFast]; TST_Fast_More(isnan(TST_Fast_More)) = [];
 TST_Fast_Less = [nstats(ccLess).VRTSTFast]; TST_Fast_Less(isnan(TST_Fast_Less)) = [];
 
-% figure(); hold on
+nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
+nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
+
+figure(); hold on
 % cdfplotTR(TST_Fast_More, 'Color',[0 .7 0])
 % cdfplotTR(TST_Fast_Less, 'Color',[0 .7 0], 'LineWidth',1.75)
 % cdfplotTR(TST_Acc_More, 'Color','r')
 % cdfplotTR(TST_Acc_Less, 'Color','r', 'LineWidth',1.75)
 % ppretty([3.6,2]); ytickformat('%2.1f')
+boxplot([TST_Fast_More TST_Acc_More TST_Fast_Less TST_Acc_Less], [ones(1,nFM) 2*ones(1,nAM) 3*ones(1,nFL) 4*ones(1,nAL)], ...
+  'GroupOrder',{'4','3','2','1'}, 'Whisker',1.0, 'Colors','k', 'Symbol','o', 'OutlierSize',4, 'Orientation','horizontal')
+ppretty([3.2,2]); yticks([]); set(gca, 'YMinorTick','off')
 
 %Stats -- unpaired t-test -- SAT effect at each level of efficiency
 %Note - this *should* be post-hoc test after two-way ANOVA
@@ -71,12 +77,10 @@ fprintf('pval (unpaired) (More efficient) :: %g\n', pval_More)
 fprintf('pval (unpaired) (Less efficient) :: %g\n', pval_Less)
 
 %Stats -- two-way between-subjects ANOVA -- main effects of SAT/efficiency
-nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
-nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
-tmp = [TST_Acc_More TST_Acc_Less TST_Fast_More TST_Fast_Less]';
-Condition = [ones(1,nAM+nAL) 2*ones(1,nFM+nFL)]';
-Efficiency = [ones(1,nAM) 2*ones(1,nAL) ones(1,nFM) 2*ones(1,nFL)]';
-anovan(tmp, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
+% tmp = [TST_Acc_More TST_Acc_Less TST_Fast_More TST_Fast_Less]';
+% Condition = [ones(1,nAM+nAL) 2*ones(1,nFM+nFL)]';
+% Efficiency = [ones(1,nAM) 2*ones(1,nAL) ones(1,nFM) 2*ones(1,nFL)]';
+% anovan(tmp, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
 
 %% Plotting - Barplot - TST
 y_AM = mean(TST_Acc_More);    se_AM = std(TST_Acc_More)/sqrt(NUM_MORE);
