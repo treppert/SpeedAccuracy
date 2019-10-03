@@ -3,7 +3,7 @@ function [ ] = plotPupilData_SAT( pupilData , binfo )
 %   Detailed explanation goes here
 
 T_ARRAY = 3500;
-T_WIN_PLOT = T_ARRAY + (-650 : +250); %window for viewing pupil dynamics
+T_WIN_PLOT = T_ARRAY + (-650 : +1500); %window for viewing pupil dynamics
 NUM_SAMP = length(T_WIN_PLOT);
 
 binfo = utilIsolateMonkeyBehavior({'D','E'}, binfo);
@@ -34,23 +34,26 @@ for kk = 1:NUM_SESSION
   pupilMat_AccErrTime(kk,:)  = nanmean(pupil_AccErrTime);
   
   %plotting
-  figure(); hold on; ppretty([4.8,3])
-  shadedErrorBar(T_WIN_PLOT-3500, pupil_FastCorr, {@nanmean,@nanstd}, 'lineprops',{'-', 'Color',[0 .7 0]}, 'transparent',true);
-  shadedErrorBar(T_WIN_PLOT-3500, pupil_FastErrChc, {@nanmean,@nanstd},  'lineprops',{':', 'Color',[0 .7 0]}, 'transparent',true);
-  xlabel('Time from array (ms)'); ylabel('Pupil (a.u.)'); title(binfo(kk).session)
+%   figure(); hold on; ppretty([4.8,3])
+%   shadedErrorBar(T_WIN_PLOT-3500, pupil_FastCorr, {@nanmean,@nanstd}, 'lineprops',{'-', 'Color',[0 .7 0]}, 'transparent',true);
+%   shadedErrorBar(T_WIN_PLOT-3500, pupil_FastErrChc, {@nanmean,@nanstd},  'lineprops',{':', 'Color',[0 .7 0]}, 'transparent',true);
+%   xlabel('Time from array (ms)'); ylabel('Pupil (a.u.)'); title(binfo(kk).session)
 %   print([DIR_PRINT, sessions.name{kk}(1:end-4), '.tif'], '-dtiff');
 %   pause(0.25); close()
-  pause(1.0)
+  
 end % for :: session (kk)
 
 %% Plotting - Across sessions
 mu_FC = nanmean(pupilMat_FastCorr);   se_FC = nanstd(pupilMat_FastCorr) / sqrt(NUM_SESSION);
+mu_FE = nanmean(pupilMat_FastErrChc); se_FE = nanstd(pupilMat_FastErrChc) / sqrt(NUM_SESSION);
 mu_AC = nanmean(pupilMat_AccCorr);    se_AC = nanstd(pupilMat_AccCorr) / sqrt(NUM_SESSION);
+mu_AE = nanmean(pupilMat_AccErrTime); se_AE = nanstd(pupilMat_AccErrTime) / sqrt(NUM_SESSION);
 
 figure(); hold on; ppretty([4.8,3])
 plot([T_WIN_PLOT(1) T_WIN_PLOT(end)] - T_ARRAY, [0 0], 'k:')
-shadedErrorBar(T_WIN_PLOT-3500, mu_FC, se_FC, 'lineprops', {'-', 'Color',[0 .7 0]}, 'transparent',true)
-shadedErrorBar(T_WIN_PLOT-3500, mu_AC, se_AC, 'lineprops', {'-', 'Color','r'}, 'transparent',true)
+shadedErrorBar(T_WIN_PLOT-3500, mu_FC, se_FC, 'lineprops', {'-', 'Color',[0 .7 0], 'LineWidth',1.5}, 'transparent',true)
+shadedErrorBar(T_WIN_PLOT-3500, mu_AC, se_AC, 'lineprops', {'-', 'Color','r', 'LineWidth',1.5}, 'transparent',true)
+shadedErrorBar(T_WIN_PLOT-3500, mu_AE, se_AE, 'lineprops', {':', 'Color','r', 'LineWidth',1.5}, 'transparent',true)
 xlabel('Time from array (ms)'); ylabel('Pupil diameter (a.u.)')
 
 end % fxn : plotPupilData_SAT()

@@ -83,7 +83,7 @@ for cc = 1:NUM_CELLS
   nstats(ccNS).NormFactor_All  = max([nfVis nfMove nfRew]);
   
   %plotting
-%   plotSDFcc(TIME, sdfAcc, sdfFast, ninfo(cc), nstats(ccNS)); pause(0.1)
+  plotSDFcc(TIME, sdfAcc, sdfFast, ninfo(cc), nstats(ccNS)); pause(0.1)
 %   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff');
 %   pause(0.1); close()
   
