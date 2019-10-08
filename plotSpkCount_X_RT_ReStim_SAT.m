@@ -1,4 +1,4 @@
-function [ ] = plotSpkCount_X_RT_ReStim_SAT( binfo , moves , ninfo , spikes , varargin )
+function [ ] = plotSpkCount_X_RT_ReStim_SAT( binfo , ninfo , spikes , varargin )
 %plotSpkCount_X_RT_ReStim_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -36,7 +36,7 @@ zSpkCtFast = NaN(NUM_CELLS,NBIN_FAST);
 
 for cc = 1:NUM_CELLS
   kk = ismember({binfo.session}, ninfo(cc).sess);
-  RTkk = double(moves(kk).resptime);
+  RTkk = double(binfo(kk).resptime);
   
   %compute spike count for all trials
   spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(cc).SAT);

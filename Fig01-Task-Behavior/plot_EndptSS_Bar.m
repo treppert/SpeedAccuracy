@@ -27,12 +27,6 @@ end%for:session(kk)
 
 ttestTom(Ptgt_Acc, Ptgt_Fast)
 
-%% Stats - two-way between-subjects ANOVA
-% DV_Pr2tgt = [Pr2tgt.AccMore Pr2tgt.AccLess Pr2tgt.FastMore Pr2tgt.FastLess]';
-% Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
-% Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
-% anovan(DV_Pr2tgt, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
-
 %% Plotting
 muAcc = mean(Ptgt_Acc);     seAcc = std(Ptgt_Acc) / sqrt(NUM_SESS);
 muFast = mean(Ptgt_Fast);   seFast = std(Ptgt_Fast) / sqrt(NUM_SESS);
@@ -41,5 +35,11 @@ figure(); hold on
 bar([1 2], [muAcc muFast], 0.4, 'FaceColor',[.5 .5 .5], 'LineWidth',0.5)
 errorbar([1 2], [muAcc muFast], [seAcc seFast], 'Color','k', 'CapSize',0)
 ppretty([2,3]); xticks([1 2]); xticklabels({'A','F'})
+
+%% Stats - two-way between-subjects ANOVA
+% DV_Pr2tgt = [Pr2tgt.AccMore Pr2tgt.AccLess Pr2tgt.FastMore Pr2tgt.FastLess]';
+% Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
+% Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
+% anovan(DV_Pr2tgt, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
 
 end%fxn:plot_EndptSS_Bar()

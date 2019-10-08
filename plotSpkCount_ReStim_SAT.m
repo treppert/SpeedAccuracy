@@ -1,119 +1,108 @@
-function [ ] = plotSpkCount_ReStim_SAT( binfo , ninfo , spikes , varargin )
+function [ ] = plotSpkCount_ReStim_SAT( behavInfo , unitInfo , spikes )
 %plotSpkCount_ReStim_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+MIN_MEDIAN_SPIKE_COUNT = 2;
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+% INTERVAL_TEST = 'Baseline';
+INTERVAL_TEST = 'visResponse';
+AREA_TEST = 'SEF';
 
-idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
-idxKeep = (idxArea & idxMonkey & idxVis); %visual response
+idxArea = ismember(unitInfo.area, {AREA_TEST});
+idxMonkey = ismember(unitInfo.monkey, {'D','E'});
+idxVisUnit = (unitInfo.visGrade >= 2);
+idxMoveUnit = (unitInfo.moveGrade >= 2);
 
-NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-spikes = spikes(idxKeep);
+if strcmp(INTERVAL_TEST, 'Baseline')
+  unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit));
+  T_TEST = 3500 + [-600 20];
+elseif strcmp(INTERVAL_TEST, 'visResponse')
+  unitTest = (idxArea & idxMonkey & idxVisUnit);
+  T_TEST = 3500 + [50 200];
+end
 
-% T_TEST = 3500 + [-600 20]; %baseline
-T_TEST = 3500 + [75 200]; %visual response
+NUM_CELLS = sum(unitTest);
+unitInfo = unitInfo(unitTest,:);
+spikes = spikes(unitTest);
 
-%initializations
-spkCountAcc = NaN(1,NUM_CELLS);
-spkCountFast = NaN(1,NUM_CELLS);
+%initialize spike count
+scAcc_All = NaN(1,NUM_CELLS);
+scFast_All = NaN(1,NUM_CELLS);
+%initialize unit cuts
+ccCut = [];
 
 for cc = 1:NUM_CELLS
+  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+  
   %compute spike count for all trials
-  spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(cc).SAT);
+  sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{cc});
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  
-  %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
-  %index by trial outcome
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  %index by condition and RT limits
-  idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~idxIso);
-  idxFast = ((binfo(kk).condition == 3) & idxCorr & ~idxIso);
-  
-  %compute trial-wise spike counts per task condition
-  scAccCC = spkCtCC(idxAcc);
-  scFastCC = spkCtCC(idxFast);
-  
-  %remove outliers
-  if (nanmedian(scAccCC) >= 1) %make sure we have a minimum spike count
-    idxCutAcc = estimate_spread(scAccCC, 3.5);      scAccCC(idxCutAcc) = [];
-    idxCutFast = estimate_spread(scFastCC, 3.5);    scFastCC(idxCutFast) = [];
+  %compute median spike count
+  medSC_CC = median(sc_CC);
+  if (medSC_CC < MIN_MEDIAN_SPIKE_COUNT)
+    fprintf('Skipping Unit %s-%s due to minimum spike count\n', unitInfo.sess{cc}, unitInfo.unit{cc})
+    ccCut = cat(2, ccCut, cc);
+    continue
   end
   
-  %z-score spike counts
-  muSpkCt = mean([scAccCC scFastCC]);
-  sdSpkCt = std([scAccCC scFastCC]);
-  scAccCC = (scAccCC - muSpkCt) / sdSpkCt;
-  scFastCC = (scFastCC - muSpkCt) / sdSpkCt;
-    
+  %compute z-scored spike count
+%   idxNaN = estimate_spread(sc_CC, 3.5);   sc_CC(idxNaN) = NaN;
+  sc_CC = zscore(sc_CC);
+  
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
+  %index by trial outcome
+  idxCorr = ~(behavInfo.err_time{kk} | behavInfo.err_hold{kk} | behavInfo.err_nosacc{kk});
+  %index by condition
+  idxAcc = ((behavInfo.condition{kk} == 1) & idxCorr & ~idxIso);
+  idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);
+  
+  %split by task condition
+  scAccCC = sc_CC(idxAcc);
+  scFastCC = sc_CC(idxFast);
+  
   %save mean spike counts
-  spkCountAcc(cc) = mean(scAccCC);
-  spkCountFast(cc) = mean(scFastCC);
+  scAcc_All(cc) = mean(scAccCC);
+  scFast_All(cc) = mean(scFastCC);
   
 end%for:cells(cc)
 
-%split by search efficiency
-ccMore = ([ninfo.taskType] == 1);   NUM_MORE = sum(ccMore);
-ccLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(ccLess);
+%cut units based on min spike count
+unitInfo(ccCut,:) = [];
+scAcc_All(ccCut) = [];
+scFast_All(ccCut) = [];
 
-scAccMore = spkCountAcc(ccMore);    scAccLess = spkCountAcc(ccLess);
-scFastMore = spkCountFast(ccMore);  scFastLess = spkCountFast(ccLess);
+%split by search efficiency
+cc_More = (unitInfo.taskType == 1);   NUM_MORE = sum(cc_More);
+cc_Less = (unitInfo.taskType == 2);   NUM_LESS = sum(cc_Less);
+
+sc_AccMore = scAcc_All(cc_More);    sc_AccLess = scAcc_All(cc_Less);
+sc_FastMore = scFast_All(cc_More);  sc_FastLess = scFast_All(cc_Less);
 
 %% Stats - Two-way split-plot ANOVA
-ROOT_DIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
-spikeCount = struct('AccMore',scAccMore, 'AccLess',scAccLess, 'FastMore',scFastMore, 'FastLess',scFastLess);
-writeData_TwoWayANOVA( spikeCount , [ROOT_DIR,args.area,'-VisResponse.mat'] )
+spikeCount = struct('AccMore',sc_AccMore, 'AccLess',sc_AccLess, 'FastMore',sc_FastMore, 'FastLess',sc_FastLess);
+writeData_SplitPlotANOVA_SAT(spikeCount, [AREA_TEST, '-SpikeCount-', INTERVAL_TEST, '.mat'])
 
-%% Plotting
+%% Plotting -- Show SAT effect separately for more and less efficient search
+dSAT_More = sc_FastMore - sc_AccMore;   se_More = std(dSAT_More) / sqrt(NUM_MORE);
+dSAT_Less = sc_FastLess - sc_AccLess;   se_Less = std(dSAT_Less) / sqrt(NUM_LESS);
 
-% muAccMore = mean(scAccMore);    seAccMore = std(scAccMore) / sqrt(NUM_MORE);
-% muAccLess = mean(scAccLess);    seAccLess = std(scAccLess) / sqrt(NUM_LESS);
-% muFastMore = mean(scFastMore);    seFastMore = std(scFastMore) / sqrt(NUM_MORE);
-% muFastLess = mean(scFastLess);    seFastLess = std(scFastLess) / sqrt(NUM_LESS);
-
-% figure(); hold on
-% bar((1:4), [muAccMore muFastMore muAccLess muFastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
-% errorbar((1:4), [muAccMore muFastMore muAccLess muFastLess], [seAccMore seFastMore seAccLess seFastLess], 'Color','k', 'CapSize',0)
-% ppretty([1.5,3])
-
-%plot the SAT effect on spike count separately for more and less efficient
-dSAT_More = scFastMore - scAccMore;   se_More = std(dSAT_More) / sqrt(NUM_MORE);
-dSAT_Less = scFastLess - scAccLess;   se_Less = std(dSAT_Less) / sqrt(NUM_LESS);
-
-pause(0.25); figure(); hold on
+figure(); hold on
 errorbar([mean(dSAT_More) mean(dSAT_Less)], [se_More se_Less], 'capsize',0, 'Color','k')
 xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
-ylabel('\Delta sp. ct. (Fast - Accurate) (z)')
+ylabel('Sp. ct. diff. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
 end%fxn:plotSpkCount_ReStim_SAT()
 
-function [ ] = writeData_TwoWayANOVA( param , writeFile )
+% %plotting - show each level of Condition*Efficiency separately
+% mu_AccMore = mean(sc_AccMore);       se_AccMore = std(sc_AccMore) / sqrt(NUM_MORE);
+% mu_AccLess = mean(sc_AccLess);       se_AccLess = std(sc_AccLess) / sqrt(NUM_LESS);
+% mu_FastMore = mean(sc_FastMore);     se_FastMore = std(sc_FastMore) / sqrt(NUM_MORE);
+% mu_FastLess = mean(sc_FastLess);     se_FastLess = std(sc_FastLess) / sqrt(NUM_LESS);
+% 
+% figure(); hold on
+% bar((1:4), [mu_AccMore mu_FastMore mu_AccLess mu_FastLess], 0.6, 'FaceColor',[.4 .4 .4], 'LineWidth',0.25)
+% errorbar((1:4), [mu_AccMore mu_FastMore mu_AccLess mu_FastLess], [se_AccMore se_FastMore se_AccLess se_FastLess], 'Color','k', 'CapSize',0)
+% ppretty([1.5,3])
 
-N_MORE = length(param.AccMore);
-N_LESS = length(param.AccLess);
-N_CELL = N_MORE + N_LESS;
-
-%dependent variable
-DV_Parameter = [ param.AccMore param.AccLess param.FastMore param.FastLess ]';
-
-%factors
-F_Condition = [ ones(1,N_CELL) 2*ones(1,N_CELL) ]';
-F_Efficiency = [ ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS) ]';
-F_Neuron = linspace(1,N_CELL,N_CELL); F_Neuron = repmat(F_Neuron, 1,2)';
-
-%write data
-save(writeFile, 'DV_Parameter','F_Condition','F_Efficiency','F_Neuron')
-
-tmp = [param.AccMore param.AccLess param.FastMore param.FastLess]';
-Condition = [ones(1,N_CELL) 2*ones(1,N_CELL)]';
-Efficiency = [ones(1,N_MORE) 2*ones(1,N_LESS) ones(1,N_MORE) 2*ones(1,N_LESS)]';
-anovan(tmp, {Condition Efficiency}, 'model','interaction', 'varnames',{'Condition','Efficiency'});
-
-end%util:writeData()
