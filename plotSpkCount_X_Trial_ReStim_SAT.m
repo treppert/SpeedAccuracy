@@ -1,128 +1,119 @@
-function [ ] = plotSpkCount_X_Trial_ReStim_SAT( binfo , ninfo , spikes , varargin )
+function [ ] = plotSpkCount_X_Trial_ReStim_SAT( behavInfo , unitInfo , spikes )
 %plotSpkCount_X_Trial_ReStim_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+MIN_MEDIAN_SPIKE_COUNT = 2;
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+INTERVAL_TEST = 'Baseline';
+% INTERVAL_TEST = 'visResponse';
+AREA_TEST = 'SEF';
 
-idxVis = ([ninfo.visGrade] >= 2);
-idxMove = ([ninfo.moveGrade] >= 2);
+TRIAL_TEST = (-3 : +2);
+NUM_TRIAL_TEST = length(TRIAL_TEST);
+trialSwitch = identify_condition_switch(behavInfo);
 
-% idxKeep = (idxArea & idxMonkey & (idxVis | idxMove)); %baseline
-idxKeep = (idxArea & idxMonkey & idxVis); %visual response
+idxArea = ismember(unitInfo.area, {AREA_TEST});
+idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
+idxVisUnit = (unitInfo.visGrade >= 2);
+idxMoveUnit = (unitInfo.moveGrade >= 2);
 
-NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-spikes = spikes(idxKeep);
+if strcmp(INTERVAL_TEST, 'Baseline')
+  unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit));
+  T_TEST = 3500 + [-600 20];
+elseif strcmp(INTERVAL_TEST, 'visResponse')
+  unitTest = (idxArea & idxMonkey & idxVisUnit);
+  T_TEST = 3500 + [50 200];
+end
 
-% T_TEST = 3500 + [-500 20]; %baseline
-T_TEST = 3500 + [75 200]; %visual response
+NUM_CELLS = sum(unitTest);
+unitInfo = unitInfo(unitTest,:);
+spikes = spikes(unitTest);
 
-TRIAL_PLOT = (-4 : 3);  NUM_TRIAL = length(TRIAL_PLOT);
-trialSwitch = identify_condition_switch(binfo);
-
-MIN_PER_BIN = 25; %minimum number of trials per bin
-
-RTLIM_ACC = [390 800]; %limits on acceptable RT (used for data cleaning)
-RTLIM_FAST = [150 450];
-
-%initializations
-zSpkCt_A2F = NaN(NUM_CELLS,NUM_TRIAL);
-zSpkCt_F2A = NaN(NUM_CELLS,NUM_TRIAL);
+%initialize spike count
+scA2F_All = NaN(NUM_CELLS,NUM_TRIAL_TEST);
+scF2A_All = NaN(NUM_CELLS,NUM_TRIAL_TEST);
+%initialize unit cuts
+ccCut = [];
 
 for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  RTkk = double(binfo(kk).resptime);
-  trialA2F = trialSwitch(kk).A2F;
-  trialF2A = trialSwitch(kk).F2A;
+  kk = ismember(behavInfo.session, unitInfo.sess{cc});
   
   %compute spike count for all trials
-  spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(cc).SAT);
+  sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{cc});
+  
+  %compute median spike count
+  medSC_CC = median(sc_CC);
+  if (medSC_CC < MIN_MEDIAN_SPIKE_COUNT)
+    fprintf('Skipping Unit %s-%s due to minimum spike count\n', unitInfo.sess{cc}, unitInfo.unit{cc})
+    ccCut = cat(2, ccCut, cc);  continue
+  end
+  
+  %compute z-scored spike count
+  sc_CC = zscore(sc_CC);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  %index by RT limits
-  idxCutAcc = (RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk));
-  idxCutFast = (RTkk < RTLIM_FAST(1) | RTkk > RTLIM_FAST(2) | isnan(RTkk));
-  %index by condition and RT limits
-  idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~idxIso & ~idxCutAcc);
-  idxFast = ((binfo(kk).condition == 3) & idxCorr & ~idxIso & ~idxCutFast);
+  idxCorr = ~(behavInfo.err_time{kk} | behavInfo.err_hold{kk} | behavInfo.err_nosacc{kk});
+  %index by condition
+  idxAcc = ((behavInfo.condition{kk} == 1) & idxCorr & ~idxIso);    trialAcc = find(idxAcc);
+  idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);   trialFast = find(idxFast);
   
-  %save raw spike counts
-  spkCountAcc = spkCtCC(idxAcc);
-  spkCountFast = spkCtCC(idxFast);
-  %save corresponding trial numbers for reference
-  trialAcc = find(idxAcc);
-  trialFast = find(idxFast);
-  
-  %remove outliers
-  if (nanmedian(spkCountAcc) >= 1.0) %make sure we have a minimum spike count
-    idxCutAcc = estimate_spread(spkCountAcc, 3.5);    spkCountAcc(idxCutAcc) = [];    trialAcc(idxCutAcc) = [];
-    idxCutFast = estimate_spread(spkCountFast, 3.5);  spkCountFast(idxCutFast) = [];  trialFast(idxCutFast) = [];
-  end
-  
-  %z-score spike counts
-  muSpkCt = mean([spkCountAcc spkCountFast]);
-  sdSpkCt = std([spkCountAcc spkCountFast]);
-  spkCountAcc = (spkCountAcc - muSpkCt) / sdSpkCt;
-  spkCountFast = (spkCountFast - muSpkCt) / sdSpkCt;
+  %split by task condition
+  scAccCC = sc_CC(idxAcc);
+  scFastCC = sc_CC(idxFast);
   
   %index by trial number
-  for jj = 1:NUM_TRIAL
-    if (jj <= NUM_TRIAL/2) %first half
-      idxJJ_A2F = ismember(trialAcc, trialA2F + TRIAL_PLOT(jj));
-      idxJJ_F2A = ismember(trialFast, trialF2A + TRIAL_PLOT(jj));
-      
-      if (sum(idxJJ_A2F) >= MIN_PER_BIN)
-        zSpkCt_A2F(cc,jj) = mean(spkCountAcc(idxJJ_A2F));
-      end
-      if (sum(idxJJ_F2A) >= MIN_PER_BIN)
-        zSpkCt_F2A(cc,jj) = mean(spkCountFast(idxJJ_F2A));
-      end
-    else %second half
-      idxJJ_A2F = ismember(trialFast, trialA2F + TRIAL_PLOT(jj));
-      idxJJ_F2A = ismember(trialAcc, trialF2A + TRIAL_PLOT(jj));
-      
-      if (sum(idxJJ_A2F) >= MIN_PER_BIN)
-        zSpkCt_A2F(cc,jj) = mean(spkCountFast(idxJJ_A2F));
-      end
-      if (sum(idxJJ_F2A) >= MIN_PER_BIN)
-        zSpkCt_F2A(cc,jj) = mean(spkCountAcc(idxJJ_F2A));
-      end
+  for jj = 1:NUM_TRIAL_TEST
+    if (TRIAL_TEST(jj) < 0) %Before condition switch
+      %get all trials at this index
+      idxJJ_A2F = ismember(trialAcc, trialSwitch.A2F{kk} + TRIAL_TEST(jj));
+      idxJJ_F2A = ismember(trialFast, trialSwitch.F2A{kk} + TRIAL_TEST(jj));
+      %compute mean spike count for this trial
+      scA2F_All(cc,jj) = mean(scAccCC(idxJJ_A2F));
+      scF2A_All(cc,jj) = mean(scFastCC(idxJJ_F2A));
+    else %After condition switch
+      idxJJ_A2F = ismember(trialFast, trialSwitch.A2F{kk} + TRIAL_TEST(jj));
+      idxJJ_F2A = ismember(trialAcc, trialSwitch.F2A{kk} + TRIAL_TEST(jj));
+      scA2F_All(cc,jj) = mean(scFastCC(idxJJ_A2F));
+      scF2A_All(cc,jj) = mean(scAccCC(idxJJ_F2A));
     end
-    
-  end
+  end % for : trial (jj)
   
-end%for:cell(cc)
+end % for : cell (cc)
+
+%cut units based on min spike count
+NUM_CELLS = NUM_CELLS - length(ccCut);
+unitInfo(ccCut,:) = [];
+scA2F_All(ccCut,:) = [];
+scF2A_All(ccCut,:) = [];
+
+% %split by search efficiency
+% cc_More = (unitInfo.taskType == 1);   NUM_MORE = sum(cc_More);
+% cc_Less = (unitInfo.taskType == 2);   NUM_LESS = sum(cc_Less);
+% scA2F_More = scA2F_All(cc_More,:);    scA2F_Less = scA2F_All(cc_Less,:);
+% scF2A_More = scF2A_All(cc_More,:);    scF2A_Less = scF2A_All(cc_Less,:);
+
+
+%% Plotting
+mu_A2F = mean(scA2F_All);    se_A2F = std(scA2F_All) / sqrt(NUM_CELLS);
+mu_F2A = mean(scF2A_All);    se_F2A = std(scF2A_All) / sqrt(NUM_CELLS);
+
+figure()
+
+subplot(1,2,1); hold on
+plot([-3 2], [0 0], 'k:')
+errorbar(TRIAL_TEST, mu_A2F, se_A2F, 'capsize',0, 'Color','k')
+xticks(-3:2); xticklabels({}); ylabel('Spike count (z)')
+ppretty([4.8,2.2]); set(gca, 'XMinorTick','off')
+
 
 %% Stats - Single-trial modulation at cued condition switch
-tmp_A2F = [nanmean(zSpkCt_A2F(:,[3,4]),2) , nanmean(zSpkCt_A2F(:,[5,6]),2)];
-tmp_F2A = [nanmean(zSpkCt_F2A(:,[3,4]),2) , nanmean(zSpkCt_F2A(:,[5,6]),2)];
+tmp_A2F = [nanmean(scA2F_All(:,[3,4]),2) , nanmean(scA2F_All(:,[5,6]),2)];
+tmp_F2A = [nanmean(scF2A_All(:,[3,4]),2) , nanmean(scF2A_All(:,[5,6]),2)];
 diffA2F = diff(tmp_A2F, 1, 2);
 diffF2A = diff(tmp_F2A, 1, 2);
 ttestTom( diffA2F , diffF2A )
-
-%% Plotting
-NSEM_A2F = sum(~isnan(zSpkCt_A2F), 1);
-NSEM_F2A = sum(~isnan(zSpkCt_F2A), 1);
-
-muA2F = nanmean(zSpkCt_A2F);    seA2F = nanstd(zSpkCt_A2F) ./ NSEM_A2F;
-muF2A = nanmean(zSpkCt_F2A);    seF2A = nanstd(zSpkCt_F2A) ./ NSEM_F2A;
-
-figure(); hold on
-plot([-4 12], [0 0], 'k:')
-% plot(TRIAL_PLOT, zSpkCt_A2F', 'k-')
-% plot(TRIAL_PLOT+NUM_TRIAL+1, zSpkCt_F2A', 'k-')
-errorbar(TRIAL_PLOT, muA2F, seA2F, 'capsize',0, 'Color','k')
-errorbar(TRIAL_PLOT+NUM_TRIAL+1, muF2A, seF2A, 'capsize',0, 'Color','k')
-xlabel('Trial');  ylabel('Spike count (z)'); ytickformat('%2.1f')
-xticks(-4:12); xticklabels({}); xlim([-4.5 12.5])
-ppretty([4.8,2.2])
-set(gca, 'XMinorTick','off')
 
 
 end%fxn:plotSpkCount_X_Trial_ReStim_SAT()

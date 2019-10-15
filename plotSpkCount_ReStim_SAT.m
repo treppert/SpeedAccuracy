@@ -4,12 +4,12 @@ function [ ] = plotSpkCount_ReStim_SAT( behavInfo , unitInfo , spikes )
 
 MIN_MEDIAN_SPIKE_COUNT = 2;
 
-% INTERVAL_TEST = 'Baseline';
-INTERVAL_TEST = 'visResponse';
-AREA_TEST = 'SEF';
+INTERVAL_TEST = 'Baseline';
+% INTERVAL_TEST = 'visResponse';
+AREA_TEST = 'SC';
 
 idxArea = ismember(unitInfo.area, {AREA_TEST});
-idxMonkey = ismember(unitInfo.monkey, {'D','E'});
+idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
 idxVisUnit = (unitInfo.visGrade >= 2);
 idxMoveUnit = (unitInfo.moveGrade >= 2);
 
@@ -41,8 +41,7 @@ for cc = 1:NUM_CELLS
   medSC_CC = median(sc_CC);
   if (medSC_CC < MIN_MEDIAN_SPIKE_COUNT)
     fprintf('Skipping Unit %s-%s due to minimum spike count\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-    ccCut = cat(2, ccCut, cc);
-    continue
+    ccCut = cat(2, ccCut, cc);  continue
   end
   
   %compute z-scored spike count
