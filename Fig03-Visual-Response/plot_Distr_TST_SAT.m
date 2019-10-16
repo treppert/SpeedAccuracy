@@ -3,7 +3,7 @@ function [ ] = plot_Distr_TST_SAT( unitInfo , unitStats )
 %   Detailed explanation goes here
 
 ANALYZE_PAIRED_ONLY = true;
-AREA_TEST = 'SC';
+AREA_TEST = 'SEF';
 
 idxArea = ismember(unitInfo.area, {AREA_TEST});
 idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
@@ -55,7 +55,7 @@ ppretty([2,3]); xticks([])
 %% Stats - Two-way split-plot ANOVA
 if (ANALYZE_PAIRED_ONLY)
   TST_All = struct('AccMore',TST_Acc_More', 'AccLess',TST_Acc_Less', 'FastMore',TST_Fast_More', 'FastLess',TST_Fast_Less');
-  writeData_SplitPlotANOVA_SAT(TST_All, [AREA_TEST, '-TST.mat'], 'compareBetweenANOVA')
+  writeData_SplitPlotANOVA_SAT(TST_All, [AREA_TEST, '-TST.mat'])
 end
 
 

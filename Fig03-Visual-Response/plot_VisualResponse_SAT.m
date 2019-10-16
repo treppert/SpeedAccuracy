@@ -22,7 +22,6 @@ sdf_AccTgt = NaN(NUM_CELLS, NUM_SAMP);    sdf_FastTgt = NaN(NUM_CELLS, NUM_SAMP)
 sdf_AccDistr = NaN(NUM_CELLS, NUM_SAMP);  sdf_FastDistr = NaN(NUM_CELLS, NUM_SAMP);
 
 for cc = 1:NUM_CELLS
-  if ~ismember(unitInfo.unitNum(cc), [269,343]); continue; end
   fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
   kk = ismember(bInfo.session, unitInfo.sess{cc});
   

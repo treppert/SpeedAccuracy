@@ -4,8 +4,8 @@ function [ ] = plotSpkCount_ReStim_SAT( behavInfo , unitInfo , spikes )
 
 MIN_MEDIAN_SPIKE_COUNT = 2;
 
-INTERVAL_TEST = 'Baseline';
-% INTERVAL_TEST = 'visResponse';
+% INTERVAL_TEST = 'Baseline';
+INTERVAL_TEST = 'visResponse';
 AREA_TEST = 'SC';
 
 idxArea = ismember(unitInfo.area, {AREA_TEST});
@@ -18,7 +18,13 @@ if strcmp(INTERVAL_TEST, 'Baseline')
   T_TEST = 3500 + [-600 20];
 elseif strcmp(INTERVAL_TEST, 'visResponse')
   unitTest = (idxArea & idxMonkey & idxVisUnit);
-  T_TEST = 3500 + [50 200];
+  if strcmp(AREA_TEST, 'SEF') %testing interval based on VR Latency **
+    T_TEST = 3500 + [73 223];
+  elseif strcmp(AREA_TEST, 'FEF')
+    T_TEST = 3500 + [60 210];
+  elseif strcmp(AREA_TEST, 'SC')
+    T_TEST = 3500 + [43 193];
+  end
 end
 
 NUM_CELLS = sum(unitTest);
