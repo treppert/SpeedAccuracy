@@ -1,4 +1,4 @@
-function [ varargout ] = plotSDFChoiceErrSAT( binfo , primarySacc , secondSacc , unitInfo , unitStats , spikes )
+function [ varargout ] = plotSDFChoiceErrSAT( behavInfo , primarySacc , secondSacc , unitInfo , unitStats , spikes )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -24,7 +24,7 @@ sdfFast = sdfAcc;
 
 for cc = 1:NUM_CELLS
   fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-  kk = ismember(binfo.session, unitInfo.sess{cc});
+  kk = ismember(behavInfo.session, unitInfo.sess{cc});
   
   RT_Primary_kk = primarySacc.resptime{kk};
   RT_Primary_kk(RT_Primary_kk > 900) = NaN; %hard limit on primary RT
@@ -32,21 +32,21 @@ for cc = 1:NUM_CELLS
   RT_Second_kk(RT_Second_kk < 0) = NaN; %trials with no secondary saccade
   
   %prepare event-aligned SDFs
-  SDF_FromArray = compute_spike_density_fxn(spikes);
+  SDF_FromArray = compute_spike_density_fxn(spikes{cc});
   SDF_FromPrimary = align_signal_on_response(SDF_FromArray, RT_Primary_kk);
   SDF_FromSecond  = align_signal_on_response(SDF_FromArray, RT_Second_kk);
   
   %index by isolation quality
-  idxPoorIso = identify_trials_poor_isolation_SAT(unitInfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxPoorIso = identify_trials_poor_isolation_SAT(unitInfo(cc), behavInfo(kk).num_trials, 'task','SAT');
   %index by second saccade endpoint
   idxSS2Tgt = (secondSacc.endpt{kk} == 1);
   idxSS2Distr = (secondSacc.endpt{kk} == 2);
   %index by condition
-  idxAcc = ((binfo(kk).condition == 1) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
-  idxFast = ((binfo(kk).condition == 3) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
+  idxAcc = ((behavInfo(kk).condition == 1) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
+  idxFast = ((behavInfo(kk).condition == 3) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErrChc = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxCorr = ~(behavInfo(kk).err_dir | behavInfo(kk).err_time | behavInfo(kk).err_hold | behavInfo(kk).err_nosacc);
+  idxErrChc = (behavInfo(kk).err_dir & ~behavInfo(kk).err_time);
   
   %set "ISI" on correct trials as median ISI of choice error trials
 %   ISI_kk(idxFast & idxCorr) = round(nanmedian(ISI_kk(idxFast & idxErrChc)));

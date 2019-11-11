@@ -1,16 +1,15 @@
-function [ ] = plotProbCorr_X_ChcErrActivity( binfo , movesPP , ninfo , nstats , spikes )
-%plotProbCorr_X_ChcErrActivity Summary of this function goes here
+function [ ] = plot_PrCorrective_X_ChcErrSignal_SAT( behavInfo , secondSacc , unitInfo , unitStats , spikesSAT )
+%plot_PrCorrective_X_ChcErrSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxSEF = ismember({ninfo.area}, 'SEF');
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
-idxErr = ([ninfo.errGrade] >= 2);
-idxKeep = (idxSEF & idxMonkey & idxErr);
+idxSEF = ismember(unitInfo.area, 'SEF');
+idxMonkey = ismember(unitInfo.monkey, {'D','E'});
+idxErrUnit = (idxSEF & idxMonkey & (unitInfo.errGrade >= 2));
 
-NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
-spikes = spikes(idxKeep);
+NUM_CELLS = sum(idxErrUnit);
+unitInfo = unitInfo(idxErrUnit,:);
+unitStats = unitStats(idxErrUnit,:);
+spikesSAT = spikesSAT(idxErrUnit);
 
 T_COUNT_BASE = [-50, 50] + 3500; %interval over which to count baseline spikes as control
 T_COUNT_ERR = [0, 200] + 3500; %interval (re. signal onset) over which to count spikes
@@ -27,26 +26,27 @@ RespTime = NaN(NUM_CELLS, NBIN); %save RT as control
 
 for cc = 1:NUM_CELLS
 %   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  rtKK = double(binfo(kk).resptime);
-  errKK = rtKK - double(binfo(kk).deadline);
-  ssEndKK = movesPP(kk).endpt; %second saccade endpoint
+  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+  
+  RT_kk = double(behavInfo(kk).resptime);
+  RTerr_kk = RT_kk - double(behavInfo(kk).deadline);
+  ssEndKK = secondSacc(kk).endpt; %second saccade endpoint
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitInfo(cc), behavInfo(kk).num_trials, 'task','SAT');
   %index by task condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (behavInfo(kk).condition == 1);
+  idxFast = (behavInfo(kk).condition == 3);
   %index by trial outcome
-  idxErrDir = ( binfo(kk).err_dir );
+  idxErrDir = ( behavInfo(kk).err_dir );
   %index by timing error magnitude
-  idxErrTime = ( (idxAcc & (errKK < -MAX_ERR_TIME)) | (idxFast & (errKK > MAX_ERR_TIME)) );
+  idxErrTime = ( (idxAcc & (RTerr_kk < -MAX_ERR_TIME)) | (idxFast & (RTerr_kk > MAX_ERR_TIME)) );
   
   trialErr = find(idxErrDir & (idxAcc | idxFast) & ~idxErrTime & ~idxIso);
   numTrial = length(trialErr);
   
   %save RT as a control
-  rtErr = rtKK(trialErr);
+  rtErr = RT_kk(trialErr);
   
   %second saccade endpoint as binary (Target = TRUE, Other = FALSE)
   ssEndErr = false(1,numTrial);
@@ -55,17 +55,17 @@ for cc = 1:NUM_CELLS
   %% Compute single-trial spike counts
   
   %compute baseline spike count to control for effect of Trial Number
-  spkBase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikes(cc).SAT);
+  spkBase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesSAT(cc).SAT);
   spkBase = spkBase(trialErr);
   
   %get error interval for each task condition
-  tErrCC = nstats(cc).A_ChcErr_tErr_Fast + T_COUNT_ERR;
-  tErrCC = rtKK(trialErr)'*ones(1,2) + tErrCC;
+  tErrCC = unitStats(cc).A_ChcErr_tErr_Fast + T_COUNT_ERR;
+  tErrCC = RT_kk(trialErr)'*ones(1,2) + tErrCC;
   
   spkErr = NaN(1,numTrial);
   for jj = 1:numTrial
     %spike times aligned on primary saccade
-    tSpkJJ = spikes(cc).SAT{trialErr(jj)};
+    tSpkJJ = spikesSAT(cc).SAT{trialErr(jj)};
     %compute number of spikes during Accurate error interval
     spkErr(jj) = sum( (tSpkJJ >= tErrCC(jj,1)) & (tSpkJJ <= tErrCC(jj,2)) );
   end%for:trialsAcc(jj)
@@ -110,5 +110,5 @@ anovan(DV_Prob, {F_Signal});
 %save for ANOVA in R
 % save('C:\Users\Thomas Reppert\Dropbox\SAT\Stats\PTgtXSignalErr.mat', 'DV_Prob','F_Signal')
 
-end%fxn:plotProbCorr_X_ChcErrActivity()
+end%fxn:plot_PrCorrective_X_ChcErrSignal_SAT()
 
