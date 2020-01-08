@@ -4,7 +4,7 @@ t_Plot = 3500 + (-600 : +200); %window for viewing pupil dynamics
 numSamp = length(t_Plot);
 
 idx_Early = (-500 : -400) - (t_Plot(1)-3500); %windows for static pupil diameter
-idx_Late  = (0 : 100)     - (t_Plot(1)-3500);
+idx_Late  = (50 : 150)     - (t_Plot(1)-3500);
 
 behavInfo = binfoSAT_DaEu;
 numSess = size(behavInfo,1);
@@ -46,7 +46,7 @@ mu_Fast_Hard = nanmean(pupil_Fast_Hard);    se_Fast_Hard = nanstd(pupil_Fast_Har
 mu_Acc_Easy =  nanmean(pupil_Acc_Easy);     se_Acc_Easy = nanstd(pupil_Acc_Easy) / sqrt(numEasy);
 mu_Acc_Hard =  nanmean(pupil_Acc_Hard);     se_Acc_Hard = nanstd(pupil_Acc_Hard) / sqrt(numHard);
 
-
+if (false)
 figure() %dynamic plot
 
 subplot(1,2,1); hold on %less difficult
@@ -65,8 +65,9 @@ title('More Difficult')
 ylim([-.02 .1]); yticks([])
 
 ppretty([6,3])
+end
 
-
+%static plot
 pupStatic_Acc_Easy = pupStatic_Acc(idx_Easy,:); pupStatic_Fast_Easy = pupStatic_Fast(idx_Easy,:);
 pupStatic_Acc_Hard = pupStatic_Acc(idx_Hard,:); pupStatic_Fast_Hard = pupStatic_Fast(idx_Hard,:);
 
@@ -81,5 +82,16 @@ errorbar((6:9), mean(pupLate), std(pupLate)/sqrt(numEasy), 'Color','k', 'CapSize
 title('Early :: Late')
 xticks([]); ytickformat('%3.2f'); ppretty([4,3])
 
-clearvars -except binfoSAT_DaEu pupilData
+
+%run two-way ANOVA on the static windows
+windowTest = 1; %1=Early window, 2=Late window
+DV_Pupil = [pupStatic_Acc_Easy(:,windowTest); pupStatic_Acc_Hard(:,windowTest); ...
+  pupStatic_Fast_Easy(:,windowTest); pupStatic_Fast_Hard(:,windowTest)];
+F_Condition = [ones(numEasy+numHard,1); 2*ones(numEasy+numHard,1)];
+F_Difficulty = [ones(numEasy,1); 2*ones(numHard,1); ones(numEasy,1); 2*ones(numHard,1)];
+
+[~,tblAnova] = anovan(DV_Pupil, {F_Condition F_Difficulty}, 'model','full', ...
+  'varnames',{'Condition','Difficulty'}, 'display','on', 'sstype',2);
+
+clearvars -except binfoSAT_DaEu pupilData allSaccades_DaEu tblAnova
 
