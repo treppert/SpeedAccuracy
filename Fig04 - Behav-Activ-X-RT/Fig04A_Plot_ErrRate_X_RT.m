@@ -1,29 +1,33 @@
-function [ ] = plot_ErrRate_X_RT( binfo , moves , varargin )
-%plot_ErrRate_X_RT Summary of this function goes here
-%   Detailed explanation goes here
+function [ ] = Fig04A_Plot_ErrRate_X_RT( binfo , pSacc )
+%Fig04A_Plot_ErrRate_X_RT Summary of this function goes here
+%   Inputs
+%     binfo - binfoSAT
+%     pSacc - primarySaccade
 
-args = getopt(varargin, {{'monkey=',{'D','E'}}});
-
-[binfo, moves] = utilIsolateMonkeyBehavior(binfo, moves, cell(1,length(binfo)), args.monkey);
-NUM_SESS = length(binfo);
-
+MONKEY = {'D','E'};
 MIN_NUM_TRIAL = 5; %min number of trials per bin
 
+%isolate sessions from MONKEY
+sessKeep = ismember(binfo.monkey, MONKEY);
+binfo = binfo(sessKeep, :);
+pSacc = pSacc(sessKeep, :);
+NUM_SESS = sum(sessKeep);
+
+%initialize RT and error rate
 RT_ACC = (0 : 30 : 300);   NBIN_ACC = length(RT_ACC) - 1;
 RT_FAST = (-200 : 20 : 0); NBIN_FAST = length(RT_FAST) - 1;
-
 chcErrRateAcc = NaN(NUM_SESS,NBIN_ACC);
 chcErrRateFast = NaN(NUM_SESS,NBIN_FAST);
 
 for kk = 1:NUM_SESS
   %RT from deadline
-  rtKK = double(moves(kk).resptime) - double(binfo(kk).deadline);
+  rtKK = double(pSacc.resptime{kk}) - double(binfo.deadline{kk});
   
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (binfo.condition{kk} == 1);
+  idxFast = (binfo.condition{kk} == 3);
   %index by trial outcome
-  idxErrChc = binfo(kk).err_dir;
+  idxErrChc = binfo.err_dir{kk};
   
   for ii = 1:NBIN_ACC %loop over Time Err bins -- Accurate
     idxII = ((rtKK > RT_ACC(ii)) & (rtKK <= RT_ACC(ii+1)));
