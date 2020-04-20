@@ -10,7 +10,7 @@ if isempty(trialRemove) %no trials to remove
 elseif (trialRemove(1) == 9999) %remove all trials from consideration
   idx_poor_isolation = true(1,numTrial);
   
-else %sepcified interval of trials to remove
+else %specified interval of trials to remove
   idx_poor_isolation(trialRemove(1) : trialRemove(2)) = true;
   
 end

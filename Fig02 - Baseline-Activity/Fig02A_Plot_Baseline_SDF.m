@@ -1,49 +1,62 @@
-function [ ] = Fig02A_Plot_Baseline_SDF( binfo , moves , ninfo , nstats , spikes , varargin )
+function [ ] = Fig02A_Plot_Baseline_SDF( bInfo , pSacc , uInfo , uStats , spikes , varargin )
 %Fig02A_Plot_Baseline_SDF Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=',{'SEF'}}, {'monkey=',{'D','E','Q','S'}}});
+AREA = 'SEF';
+MONKEY = {'D','E'};
+F_TYPE = 'VM';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+%isolate units from MONKEY and AREA
+idxArea = ismember(uInfo.area, AREA);
+idxMonkey = ismember(uInfo.monkey, MONKEY);
+uInfo = uInfo(idxArea & idxMonkey, :);
+uStats = uStats(idxArea & idxMonkey, :);
+spikes = spikes(idxArea & idxMonkey, :);
 
-idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
-idxTaskRel = (idxVis | idxMove);% | idxErr);% | idxRew);
-
-idxKeep = (idxArea & idxMonkey & idxTaskRel);
-
-NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
-spikes = spikes(idxKeep);
+%isolate units of functional type F_TYPE
+switch F_TYPE
+  case 'V' %visual
+    uKeep = (uInfo.visGrade >= 2);
+  case 'M' %movement
+    uKeep = (uInfo.moveGrade >= 2);
+  case 'VM'
+    uKeep = (uInfo.visGrade >= 2) | (uInfo.moveGrade >= 2);
+  case 'E' %error
+    uKeep = (uInfo.errGrade >= 2);
+  case 'R' %reward
+    uKeep = (abs(uInfo.rewGrade) >= 2);
+  otherwise %all
+    uKeep = (uInfo.visGrade >= 2) | (uInfo.moveGrade >= 2) | (uInfo.errGrade >= 2) | (abs(uInfo.rewGrade) >= 2);
+end
+uInfo = uInfo(uKeep, :);
+uStats = uStats(uKeep, :);
+spikes = spikes(uKeep, :);
+NUM_UNIT = sum(uKeep);
 
 T_STIM = 3500 + (-300 : 150); %from stimulus
-N_SAMP = length(T_STIM); %number of samples consistent across epochs
 T_FOCUSED = (-150 : -50); %for "focused" plot
 
-sdfAcc = NaN(NUM_CELLS, N_SAMP);
-sdfFast = NaN(NUM_CELLS, N_SAMP);
+sdfAcc = NaN(NUM_UNIT, length(T_STIM));
+sdfFast = NaN(NUM_UNIT, length(T_STIM));
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
+for cc = 1:NUM_UNIT
+  fprintf('%s - %s\n', uInfo.sess{cc}, uInfo.unit{cc})
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+  kk = ismember(bInfo.session, uInfo.sess{cc});
   
   %compute single-trial SDF
-  SDFcc = compute_spike_density_fxn(spikes(cc).SAT);
+  SDFcc = compute_spike_density_fxn(spikes{cc});
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(uInfo.trRemSAT{cc}, bInfo.num_trials(kk));
   %index by trial outcome
-%   idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
+  idxCorr = ~(bInfo.err_dir{kk} | bInfo.err_time{kk} | bInfo.err_hold{kk} | bInfo.err_nosacc{kk});
   %index by condition
-  idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~idxIso);
-  idxFast = ((binfo(kk).condition == 3) & idxCorr & ~idxIso);
+  idxAcc = ((bInfo.condition{kk} == 1) & idxCorr & ~idxIso);
+  idxFast = ((bInfo.condition{kk} == 3) & idxCorr & ~idxIso);
   %index by response direction relative to RF and MF
-  [visField,~] = determineFieldsVisMove( ninfo(cc) );
-  idxRF = ismember(moves(kk).octant, visField);
+  [visField,~] = determineFieldsVisMove(uInfo.visField{cc}, uInfo.moveField{cc});
+  idxRF = ismember(pSacc.octant{kk}, visField);
   
   %split single-trial SDF by condition
   sdfAccST = SDFcc(idxAcc & idxRF, T_STIM);
@@ -58,12 +71,12 @@ end%for:cells(cc)
 %% Plotting
 
 %normalization
-sdfAcc = sdfAcc ./ [nstats.NormFactor_All]';
-sdfFast = sdfFast ./ [nstats.NormFactor_All]';
+sdfAcc = sdfAcc ./ [uStats.NormFactor_All]';
+sdfFast = sdfFast ./ [uStats.NormFactor_All]';
 
 %split neurons by level of search efficiency
-ccMore = ([ninfo.taskType] == 1);   NUM_MORE = sum(ccMore);
-ccLess = ([ninfo.taskType] == 2);   NUM_LESS = sum(ccLess);
+ccMore = ([uInfo.taskType] == 1);   NUM_MORE = sum(ccMore);
+ccLess = ([uInfo.taskType] == 2);   NUM_LESS = sum(ccLess);
 sdfAccMore = sdfAcc(ccMore,:);     sdfFastMore = sdfFast(ccMore,:);
 sdfAccLess = sdfAcc(ccLess,:);     sdfFastLess = sdfFast(ccLess,:);
 
@@ -105,18 +118,18 @@ ppretty([8,1.8])
 end%fxn:plotBaselineSDF_SAT()
 
 
-function [visField , moveField] = determineFieldsVisMove( ninfo )
+function [visField , moveField] = determineFieldsVisMove( visField , moveField )
 
-if (isempty(ninfo.visField) || ismember(9, ninfo.visField)) %non-specific RF
+if (isempty(visField) || ismember(9, visField)) %non-specific RF
   visField = (1:8);
 else %specific RF
-  visField = ninfo.visField;
+  visField = visField;
 end
 
-if (isempty(ninfo.moveField) || ismember(9, ninfo.moveField)) %non-specific MF
+if (isempty(moveField) || ismember(9, moveField)) %non-specific MF
   moveField = (1:8);
 else %specific MF
-  moveField = ninfo.moveField;
+  moveField = moveField;
 end
 
 end%util:determineFieldsVisMove()
