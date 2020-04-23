@@ -1,6 +1,6 @@
 function [ ] = Fig01B_Plot_ErrRate_X_RT( binfo , pSacc )
 %Fig01B_Plot_ErrRate_X_RT() Summary of this function goes here
-%   Detailed explanation goes here
+%   Detailed explanation goes here.
 
 PLOT = true;
 STATS = true;
