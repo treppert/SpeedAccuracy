@@ -1,17 +1,18 @@
-function [  ] = plot_SDF_X_Dir_SAT( binfoSAT , primarySaccade , unitInfo , spikesSAT , varargin )
+function [  ] = plot_SDF_X_Dir_SAT( bInfo , pSacc , uInfo , spikes )
 %plot_SDF_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\SDF-X-Direction\';
+AREA = 'SEF';
+MONKEY = 'D';
+ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Figs\SDF-SEF\SDF_X_Direction\';
 
-idxArea = ismember(unitInfo.area, args.area);
-idxMonkey = ismember(unitInfo.monkey, args.monkey);
+idxArea = ismember(uInfo.area, AREA);
+idxMonkey = ismember(uInfo.monkey, MONKEY);
 
-unitInfo = unitInfo(idxArea & idxMonkey, :); %table
-spikesSAT = spikesSAT(idxArea & idxMonkey); %cell array
+uInfo = uInfo(idxArea & idxMonkey, :); %table
+spikes = spikes(idxArea & idxMonkey); %cell array
 
-NUM_CELLS = length(spikesSAT);
+NUM_CELLS = 1;%length(spikesSAT);
 T_STIM = 3500 + (-200 : 400);
 T_RESP = 3500 + (-400 : 200);
 
@@ -19,21 +20,21 @@ IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
 for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-  kk = ismember(binfoSAT.session, unitInfo.sess{cc});
-  RTkk = double(primarySaccade.resptime{kk});
+  fprintf('%s - %s\n', uInfo.sess{cc}, uInfo.unit{cc})
+  kk = ismember(bInfo.session, uInfo.sess{cc});
+  RTkk = double(pSacc.resptime{kk});
   
   %compute spike density function and align on primary response
-  sdfKKstim = compute_spike_density_fxn(spikesSAT{cc});
+  sdfKKstim = compute_spike_density_fxn(spikes{cc});
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
   %index by isolation quality
 %   idxIso = identify_trials_poor_isolation_SAT(unitInfo(cc), binfoSAT(kk).num_trials, 'task','SAT');
   %index by condition
-  idxAcc = ((binfoSAT.condition{kk} == 1));% & ~idxIso);
-  idxFast = ((binfoSAT.condition{kk} == 3));% & ~idxIso);
+  idxAcc = ((bInfo.condition{kk} == 1));% & ~idxIso);
+  idxFast = ((bInfo.condition{kk} == 3));% & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfoSAT.err_dir{kk} | binfoSAT.err_time{kk} | binfoSAT.err_hold{kk} | binfoSAT.err_nosacc{kk});
+  idxCorr = ~(bInfo.err_dir{kk} | bInfo.err_time{kk} | bInfo.err_hold{kk} | bInfo.err_nosacc{kk});
   
   %initializations
   sdf_AccStim = NaN(8,length(T_STIM));
@@ -43,7 +44,7 @@ for cc = 1:NUM_CELLS
   RT_Acc = NaN(1,8);
   RT_Fast = NaN(1,8);
   for dd = 1:8 %loop over response directions
-    idxDir = (primarySaccade.octant{kk} == dd);
+    idxDir = (pSacc.octant{kk} == dd);
     sdf_AccStim(dd,:) = nanmean(sdfKKstim(idxAcc & idxCorr & idxDir, T_STIM));
     sdf_AccResp(dd,:) = nanmean(sdfKKresp(idxAcc & idxCorr & idxDir, T_RESP));
     sdf_FastStim(dd,:) = nanmean(sdfKKstim(idxFast & idxCorr & idxDir, T_STIM));
@@ -73,7 +74,7 @@ for cc = 1:NUM_CELLS
       ylabel('Activity (sp/sec)');  xticklabels([])
     elseif (IDX_STIM_PLOT(dd) == 15)
       xlabel('Time from array (ms)');  yticklabels([])
-      print_session_unit(gca , unitInfo(cc,:), binfoSAT(kk,:), 'horizontal')
+      print_session_unit(gca , uInfo(cc,:), bInfo(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -92,7 +93,7 @@ for cc = 1:NUM_CELLS
     
     if (IDX_RESP_PLOT(dd) == 16)
       xlabel('Time from response (ms)');  yticklabels([])
-      print_session_unit(gca , unitInfo(cc,:), binfoSAT(kk,:), 'horizontal')
+      print_session_unit(gca , uInfo(cc,:), bInfo(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -101,7 +102,7 @@ for cc = 1:NUM_CELLS
   end%for:direction(dd)
   
   ppretty([16,8])
-  pause(0.1); print([ROOTDIR, unitInfo.sess{cc},'-',unitInfo.unit{cc},'.tif'], '-dtiff')
+  pause(0.1); print([ROOTDIR, uInfo.sess{cc},'-',uInfo.unit{cc},'.tif'], '-dtiff')
   pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
