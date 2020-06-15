@@ -15,7 +15,7 @@ NUM_CELLS = sum(unitTest);
 unitInfo = unitInfo(unitTest,:);
 spikes = spikes(unitTest);
 
-T_TEST = 3500 + [-300 20]; %interval over which to count spikes
+T_TEST = 3500 + [-600 +20]; %interval over which to count spikes
 
 %initialize spike count
 spkCt_Acc = NaN(1,NUM_CELLS);
@@ -56,11 +56,13 @@ cc_Less = (unitInfo.taskType == 1);   NUM_LESS = sum(cc_Less);
 sc_AccMore = spkCt_Acc(cc_More);    sc_AccLess = spkCt_Acc(cc_Less);
 sc_FastMore = spkCt_Fast(cc_More);  sc_FastLess = spkCt_Fast(cc_Less);
 
+[~,p] = ttest2(sc_FastMore-sc_AccMore, sc_FastLess-sc_AccLess)
+
 figure(); hold on
-h_AM = cdfplot(sc_AccMore); h_AM.Color = 'r'; h_AM.LineWidth = 1.75;
-h_FM = cdfplot(sc_FastMore); h_FM.Color = [0 .7 0]; h_FM.LineWidth = 1.75;
-h_AL = cdfplot(sc_AccLess); h_AL.Color = 'r'; h_AL.LineWidth = 0.75;
-h_FL = cdfplot(sc_FastLess); h_FL.Color = [0 .7 0]; h_FL.LineWidth = 0.75;
+cdfplotTR(sc_AccMore, 'Color','r', 'LineWidth',1.75)
+cdfplotTR(sc_FastMore, 'Color',[0 .7 0], 'LineWidth',1.75)
+cdfplotTR(sc_AccLess, 'Color','r', 'LineWidth',0.75)
+cdfplotTR(sc_FastLess, 'Color',[0 .7 0], 'LineWidth',0.75)
 ppretty([6.4,4])
 
 %% Stats - Two-way ANOVA
