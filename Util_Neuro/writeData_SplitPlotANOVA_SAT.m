@@ -11,7 +11,7 @@ function [ ] = writeData_SplitPlotANOVA_SAT( param , fname , varargin )
 % 
 
 args = getopt(varargin, {'compareBetweenANOVA'});
-rootDir = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
+rootDir = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\';
 
 numCells_More = length(param.AccMore);
 numCells_Less = length(param.AccLess);
@@ -34,7 +34,7 @@ if (args.compareBetweenANOVA)
   tmp = [param.AccMore param.AccLess param.FastMore param.FastLess]';
   Condition = [ones(1,numCells) 2*ones(1,numCells)]';
   Efficiency = [ones(1,numCells_More) 2*ones(1,numCells_Less) ones(1,numCells_More) 2*ones(1,numCells_Less)]';
-  anovan(tmp, {Condition Efficiency}, 'model','interaction', 'sstype',2, 'varnames',{'Condition','Efficiency'});
+  anovan(tmp, {Condition Efficiency}, 'model','interaction', 'sstype',1, 'varnames',{'Condition','Efficiency'});
 end
 
 end % util : writeData_SplitPlotANOVA_SAT()

@@ -1,5 +1,5 @@
-function [ ] = Fig02A_Plot_Baseline_SDF( bInfo , pSacc , uInfo , uStats , spikes , varargin )
-%Fig02A_Plot_Baseline_SDF Summary of this function goes here
+function [ ] = Fig02A_plotBaselineSDF( bInfo , pSacc , uInfo , uStats , spikes , varargin )
+%Fig02A_plotBaselineSDF Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA = 'SEF';
@@ -71,14 +71,14 @@ end%for:cells(cc)
 %% Plotting
 
 %normalization
-sdfAcc = sdfAcc ./ [uStats.NormFactor_All]';
-sdfFast = sdfFast ./ [uStats.NormFactor_All]';
+sdfAcc = sdfAcc ./ uStats.NormalizationFactor(:,1);
+sdfFast = sdfFast ./ uStats.NormalizationFactor(:,1);
 
-%split neurons by level of search efficiency
-ccMore = ([uInfo.taskType] == 1);   NUM_MORE = sum(ccMore);
-ccLess = ([uInfo.taskType] == 2);   NUM_LESS = sum(ccLess);
-sdfAccMore = sdfAcc(ccMore,:);     sdfFastMore = sdfFast(ccMore,:);
-sdfAccLess = sdfAcc(ccLess,:);     sdfFastLess = sdfFast(ccLess,:);
+%split neurons by level of search difficulty
+ccLessDiff = (uInfo.taskType == 1);     NUM_LESS_DIFF = sum(ccLessDiff);
+ccMoreDiff = (uInfo.taskType == 2);     NUM_MORE_DIFF = sum(ccMoreDiff);
+sdfAccLD = sdfAcc(ccLessDiff,:);        sdfFastLD = sdfFast(ccLessDiff,:);
+sdfAccMD = sdfAcc(ccMoreDiff,:);        sdfFastMD = sdfFast(ccMoreDiff,:);
 
 T_STIM = T_STIM - 3500;
 
@@ -86,36 +86,36 @@ T_STIM = T_STIM - 3500;
 IDX_FOCUSED = ismember(T_STIM, T_FOCUSED);
 
 %compute common y-axis scale
-tmp = [mean(sdfAccMore) mean(sdfFastMore) mean(sdfAccLess) mean(sdfFastLess)];
+tmp = [mean(sdfAccLD) mean(sdfFastLD) mean(sdfAccMD) mean(sdfFastMD)];
 yLim = [(min(tmp)-0.05) , (max(tmp)+0.05)];
 
 figure()
 
-%Less efficient
+%More difficult
 subplot(2,2,1); hold on %from stimulus
 plot([0 0], yLim, 'k:')
-shaded_error_bar(T_STIM, mean(sdfAccLess), std(sdfAccLess)/sqrt(NUM_LESS), {'r-', 'LineWidth',1.25})
-shaded_error_bar(T_STIM, nanmean(sdfFastLess), nanstd(sdfFastLess)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
+shaded_error_bar(T_STIM, mean(sdfAccMD), std(sdfAccMD)/sqrt(NUM_MORE_DIFF), {'r-', 'LineWidth',1.25})
+shaded_error_bar(T_STIM, nanmean(sdfFastMD), nanstd(sdfFastMD)/sqrt(NUM_MORE_DIFF), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
 xlabel('Time from array (ms)'); ytickformat('%2.1f')
 
 subplot(2,2,2); hold on %focused look at baseline
-plot(T_FOCUSED, mean(sdfAccLess(:,IDX_FOCUSED)), 'r-', 'LineWidth',1.25)
-plot(T_FOCUSED, nanmean(sdfFastLess(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
+plot(T_FOCUSED, mean(sdfAccMD(:,IDX_FOCUSED)), 'r-', 'LineWidth',1.25)
+plot(T_FOCUSED, nanmean(sdfFastMD(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',1.25)
 
-%More efficient
+%Less difficult
 subplot(2,2,3); hold on %from stimulus
 plot([0 0], yLim, 'k:')
-shaded_error_bar(T_STIM, mean(sdfAccMore), std(sdfAccMore)/sqrt(NUM_MORE), {'r-', 'LineWidth',0.75})
-shaded_error_bar(T_STIM, mean(sdfFastMore), std(sdfFastMore)/sqrt(NUM_MORE), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
+shaded_error_bar(T_STIM, mean(sdfAccLD), std(sdfAccLD)/sqrt(NUM_LESS_DIFF), {'r-', 'LineWidth',0.75})
+shaded_error_bar(T_STIM, mean(sdfFastLD), std(sdfFastLD)/sqrt(NUM_LESS_DIFF), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
 ylabel('Norm. activity'); ytickformat('%2.1f')
 
 subplot(2,2,4); hold on %focused look at baseline
-plot(T_FOCUSED, mean(sdfAccMore(:,IDX_FOCUSED)), 'r-', 'LineWidth',0.75)
-plot(T_FOCUSED, mean(sdfFastMore(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',0.75)
+plot(T_FOCUSED, mean(sdfAccLD(:,IDX_FOCUSED)), 'r-', 'LineWidth',0.75)
+plot(T_FOCUSED, mean(sdfFastLD(:,IDX_FOCUSED)), '-', 'Color',[0 .7 0], 'LineWidth',0.75)
 
 ppretty([8,1.8])
 
-end%fxn:plotBaselineSDF_SAT()
+end%fxn:Fig02A_plotBaselineSDF()
 
 
 function [visField , moveField] = determineFieldsVisMove( visField , moveField )

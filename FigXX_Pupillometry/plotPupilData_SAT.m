@@ -1,17 +1,19 @@
-%plotPupilData_SAT.m
+function [ ] = plotPupilData_SAT( binfoSAT , pupilData )
+%plotPupilData_SAT Summary of this function goes here
+%   Detailed explanation goes here
 
 t_Plot = 3500 + (-600 : +200); %window for viewing pupil dynamics
 numSamp = length(t_Plot);
 
 idx_Early = (-500 : -400) - (t_Plot(1)-3500); %windows for static pupil diameter
-idx_Late  = (50 : 150)     - (t_Plot(1)-3500);
+idx_Late  = (50 : 150)    - (t_Plot(1)-3500);
 
-behavInfo = binfoSAT_DaEu;
+behavInfo = binfoSAT(1:14,:);
 numSess = size(behavInfo,1);
 
 %initializations
-pupil_Fast = NaN(numSess,numSamp);  pupStatic_Fast = NaN(numSess,2); %early and late
-pupil_Acc  = NaN(numSess,numSamp);  pupStatic_Acc = NaN(numSess,2);
+pupil_Fast = NaN(numSess,numSamp);  pupAvg_Fast = NaN(numSess,2); %early and late
+pupil_Acc  = NaN(numSess,numSamp);  pupAvg_Acc = NaN(numSess,2);
 
 for kk = 1:numSess
   
@@ -28,14 +30,14 @@ for kk = 1:numSess
   pupil_Acc(kk,:)  = nanmean(pupil_AccCorr_kk);
   
   %compute early and late (static) pupil diameter estimates
-  pupStatic_Fast(kk,1) = mean(pupil_Fast(kk,idx_Early));   pupStatic_Fast(kk,2) = mean(pupil_Fast(kk,idx_Late));
-  pupStatic_Acc(kk,1) = mean(pupil_Acc(kk,idx_Early));     pupStatic_Acc(kk,2) = mean(pupil_Acc(kk,idx_Late));
+  pupAvg_Fast(kk,1) = mean(pupil_Fast(kk,idx_Early));   pupAvg_Fast(kk,2) = mean(pupil_Fast(kk,idx_Late));
+  pupAvg_Acc(kk,1) = mean(pupil_Acc(kk,idx_Early));     pupAvg_Acc(kk,2) = mean(pupil_Acc(kk,idx_Late));
   
 end % for :: session (kk)
 
 %split sessions by task difficulty
-idx_Easy = (binfoSAT_DaEu.taskType == 1); numEasy = sum(idx_Easy); %less difficult
-idx_Hard = (binfoSAT_DaEu.taskType == 2); numHard = sum(idx_Hard); %more difficult
+idx_Easy = (behavInfo.taskType == 1); numEasy = sum(idx_Easy); %less difficult
+idx_Hard = (behavInfo.taskType == 2); numHard = sum(idx_Hard); %more difficult
 
 pupil_Acc_Easy = pupil_Acc(idx_Easy,:);   pupil_Fast_Easy = pupil_Fast(idx_Easy,:);
 pupil_Acc_Hard = pupil_Acc(idx_Hard,:);   pupil_Fast_Hard = pupil_Fast(idx_Hard,:);
@@ -46,7 +48,8 @@ mu_Fast_Hard = nanmean(pupil_Fast_Hard);    se_Fast_Hard = nanstd(pupil_Fast_Har
 mu_Acc_Easy =  nanmean(pupil_Acc_Easy);     se_Acc_Easy = nanstd(pupil_Acc_Easy) / sqrt(numEasy);
 mu_Acc_Hard =  nanmean(pupil_Acc_Hard);     se_Acc_Hard = nanstd(pupil_Acc_Hard) / sqrt(numHard);
 
-if (false)
+
+%% Plotting - Pupil dynamics
 figure() %dynamic plot
 
 subplot(1,2,1); hold on %less difficult
@@ -65,11 +68,11 @@ title('More Difficult')
 ylim([-.02 .1]); yticks([])
 
 ppretty([6,3])
-end
 
-%static plot
-pupStatic_Acc_Easy = pupStatic_Acc(idx_Easy,:); pupStatic_Fast_Easy = pupStatic_Fast(idx_Easy,:);
-pupStatic_Acc_Hard = pupStatic_Acc(idx_Hard,:); pupStatic_Fast_Hard = pupStatic_Fast(idx_Hard,:);
+
+%% Plotting - Barplot
+pupStatic_Acc_Easy = pupAvg_Acc(idx_Easy,:); pupStatic_Fast_Easy = pupAvg_Fast(idx_Easy,:);
+pupStatic_Acc_Hard = pupAvg_Acc(idx_Hard,:); pupStatic_Fast_Hard = pupAvg_Fast(idx_Hard,:);
 
 pupEarly = [pupStatic_Acc_Easy(:,1) pupStatic_Fast_Easy(:,1) pupStatic_Acc_Hard(:,1) pupStatic_Fast_Hard(:,1)];
 pupLate  = [pupStatic_Acc_Easy(:,2) pupStatic_Fast_Easy(:,2) pupStatic_Acc_Hard(:,2) pupStatic_Fast_Hard(:,2)];
@@ -83,6 +86,7 @@ title('Early :: Late')
 xticks([]); ytickformat('%3.2f'); ppretty([4,3])
 
 
+%% Stats - ANOVA
 %run two-way ANOVA on the static windows
 windowTest = 1; %1=Early window, 2=Late window
 DV_Pupil = [pupStatic_Acc_Easy(:,windowTest); pupStatic_Acc_Hard(:,windowTest); ...
@@ -93,5 +97,4 @@ F_Difficulty = [ones(numEasy,1); 2*ones(numHard,1); ones(numEasy,1); 2*ones(numH
 [~,tblAnova] = anovan(DV_Pupil, {F_Condition F_Difficulty}, 'model','full', ...
   'varnames',{'Condition','Difficulty'}, 'display','on', 'sstype',2);
 
-clearvars -except binfoSAT_DaEu pupilData allSaccades_DaEu tblAnova
-
+end%fxn:plotPupilData_SAT()
