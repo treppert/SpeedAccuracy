@@ -1,5 +1,5 @@
-function [ ] = plotSpkCount_Baseline_SAT( behavInfo , unitInfo , spikes )
-%plotSpkCount_Baseline_SAT Summary of this function goes here
+function [ ] = Fig02X_plotDistrBaselineSpikeCount( behavInfo , unitInfo , spikes )
+%Fig02X_plotDistrBaselineSpikeCount Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA = {'SEF'};
@@ -85,7 +85,7 @@ xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
 ylabel('Sp. ct. diff. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
-end% fxn : plotSpkCount_Baseline_SAT()
+end% fxn : Fig02X_plotDistrBaselineSpikeCount()
 
 % %plotting - show each level of Condition*Efficiency separately
 % mu_AccMore = mean(sc_AccMore);       se_AccMore = std(sc_AccMore) / sqrt(NUM_MORE);
