@@ -3,10 +3,11 @@ function [ ] = Fig01B_Plot_ErrRate_X_RT( binfo , pSacc )
 %   Detailed explanation goes here.
 
 PLOT = true;
-STATS = true;
+STATS = false;
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(binfo.monkey, MONKEY);
+MONKEY = {'E'};
+sessKeep = (ismember(binfo.monkey, MONKEY) & (binfo.recordedSEF));
 NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);   pSacc = pSacc(sessKeep, :);
 
 
@@ -77,16 +78,16 @@ end
 
 %% Stats -- Two-way between-subjects ANOVA
 if (STATS)
+  rootDir = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\';
+  
   RT = [rt_AccMore rt_AccLess rt_FastMore rt_FastLess]';
   ER = [er_AccMore er_AccLess er_FastMore er_FastLess]';
+  F_Difficulty = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
   F_Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
-  F_Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
-  F_Session = [(1:NUM_SESS) (1:NUM_SESS)];
-
-  anova_TwoWay_Between_SAT(RT, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-%   anova_TwoWay_Between_SAT(ER, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
-%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
+%   F_Session = [(1:NUM_SESS) (1:NUM_SESS)]';
+  
+  DV_param = RT; save([rootDir, 'Eu-RespTime.mat'], 'DV_param','F_Condition','F_Difficulty')
+  DV_param = ER; save([rootDir, 'Eu-ErrorRate.mat'], 'DV_param','F_Condition','F_Difficulty')
 end
 
 end % fxn :: Fig01B_Plot_ErrRate_X_RT()

@@ -3,7 +3,7 @@ function [ ] = Fig02X_plotBaselineSpkCt_X_Condition( behavInfo , unitInfo , spik
 %   Detailed explanation goes here
 
 AREA = {'SEF'};
-MONKEY = {'E'};
+MONKEY = {'D','E'};
 
 idxArea = ismember(unitInfo.area, AREA);
 idxMonkey = ismember(unitInfo.monkey, MONKEY);
@@ -15,7 +15,7 @@ NUM_CELLS = sum(unitTest);
 unitInfo = unitInfo(unitTest,:);
 spikes = spikes(unitTest);
 
-T_TEST = 3500 + [-600 +20]; %interval over which to count spikes
+T_TEST = 3500 + [-500 +20]; %interval over which to count spikes
 
 %initialize spike count
 spkCt_Acc = NaN(1,NUM_CELLS);
@@ -27,10 +27,6 @@ for cc = 1:NUM_CELLS
   %compute spike count for all trials
   sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{cc});
   
-  %compute z-scored spike count
-%   idxNaN = estimate_spread(sc_CC, 3.5);   sc_CC(idxNaN) = NaN;
-  sc_CC = zscore(sc_CC);
-  
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
   %index by trial outcome
@@ -40,8 +36,13 @@ for cc = 1:NUM_CELLS
   idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);
   
   %split by task condition
-  scAccCC = sc_CC(idxAcc);
-  scFastCC = sc_CC(idxFast);
+  scAccCC = sc_CC(idxAcc);    nAcc = sum(idxAcc);
+  scFastCC = sc_CC(idxFast);  nFast = sum(idxFast);
+  
+  %compute z-scored spike count
+  sc_CC = zscore([scAccCC, scFastCC]);
+  scAccCC = sc_CC(1:nAcc);
+  scFastCC = sc_CC((nAcc+1):(nAcc+nFast));
   
   %save mean spike counts
   spkCt_Acc(cc) = mean(scAccCC);
@@ -63,7 +64,7 @@ cdfplotTR(sc_AccLess, 'Color','r', 'LineWidth',0.75)
 cdfplotTR(sc_FastLess, 'Color',[0 .7 0], 'LineWidth',0.75)
 ppretty([6.4,4])
 
-%% Stats - Two-way ANOVA
+%% Stats - Two-way split-plot ANOVA
 %write data out for ANOVA in R
 rootDir = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\';
 DV_param = [sc_AccMore sc_AccLess sc_FastMore sc_FastLess]';
