@@ -2,11 +2,7 @@ function [ sessions , num_trials ] = identify_sessions_SAT( root_dir , type , va
 %identify_sessions_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-if (nargin > 2)
-  monkey = varargin{1};
-else
-  monkey = {''};
-end
+args = getopt(varargin, {{'removeSessions=',true}, {'monkey=',''}});
 
 MIN_TOTAL_TRIALS_PER_SESSION = 700;
 
@@ -30,18 +26,26 @@ for kk = 1:num_sessions
   num_trials.SAT(kk) = vars_SAT_kk(1).size(1);
   num_trials.MG(kk) = vars_MG_kk(1).size(1);
   
-end
+end % for : session(kk)
 
-%remove sessions without enough total trials (Q & S)
-if ismember(monkey, {'Quincy','Seymour'})
-  kkRemove = (num_trials.SAT < MIN_TOTAL_TRIALS_PER_SESSION);
-else %Darwin or Euler
-  kkRemove = 1;
-end
 
-sessions.SAT(kkRemove) = [];
-num_trials.SAT(kkRemove) = [];
-sessions.MG(kkRemove) = [];
-num_trials.MG(kkRemove) = [];
+if (args.removeSessions)
+  
+  %remove sessions without enough total trials (Q & S)
+  if ismember(args.monkey, {'Q'})
+    kkRemove = (num_trials.SAT < MIN_TOTAL_TRIALS_PER_SESSION);
+    kkRemove(7) = true; %remove second session from 2010-11-02 (Quincy only)
+  elseif ismember(args.monkey, {'S'})
+    kkRemove = (num_trials.SAT < MIN_TOTAL_TRIALS_PER_SESSION);
+  elseif ismember(args.monkey, {'Da','Eu'}) %Darwin or Euler
+    kkRemove = 1;
+  end
+  
+  sessions.SAT(kkRemove) = [];
+  num_trials.SAT(kkRemove) = [];
+  sessions.MG(kkRemove) = [];
+  num_trials.MG(kkRemove) = [];
+  
+end % if : REMOVE_SESSIONS
 
 end % util : identify_sessions_SAT()

@@ -1,34 +1,27 @@
-function [ ] = plotSpkCount_X_Trial_ReStim_SAT( behavInfo , unitInfo , spikes )
-%plotSpkCount_X_Trial_ReStim_SAT Summary of this function goes here
+function [ ] = Fig02B_plotBaselineSpkCt_X_Trial( behavInfo , unitInfo , unitStats , spikes )
+%Fig02B_plotBaselineSpkCt_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
-MIN_MEDIAN_SPIKE_COUNT = 2;
+MIN_MEDIAN_SPIKE_COUNT = 0;
 
-INTERVAL_TEST = 'Baseline';
-% INTERVAL_TEST = 'visResponse';
+MONKEY = {'D','E'};
 AREA_TEST = 'SEF';
+T_TEST = 3500 + [-600 20];
 
-TRIAL_TEST = (-3 : +2);
+TRIAL_TEST = (-4 : +3);
 NUM_TRIAL_TEST = length(TRIAL_TEST);
 trialSwitch = identify_condition_switch(behavInfo);
 
 idxArea = ismember(unitInfo.area, {AREA_TEST});
-idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
+idxMonkey = ismember(unitInfo.monkey, MONKEY);
 idxVisUnit = (unitInfo.visGrade >= 2);
 idxMoveUnit = (unitInfo.moveGrade >= 2);
 idxSATEffect = (unitStats.Baseline_SAT_Effect == 1);
 
-if strcmp(INTERVAL_TEST, 'Baseline')
-  unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit) & idxSATEffect);
-  T_TEST = 3500 + [-600 20];
-elseif strcmp(INTERVAL_TEST, 'visResponse')
-  unitTest = (idxArea & idxMonkey & idxVisUnit & idxSATEffect);
-  T_TEST = 3500 + [50 200];
-end
-
-NUM_CELLS = sum(unitTest);
+unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit) & idxSATEffect);
 unitInfo = unitInfo(unitTest,:);
 spikes = spikes(unitTest);
+NUM_CELLS = sum(unitTest);
 
 %initialize spike count
 scA2F_All = NaN(NUM_CELLS,NUM_TRIAL_TEST);
@@ -49,20 +42,22 @@ for cc = 1:NUM_CELLS
     ccCut = cat(2, ccCut, cc);  continue
   end
   
-  %compute z-scored spike count
-  sc_CC = zscore(sc_CC);
-  
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
   %index by trial outcome
-  idxCorr = ~(behavInfo.err_time{kk} | behavInfo.err_hold{kk} | behavInfo.err_nosacc{kk});
+  idxCorr = ~(behavInfo.err_dir{kk} | behavInfo.err_time{kk} | behavInfo.err_hold{kk} | behavInfo.err_nosacc{kk});
   %index by condition
   idxAcc = ((behavInfo.condition{kk} == 1) & idxCorr & ~idxIso);    trialAcc = find(idxAcc);
   idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);   trialFast = find(idxFast);
   
   %split by task condition
-  scAccCC = sc_CC(idxAcc);
-  scFastCC = sc_CC(idxFast);
+  scAccCC = sc_CC(idxAcc);    nAcc = sum(idxAcc);
+  scFastCC = sc_CC(idxFast);  nFast = sum(idxFast);
+  
+  %compute z-scored spike count
+  sc_CC = zscore([scAccCC, scFastCC]);
+  scAccCC = sc_CC(1:nAcc);
+  scFastCC = sc_CC((nAcc+1):(nAcc+nFast));
   
   %index by trial number
   for jj = 1:NUM_TRIAL_TEST
@@ -91,24 +86,31 @@ scF2A_All(ccCut,:) = [];
 
 
 %% Plotting
-mu_A2F = mean(scA2F_All);    se_A2F = std(scA2F_All) / sqrt(NUM_CELLS);
-mu_F2A = mean(scF2A_All);    se_F2A = std(scF2A_All) / sqrt(NUM_CELLS);
+mu_A2F = nanmean(scA2F_All);    se_A2F = nanstd(scA2F_All) / sqrt(NUM_CELLS);
+mu_F2A = nanmean(scF2A_All);    se_F2A = nanstd(scF2A_All) / sqrt(NUM_CELLS);
 
 figure()
 
 subplot(1,2,1); hold on
 plot([-3 2], [0 0], 'k:')
+% plot(TRIAL_TEST, scA2F_All)
 errorbar(TRIAL_TEST, mu_A2F, se_A2F, 'capsize',0, 'Color','k')
-xticks(-3:2); xticklabels({}); ylabel('Spike count (z)')
-ppretty([4.8,2.2]); set(gca, 'XMinorTick','off')
+xticks(-3:2); xticklabels({}); ylabel('Spike count (z)'); 
+
+subplot(1,2,2); hold on
+plot([-3 2], [0 0], 'k:')
+% plot(TRIAL_TEST, scF2A_All)
+errorbar(TRIAL_TEST, mu_F2A, se_F2A, 'capsize',0, 'Color','k')
+xticks(-3:2); xticklabels({}); yticks([])
+
+ppretty([4.8,2.2], 'XMinorTick','off'); 
 
 
 %% Stats - Single-trial modulation at cued condition switch
-tmp_A2F = [nanmean(scA2F_All(:,[3,4]),2) , nanmean(scA2F_All(:,[5,6]),2)];
-tmp_F2A = [nanmean(scF2A_All(:,[3,4]),2) , nanmean(scF2A_All(:,[5,6]),2)];
-diffA2F = diff(tmp_A2F, 1, 2);
-diffF2A = diff(tmp_F2A, 1, 2);
-ttestTom( diffA2F , diffF2A , 'paired' )
+singleTrialMod_A2F =  diff(scA2F_All(:,[4,5]),1,2);
+singleTrialMod_F2A = -diff(scF2A_All(:,[4,5]),1,2); %negative for comparison
+ttestTom( singleTrialMod_A2F , singleTrialMod_F2A , 'paired' )
+fprintf('A2F: %3.2f +- %3.2f\n', mean(singleTrialMod_A2F), std(singleTrialMod_A2F)/sqrt(NUM_CELLS))
+fprintf('F2A: %3.2f +- %3.2f\n', mean(singleTrialMod_F2A), std(singleTrialMod_F2A)/sqrt(NUM_CELLS))
 
-
-end % fxn : plotSpkCount_X_Trial_ReStim_SAT()
+end % fxn : Fig02B_plotBaselineSpkCt_X_Trial()

@@ -7,8 +7,8 @@ function [ pupilData ] = loadPupilData_SAT( )
 dataDir_Da = 'T:\data\Darwin\SAT\Matlab\';
 dataDir_Eu = 'T:\data\Euler\SAT\Matlab\';
 
-[sessions_Da, nTrials_Da] = identify_sessions_SAT(dataDir_Da, 'SEARCH');
-[sessions_Eu, nTrials_Eu] = identify_sessions_SAT(dataDir_Eu, 'SEARCH');
+[sessions_Da, nTrials_Da] = identify_sessions_SAT(dataDir_Da, 'SEARCH', 'removeSessions',false, 'monkey','Da');
+[sessions_Eu, nTrials_Eu] = identify_sessions_SAT(dataDir_Eu, 'SEARCH', 'removeSessions',false, 'monkey','Eu');
 sessions = struct2table([sessions_Da.SAT; sessions_Eu.SAT]);
 nTrials = [nTrials_Da.SAT, nTrials_Eu.SAT];   NUM_SESSION = length(nTrials);
 
@@ -25,7 +25,7 @@ for kk = 1:NUM_SESSION
   pupil = load(sessFile, 'Pupil_'); pupil = pupil.Pupil_;
   
   %low-pass filter the pupil data
-%   pupil = filtfilt(B_BUTTER, A_BUTTER, pupil);
+%   pupil = single(filtfilt(B_BUTTER, A_BUTTER, pupil));
 
   %for each trial, subtract off value at time of array appearance
   %NOTE: this is a control for trial number

@@ -1,17 +1,17 @@
-function [ varargout ] = Fig02X_computeBaselineSATEffectXNeuron( binfo , ninfo , nstats , spikes , varargin )
-%Fig02X_computeBaselineSATEffectXNeuron This function tests for a significant effect of
+function [ varargout ] = testBaselineSATEffect_X_Neuron( binfo , ninfo , nstats , spikes )
+%testBaselineSATEffect_X_Neuron This function tests for a significant effect of
 %SAT condition on baseline discharge rate for single neurons. That actual
 %test is the (non-parametric) Mann-Whitney U-test.
 % 
 
-AREA = {'FEF'};
+AREA = {'SEF'};
 MONKEY = {'D','E','Q','S'};
 
 idxArea = ismember(ninfo.area, AREA);
 idxMonkey = ismember(ninfo.monkey, MONKEY);
 
 idxVis = (ninfo.visGrade >= 2);   idxMove = (ninfo.moveGrade >= 2);
-% idxErr = (ninfo.errGrade >= 2);   idxRew = (abs(ninfo.rewGrade) >= 2);
+idxErr = (ninfo.errGrade >= 2);   idxRew = (abs(ninfo.rewGrade) >= 2);
 
 idxKeep = (idxArea & idxMonkey & (idxVis | idxMove));
 % idxKeep = (idxArea & idxMonkey & (idxMove));
@@ -71,8 +71,10 @@ end
 nstats = nstats(idxKeep,:);
 nFgA = sum((nstats.blineEffect ==  1));
 nAgF = sum((nstats.blineEffect == -1));
+nNoEffect = NUM_CELLS - (nFgA + nAgF);
 
 fprintf('Number of neurons with Fast > Acc: %d/%d = %d%%\n', nFgA, NUM_CELLS, 100*nFgA/NUM_CELLS)
 fprintf('Number of neurons with Acc > Fast: %d/%d = %d%%\n', nAgF, NUM_CELLS, 100*nAgF/NUM_CELLS)
+fprintf('Number of neurons with no effect: %d/%d = %d%%\n', nNoEffect, NUM_CELLS, 100*nNoEffect/NUM_CELLS)
 
-end % fxn : Fig02X_computeBaselineSATEffectXNeuron()
+end % fxn : testBaselineSATEffect_X_Neuron()

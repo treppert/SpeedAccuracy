@@ -1,9 +1,9 @@
-function [ ] = Fig02X_plotDistrBaselineSpikeCount( behavInfo , unitInfo , spikes )
-%Fig02X_plotDistrBaselineSpikeCount Summary of this function goes here
+function [ ] = Fig02X_plotBaselineSpkCt_X_Condition( behavInfo , unitInfo , spikes )
+%Fig02X_plotBaselineSpkCt_X_Condition Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA = {'SEF'};
-MONKEY = {'D','E'};
+MONKEY = {'E'};
 
 idxArea = ismember(unitInfo.area, AREA);
 idxMonkey = ismember(unitInfo.monkey, MONKEY);
@@ -56,8 +56,6 @@ cc_Less = (unitInfo.taskType == 1);   NUM_LESS = sum(cc_Less);
 sc_AccMore = spkCt_Acc(cc_More);    sc_AccLess = spkCt_Acc(cc_Less);
 sc_FastMore = spkCt_Fast(cc_More);  sc_FastLess = spkCt_Fast(cc_Less);
 
-[~,p] = ttest2(sc_FastMore-sc_AccMore, sc_FastLess-sc_AccLess)
-
 figure(); hold on
 cdfplotTR(sc_AccMore, 'Color','r', 'LineWidth',1.75)
 cdfplotTR(sc_FastMore, 'Color',[0 .7 0], 'LineWidth',1.75)
@@ -73,9 +71,6 @@ F_Difficulty = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NU
 F_Condition = [ones(1,NUM_CELLS) 2*ones(1,NUM_CELLS)]';
 F_Neuron = [(1:NUM_CELLS) (1:NUM_CELLS)]';
 save([rootDir, AREA{1}, '-SpikeCount-Baseline.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
-return
-% spikeCount = struct('AccMore',sc_AccMore, 'AccLess',sc_AccLess, 'FastMore',sc_FastMore, 'FastLess',sc_FastLess);
-% writeData_SplitPlotANOVA_SAT(spikeCount, [AREA{1}, '-SpikeCount-', INTERVAL_TEST, '.mat'], 'compareBetweenANOVA')
 
 %% Plotting -- Show SAT effect separately for more and less efficient search
 dSAT_More = sc_FastMore - sc_AccMore;   se_More = std(dSAT_More) / sqrt(NUM_MORE);
@@ -87,7 +82,7 @@ xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
 ylabel('Sp. ct. diff. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
-end% fxn : Fig02X_plotDistrBaselineSpikeCount()
+end% fxn : Fig02X_plotBaselineSpkCt_X_Condition()
 
 % %plotting - show each level of Condition*Efficiency separately
 % mu_AccMore = mean(sc_AccMore);       se_AccMore = std(sc_AccMore) / sqrt(NUM_MORE);

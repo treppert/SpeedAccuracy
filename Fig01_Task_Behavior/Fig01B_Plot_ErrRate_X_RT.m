@@ -72,7 +72,7 @@ if (PLOT)
   errorbar([mu.ER_FL mu.ER_AL], [se.ER_FL se.ER_AL], 'CapSize',0, 'LineWidth',2, 'Color','k')
   xlim([0.9 2.1]); xticks([1 2]); xticklabels({'Fast','Accurate'})
 
-  ppretty([8,1.8])
+  ppretty([9,1.2])
 end
 
 %% Stats -- Two-way between-subjects ANOVA
@@ -85,8 +85,8 @@ if (STATS)
 
   anova_TwoWay_Between_SAT(RT, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
 %   anova_TwoWay_Between_SAT(ER, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-  save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
-  save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
+%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
+%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
 end
 
 end % fxn :: Fig01B_Plot_ErrRate_X_RT()
