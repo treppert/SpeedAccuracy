@@ -1,21 +1,33 @@
-function [ ] = Fig02X_plotBaselineSpkCt_X_Condition( behavInfo , unitInfo , spikes )
-%Fig02X_plotBaselineSpkCt_X_Condition Summary of this function goes here
+function [ ] = analyzeSpkCt_X_Condition_X_Difficulty( behavInfo , unitInfo , spikes )
+%analyzeSpkCt_X_Condition_X_Difficulty Summary of this function goes here
 %   Detailed explanation goes here
 
-AREA = {'SEF'};
+AREA = {'FEF'};
 MONKEY = {'D','E'};
+INTERVAL = 'pre'; %either 'pre' = baseline or 'post' = visual response
 
 idxArea = ismember(unitInfo.area, AREA);
 idxMonkey = ismember(unitInfo.monkey, MONKEY);
 idxVisUnit = (unitInfo.visGrade >= 2);
 idxMoveUnit = (unitInfo.moveGrade >= 2);
-unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit));
+
+if strcmp(INTERVAL, 'pre')
+  unitTest = (idxArea & idxMonkey & (idxVisUnit | idxMoveUnit));
+  T_TEST = 3500 + [-500 +20]; %interval over which to count spikes
+elseif strcmp(INTERVAL, 'post')
+  unitTest = (idxArea & idxMonkey & idxVisUnit);
+  if strcmp(AREA, 'SEF') %testing interval based on VR Latency **
+    T_TEST = 3500 + [73 223];
+  elseif strcmp(AREA, 'FEF')
+    T_TEST = 3500 + [60 210];
+  elseif strcmp(AREA, 'SC')
+    T_TEST = 3500 + [43 193];
+  end
+end
 
 NUM_CELLS = sum(unitTest);
 unitInfo = unitInfo(unitTest,:);
 spikes = spikes(unitTest);
-
-T_TEST = 3500 + [-500 +20]; %interval over which to count spikes
 
 %initialize spike count
 spkCt_Acc = NaN(1,NUM_CELLS);
@@ -48,7 +60,7 @@ for cc = 1:NUM_CELLS
   spkCt_Acc(cc) = mean(scAccCC);
   spkCt_Fast(cc) = mean(scFastCC);
   
-end%for:cells(cc)
+end % for : cell(cc)
 
 %split by search difficulty
 cc_More = (unitInfo.taskType == 2);   NUM_MORE = sum(cc_More);
@@ -64,14 +76,18 @@ cdfplotTR(sc_AccLess, 'Color','r', 'LineWidth',0.75)
 cdfplotTR(sc_FastLess, 'Color',[0 .7 0], 'LineWidth',0.75)
 ppretty([6.4,4])
 
-%% Stats - Two-way split-plot ANOVA
+%% Stats - Two-way ANOVA
 %write data out for ANOVA in R
 rootDir = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\';
 DV_param = [sc_AccMore sc_AccLess sc_FastMore sc_FastLess]';
 F_Difficulty = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
 F_Condition = [ones(1,NUM_CELLS) 2*ones(1,NUM_CELLS)]';
 F_Neuron = [(1:NUM_CELLS) (1:NUM_CELLS)]';
-save([rootDir, AREA{1}, '-SpikeCount-Baseline.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+if strcmp(INTERVAL, 'pre')
+  save([rootDir, AREA{1}, '-SpikeCount-Baseline.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+elseif strcmp(INTERVAL, 'post')
+  save([rootDir, AREA{1}, '-SpikeCount-VisResponse.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+end
 
 %% Plotting -- Show SAT effect separately for more and less efficient search
 dSAT_More = sc_FastMore - sc_AccMore;   se_More = std(dSAT_More) / sqrt(NUM_MORE);
@@ -83,7 +99,7 @@ xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
 ylabel('Sp. ct. diff. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
-end% fxn : Fig02X_plotBaselineSpkCt_X_Condition()
+end% fxn : analyzeSpkCt_X_Condition_X_Difficulty()
 
 % %plotting - show each level of Condition*Efficiency separately
 % mu_AccMore = mean(sc_AccMore);       se_AccMore = std(sc_AccMore) / sqrt(NUM_MORE);

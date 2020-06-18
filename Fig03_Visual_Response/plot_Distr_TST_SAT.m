@@ -5,6 +5,9 @@ function [ ] = plot_Distr_TST_SAT( unitInfo , unitStats )
 ANALYZE_PAIRED_ONLY = true;
 AREA_TEST = 'SEF';
 
+TST_Acc = unitStats.TargetSelectionTime(:,1);
+TST_Fast = unitStats.TargetSelectionTime(:,2);
+
 idxArea = ismember(unitInfo.area, {AREA_TEST});
 idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
 idxVisUnit = (unitInfo.visGrade >= 2);

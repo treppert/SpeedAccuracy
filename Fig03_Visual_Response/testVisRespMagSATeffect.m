@@ -1,18 +1,17 @@
-function [ nstats ] = testVisRespMagSATeffect( binfo , moves , ninfo , nstats , spikes , varargin )
+function [ varargout ] = testVisRespMagSATeffect( bInfo , uInfo , uStats , spikes , varargin )
 %testVisRespMagSATeffect Summary of this function goes here
 %   Test for a significant difference in VR magnitude (relative to
 %   baseline) across conditions Fast and Accurate.
 % 
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+args = getopt(varargin, {{'area=','SC'}, {'monkey=',{'D','E','Q','S'}}});
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
-
-idxVis = ([ninfo.visGrade] >= 2);
+idxArea = ismember(uInfo.area, args.area);
+idxMonkey = ismember(uInfo.monkey, args.monkey);
+idxVis = (uInfo.visGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVis);
 
-ninfo = ninfo(idxKeep);
+uInfo = uInfo(idxKeep,:);
 spikes = spikes(idxKeep);
 
 NUM_CELLS = length(spikes);
@@ -20,30 +19,28 @@ T_BASE = [-90, 9] + 3500; %baseline interval spike ct to be subtracted
 T_TEST = 100; %duration over which to test (time-locked to VR onset)
 
 %pull visual response latencies
-VRlatAcc = [nstats.VRlatAcc];
-VRlatFast = [nstats.VRlatFast];
+VR_Latency = uStats.VisualResponse_Latency;
 
 %initializations
 relSpkCtAcc = cell(1,NUM_CELLS); %relative to baseline
 relSpkCtFast = cell(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  ccNS = ninfo(cc).unitNum; %index nstats correctly
+  kk = ismember(bInfo.session, uInfo.sess{cc});
+  ccNS = uInfo.unitNum(cc); %index nstats correctly
   
   %determine testing intervals (time-locked to VR onset)
-  tTestAcc = VRlatAcc(ccNS) + [0, T_TEST-1] + 3500;
-  tTestFast = VRlatFast(ccNS) + [0, T_TEST-1] + 3500;
+  tTest = VR_Latency(ccNS) + [0, T_TEST-1] + 3500;
 
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(uInfo.trRemSAT{cc}, bInfo.num_trials(kk));
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc);
+  idxCorr = ~(bInfo.err_dir{kk} | bInfo.err_time{kk} | bInfo.err_hold{kk} | bInfo.err_nosacc{kk});
   %index by response dir re. response field
 %   idxRF = ismember(moves(kk).octant, ninfo(cc).visField);
   %index by condition
-  trialAcc = find((binfo(kk).condition == 1) & ~idxIso & idxCorr);
-  trialFast = find((binfo(kk).condition == 3) & ~idxIso & idxCorr);
+  trialAcc = find((bInfo.condition{kk} == 1) & ~idxIso & idxCorr);
+  trialFast = find((bInfo.condition{kk} == 3) & ~idxIso & idxCorr);
   
   numTrialAcc = length(trialAcc);
   numTrialFast = length(trialFast);
@@ -51,20 +48,20 @@ for cc = 1:NUM_CELLS
   relSpkCtAcc{cc} = NaN(1,numTrialAcc);
   for jj = 1:numTrialAcc
     %retrieve spikes for Accurate condition
-    spkTime_jj = spikes(cc).SAT{trialAcc(jj)};
+    spkTime_jj = spikes{cc}{trialAcc(jj)};
     %compute baseline spike count for comparison
     spkCtAccBasejj = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2)));
     %compute raw visual response spike count
-    spkCtAccVRjj = sum((spkTime_jj > tTestAcc(1)) & (spkTime_jj < tTestAcc(2)));
+    spkCtAccVRjj = sum((spkTime_jj > tTest(1)) & (spkTime_jj < tTest(2)));
     %compute relative VR spike count (VR - baseline)
     relSpkCtAcc{cc}(jj) = spkCtAccVRjj - spkCtAccBasejj;
   end%for:trial(jj)
   
   relSpkCtFast{cc} = NaN(1,numTrialFast);
   for jj = 1:numTrialFast
-    spkTime_jj = spikes(cc).SAT{trialFast(jj)};
+    spkTime_jj = spikes{cc}{trialFast(jj)};
     spkCtFastBasejj = sum((spkTime_jj > T_BASE(1)) & (spkTime_jj < T_BASE(2)));
-    spkCtFastVRjj = sum((spkTime_jj > tTestFast(1)) & (spkTime_jj < tTestFast(2)));
+    spkCtFastVRjj = sum((spkTime_jj > tTest(1)) & (spkTime_jj < tTest(2)));
     relSpkCtFast{cc}(jj) = spkCtFastVRjj - spkCtFastBasejj;
   end%for:trial(jj)
   
@@ -72,14 +69,18 @@ for cc = 1:NUM_CELLS
   [hVal,~,~,tmp] = ttest2(relSpkCtFast{cc}, relSpkCtAcc{cc}, 'Alpha',0.05, 'Tail','both');
   if (hVal)
     if (tmp.tstat < 0) %Acc > Fast
-      nstats(ccNS).VReffect = -1;
+      uStats.VisualResponse_SAT_Effect(ccNS) = -1;
     else %Fast > Acc
-      nstats(ccNS).VReffect = 1;
+      uStats.VisualResponse_SAT_Effect(ccNS) = 1;
     end
   else%no SAT effect on VR
-    nstats(ccNS).VReffect = 0;
+    uStats.VisualResponse_SAT_Effect(ccNS) = 0;
   end
   
 end%for:cells(cc)
+
+if (nargout > 0)
+  varargout{1} = uStats;
+end
 
 end%util:testVisRespMagSATeffect()
