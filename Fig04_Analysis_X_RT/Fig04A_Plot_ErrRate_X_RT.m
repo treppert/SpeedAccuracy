@@ -1,15 +1,15 @@
-function [ ] = Fig04A_Plot_ErrRate_X_RT( binfo , pSacc )
+function [ ] = Fig04A_Plot_ErrRate_X_RT( bInfo , pSacc )
 %Fig04A_Plot_ErrRate_X_RT Summary of this function goes here
 %   Inputs
 %     binfo - binfoSAT
 %     pSacc - primarySaccade
 
 MONKEY = {'D','E'};
-MIN_NUM_TRIAL = 5; %min number of trials per bin
+MIN_NUM_TRIAL = 8; %min number of trials per bin (Da=5, Eu=8)
 
 %isolate sessions from MONKEY
-sessKeep = ismember(binfo.monkey, MONKEY);
-binfo = binfo(sessKeep, :);
+sessKeep = ismember(bInfo.monkey, MONKEY);
+bInfo = bInfo(sessKeep, :);
 pSacc = pSacc(sessKeep, :);
 NUM_SESS = sum(sessKeep);
 
@@ -21,13 +21,13 @@ chcErrRateFast = NaN(NUM_SESS,NBIN_FAST);
 
 for kk = 1:NUM_SESS
   %RT from deadline
-  rtKK = double(pSacc.resptime{kk}) - double(binfo.deadline{kk});
+  rtKK = double(pSacc.resptime{kk}) - double(bInfo.deadline{kk});
   
   %index by condition
-  idxAcc = (binfo.condition{kk} == 1);
-  idxFast = (binfo.condition{kk} == 3);
+  idxAcc = ((bInfo.condition{kk} == 1) & ~isnan(bInfo.deadline{kk}));
+  idxFast = ((bInfo.condition{kk} == 3) & ~isnan(bInfo.deadline{kk}));
   %index by trial outcome
-  idxErrChc = binfo.err_dir{kk};
+  idxErrChc = bInfo.err_dir{kk};
   
   for ii = 1:NBIN_ACC %loop over Time Err bins -- Accurate
     idxII = ((rtKK > RT_ACC(ii)) & (rtKK <= RT_ACC(ii+1)));
@@ -52,11 +52,11 @@ end%for:session(kk)
 RT_PLOT_ACC = RT_ACC(1:end-1) + diff(RT_ACC)/2;
 RT_PLOT_FAST = RT_FAST(1:end-1) + diff(RT_FAST)/2;
 
-NUM_SE_ACC = sum(~isnan(chcErrRateAcc),1);
-NUM_SE_FAST = sum(~isnan(chcErrRateFast),1);
+NSEM_ACC = sum(~isnan(chcErrRateAcc),1);
+NSEM_FAST = sum(~isnan(chcErrRateFast),1);
 
-mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NUM_SE_ACC);
-mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NUM_SE_FAST);
+mu_ERAcc = nanmean(chcErrRateAcc);   SE_ERAcc = nanstd(chcErrRateAcc) ./ sqrt(NSEM_ACC);
+mu_ERFast = nanmean(chcErrRateFast); SE_ERFast = nanstd(chcErrRateFast) ./ sqrt(NSEM_FAST);
 
 figure(); hold on
 plot([0 0], [.1 .3], 'k:')
@@ -68,8 +68,8 @@ ppretty([4.8,3])
 
 %% Stats
 %prepare session averages for Pearson correlation analysis
-errRateFC = reshape(chcErrRateFast', 10*NUM_SESS,1);
-errRateAC = reshape(chcErrRateAcc', 10*NUM_SESS,1);
+errRateFC = reshape(chcErrRateFast', NBIN_FAST*NUM_SESS,1);
+errRateAC = reshape(chcErrRateAcc', NBIN_ACC*NUM_SESS,1);
 RTFC = repmat(RT_PLOT_FAST, 1,NUM_SESS)';
 RTAC = repmat(RT_PLOT_ACC, 1,NUM_SESS)';
 
@@ -77,11 +77,11 @@ RTAC = repmat(RT_PLOT_ACC, 1,NUM_SESS)';
 inan = isnan(errRateFC);  RTFC(inan) = [];  errRateFC(inan) = [];
 inan = isnan(errRateAC);  RTAC(inan) = [];  errRateAC(inan) = [];
 
-[bfFC, rhoFC, pvalFC] = bf.corr(RTFC, errRateFC);
-[bfAC, rhoAC, pvalAC] = bf.corr(RTAC, errRateAC);
+[bf_Fast, rho_Fast, pval_Fast] = bf.corr(RTFC, errRateFC);
+[bf_Acc,  rho_Acc,  pval_Acc] = bf.corr(RTAC, errRateAC);
 
-fprintf('Accurate: R = %g  ||  p = %g || BF = %g\n', rhoAC, pvalAC, bfAC)
-fprintf('Fast: R = %g  ||  p = %g || BF = %g\n', rhoFC, pvalFC, bfFC)
+fprintf('Fast: R = %g  ||  p = %g || BF = %g\n', rho_Fast, pval_Fast, bf_Fast)
+fprintf('Accurate: R = %g  ||  p = %g || BF = %g\n', rho_Acc, pval_Acc, bf_Acc)
 
 %fit line to the data
 fitFast = fit(RTFC, errRateFC, 'poly1');

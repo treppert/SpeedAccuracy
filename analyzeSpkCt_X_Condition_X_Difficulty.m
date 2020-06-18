@@ -1,10 +1,11 @@
-function [ ] = analyzeSpkCt_X_Condition_X_Difficulty( behavInfo , unitInfo , spikes )
+function [ ] = analyzeSpkCt_X_Condition_X_Difficulty( bInfo , unitInfo , spikes )
 %analyzeSpkCt_X_Condition_X_Difficulty Summary of this function goes here
 %   Detailed explanation goes here
 
-AREA = {'FEF'};
+AREA = {'SEF'};
 MONKEY = {'D','E'};
 INTERVAL = 'pre'; %either 'pre' = baseline or 'post' = visual response
+SAVE_DATA = false;
 
 idxArea = ismember(unitInfo.area, AREA);
 idxMonkey = ismember(unitInfo.monkey, MONKEY);
@@ -34,31 +35,32 @@ spkCt_Acc = NaN(1,NUM_CELLS);
 spkCt_Fast = NaN(1,NUM_CELLS);
 
 for cc = 1:NUM_CELLS
-  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+  kk = ismember(bInfo.session, unitInfo.sess{cc});
   
   %compute spike count for all trials
-  sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{cc});
+  spkCt_cc = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{cc});
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, bInfo.num_trials(kk));
   %index by trial outcome
-  idxCorr = ~(behavInfo.err_dir{kk} | behavInfo.err_time{kk} | behavInfo.err_hold{kk} | behavInfo.err_nosacc{kk});
+  idxCorr = ~(bInfo.err_dir{kk} | bInfo.err_time{kk} | bInfo.err_hold{kk} | bInfo.err_nosacc{kk});
   %index by condition
-  idxAcc = ((behavInfo.condition{kk} == 1) & idxCorr & ~idxIso);
-  idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);
+  idxAcc = ((bInfo.condition{kk} == 1) & idxCorr & ~idxIso);
+  idxFast = ((bInfo.condition{kk} == 3) & idxCorr & ~idxIso);
   
   %split by task condition
-  scAccCC = sc_CC(idxAcc);    nAcc = sum(idxAcc);
-  scFastCC = sc_CC(idxFast);  nFast = sum(idxFast);
+  scAcc_cc = spkCt_cc(idxAcc);
+  scFast_cc = spkCt_cc(idxFast);
   
   %compute z-scored spike count
-  sc_CC = zscore([scAccCC, scFastCC]);
-  scAccCC = sc_CC(1:nAcc);
-  scFastCC = sc_CC((nAcc+1):(nAcc+nFast));
+  muSpkCt = mean([scAcc_cc scFast_cc]);
+  sdSpkCt = std([scAcc_cc scFast_cc]);
+  scAcc_cc = (scAcc_cc - muSpkCt) / sdSpkCt;
+  scFast_cc = (scFast_cc - muSpkCt) / sdSpkCt;
   
-  %save mean spike counts
-  spkCt_Acc(cc) = mean(scAccCC);
-  spkCt_Fast(cc) = mean(scFastCC);
+  %save mean spike count
+  spkCt_Acc(cc) = mean(scAcc_cc);
+  spkCt_Fast(cc) = mean(scFast_cc);
   
 end % for : cell(cc)
 
@@ -83,10 +85,12 @@ DV_param = [sc_AccMore sc_AccLess sc_FastMore sc_FastLess]';
 F_Difficulty = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
 F_Condition = [ones(1,NUM_CELLS) 2*ones(1,NUM_CELLS)]';
 F_Neuron = [(1:NUM_CELLS) (1:NUM_CELLS)]';
-if strcmp(INTERVAL, 'pre')
-  save([rootDir, AREA{1}, '-SpikeCount-Baseline.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
-elseif strcmp(INTERVAL, 'post')
-  save([rootDir, AREA{1}, '-SpikeCount-VisResponse.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+if (SAVE_DATA)
+  if strcmp(INTERVAL, 'pre')
+    save([rootDir, AREA{1}, '-SpikeCount-Baseline.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+  elseif strcmp(INTERVAL, 'post')
+    save([rootDir, AREA{1}, '-SpikeCount-VisResponse.mat'], 'DV_param','F_Condition','F_Difficulty','F_Neuron')
+  end
 end
 
 %% Plotting -- Show SAT effect separately for more and less efficient search

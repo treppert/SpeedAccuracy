@@ -54,13 +54,14 @@ for cc = 1:NUM_CELLS
   idxFast = ((behavInfo.condition{kk} == 3) & idxCorr & ~idxIso);   trialFast = find(idxFast);
   
   %split by task condition
-  scAccCC = sc_CC(idxAcc);    nAcc = sum(idxAcc);
-  scFastCC = sc_CC(idxFast);  nFast = sum(idxFast);
+  scAcc_cc = sc_CC(idxAcc);
+  scFast_cc = sc_CC(idxFast);
   
   %compute z-scored spike count
-  sc_CC = zscore([scAccCC, scFastCC]);
-  scAccCC = sc_CC(1:nAcc);
-  scFastCC = sc_CC((nAcc+1):(nAcc+nFast));
+  muSpkCt = mean([scAcc_cc scFast_cc]);
+  sdSpkCt = std([scAcc_cc scFast_cc]);
+  scAcc_cc = (scAcc_cc - muSpkCt) / sdSpkCt;
+  scFast_cc = (scFast_cc - muSpkCt) / sdSpkCt;
   
   %index by trial number
   for jj = 1:NUM_TRIAL_TEST
@@ -69,13 +70,13 @@ for cc = 1:NUM_CELLS
       idxJJ_A2F = ismember(trialAcc, trialSwitch.A2F{kk} + TRIAL_TEST(jj));
       idxJJ_F2A = ismember(trialFast, trialSwitch.F2A{kk} + TRIAL_TEST(jj));
       %compute mean spike count for this trial
-      spkCt_A2F(cc,jj) = mean(scAccCC(idxJJ_A2F));
-      spkCt_F2A(cc,jj) = mean(scFastCC(idxJJ_F2A));
+      spkCt_A2F(cc,jj) = mean(scAcc_cc(idxJJ_A2F));
+      spkCt_F2A(cc,jj) = mean(scFast_cc(idxJJ_F2A));
     else %After condition switch
       idxJJ_A2F = ismember(trialFast, trialSwitch.A2F{kk} + TRIAL_TEST(jj));
       idxJJ_F2A = ismember(trialAcc, trialSwitch.F2A{kk} + TRIAL_TEST(jj));
-      spkCt_A2F(cc,jj) = mean(scFastCC(idxJJ_A2F));
-      spkCt_F2A(cc,jj) = mean(scAccCC(idxJJ_F2A));
+      spkCt_A2F(cc,jj) = mean(scFast_cc(idxJJ_A2F));
+      spkCt_F2A(cc,jj) = mean(scAcc_cc(idxJJ_F2A));
     end
   end % for : trial (jj)
   
