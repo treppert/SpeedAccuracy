@@ -2,7 +2,9 @@ function [ ] = plot_EndptSS_Bar( behavInfo , secondSacc )
 %plot_EndptSS_Bar Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESS = size(behavInfo,1);
+MONKEY = {'E'};
+sessKeep = (ismember(behavInfo.monkey, MONKEY) & (behavInfo.recordedSEF));
+NUM_SESS = sum(sessKeep);   behavInfo = behavInfo(sessKeep, :);   secondSacc = secondSacc(sessKeep, :);
 
 Ptgt_Acc = NaN(1,NUM_SESS);     Ptgt_Fast = NaN(1,NUM_SESS);
 Pdistr_Acc = NaN(1,NUM_SESS);   Pdistr_Fast = NaN(1,NUM_SESS);
@@ -36,12 +38,16 @@ muDistr_Acc = mean(Pdistr_Acc);     seDistr_Acc = std(Pdistr_Acc) / sqrt(NUM_SES
 muDistr_Fast = mean(Pdistr_Fast);   seDistr_Fast = std(Pdistr_Fast) / sqrt(NUM_SESS);
 
 figure(); hold on
-bar([1 2 3 4], [muTgt_Acc muTgt_Fast muDistr_Acc muDistr_Fast], 0.4, 'FaceColor',[.5 .5 .5], 'LineWidth',0.5)
+bar([1 2 3 4], [muTgt_Acc muTgt_Fast muDistr_Acc muDistr_Fast], 0.75, 'FaceColor',[.5 .5 .5], 'LineWidth',0.5)
 errorbar([1 2 3 4], [muTgt_Acc muTgt_Fast muDistr_Acc muDistr_Fast], [seTgt_Acc seTgt_Fast seDistr_Acc seDistr_Fast], 'Color','k', 'CapSize',0)
 ppretty([3,3]); xticks([1 2 3 4]); xticklabels({'A','F','A','F'}); ytickformat('%2.1f')
 
-%% Stats - two-way between-subjects ANOVA
-matStats = [Ptgt_Acc Pdistr_Acc ; Ptgt_Fast Pdistr_Fast]';
-anova2_TR(matStats, NUM_SESS)
+%% Stats - balanced two-way between-subjects ANOVA
+DV_Prob = [Ptgt_Acc Pdistr_Acc Ptgt_Fast Pdistr_Fast]';
+F_Condition = [ones(2*NUM_SESS,1); 2*ones(2*NUM_SESS,1)];
+F_Endpoint = [ones(NUM_SESS,1); 2*ones(NUM_SESS,1); ones(NUM_SESS,1); 2*ones(NUM_SESS,1)];
+anova_TwoWay_Between_SAT(DV_Prob, F_Condition, F_Endpoint, 'model','full' )
+% bf10 = bfFromF(F,df1,df2,n)
+% bf.bfFromF(4.5077e-13, 1, 20, 6)
 
 end%fxn:plot_EndptSS_Bar()

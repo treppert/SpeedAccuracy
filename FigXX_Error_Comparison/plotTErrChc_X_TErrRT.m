@@ -1,32 +1,31 @@
-function [ ] = plotTErrChc_X_TErrRT( ninfo , nstats )
+function [ ] = plotTErrChc_X_TErrRT( unitInfo , unitStats )
 %plotTErrChc_X_TErrRT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember({ninfo.area}, {'SEF'});
-idxDa = ismember({ninfo.monkey}, {'D'});
-idxEu = ismember({ninfo.monkey}, {'E'});
+idxSEF = ismember(unitInfo.area, {'SEF'});
+idxDa = ismember(unitInfo.monkey, {'D'});
+idxEu = ismember(unitInfo.monkey, {'E'});
 
-idxErr = ([ninfo.errGrade] >= 2);
-idxRew = (abs([ninfo.rewGrade]) >= 2 & ~isnan([nstats.A_Reward_tErrStart_Fast]));
+idxErr = (unitInfo.errGrade >= 2);
+idxRew = (abs(unitInfo.rewGrade) >= 2);
 
-idxBothErrDa = (idxArea & idxDa & (idxErr & idxRew));
-idxBothErrEu = (idxArea & idxEu & (idxErr & idxRew));
+idxKeep = (idxSEF & (idxDa | idxEu) & (idxErr | idxRew));
 
-%compute median time of error signaling for each monkey
-tmedChcErrDa = median([nstats(idxErr & idxDa).A_ChcErr_tErr_Fast]);
-tmedChcErrEu = median([nstats(idxErr & idxEu).A_ChcErr_tErr_Fast]);
-tmedRTErrDa = median([nstats(idxRew & idxDa).A_Reward_tErrStart_Acc]);
-tmedRTErrEu = median([nstats(idxRew & idxEu).A_Reward_tErrStart_Acc]);
+unitInfo = unitInfo(idxKeep,:);
+unitStats = unitStats(idxKeep,:);
 
-%collect latencies for neurons with both types of modulation
-tChcErrDa = [nstats(idxBothErrDa).A_ChcErr_tErr_Fast];% - tmedChcErrDa;
-tChcErrEu = [nstats(idxBothErrEu).A_ChcErr_tErr_Fast];% - tmedChcErrEu;
-tRTErrDa = [nstats(idxBothErrDa).A_Reward_tErrStart_Acc];% - tmedRTErrDa;
-tRTErrEu = [nstats(idxBothErrEu).A_Reward_tErrStart_Acc];% - tmedRTErrEu;
+idxErrOnly = (idxErr & ~idxRew);
+idxRewOnly = (idxRew & ~idxErr);
+idxBoth = (idxErr & idxRew);
 
-%combine corrected latencies across monkeys
-tChcErr = [tChcErrDa , tChcErrEu];
-tRTErr  = [tRTErrDa , tRTErrEu];
+idxBothErrDa = (idxSEF & idxDa & (idxErr & idxRew));
+idxBothErrEu = (idxSEF & idxEu & (idxErr & idxRew));
+
+%collect signal latencies
+tChcErr_Fast = unitStats.ChoiceErrorSignal_Time(:,3);
+tRewErr_Acc  = unitStats.TimingErrorSignal_Time(:,1);
+
+%collect SDF's
 
 
 %% Plotting

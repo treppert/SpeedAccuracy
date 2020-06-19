@@ -1,8 +1,11 @@
-function [ ] = analyzeSpkCt_X_Trial( behavInfo , unitInfo , unitStats , spikes )
+function [ singleTrialMod ] = analyzeSpkCt_X_Trial( behavInfo , unitInfo , unitStats , spikes )
 %analyzeSpkCt_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
+%   Output "singleTrialMod" is the single-trial modulation at the time of
+%   condition switch. This output is for comparison across SEF, FEF, & SC.
+% 
 
-AREA = 'SEF';
+AREA = 'FEF';
 MONKEY = {'D','E'};
 INTERVAL = 'post'; %either 'pre' = baseline or 'post' = visual response
 
@@ -110,5 +113,8 @@ singleTrialMod_F2A = -diff(spkCt_F2A(:,[4,5]),1,2); %negative for comparison
 ttestTom( singleTrialMod_A2F , singleTrialMod_F2A , 'paired' )
 fprintf('A2F: %3.2f +- %3.2f\n', mean(singleTrialMod_A2F), std(singleTrialMod_A2F)/sqrt(NUM_CELLS))
 fprintf('F2A: %3.2f +- %3.2f\n', mean(singleTrialMod_F2A), std(singleTrialMod_F2A)/sqrt(NUM_CELLS))
+
+%output for comparison across areas
+singleTrialMod = abs([singleTrialMod_A2F; singleTrialMod_F2A]);
 
 end % fxn : analyzeSpkCt_X_Trial()

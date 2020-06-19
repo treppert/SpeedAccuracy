@@ -3,10 +3,10 @@ function [ ] = Fig01B_Plot_ErrRate_X_RT( binfo , pSacc )
 %   Detailed explanation goes here.
 
 PLOT = true;
-STATS = false;
+STATS = true;
 
 %isolate sessions from MONKEY
-MONKEY = {'E'};
+MONKEY = {'D','E'};
 sessKeep = (ismember(binfo.monkey, MONKEY) & (binfo.recordedSEF));
 NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);   pSacc = pSacc(sessKeep, :);
 
@@ -23,6 +23,7 @@ for kk = 1:NUM_SESS
   %index by trial outcome
   idxCorr = ~(binfo.err_dir{kk} | binfo.err_time{kk} | binfo.err_nosacc{kk});
   idxErr = (binfo.err_dir{kk});
+%   idxErr = (binfo.err_time{kk});
   
   rt_Acc(kk) = median(pSacc.resptime{kk}(idxAcc & idxCorr));
   rt_Fast(kk) = median(pSacc.resptime{kk}(idxFast & idxCorr));
@@ -86,8 +87,8 @@ if (STATS)
   F_Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
 %   F_Session = [(1:NUM_SESS) (1:NUM_SESS)]';
   
-  DV_param = RT; save([rootDir, 'Eu-RespTime.mat'], 'DV_param','F_Condition','F_Difficulty')
-  DV_param = ER; save([rootDir, 'Eu-ErrorRate.mat'], 'DV_param','F_Condition','F_Difficulty')
+  DV_param = RT; save([rootDir, 'RespTime.mat'], 'DV_param','F_Condition','F_Difficulty')
+  DV_param = ER; save([rootDir, 'ErrorRate.mat'], 'DV_param','F_Condition','F_Difficulty')
 end
 
 end % fxn :: Fig01B_Plot_ErrRate_X_RT()

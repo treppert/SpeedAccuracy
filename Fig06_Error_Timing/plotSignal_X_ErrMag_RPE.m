@@ -1,19 +1,18 @@
-function [ ] = plotSignal_X_ErrMag_RPE( binfo , ninfo , nstats , spikes )
+function [ ] = plotSignal_X_ErrMag_RPE( behavInfo , unitInfo , unitStats , spikes )
 %plotSignal_X_ErrMag_RPE Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
-idxRew = ([ninfo.rewGrade] >= 2);
+idxArea = ismember(unitInfo.area, {'SEF'});
+idxMonkey = ismember(unitInfo.monkey, {'D','E'});
+idxRew = (unitInfo.rewGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxRew);
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
+unitInfo = unitInfo(idxKeep,:);
+unitStats = unitStats(idxKeep,:);
 spikes = spikes(idxKeep);
 
-DEBUG = false;
-MIN_PER_BIN = 5; %minimum number of trials per errRT bin
+MIN_PER_BIN = 3; %minimum number of trials per errRT bin
 T_COUNT_REW = 3500 + [0, 200]; %window over which to count spikes (0 = onset of encoding)
 T_COUNT_BASE = 3500 + [-300, 20]; %window for BASELINE CORRECTION
 
@@ -25,33 +24,27 @@ T_ERR = T_LIM(1:N_BIN) + diff(T_LIM)/2;
 spkCT_All = NaN(NUM_CELLS,N_BIN);
 
 for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  trewKK = double(binfo(kk).rewtime) + double(binfo(kk).resptime);
-  errKK = double(binfo(kk).resptime) - double(binfo(kk).deadline);
+  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+  trewKK = double(behavInfo.rewtime{kk}) + double(behavInfo.resptime{kk});
+  errKK = double(behavInfo.resptime{kk}) - double(behavInfo.deadline{kk});
   
   %get window over which to count spikes
-  tCountRew = nstats(cc).A_Reward_tErrStart_Acc + T_COUNT_REW + nanmedian(trewKK);
+  tCountRew = unitStats.TimingErrorSignal_Time(cc,1) + T_COUNT_REW + nanmedian(trewKK);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, behavInfo.num_trials(kk));
   %index by condition
-  idxAcc = (binfo(kk).condition == 1 & ~idxIso & ~isnan(trewKK));
+  idxAcc = ((behavInfo.condition{kk} == 1) & ~idxIso & ~isnan(trewKK));
   %index by trial outcome
-  idxErr = (binfo(kk).err_time & ~binfo(kk).err_dir);
-  %index by screen clear on Fast trials
-%   idxClear = logical(binfo(kk).clearDisplayFast);
+  idxErr = (behavInfo.err_time{kk} & ~behavInfo.err_dir{kk});
   
   %compute the BASELINE-CORRECTED spike count for each trial
-  spkCTcc = cellfun(@(x) sum((x > tCountRew(1)) & (x < tCountRew(2))), spikes(cc).SAT);
-  spkCTbase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikes(cc).SAT);
+  spkCTcc = cellfun(@(x) sum((x > tCountRew(1)) & (x < tCountRew(2))), spikes{cc});
+  spkCTbase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikes{cc});
   spkCTcc = spkCTcc - spkCTbase;
   
   %z-score spike counts
   spkCTcc = (spkCTcc - mean(spkCTcc)) / std(spkCTcc) ;
-  
-  if (DEBUG)
-    figure(); hold on
-  end
   
   %bin trials by RT error magnitude
   for bb = 1:N_BIN
@@ -63,15 +56,7 @@ for cc = 1:NUM_CELLS
     else %not enough trials in this bin
       continue
     end
-    
-    if (DEBUG)
-      plot(T_ERR(bb), spkCTcc(idxBB), 'r.', 'MarkerSize',20)
-    end
   end%for:RTerr-bin (bb)
-  
-  if (DEBUG)
-    plot(T_ERR, spkCT_All(cc,:), 'k.-', 'LineWidth',1.25)
-  end
   
 end%for:cells(cc)
 

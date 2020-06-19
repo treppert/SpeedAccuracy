@@ -1,4 +1,4 @@
-function [ ] = anova_TwoWay_Between_SAT( Y , Condition , Efficiency , varargin )
+function [ tbl ] = anova_TwoWay_Between_SAT( Y , Condition , Efficiency , varargin )
 %anova_TwoWay_Between_SAT Summary of this function goes here
 %   Input
 %     'display' -- {'on','off'} -- Show ANOVA table as output?
