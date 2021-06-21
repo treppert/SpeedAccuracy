@@ -1,16 +1,16 @@
-function [  ] = plot_RasterXTrial_SAT( uInfo , spikes )
+function [  ] = plot_RasterXTrial_SAT( uInfo , spikes , bInfo )
 %plot_RasterXTrial_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Figs\Raster-SEF\Raster-X-Trial\';
-AREA = {'SEF','NSEFN'};
-MONKEY = {'D','E'};
+AREA = {'FEF'};
+MONKEY = {'Q'};
 
 idxArea = ismember(uInfo.area, AREA);
 idxMonkey = ismember(uInfo.monkey, MONKEY);
+idxKeep = [157,252]; %idxArea & idxMonkey;
 
-uInfo = uInfo(idxArea & idxMonkey, :);
-spikes = spikes(idxArea & idxMonkey);
+uInfo = uInfo(idxKeep, :);
+spikes = spikes(idxKeep);
 
 NUM_UNITS = size(uInfo, 1);
 TIME_PLOT = (-1000 : 2000); %time from stimulus
@@ -42,23 +42,32 @@ for uu = 1:NUM_UNITS
   tSpikeMat = tSpikeMat(idxPlot);
   jjSpike = jjSpike(idxPlot);
   
+  %parse trials by task condition
+  kk = ismember(bInfo.session, uInfo.sess{uu});
+  trialAcc = find(bInfo.condition{kk} == 1);
+  trialFast = find(bInfo.condition{kk} == 3);
+  
+  %sort spikes by task condition
+  idxAcc = ismember(jjSpike, trialAcc);
+  idxFast = ismember(jjSpike, trialFast);
+  jjSpikeAcc = jjSpike(idxAcc);     tSpikeMatAcc = tSpikeMat(idxAcc);
+  jjSpikeFast = jjSpike(idxFast);   tSpikeMatFast = tSpikeMat(idxFast);
   
   %% Plotting
   figure(); hold on
-  plot(tSpikeMat, jjSpike, 'k.', 'MarkerSize',4)
-  plot([0 0], [0 numTrials], 'b-', 'LineWidth',1.5)
+%   plot(tSpikeMat, jjSpike, 'k.', 'MarkerSize',4)
+  plot(tSpikeMatAcc, jjSpikeAcc, 'r.', 'MarkerSize',4)
+  plot(tSpikeMatFast, jjSpikeFast, '.', 'Color',[0 .7 0], 'MarkerSize',4)
+  plot([0 0], [0 numTrials], 'k-', 'LineWidth',2.0)
   
   ylim([0 numTrials+1])
-  ylabel('Trial number')
-  xlabel('Time from array (ms)')
-  
+%   ylabel('Trial number')
+%   xlabel('Time from array (ms)')
+  xlim([-600 1000])
   title(unitID)
-  ppretty([8,12])
+  ppretty([7,6]); pause(0.5)
   
-  print([SAVEDIR, unitID,'.tif'], '-dtiff')
-  pause(0.25); close(); pause(0.25)
-  
-end%for:cells(cc)
+end%for:units(uu)
 
 end % util :: plot_RasterXTrial_SAT()
 
