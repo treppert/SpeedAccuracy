@@ -1,4 +1,4 @@
-function [  ] = Fig01C_Plot_Behav_X_Trial( binfo , pSacc )
+function [  ] = Fig1D_Behav_X_Trial( binfo , pSacc )
 %Fig01C_Plot_Behav_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 

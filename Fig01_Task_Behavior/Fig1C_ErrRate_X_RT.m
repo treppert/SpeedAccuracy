@@ -1,4 +1,4 @@
-function [ ] = Fig01B_Plot_ErrRate_X_RT( binfo , pSacc )
+function [ ] = Fig1C_ErrRate_X_RT( binfo , pSacc )
 %Fig01B_Plot_ErrRate_X_RT() Summary of this function goes here
 %   Detailed explanation goes here
 
