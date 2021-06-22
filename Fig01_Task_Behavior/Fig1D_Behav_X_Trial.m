@@ -1,13 +1,14 @@
-function [  ] = Fig1D_Behav_X_Trial( binfo , pSacc )
-%Fig01C_Plot_Behav_X_Trial Summary of this function goes here
+function [  ] = Fig1D_Behav_X_Trial( binfo )
+%Fig1D_Behav_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(binfo.monkey, MONKEY);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);   pSacc = pSacc(sessKeep, :);
+MONKEY = {'D','E'};
+sessKeep = (ismember(binfo.monkey, MONKEY) & binfo.recordedSEF);
+NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);
 
 %initialize error rate (ER)
 ER_A2F = NaN(NUM_SESS,NUM_TRIAL);
@@ -33,8 +34,8 @@ for kk = 1:NUM_SESS
   for jj = 1:NUM_TRIAL    
     jj_RT_A2F = intersect(jjCorr, jjA2F + TRIAL_PLOT(jj));
     jj_RT_F2A = intersect(jjCorr, jjF2A + TRIAL_PLOT(jj));
-    RT_A2F(kk,jj) = median(pSacc.resptime{kk}(jj_RT_A2F));
-    RT_F2A(kk,jj) = median(pSacc.resptime{kk}(jj_RT_F2A));
+    RT_A2F(kk,jj) = median(binfo.RT{kk}(jj_RT_A2F));
+    RT_F2A(kk,jj) = median(binfo.RT{kk}(jj_RT_F2A));
     
     jj_ER_A2F = intersect(jjErr, jjA2F + TRIAL_PLOT(jj));
     jj_ER_F2A = intersect(jjErr, jjF2A + TRIAL_PLOT(jj));
@@ -71,7 +72,7 @@ errorbar(TRIAL_PLOT-0.1, mean(ER_F2A_More), std(ER_F2A_More)/sqrt(numMore), 'Col
 errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(ER_A2F_More), std(ER_A2F_More)/sqrt(numMore), 'Color','k', 'LineWidth',1.75, 'CapSize',0)
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 
-ppretty([6.4,7], 'XMinorTick','off')
+ppretty([6.4,7])
 
 end%function:plot_ErrRate_X_Trial()
 

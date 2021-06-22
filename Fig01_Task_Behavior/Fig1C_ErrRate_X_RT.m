@@ -1,13 +1,15 @@
-function [ ] = Fig1C_ErrRate_X_RT( binfo , pSacc )
-%Fig01B_Plot_ErrRate_X_RT() Summary of this function goes here
+function [ ] = Fig1C_ErrRate_X_RT( binfo )
+%Fig1C_ErrRate_X_RT() Summary of this function goes here
 %   Detailed explanation goes here
 
 PLOT = true;
 STATS = true;
+PARAM = 'ER'; %{'RT','ER'}
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(binfo.monkey, MONKEY);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);   pSacc = pSacc(sessKeep, :);
+MONKEY = {'D','E'};
+sessKeep = (ismember(binfo.monkey, MONKEY) & binfo.recordedSEF);
+NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);
 
 
 %% Compute RT/ER and split on Task Condition
@@ -23,8 +25,8 @@ for kk = 1:NUM_SESS
   idxCorr = ~(binfo.err_dir{kk} | binfo.err_time{kk} | binfo.err_nosacc{kk});
   idxErr = (binfo.err_dir{kk});
   
-  rt_Acc(kk) = median(pSacc.resptime{kk}(idxAcc & idxCorr));
-  rt_Fast(kk) = median(pSacc.resptime{kk}(idxFast & idxCorr));
+  rt_Acc(kk) = median(binfo.RT{kk}(idxAcc & idxCorr));
+  rt_Fast(kk) = median(binfo.RT{kk}(idxFast & idxCorr));
   errRate_Acc(kk) = sum(idxAcc & idxErr) / sum(idxAcc);
   errRate_Fast(kk) = sum(idxFast & idxErr) / sum(idxFast);
   
@@ -60,7 +62,7 @@ if (PLOT)
   subplot(1,3,1); hold on
   errorbarxy([mu.RT_FM mu.RT_AM], [mu.ER_FM mu.ER_AM], [se.RT_FM se.RT_AM], [se.ER_FM se.ER_AM], {'k-','k','k'})
   errorbarxy([mu.RT_FL mu.RT_AL], [mu.ER_FL mu.ER_AL], [se.RT_FL se.RT_AL], [se.ER_FL se.ER_AL], {'k-','k','k'})
-  xlim([245 550]); ylim([.05 .45])
+  xlim([250 550]); ylim([.05 .45])
 
   subplot(1,3,2); hold on
   errorbar([mu.RT_FM mu.RT_AM], [se.RT_FM se.RT_AM], 'CapSize',0, 'LineWidth',1, 'Color','k')
@@ -77,16 +79,19 @@ end
 
 %% Stats -- Two-way between-subjects ANOVA
 if (STATS)
-  RT = [rt_AccMore rt_AccLess rt_FastMore rt_FastLess]';
-  ER = [er_AccMore er_AccLess er_FastMore er_FastLess]';
+  if strcmp(PARAM, 'RT')
+    param = [rt_AccMore rt_AccLess rt_FastMore rt_FastLess]';
+  elseif strcmp(PARAM, 'ER')
+    param = [er_AccMore er_AccLess er_FastMore er_FastLess]';
+  end
   F_Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
   F_Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
   F_Session = [(1:NUM_SESS) (1:NUM_SESS)];
-
-  anova_TwoWay_Between_SAT(RT, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
+  
+  anova_TwoWay_Between_SAT(param, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
 %   anova_TwoWay_Between_SAT(ER, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-  save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
-  save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
+%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
+%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
 end
 
 end % fxn :: Fig01B_Plot_ErrRate_X_RT()
