@@ -1,4 +1,4 @@
-function [ ] = Fig1C_ErrRate_X_RT( binfo )
+function [ ] = Fig1C_ErrRate_X_RT( behavData )
 %Fig1C_ErrRate_X_RT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -8,8 +8,8 @@ PARAM = 'ER'; %{'RT','ER'}
 
 %isolate sessions from MONKEY
 MONKEY = {'D','E'};
-sessKeep = (ismember(binfo.monkey, MONKEY) & binfo.recordedSEF);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);
+sessKeep = (ismember(behavData.monkey, MONKEY) & behavData.recordedSEF);
+NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 
 %% Compute RT/ER and split on Task Condition
@@ -19,14 +19,14 @@ errRate_Fast = NaN(1,NUM_SESS);  rt_Fast = NaN(1,NUM_SESS);
 for kk = 1:NUM_SESS
   
   %index by condition
-  idxAcc = (binfo.condition{kk} == 1) & ~isnan(binfo.deadline{kk});
-  idxFast = (binfo.condition{kk} == 3) & ~isnan(binfo.deadline{kk});
+  idxAcc = (behavData.condition{kk} == 1) & ~isnan(behavData.deadline{kk});
+  idxFast = (behavData.condition{kk} == 3) & ~isnan(behavData.deadline{kk});
   %index by trial outcome
-  idxCorr = ~(binfo.err_dir{kk} | binfo.err_time{kk} | binfo.err_nosacc{kk});
-  idxErr = (binfo.err_dir{kk});
+  idxCorr = ~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk});
+  idxErr = (behavData.err_dir{kk});
   
-  rt_Acc(kk) = median(binfo.RT{kk}(idxAcc & idxCorr));
-  rt_Fast(kk) = median(binfo.RT{kk}(idxFast & idxCorr));
+  rt_Acc(kk) = median(behavData.RT{kk}(idxAcc & idxCorr));
+  rt_Fast(kk) = median(behavData.RT{kk}(idxFast & idxCorr));
   errRate_Acc(kk) = sum(idxAcc & idxErr) / sum(idxAcc);
   errRate_Fast(kk) = sum(idxFast & idxErr) / sum(idxFast);
   
@@ -34,8 +34,8 @@ end%for:session(kk)
 
 
 %% Split RT/ER on Search Difficulty
-idxMore = (binfo.taskType == 1); NUM_MORE = sum(idxMore); %more efficient
-idxLess = (binfo.taskType == 2); NUM_LESS = sum(idxLess); %less efficient
+idxMore = (behavData.taskType == 1); NUM_MORE = sum(idxMore); %more efficient
+idxLess = (behavData.taskType == 2); NUM_LESS = sum(idxLess); %less efficient
 
 %split RT by condition and efficiency
 rt_AccMore = rt_Acc(idxMore);         rt_AccLess = rt_Acc(idxLess);

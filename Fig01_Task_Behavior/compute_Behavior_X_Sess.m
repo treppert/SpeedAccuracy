@@ -1,10 +1,10 @@
-function [ ] = compute_Behavior_X_Sess( binfo , pSacc , sSacc )
+function [ ] = compute_Behavior_X_Sess( behavData )
 %compute_Behavior_X_Sess Summary of this function goes here
 %   Detailed explanation goes here
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(binfo.monkey, MONKEY);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);   pSacc = pSacc(sessKeep, :);   sSacc = sSacc(sessKeep, :);
+MONKEY = {'D','E'};         sessKeep = ismember(behavData.monkey, MONKEY);
+NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);
 
 %% Initializations
 
@@ -21,27 +21,32 @@ isiFast = NaN(1,NUM_SESS);
 
 for kk = 1:NUM_SESS
   
-  idxAcc = (binfo.condition{kk} == 1) & ~isnan(binfo.deadline{kk});
-  idxFast = (binfo.condition{kk} == 3) & ~isnan(binfo.deadline{kk});
+  idxAcc = (behavData.condition{kk} == 1) & ~isnan(behavData.deadline{kk});
+  idxFast = (behavData.condition{kk} == 3) & ~isnan(behavData.deadline{kk});
   
-  idxCorr = ~(binfo.err_dir{kk} | binfo.err_time{kk} | binfo.err_nosacc{kk});
-  idxErrChc = binfo.err_dir{kk} & ~binfo.err_time{kk};
-  idxErrTime = binfo.err_time{kk} & ~binfo.err_dir{kk};
+  idxCorr = ~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk});
+  idxErrChc = behavData.err_dir{kk} & ~behavData.err_time{kk};
+  idxErrTime = behavData.err_time{kk} & ~behavData.err_dir{kk};
   
-  dlineAcc(kk) = median(binfo.deadline{kk}(idxAcc));
-  dlineFast(kk) = median(binfo.deadline{kk}(idxFast));
+  %deadline
+  dlineAcc(kk) = median(behavData.deadline{kk}(idxAcc));
+  dlineFast(kk) = median(behavData.deadline{kk}(idxFast));
   
-  RTAcc(kk) = median(pSacc.resptime{kk}(idxAcc & idxCorr));
-  RTFast(kk) = median(pSacc.resptime{kk}(idxFast & idxCorr));
+  %response time
+  RTAcc(kk) = median(behavData.RT{kk}(idxAcc & idxCorr));
+  RTFast(kk) = median(behavData.RT{kk}(idxFast & idxCorr));
   
+  %prob. choice error
   PerrChcAcc(kk) = sum(idxAcc & idxErrChc) / sum(idxAcc);
   PerrChcFast(kk) = sum(idxFast & idxErrChc) / sum(idxFast);
   
+  %prob. timing error
   PerrTimeAcc(kk) = sum(idxAcc & idxErrTime) / sum(idxAcc);
   PerrTimeFast(kk) = sum(idxFast & idxErrTime) / sum(idxFast);
   
-  ISIkk = double(sSacc.resptime{kk}) - (double(pSacc.resptime{kk}) + double(pSacc.duration{kk}));
-  idxNoPP = (sSacc.resptime{kk} == 0);
+  %inter-saccade interval
+  ISIkk = double(behavData.RT_SS{kk}) - (double(behavData.RT{kk}) + double(behavData.duration{kk}));
+  idxNoPP = (behavData.resptime{kk} == 0);
   
   isiAcc(kk) = median(ISIkk(idxAcc & idxErrChc & ~idxNoPP));
   isiFast(kk) = median(ISIkk(idxFast & idxErrChc & ~idxNoPP));

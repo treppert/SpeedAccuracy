@@ -1,4 +1,4 @@
-function [  ] = Fig1D_Behav_X_Trial( binfo )
+function [  ] = Fig1D_Behav_X_Trial( behavData )
 %Fig1D_Behav_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,8 +7,8 @@ NUM_TRIAL = length(TRIAL_PLOT);
 
 %isolate sessions from MONKEY
 MONKEY = {'D','E'};
-sessKeep = (ismember(binfo.monkey, MONKEY) & binfo.recordedSEF);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);
+sessKeep = (ismember(behavData.monkey, MONKEY) & behavData.recordedSEF);
+NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 %initialize error rate (ER)
 ER_A2F = NaN(NUM_SESS,NUM_TRIAL);
@@ -17,7 +17,7 @@ ER_F2A = NaN(NUM_SESS,NUM_TRIAL);
 RT_A2F = NaN(NUM_SESS,NUM_TRIAL);
 RT_F2A = NaN(NUM_SESS,NUM_TRIAL);
 
-trialSwitch = identify_condition_switch( binfo );
+trialSwitch = identify_condition_switch( behavData );
 
 %% Compute probability of error vs trial
 
@@ -28,14 +28,14 @@ for kk = 1:NUM_SESS
   jjF2A = trialSwitch.F2A{kk};  numF2A = length(jjF2A);
   
   %index by trial outcome
-  jjErr = find(binfo.err_dir{kk}); %note: err_dir OR err_time
-  jjCorr = find(~(binfo.err_dir{kk} | binfo.err_time{kk} | binfo.err_nosacc{kk}));
+  jjErr = find(behavData.err_dir{kk}); %note: err_dir OR err_time
+  jjCorr = find(~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk}));
   
   for jj = 1:NUM_TRIAL    
     jj_RT_A2F = intersect(jjCorr, jjA2F + TRIAL_PLOT(jj));
     jj_RT_F2A = intersect(jjCorr, jjF2A + TRIAL_PLOT(jj));
-    RT_A2F(kk,jj) = median(binfo.RT{kk}(jj_RT_A2F));
-    RT_F2A(kk,jj) = median(binfo.RT{kk}(jj_RT_F2A));
+    RT_A2F(kk,jj) = median(behavData.RT{kk}(jj_RT_A2F));
+    RT_F2A(kk,jj) = median(behavData.RT{kk}(jj_RT_F2A));
     
     jj_ER_A2F = intersect(jjErr, jjA2F + TRIAL_PLOT(jj));
     jj_ER_F2A = intersect(jjErr, jjF2A + TRIAL_PLOT(jj));
@@ -46,8 +46,8 @@ for kk = 1:NUM_SESS
 end % for : sessions(kk)
 
 %index by search difficulty
-idxMoreDiff = (binfo.taskType == 2);  numMore = sum(idxMoreDiff);
-idxLessDiff = (binfo.taskType == 1);  numLess = sum(idxLessDiff);
+idxMoreDiff = (behavData.taskType == 2);  numMore = sum(idxMoreDiff);
+idxLessDiff = (behavData.taskType == 1);  numLess = sum(idxLessDiff);
 
 RT_A2F_More = RT_A2F(idxMoreDiff,:);      RT_A2F_Less = RT_A2F(idxLessDiff,:);
 RT_F2A_More = RT_F2A(idxMoreDiff,:);      RT_F2A_Less = RT_F2A(idxLessDiff,:);
