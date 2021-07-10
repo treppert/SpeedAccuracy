@@ -8,7 +8,7 @@ PARAM = 'ER'; %{'RT','ER'}
 
 %isolate sessions from MONKEY
 MONKEY = {'D','E'};
-sessKeep = (ismember(behavData.monkey, MONKEY) & behavData.recordedSEF);
+sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
 NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 
@@ -19,14 +19,14 @@ errRate_Fast = NaN(1,NUM_SESS);  rt_Fast = NaN(1,NUM_SESS);
 for kk = 1:NUM_SESS
   
   %index by condition
-  idxAcc = (behavData.condition{kk} == 1) & ~isnan(behavData.deadline{kk});
-  idxFast = (behavData.condition{kk} == 3) & ~isnan(behavData.deadline{kk});
+  idxAcc = (behavData.Task_SATCondition{kk} == 1) & ~isnan(behavData.Task_Deadline{kk});
+  idxFast = (behavData.Task_SATCondition{kk} == 3) & ~isnan(behavData.Task_Deadline{kk});
   %index by trial outcome
-  idxCorr = ~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk});
-  idxErr = (behavData.err_dir{kk});
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk});
   
-  rt_Acc(kk) = median(behavData.RT{kk}(idxAcc & idxCorr));
-  rt_Fast(kk) = median(behavData.RT{kk}(idxFast & idxCorr));
+  rt_Acc(kk) = median(behavData.Sacc_RT{kk}(idxAcc & idxCorr));
+  rt_Fast(kk) = median(behavData.Sacc_RT{kk}(idxFast & idxCorr));
   errRate_Acc(kk) = sum(idxAcc & idxErr) / sum(idxAcc);
   errRate_Fast(kk) = sum(idxFast & idxErr) / sum(idxFast);
   
@@ -34,8 +34,8 @@ end%for:session(kk)
 
 
 %% Split RT/ER on Search Difficulty
-idxMore = (behavData.taskType == 1); NUM_MORE = sum(idxMore); %more efficient
-idxLess = (behavData.taskType == 2); NUM_LESS = sum(idxLess); %less efficient
+idxMore = (behavData.Task_LevelDifficulty == 1); NUM_MORE = sum(idxMore); %more efficient
+idxLess = (behavData.Task_LevelDifficulty == 2); NUM_LESS = sum(idxLess); %less efficient
 
 %split RT by condition and efficiency
 rt_AccMore = rt_Acc(idxMore);         rt_AccLess = rt_Acc(idxLess);
@@ -44,10 +44,10 @@ rt_FastMore = rt_Fast(idxMore);       rt_FastLess = rt_Fast(idxLess);
 er_FastMore = errRate_Fast(idxMore);  er_FastLess = errRate_Fast(idxLess);
 
 %compute mean and SE of response time
-mu.RT_AM = mean(rt_AccMore);    se.RT_AM = std(rt_AccMore)/sqrt(NUM_MORE);
-mu.RT_AL = mean(rt_AccLess);    se.RT_AL = std(rt_AccLess)/sqrt(NUM_LESS);
-mu.RT_FM = mean(rt_FastMore);   se.RT_FM = std(rt_FastMore)/sqrt(NUM_MORE);
-mu.RT_FL = mean(rt_FastLess);   se.RT_FL = std(rt_FastLess)/sqrt(NUM_LESS);
+mu.Sacc_RT_AM = mean(rt_AccMore);    se.Sacc_RT_AM = std(rt_AccMore)/sqrt(NUM_MORE);
+mu.Sacc_RT_AL = mean(rt_AccLess);    se.Sacc_RT_AL = std(rt_AccLess)/sqrt(NUM_LESS);
+mu.Sacc_RT_FM = mean(rt_FastMore);   se.Sacc_RT_FM = std(rt_FastMore)/sqrt(NUM_MORE);
+mu.Sacc_RT_FL = mean(rt_FastLess);   se.Sacc_RT_FL = std(rt_FastLess)/sqrt(NUM_LESS);
 %compute mean and SE of error rate
 mu.ER_AM = mean(er_AccMore);    se.ER_AM = std(er_AccMore)/sqrt(NUM_MORE);
 mu.ER_AL = mean(er_AccLess);    se.ER_AL = std(er_AccLess)/sqrt(NUM_LESS);
@@ -60,13 +60,13 @@ if (PLOT)
   figure()
 
   subplot(1,3,1); hold on
-  errorbarxy([mu.RT_FM mu.RT_AM], [mu.ER_FM mu.ER_AM], [se.RT_FM se.RT_AM], [se.ER_FM se.ER_AM], {'k-','k','k'})
-  errorbarxy([mu.RT_FL mu.RT_AL], [mu.ER_FL mu.ER_AL], [se.RT_FL se.RT_AL], [se.ER_FL se.ER_AL], {'k-','k','k'})
+  errorbarxy([mu.Sacc_RT_FM mu.Sacc_RT_AM], [mu.ER_FM mu.ER_AM], [se.Sacc_RT_FM se.Sacc_RT_AM], [se.ER_FM se.ER_AM], {'k-','k','k'})
+  errorbarxy([mu.Sacc_RT_FL mu.Sacc_RT_AL], [mu.ER_FL mu.ER_AL], [se.Sacc_RT_FL se.Sacc_RT_AL], [se.ER_FL se.ER_AL], {'k-','k','k'})
   xlim([250 550]); ylim([.05 .45])
 
   subplot(1,3,2); hold on
-  errorbar([mu.RT_FM mu.RT_AM], [se.RT_FM se.RT_AM], 'CapSize',0, 'LineWidth',1, 'Color','k')
-  errorbar([mu.RT_FL mu.RT_AL], [se.RT_FL se.RT_AL], 'CapSize',0, 'LineWidth',2, 'Color','k')
+  errorbar([mu.Sacc_RT_FM mu.Sacc_RT_AM], [se.Sacc_RT_FM se.Sacc_RT_AM], 'CapSize',0, 'LineWidth',1, 'Color','k')
+  errorbar([mu.Sacc_RT_FL mu.Sacc_RT_AL], [se.Sacc_RT_FL se.Sacc_RT_AL], 'CapSize',0, 'LineWidth',2, 'Color','k')
   xlim([0.9 2.1]); xticks([1 2]); xticklabels({'Fast','Accurate'})
 
   subplot(1,3,3); hold on
@@ -79,21 +79,22 @@ end
 
 %% Stats -- Two-way between-subjects ANOVA
 if (STATS)
-  if strcmp(PARAM, 'RT')
-    param = [rt_AccMore rt_AccLess rt_FastMore rt_FastLess]';
-  elseif strcmp(PARAM, 'ER')
-    param = [er_AccMore er_AccLess er_FastMore er_FastLess]';
-  end
+  RespTime = [rt_AccMore rt_AccLess rt_FastMore rt_FastLess]';
+  ErrorRate = [er_AccMore er_AccLess er_FastMore er_FastLess]';
   F_Condition = [ones(1,NUM_SESS) 2*ones(1,NUM_SESS)]';
   F_Efficiency = [ones(1,NUM_MORE) 2*ones(1,NUM_LESS) ones(1,NUM_MORE) 2*ones(1,NUM_LESS)]';
   F_Session = [(1:NUM_SESS) (1:NUM_SESS)];
   
-  anova_TwoWay_Between_SAT(param, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-%   anova_TwoWay_Between_SAT(ER, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
-%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\RT_X_Condition_X_Efficiency.mat', 'RT','F_Condition','F_Efficiency','F_Session')
-%   save('C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Stats\Fig01-Task-Behavior\ER_X_Condition_X_Efficiency.mat', 'ER','F_Condition','F_Efficiency','F_Session')
+  anova_TwoWay_Between_SAT(RespTime, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
+  anova_TwoWay_Between_SAT(ErrorRate, F_Condition, F_Efficiency, 'display','on', 'model','full', 'sstype',3)
+  
+  rootDirStats = 'C:\Users\Tom\Dropbox\Speed Accuracy\__SEF_SAT\Data\Stats\';
+  if ~exist([rootDirStats 'Fig1_RespTime.mat'], 'file')
+    save([rootDirStats 'Fig1_RespTime.mat'], 'RespTime','F_Condition','F_Efficiency','F_Session')
+  end
+  if ~exist([rootDirStats 'Fig1_ErrorRate.mat'], 'file')
+    save([rootDirStats 'Fig1_ErrorRate.mat'], 'ErrorRate','F_Condition','F_Efficiency','F_Session')
+  end
+end %if(STATS)
+
 end
-
-end % fxn :: Fig01B_Plot_ErrRate_X_RT()
-
-

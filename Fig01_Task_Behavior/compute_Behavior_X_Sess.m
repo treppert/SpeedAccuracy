@@ -3,7 +3,7 @@ function [ ] = compute_Behavior_X_Sess( behavData )
 %   Detailed explanation goes here
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(behavData.monkey, MONKEY);
+MONKEY = {'D','E'};         sessKeep = ismember(behavData.Monkey, MONKEY);
 NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);
 
 %% Initializations
@@ -21,20 +21,20 @@ isiFast = NaN(1,NUM_SESS);
 
 for kk = 1:NUM_SESS
   
-  idxAcc = (behavData.condition{kk} == 1) & ~isnan(behavData.deadline{kk});
-  idxFast = (behavData.condition{kk} == 3) & ~isnan(behavData.deadline{kk});
+  idxAcc = (behavData.Task_SATCondition{kk} == 1) & ~isnan(behavData.Task_Deadline{kk});
+  idxFast = (behavData.Task_SATCondition{kk} == 3) & ~isnan(behavData.Task_Deadline{kk});
   
-  idxCorr = ~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk});
-  idxErrChc = behavData.err_dir{kk} & ~behavData.err_time{kk};
-  idxErrTime = behavData.err_time{kk} & ~behavData.err_dir{kk};
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErrChc = behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk};
+  idxErrTime = behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk};
   
   %deadline
-  dlineAcc(kk) = median(behavData.deadline{kk}(idxAcc));
-  dlineFast(kk) = median(behavData.deadline{kk}(idxFast));
+  dlineAcc(kk) = median(behavData.Task_Deadline{kk}(idxAcc));
+  dlineFast(kk) = median(behavData.Task_Deadline{kk}(idxFast));
   
   %response time
-  RTAcc(kk) = median(behavData.RT{kk}(idxAcc & idxCorr));
-  RTFast(kk) = median(behavData.RT{kk}(idxFast & idxCorr));
+  RTAcc(kk) = median(behavData.Sacc_RT{kk}(idxAcc & idxCorr));
+  RTFast(kk) = median(behavData.Sacc_RT{kk}(idxFast & idxCorr));
   
   %prob. choice error
   PerrChcAcc(kk) = sum(idxAcc & idxErrChc) / sum(idxAcc);
@@ -45,8 +45,8 @@ for kk = 1:NUM_SESS
   PerrTimeFast(kk) = sum(idxFast & idxErrTime) / sum(idxFast);
   
   %inter-saccade interval
-  ISIkk = double(behavData.RT_SS{kk}) - (double(behavData.RT{kk}) + double(behavData.duration{kk}));
-  idxNoPP = (behavData.resptime{kk} == 0);
+  ISIkk = double(behavData.Sacc2_RT{kk}) - (double(behavData.Sacc_RT{kk}) + double(behavData.Sacc_Duration{kk}));
+  idxNoPP = (behavData.Sacc_RT{kk} == 0);
   
   isiAcc(kk) = median(ISIkk(idxAcc & idxErrChc & ~idxNoPP));
   isiFast(kk) = median(ISIkk(idxFast & idxErrChc & ~idxNoPP));

@@ -4,8 +4,9 @@
 %compute mean task-related parameters per session
 compute_Behavior_X_Sess( behavData )
 
-
+%generate Fig1C
 Fig1C_ErrRate_X_RT( behavData )
 
+%generate Fig1D
 Fig1D_Behav_X_Trial( behavData )
 

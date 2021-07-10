@@ -7,7 +7,7 @@ NUM_TRIAL = length(TRIAL_PLOT);
 
 %isolate sessions from MONKEY
 MONKEY = {'D','E'};
-sessKeep = (ismember(behavData.monkey, MONKEY) & behavData.recordedSEF);
+sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
 NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 %initialize error rate (ER)
@@ -28,14 +28,14 @@ for kk = 1:NUM_SESS
   jjF2A = trialSwitch.F2A{kk};  numF2A = length(jjF2A);
   
   %index by trial outcome
-  jjErr = find(behavData.err_dir{kk}); %note: err_dir OR err_time
-  jjCorr = find(~(behavData.err_dir{kk} | behavData.err_time{kk} | behavData.err_nosacc{kk}));
+  jjErr = find(behavData.Task_ErrChoice{kk}); %note: err_dir OR err_time
+  jjCorr = find(~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk}));
   
   for jj = 1:NUM_TRIAL    
     jj_RT_A2F = intersect(jjCorr, jjA2F + TRIAL_PLOT(jj));
     jj_RT_F2A = intersect(jjCorr, jjF2A + TRIAL_PLOT(jj));
-    RT_A2F(kk,jj) = median(behavData.RT{kk}(jj_RT_A2F));
-    RT_F2A(kk,jj) = median(behavData.RT{kk}(jj_RT_F2A));
+    RT_A2F(kk,jj) = median(behavData.Sacc_RT{kk}(jj_RT_A2F));
+    RT_F2A(kk,jj) = median(behavData.Sacc_RT{kk}(jj_RT_F2A));
     
     jj_ER_A2F = intersect(jjErr, jjA2F + TRIAL_PLOT(jj));
     jj_ER_F2A = intersect(jjErr, jjF2A + TRIAL_PLOT(jj));
@@ -46,8 +46,8 @@ for kk = 1:NUM_SESS
 end % for : sessions(kk)
 
 %index by search difficulty
-idxMoreDiff = (behavData.taskType == 2);  numMore = sum(idxMoreDiff);
-idxLessDiff = (behavData.taskType == 1);  numLess = sum(idxLessDiff);
+idxMoreDiff = (behavData.Task_LevelDifficulty == 2);  numMore = sum(idxMoreDiff);
+idxLessDiff = (behavData.Task_LevelDifficulty == 1);  numLess = sum(idxLessDiff);
 
 RT_A2F_More = RT_A2F(idxMoreDiff,:);      RT_A2F_Less = RT_A2F(idxLessDiff,:);
 RT_F2A_More = RT_F2A(idxMoreDiff,:);      RT_F2A_Less = RT_F2A(idxLessDiff,:);
@@ -72,7 +72,7 @@ errorbar(TRIAL_PLOT-0.1, mean(ER_F2A_More), std(ER_F2A_More)/sqrt(numMore), 'Col
 errorbar(TRIAL_PLOT+NUM_TRIAL-0.1, mean(ER_A2F_More), std(ER_A2F_More)/sqrt(numMore), 'Color','k', 'LineWidth',1.75, 'CapSize',0)
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12))
 
-ppretty([6.4,7])
+ppretty([4,4.8])
 
 end%function:plot_ErrRate_X_Trial()
 
