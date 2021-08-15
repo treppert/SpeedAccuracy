@@ -1,20 +1,20 @@
-function [ ] = plot_Distr_TST_SAT( unitInfo , unitStats )
-%plot_Distr_TST_SAT Summary of this function goes here
+function [ ] = Fig2HJ_Plot_Distr_TST_SAT( unitData )
+%Fig2HJ_Plot_Distr_TST_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 ANALYZE_PAIRED_ONLY = true;
 AREA_TEST = 'SEF';
 
-idxArea = ismember(unitInfo.area, {AREA_TEST});
-idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
-idxVisUnit = (unitInfo.visGrade >= 2);
+idxArea = ismember(unitData.aArea, {AREA_TEST});
+idxMonkey = ismember(unitData.aMonkey, {'D','E','Q','S'});
+idxVisUnit = (unitData.Basic_VisGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
-% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitInfo.taskType == 2));
+% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitInfo.Task_LevelDifficulty == 2));
 
-idxTST_All = ~(isnan(unitStats.VRTSTAcc) | isnan(unitStats.VRTSTFast));
-idxTST_AccOnly = ~isnan(unitStats.VRTSTAcc) & isnan(unitStats.VRTSTFast);
-idxTST_FastOnly = isnan(unitStats.VRTSTAcc) & ~isnan(unitStats.VRTSTFast);
-idxNoTST = (isnan(unitStats.VRTSTAcc) & isnan(unitStats.VRTSTFast));
+idxTST_All = ~(isnan(unitData.VisualResponse_TST(:,1)) | isnan(unitData.VisualResponse_TST(:,2)));
+idxTST_AccOnly = ~isnan(unitData.VisualResponse_TST(:,1)) & isnan(unitData.VisualResponse_TST(:,2));
+idxTST_FastOnly = isnan(unitData.VisualResponse_TST(:,1)) & ~isnan(unitData.VisualResponse_TST(:,2));
+idxNoTST = (isnan(unitData.VisualResponse_TST(:,1)) & isnan(unitData.VisualResponse_TST(:,2)));
 
 %compute neuron counts for barplot of TST diversity
 nNeuron_None = sum(idxKeep & idxNoTST);       nNeuron_Both = sum(idxKeep & idxTST_All);
@@ -25,17 +25,16 @@ if (ANALYZE_PAIRED_ONLY) %group data from neurons with TST in both task conditio
 else %group data from neurons with TST in either task condition
   idxKeep = (idxKeep & (idxTST_All | idxTST_AccOnly | idxTST_FastOnly));
 end
-unitInfo = unitInfo(idxKeep,:);
-unitStats = unitStats(idxKeep,:);
+unitData = unitData(idxKeep,:);
 
 %split analysis on search efficiency
-ccMore = (unitInfo.taskType == 1);
-ccLess = (unitInfo.taskType == 2);
+ccMore = (unitData.Task_LevelDifficulty == 1);
+ccLess = (unitData.Task_LevelDifficulty == 2);
 
-TST_Acc_More = unitStats.VRTSTAcc(ccMore);    TST_Acc_More(isnan(TST_Acc_More)) = [];
-TST_Acc_Less = unitStats.VRTSTAcc(ccLess);    TST_Acc_Less(isnan(TST_Acc_Less)) = [];
-TST_Fast_More = unitStats.VRTSTFast(ccMore);  TST_Fast_More(isnan(TST_Fast_More)) = [];
-TST_Fast_Less = unitStats.VRTSTFast(ccLess);  TST_Fast_Less(isnan(TST_Fast_Less)) = [];
+TST_Acc_More = unitData.VisualResponse_TST(ccMore,1);     TST_Acc_More(isnan(TST_Acc_More)) = [];
+TST_Acc_Less = unitData.VisualResponse_TST(ccLess,1);     TST_Acc_Less(isnan(TST_Acc_Less)) = [];
+TST_Fast_More = unitData.VisualResponse_TST(ccMore,2);    TST_Fast_More(isnan(TST_Fast_More)) = [];
+TST_Fast_Less = unitData.VisualResponse_TST(ccLess,2);    TST_Fast_Less(isnan(TST_Fast_Less)) = [];
 nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
 nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
 
@@ -55,7 +54,7 @@ ppretty([2,3]); xticks([])
 %% Stats - Two-way split-plot ANOVA
 if (ANALYZE_PAIRED_ONLY)
   TST_All = struct('AccMore',TST_Acc_More', 'AccLess',TST_Acc_Less', 'FastMore',TST_Fast_More', 'FastLess',TST_Fast_Less');
-  writeData_SplitPlotANOVA_SAT(TST_All, [AREA_TEST, '-TST.mat'])
+%   writeData_SplitPlotANOVA_SAT(TST_All, [AREA_TEST, '-TST.mat'])
 end
 
 

@@ -1,4 +1,4 @@
-function [ ] = plot_SpikeCountXTrial_SAT(uInfo , spikes)
+function [ ] = plot_SpikeCountXTrial_SAT( unitData , spikesSAT )
 %plot_SpikeCountXTrial_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -8,21 +8,21 @@ MONKEY = {'D','E'};
 
 T_TEST = [-800 0] + 3500;
 
-idxArea = ismember(uInfo.area, AREA);
-idxMonkey = ismember(uInfo.monkey, MONKEY);
+idxArea = ismember(unitData.aArea, AREA);
+idxMonkey = ismember(unitData.aMonkey, MONKEY);
 
-uInfo = uInfo(idxArea & idxMonkey, :);
-spikes = spikes(idxArea & idxMonkey);
+unitData = unitData(idxArea & idxMonkey, :);
+spikesSAT = spikesSAT(idxArea & idxMonkey);
 
-NUM_UNITS = size(uInfo, 1);
+NUM_UNITS = size(unitData, 1);
 
 for uu = 1:NUM_UNITS
   %unit-specific initialization
-  unitID = [uInfo.Properties.RowNames{uu}, '-', uInfo.area{uu}];
-  numTrials = length(spikes{uu});
+  unitID = [unitData.Properties.RowNames{uu}, '-', unitData.area{uu}];
+  numTrials = length(spikesSAT{uu});
   
   %compute spike count for all trials
-  sc_uu = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes{uu});
+  sc_uu = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikesSAT{uu});
   
   
   %% Plotting
