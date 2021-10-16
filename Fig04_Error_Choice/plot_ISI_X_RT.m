@@ -1,10 +1,10 @@
-function [ ] = plot_ISI_X_RT( binfo , moves , movesPP , varargin )
+function [ ] = plot_ISI_X_RT( behavData , moves , movesPP , varargin )
 %plot_ISI_X_RT Summary of this function goes here
 %   Detailed explanation goes here
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-[binfo, moves, movesPP] = utilIsolateMonkeyBehavior(binfo, moves, movesPP, args.monkey);
-NUM_SESS = length(binfo);
+[behavData, moves, movesPP] = utilIsolateMonkeyBehavior(behavData, moves, movesPP, args.monkey);
+NUM_SESS = length(behavData);
 
 
 MIN_NUM_TRIAL = 5; %minimum number of saccades per RT bin
@@ -18,14 +18,14 @@ isiFast = NaN(NUM_SESS,NBIN_FAST);
 for kk = 1:NUM_SESS
   
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir);
+  idxErr = (behavData.Task_ErrChoice{kk});
   %skip trials with no recorded post-primary saccade
   idxNoPP = (movesPP(kk).resptime == 0);
   
-  RTkk = double(moves(kk).resptime) - double(binfo(kk).deadline); %RT FROM DEADLINE
+  RTkk = double(moves(kk).resptime) - double(behavData.Task_Deadline{kk}); %RT FROM DEADLINE
   ISIkk = double(movesPP(kk).resptime) - (double(moves(kk).resptime) + double(moves(kk).duration));
   
   for ii = 1:NBIN_ACC %loop over RT bins (Acc)

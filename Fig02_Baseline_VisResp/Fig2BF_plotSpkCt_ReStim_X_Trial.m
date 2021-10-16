@@ -33,21 +33,21 @@ scF2A_All = NaN(NUM_CELLS,NUM_TRIAL_TEST);
 %initialize unit cuts
 ccCut = [];
 
-for cc = 1:NUM_CELLS
-  kk = ismember(behavData.Task_Session, unitData.Task_Session{cc});
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   %compute spike count for all trials
-  sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikesSAT{cc});
+  sc_CC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikesSAT{uu});
   
   %compute median spike count
   medSC_CC = median(sc_CC);
   if (medSC_CC < MIN_MEDIAN_SPIKE_COUNT)
-    fprintf('Skipping Unit %s-%s due to minimum spike count\n', unitData.Task_Session{cc}, unitData.aID{cc})
+    fprintf('Skipping Unit %s-%s due to minimum spike count\n', unitData.Task_Session(uu), unitData.aID{uu})
     ccCut = cat(2, ccCut, cc);  continue
   end
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{cc}, behavData.Task_NumTrials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by trial outcome
   idxCorr = ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   
@@ -79,7 +79,7 @@ for cc = 1:NUM_CELLS
     end
   end % for : trial (jj)
   
-end % for : cell (cc)
+end % for : cell (uu)
 
 %cut units based on min spike count
 NUM_CELLS = NUM_CELLS - length(ccCut);

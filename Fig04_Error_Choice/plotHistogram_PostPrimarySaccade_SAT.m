@@ -16,12 +16,12 @@ for kk = 1:numSession
   idxSacc2Tgt(isnan(idxSacc2Tgt)) = 10;
   
   %index by trial outcome
-  idx_Corr = ~(binfoSAT_DaEu.err_dir{kk} | binfoSAT_DaEu.err_time{kk} | binfoSAT_DaEu.err_hold{kk} | binfoSAT_DaEu.err_nosacc{kk});
-  idx_ErrChoice = (binfoSAT_DaEu.err_dir{kk});
+  idx_Corr = ~(behavDataSAT_DaEu.Task_ErrChoice{kk} | behavDataSAT_DaEu.Task_ErrTime{kk} | behavDataSAT_DaEu.Task_ErrHold{kk} | behavDataSAT_DaEu.Task_ErrNoSacc{kk});
+  idx_ErrChoice = (behavDataSAT_DaEu.Task_ErrChoice{kk});
   
   %index by task condition
-  idx_Acc = ((binfoSAT_DaEu.condition{kk} == 1) & idx_ErrChoice);
-  idx_Fast = ((binfoSAT_DaEu.condition{kk} == 3) & idx_ErrChoice);
+  idx_Acc = ((behavDataSAT_DaEu.condition{kk} == 1) & idx_ErrChoice);
+  idx_Fast = ((behavDataSAT_DaEu.condition{kk} == 3) & idx_ErrChoice);
   
   %get number of saccades
   numSacc = cat(1, numSacc, allSaccades_DaEu.nSaccades{kk}(idx_ErrChoice));

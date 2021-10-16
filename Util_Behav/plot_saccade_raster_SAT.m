@@ -18,9 +18,9 @@ info_kk = index_timing_errors_SAT(info_kk, moves_kk);
 idx_cond = (info_kk.condition == 3);
 % idx_cond = (info_kk.condition == 1);
 
-idx_corr = ~(info_kk.err_dir | info_kk.err_time | info_kk.err_hold | info_kk.err_nosacc);
-idx_err = (info_kk.err_dir & ~info_kk.err_time);
-% idx_errtime = (~info_kk.err_dir & info_kk.err_time);
+idx_corr = ~(info_kk.Task_ErrChoice | info_kk.Task_ErrTime | info_kk.Task_ErrHold | info_kk.Task_ErrNoSacc);
+idx_err = (info_kk.Task_ErrChoice & ~info_kk.Task_ErrTime);
+% idx_errtime = (~info_kk.Task_ErrChoice & info_kk.Task_ErrTime);
 
 if (args.align_on_resp)
   resptime = double(moves_kk.resptime);

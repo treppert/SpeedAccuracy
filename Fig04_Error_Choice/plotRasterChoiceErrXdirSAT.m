@@ -1,13 +1,13 @@
-function [  ] = plotRasterChoiceErrXdirSAT( binfo , moves , movesPP , ninfo , spikes , varargin )
+function [  ] = plotRasterChoiceErrXdirSAT( behavData , moves , movesPP , unitData , spikes , varargin )
 %plotRasterChoiceErrXdirSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idx_area = ismember(unitData.aArea, args.area);
+idx_monkey = ismember(unitData.aMonkey, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
+unitData = unitData(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(spikes);
@@ -15,26 +15,26 @@ T_PLOT  = 3500 + (-400 : 800);
 
 IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   figure(); ppretty('image_size',[12,8])
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by condition
-  idxCond = ((binfo(kk).condition == 1) & ~idxIso);
+  idxCond = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir);
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold);
+  idxErr = (behavData.Task_ErrChoice{kk});
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk});
   
   yMax = 0;
   for dd = 1:8 %loop over directions and plot
     idxDir = (moves(kk).octant == dd);
     
-    spikesErr = spikes(cc).SAT(idxCond & idxErr & idxDir);
+    spikesErr = spikes(uu).SAT(idxCond & idxErr & idxDir);
     nTrialErr = sum(idxCond & idxErr & idxDir);
-    spikesCorr = spikes(cc).SAT(idxCond & idxCorr & idxDir);
+    spikesCorr = spikes(uu).SAT(idxCond & idxCorr & idxDir);
     nTrialCorr = sum(idxCond & idxCorr & idxDir);
     
     %plot spike times relative to time of primary saccade
@@ -102,14 +102,14 @@ for cc = 1:NUM_CELLS
     yticks(yTicks); ylim([0 yMax])
   end
   
-  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
   ppretty('image_size',[12,8])
 %   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/Raster-PostChoiceError-xDir-ACC/', ...
-%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%     unitData.aArea{uu},'-',unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff')
 %   pause(0.1); close()
   pause()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%util:plotRasterChoiceErrXdirSAT()
 

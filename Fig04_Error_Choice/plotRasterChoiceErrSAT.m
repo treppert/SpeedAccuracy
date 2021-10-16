@@ -1,26 +1,26 @@
-function [  ] = plotRasterChoiceErrSAT( binfo , moves , movesPP , ninfo , spikes )
+function [  ] = plotRasterChoiceErrSAT( behavData , moves , movesPP , unitData , spikes )
 %plotRasterChoiceErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-ChcErr-SEF\Raster\';
 
-idxSEF = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
+idxSEF = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 
-idxErr = (([ninfo.errGrade]) >= 2);
-idxEff = ismember([ninfo.taskType], [1,2]);
+idxErr = ((unitData.Basic_ErrGrade) >= 2);
+idxEff = ismember(unitData.Task_LevelDifficulty, [1,2]);
 
 idxKeep = (idxSEF & idxMonkey & idxErr & idxEff);
 
 NUM_CELLS = 1;%sum(idxKeep);
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 T_PLOT  = 3500 + (-200 : 450);
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RTPkk = double(moves(kk).resptime); %RT of primary saccade
   RTPkk(RTPkk > 900) = NaN; %hard limit on primary RT
@@ -28,13 +28,13 @@ for cc = 1:NUM_CELLS
   RTSkk(RTSkk < 0) = NaN; %trials with no secondary saccade
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by condition
-  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
-  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %perform RT matching and group trials by condition and outcome
   trials = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, idxErr);
@@ -42,8 +42,8 @@ for cc = 1:NUM_CELLS
   nAcc = length(trials.AccCorr);
   nFast = length(trials.FastCorr);
   
-  spTimesAC = spikes(cc).SAT(trials.AccCorr);   spTimesAE = spikes(cc).SAT(trials.AccErr);
-  spTimesFC = spikes(cc).SAT(trials.FastCorr);  spTimesFE = spikes(cc).SAT(trials.FastErr);
+  spTimesAC = spikes(uu).SAT(trials.AccCorr);   spTimesAE = spikes(uu).SAT(trials.AccErr);
+  spTimesFC = spikes(uu).SAT(trials.FastCorr);  spTimesFE = spikes(uu).SAT(trials.FastErr);
   
   RT_AC = RTPkk(trials.AccCorr);   RT_AE = RTPkk(trials.AccErr);    ISI_AE = RTSkk(trials.AccErr);
   RT_FC = RTPkk(trials.FastCorr);  RT_FE = RTPkk(trials.FastErr);   ISI_FE = RTSkk(trials.FastErr);
@@ -89,7 +89,7 @@ for cc = 1:NUM_CELLS
   xlim([T_PLOT(1) T_PLOT(end)]-3500)
 %   xticks((T_PLOT(1) : 200 : T_PLOT(end)) - 3500)
   yLimFast = get(gca, 'ylim');
-  print_session_unit(gca, ninfo(cc), binfo(kk), 'horizontal')
+  print_session_unit(gca, unitData(uu,:), behavData(kk,:), 'horizontal')
   
   subplot(2,1,2); hold on %Accurate condition
 
@@ -107,9 +107,9 @@ for cc = 1:NUM_CELLS
   
   ppretty([5,4])
   
-%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+%   print([ROOTDIR, unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff'); pause(0.1); close()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%util:plotRasterChoiceErrSAT()
 

@@ -1,26 +1,26 @@
-function [ ] = plotDistr_TimingError( binfo )
+function [ ] = plotDistr_TimingError( behavData )
 %plotDistr_TimingError Summary of this function goes here
 %   Detailed explanation goes here
 
-idxMonk = ismember({binfo.monkey}, {'E'});
+idxMonk = ismember({behavData.Monkey}, {'E'});
 
 NUM_SESSION = sum(idxMonk);
-binfo = binfo(idxMonk);
+behavData = behavData(idxMonk);
 
 errRT_Acc = [];
 errRT_Fast = [];
 
 for kk = 1:NUM_SESSION
   
-  errKK = double(binfo(kk).resptime) - double(binfo(kk).deadline);
+  errKK = double(behavData.Sacc_RT{kk}) - double(behavData.Task_Deadline{kk});
   
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErr = (binfo(kk).err_time);
+  idxErr = (behavData.Task_ErrTime{kk});
   %index by screen clear on Fast trials
-  idxClear = logical(binfo(kk).clearDisplayFast); %do not include
+  idxClear = logical(behavData.Task_ClearDisplayFast{kk}); %do not include
   
   errRT_Acc = cat(2, errRT_Acc, errKK(idxAcc & idxErr));
   errRT_Fast = cat(2, errRT_Fast, errKK(idxFast & idxErr & ~idxClear));

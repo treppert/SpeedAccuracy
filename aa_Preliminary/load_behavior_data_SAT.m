@@ -1,4 +1,4 @@
-function [ binfo , gaze ] = load_behavior_data_SAT( monkey )
+function [ behavData , gaze ] = load_behavior_data_SAT( monkey )
 %load_behavior_data_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -37,9 +37,9 @@ FIELDS_INFO = {'session','monkey','num_trials','condition', ...
   'octant','resptime','fixtime','rewtime', ...
   'durReward','stimuli','taskType','clearDisplayFast'};
 
-binfo = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); binfo = orderfields(binfo);
+behavData = new_struct(FIELDS_INFO, 'dim',[1,NUM_SESSIONS]); behavData = orderfields(behavData);
 gaze = new_struct(FIELDS_GAZE, 'dim',[1,NUM_SESSIONS]); gaze = orderfields(gaze);
-binfo = struct('MG',binfo, 'SAT',binfo);
+behavData = struct('MG',behavData, 'SAT',behavData);
 gaze = struct('MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
@@ -51,14 +51,14 @@ end%for:sessions(kk)
 
 %% Load task/TEMPO information
 
-binfo.MG = load_task_info(binfo.MG, sessions, num_trials.MG, 'MG');
-binfo.SAT = load_task_info(binfo.SAT, sessions, num_trials.SAT, 'SEARCH');
-binfo.SAT = index_timing_errors_SAT(binfo.SAT);
+behavData.MG = load_task_info(behavData.MG, sessions, num_trials.MG, 'MG');
+behavData.SAT = load_task_info(behavData.SAT, sessions, num_trials.SAT, 'SEARCH');
+behavData.SAT = index_timing_errors_SAT(behavData.SAT);
 
 %% Load saccade data
 
-% gaze.MG = load_gaze_data(binfo.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
-gaze.SAT = load_gaze_data(binfo.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
+% gaze.MG = load_gaze_data(behavData.MG, gaze.MG, sessions, num_trials.MG, FIELDS_GAZE, 'MG');
+gaze.SAT = load_gaze_data(behavData.SAT, gaze.SAT, sessions, num_trials.SAT, FIELDS_GAZE, 'SEARCH');
 
 end%function:load_behavior_data_SAT()
 
@@ -103,10 +103,10 @@ for kk = 1:NUM_SESSIONS
   info(kk).tgt_eccen = Target_(:,12)';
   
   %parse array Errors_
-  info(kk).err_nosacc = false(1,num_trials(kk));   info(kk).err_nosacc(Errors_(:,2) == 1) = true;
-  info(kk).err_hold = false(1,num_trials(kk));   info(kk).err_hold(Errors_(:,4) == 1) = true;
-  info(kk).err_dir = false(1,num_trials(kk));    info(kk).err_dir(Errors_(:,5) == 1) = true;
-  info(kk).err_time = false(1,num_trials(kk));   info(kk).err_time((Errors_(:,6) == 1) | (Errors_(:,7) == 1)) = true;
+  info(kk).Task_ErrNoSacc = false(1,num_trials(kk));   info(kk).Task_ErrNoSacc(Errors_(:,2) == 1) = true;
+  info(kk).Task_ErrHold = false(1,num_trials(kk));   info(kk).Task_ErrHold(Errors_(:,4) == 1) = true;
+  info(kk).Task_ErrChoice = false(1,num_trials(kk));    info(kk).Task_ErrChoice(Errors_(:,5) == 1) = true;
+  info(kk).Task_ErrTime = false(1,num_trials(kk));   info(kk).Task_ErrTime((Errors_(:,6) == 1) | (Errors_(:,7) == 1)) = true;
   
   %parse saccLoc
   info(kk).octant = uint8(saccLoc+1)'; %TEMPO estimate of endpoint
@@ -136,7 +136,7 @@ end%for:sessions
 
 end%function:load_task_info
 
-function [ data ] = load_gaze_data( binfo , data , sessions , num_trials , fields_gaze , type )
+function [ data ] = load_gaze_data( behavData , data , sessions , num_trials , fields_gaze , type )
 
 global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
@@ -190,12 +190,12 @@ for kk = 1:NUM_SESSIONS
   end
   
   %if monkey S, remove trials with missing data during decision interval
-  if ismember(binfo(kk).session(1), {'S'})
+  if ismember(behavData.Task_Session{kk}(1), {'S'})
     bad_trials = identify_bad_trials_SAT(EyeX_, EyeY_);
     for ff = 1:length(fields_gaze)
       data(kk).(fields_gaze{ff})(:,bad_trials) = NaN;
-      binfo(kk).resptime(bad_trials) = 0;
-      binfo(kk).octant(bad_trials) = 0;
+      behavData.Sacc_RT{kk}(bad_trials) = 0;
+      behavData(kk).octant(bad_trials) = 0;
     end
   end
   

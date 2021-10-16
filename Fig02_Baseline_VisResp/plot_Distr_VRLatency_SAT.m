@@ -1,27 +1,27 @@
-function [ ] = plot_Distr_VRLatency_SAT( unitInfo , unitStats )
+function [ ] = plot_Distr_VRLatency_SAT( unitData , unitData )
 %plot_Distr_VRLatency_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA_TEST = 'SC';
 
-idxArea = ismember(unitInfo.area, {AREA_TEST});
-idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
-idxVisUnit = (unitInfo.visGrade >= 2);
+idxArea = ismember(unitData.aArea, {AREA_TEST});
+idxMonkey = ismember(unitData.aMonkey, {'D','E','Q','S'});
+idxVisUnit = (unitData.Basic_VisGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
-% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitInfo.taskType == 2));
+% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitData.Task_LevelDifficulty == 2));
 
-unitInfo = unitInfo(idxKeep,:);
-unitStats = unitStats(idxKeep,:);
+unitData = unitData(idxKeep,:);
+unitData = unitData(idxKeep,:);
 
 %report median visual response latency
-fprintf([AREA_TEST, ': median VR latency = %d ms\n'], median(unitStats.VR_Latency))
+fprintf([AREA_TEST, ': median VR latency = %d ms\n'], median(unitData.VisualResponse_Latency))
 
 %split analysis on search efficiency
-ccMore = (unitInfo.taskType == 1);
-ccLess = (unitInfo.taskType == 2);
+ccMore = (unitData.Task_LevelDifficulty == 1);
+ccLess = (unitData.Task_LevelDifficulty == 2);
 
-Latency_More = unitStats.VR_Latency(ccMore);  numMore = length(Latency_More);
-Latency_Less = unitStats.VR_Latency(ccLess);  numLess = length(Latency_Less);
+Latency_More = unitData.VisualResponse_Latency(ccMore);  numMore = length(Latency_More);
+Latency_Less = unitData.VisualResponse_Latency(ccLess);  numLess = length(Latency_Less);
 
 
 %% Plotting

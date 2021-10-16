@@ -14,7 +14,7 @@ for kk = 1:NUM_SESSION
   
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);
-  idx_err = info(kk).err_time;
+  idx_err = info(kk).Task_ErrTime;
   
   vig_acc_corr(kk) = nanmean(moves(kk).vigor(~idx_err & idx_acc));
   vig_acc_err(kk) = nanmean(moves(kk).vigor(idx_err & idx_acc));

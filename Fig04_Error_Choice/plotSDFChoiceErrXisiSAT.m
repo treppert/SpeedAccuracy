@@ -1,4 +1,4 @@
-function [ varargout ] = plotSDFChoiceErrXisiSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+function [ varargout ] = plotSDFChoiceErrXisiSAT( behavData , moves , movesPP , unitData , unitData , spikes , varargin )
 %plotSDFChoiceErrXisiSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -6,16 +6,16 @@ ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\xISI\';
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-idxSEF = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxSEF = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-idxErr = (([ninfo.errGrade]) >= 1);
-idxEff = ismember([ninfo.taskType], [1,2]);
+idxErr = ((unitData.Basic_ErrGrade) >= 1);
+idxEff = ismember(unitData.Task_LevelDifficulty, [1,2]);
 
 idxKeep = (idxSEF & idxMonkey & idxErr & idxEff);
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 TIME.PRIMARY = 3500 + (-200 : 500); OFFSET = 200; %time from primary saccade
@@ -34,9 +34,9 @@ rtSecond_LO = NaN(1,NUM_CELLS);
 latSig_SH = NaN(1,NUM_CELLS); %latency of the error signal
 latSig_LO = NaN(1,NUM_CELLS);
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RTPkk = double(moves(kk).resptime); %RT of primary saccade
   RTPkk(RTPkk > 900) = NaN; %hard limit on primary RT
@@ -44,13 +44,13 @@ for cc = 1:NUM_CELLS
   RTSkk(RTSkk < 0) = NaN; %trials with no secondary saccade
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by condition
-  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
-  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   %index by ISI
   medISI = nanmedian(RTSkk(idxErr));
   idxSH = (RTSkk <= medISI);
@@ -60,8 +60,8 @@ for cc = 1:NUM_CELLS
   trials_SH = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, (idxErr & idxSH));
   trials_LO = groupTrialsRTmatched(RTPkk, idxAcc, idxFast, idxCorr, (idxErr & idxLO));
   
-  rtSecond_SH(cc) = nanmedian(RTSkk(trials_SH.FastErr));
-  rtSecond_LO(cc) = nanmedian(RTSkk(trials_LO.FastErr));
+  rtSecond_SH(uu) = nanmedian(RTSkk(trials_SH.FastErr));
+  rtSecond_LO(uu) = nanmedian(RTSkk(trials_LO.FastErr));
   
   %set RT_second on correct trials as median ISI of choice error trials
   RTSkk(trials_SH.FastCorr) = round(nanmedian(RTSkk(trials_SH.FastErr)));
@@ -70,41 +70,41 @@ for cc = 1:NUM_CELLS
   RTSkk(trials_LO.AccCorr)  = round(nanmedian(RTSkk(trials_LO.AccErr)));
   
   %get single-trials SDFs
-  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTPkk, RTSkk, spikes(cc).SAT, trials_SH, TIME);
-  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTPkk, RTSkk, spikes(cc).SAT, trials_LO, TIME);
+  [sdfAccST_SH, sdfFastST_SH] = getSingleTrialSDF(RTPkk, RTSkk, spikes(uu).SAT, trials_SH, TIME);
+  [sdfAccST_LO, sdfFastST_LO] = getSingleTrialSDF(RTPkk, RTSkk, spikes(uu).SAT, trials_LO, TIME);
   
   %compute mean SDFs
-  [sdfAcc_SH.Corr(cc),sdfAcc_SH.Err(cc)] = computeMeanSDF( sdfAccST_SH );
-  [sdfFast_SH.Corr(cc),sdfFast_SH.Err(cc)] = computeMeanSDF( sdfFastST_SH );
-  [sdfAcc_LO.Corr(cc),sdfAcc_LO.Err(cc)] = computeMeanSDF( sdfAccST_LO );
-  [sdfFast_LO.Corr(cc),sdfFast_LO.Err(cc)] = computeMeanSDF( sdfFastST_LO );
-  sdf_SH = struct('AccCorr',sdfAcc_SH.Corr(cc), 'AccErr',sdfAcc_SH.Err(cc), 'FastCorr',sdfFast_SH.Corr(cc), 'FastErr',sdfFast_SH.Err(cc));
-  sdf_LO = struct('AccCorr',sdfAcc_LO.Corr(cc), 'AccErr',sdfAcc_LO.Err(cc), 'FastCorr',sdfFast_LO.Corr(cc), 'FastErr',sdfFast_LO.Err(cc));
+  [sdfAcc_SH.Corr(uu),sdfAcc_SH.Err(uu)] = computeMeanSDF( sdfAccST_SH );
+  [sdfFast_SH.Corr(uu),sdfFast_SH.Err(uu)] = computeMeanSDF( sdfFastST_SH );
+  [sdfAcc_LO.Corr(uu),sdfAcc_LO.Err(uu)] = computeMeanSDF( sdfAccST_LO );
+  [sdfFast_LO.Corr(uu),sdfFast_LO.Err(uu)] = computeMeanSDF( sdfFastST_LO );
+  sdf_SH = struct('AccCorr',sdfAcc_SH.Corr(uu), 'AccErr',sdfAcc_SH.Err(uu), 'FastCorr',sdfFast_SH.Corr(uu), 'FastErr',sdfFast_SH.Err(uu));
+  sdf_LO = struct('AccCorr',sdfAcc_LO.Corr(uu), 'AccErr',sdfAcc_LO.Err(uu), 'FastCorr',sdfFast_LO.Corr(uu), 'FastErr',sdfFast_LO.Err(uu));
     
   %compute signal latency
 %   [~,tmp_SH] = calcTimeErrSignal(sdfAccST_SH, sdfFastST_SH, OFFSET);
 %   [~,tmp_LO] = calcTimeErrSignal(sdfAccST_LO, sdfFastST_LO, OFFSET);
-%   latSig_SH(cc) = tmp_SH.Start;
-%   latSig_LO(cc) = tmp_LO.Start;
-%   nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI = latSig_SH(cc);
-%   nstats(ccNS).A_ChcErr_tErr_Fast_LongISI = latSig_LO(cc);
+%   latSig_SH(uu) = tmp_SH.Start;
+%   latSig_LO(uu) = tmp_LO.Start;
+%   unitData(uuNS).A_ChcErr_tErr_Fast_ShortISI = latSig_SH(uu);
+%   unitData(uuNS).A_ChcErr_tErr_Fast_LongISI = latSig_LO(uu);
   
   %compute the statistic used to determine "error-relatedness" of neuron
-  ccNS = ninfo(cc).unitNum;
-  dtSignal = ( nstats(ccNS).A_ChcErr_tErr_Fast_LongISI - nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI);
-  nstats(ccNS).A_ChcErr_dtErr_vs_dISI = dtSignal / (rtSecond_LO(cc) - rtSecond_SH(cc));
+  uuNS = unitData.aIndex(uu);
+  dtSignal = ( unitData(uuNS).A_ChcErr_tErr_Fast_LongISI - unitData(uuNS).A_ChcErr_tErr_Fast_ShortISI);
+  unitData(uuNS).A_ChcErr_dtErr_vs_dISI = dtSignal / (rtSecond_LO(uu) - rtSecond_SH(uu));
   
   %plot individual cell activity
-  statsTime = struct('isiSH',rtSecond_SH(cc), 'isiLO',rtSecond_LO(cc), ...
-    'latSH',nstats(ccNS).A_ChcErr_tErr_Fast_ShortISI, 'latLO',nstats(ccNS).A_ChcErr_tErr_Fast_LongISI);
-  plotSDFChcErrXisiSATcc(TIME, sdf_SH, sdf_LO, statsTime, ninfo(cc))
-  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff')
+  statsTime = struct('isiSH',rtSecond_SH(uu), 'isiLO',rtSecond_LO(uu), ...
+    'latSH',unitData(uuNS).A_ChcErr_tErr_Fast_ShortISI, 'latLO',unitData(uuNS).A_ChcErr_tErr_Fast_LongISI);
+  plotSDFChcErrXisiSATcc(TIME, sdf_SH, sdf_LO, statsTime, unitData(uu,:))
+  print([ROOTDIR, unitData.Task_Session(uu),'-',unitData.aID{uu},'-U',num2str(uuNS),'.tif'], '-dtiff')
   pause(0.05); close()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = nstats;
+  varargout{1} = unitData;
 end
 
 end%fxn:plotSDFChoiceErrXisiSAT()
@@ -168,7 +168,7 @@ sdfErr.Baseline = nanmean(sdfSingleTrial.Err.ReStim)';
 end%util:computeMeanSDF()
 
 
-function [ ] = plotSDFChcErrXisiSATcc( TIME , sdf_SH , sdf_LO , stats , ninfo )
+function [ ] = plotSDFChcErrXisiSATcc( TIME , sdf_SH , sdf_LO , stats , unitData )
 %plotSDFChcErrXisiSATcc Summary of this function goes here
 %   TIME.PRIMARY - Time from primary saccade (ms)
 %   TIME.SECONDARY - Time from secondary saccade (ms)
@@ -195,7 +195,7 @@ plot(stats.latSH*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0) %plot 
 plot(stats.latLO*ones(1,2), yLim, ':', 'Color',[0 .4 0], 'LineWidth',1.0)
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
-print_session_unit(gca , ninfo,[])
+print_session_unit(gca , unitData,[])
 
 
 ppretty([9,3])

@@ -1,19 +1,19 @@
-function [ varargout ] = plotSDFChoiceErrXendptSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+function [ varargout ] = plotSDFChoiceErrXendptSAT( behavData , moves , movesPP , unitData , unitData , spikes , varargin )
 %plotSDFChoiceErrXendptSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figs-ChcErr-SEF\SDF-Final\';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-idxError = (abs([ninfo.errGrade]) >= 2);
-idxEfficiency = ismember([ninfo.taskType], [1,2]);
+idxError = (abs(unitData.Basic_ErrGrade) >= 2);
+idxEfficiency = ismember(unitData.Task_LevelDifficulty, [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxError & idxEfficiency);
 
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 NUM_CELLS = length(spikes);
 
@@ -28,22 +28,22 @@ sdfFast = sdfAcc;
 effectSecondary = new_struct({'AccPrimary','AccSecondary','FastPrimary','FastSecondary'}, 'dim',[1,NUM_CELLS]);
 effectSecondary = populate_struct(effectSecondary, {'AccPrimary','AccSecondary','FastPrimary','FastSecondary'}, 0);
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RTkk = double(moves(kk).resptime);
   ISIkk = double(movesPP(kk).resptime) - RTkk;
   ISIkk(ISIkk < 0) = NaN; %trials with no secondary saccade
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by condition
-  idxAcc = ((binfo(kk).condition == 1) & ~idxIso);
-  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %set "ISI" on correct trials as median ISI of choice error trials
   ISIkk(idxFast & idxCorr) = round(nanmedian(ISIkk(idxFast & idxErr)));
@@ -61,33 +61,33 @@ for cc = 1:NUM_CELLS
   trials = rmfield(trials, {'AccErr','FastErr'});
   
   %test for different discharge rates for Corrective vs. Non-Corrective
-%   effectSecondary(cc) = testSecondaryEndpoint( spikes(cc).SAT , trials , RTkk , ISIkk );
+%   effectSecondary(uu) = testSecondaryEndpoint( spikes(uu).SAT , trials , RTkk , ISIkk );
   
   %get single-trials SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTkk, ISIkk, spikes(cc).SAT, trials, tVec);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RTkk, ISIkk, spikes(uu).SAT, trials, tVec);
   
   %compute mean SDFs
-  [sdfFast.Corr(cc), sdfFast.ErrT(cc), sdfFast.ErrD(cc)] = computeMeanSDF( sdfFastST );
-  [sdfAcc.Corr(cc), sdfAcc.ErrT(cc), sdfAcc.ErrD(cc)] = computeMeanSDF( sdfAccST );
-  sdfCombined = struct('FastCorr',sdfFast.Corr(cc), 'FastErrT',sdfFast.ErrT(cc), 'FastErrD',sdfFast.ErrD(cc), ...
-    'AccCorr',sdfAcc.Corr(cc), 'AccErrT',sdfAcc.ErrT(cc), 'AccErrD',sdfAcc.ErrD(cc));
+  [sdfFast.Corr(uu), sdfFast.ErrT(uu), sdfFast.ErrD(uu)] = computeMeanSDF( sdfFastST );
+  [sdfAcc.Corr(uu), sdfAcc.ErrT(uu), sdfAcc.ErrD(uu)] = computeMeanSDF( sdfAccST );
+  sdfCombined = struct('FastCorr',sdfFast.Corr(uu), 'FastErrT',sdfFast.ErrT(uu), 'FastErrD',sdfFast.ErrD(uu), ...
+    'AccCorr',sdfAcc.Corr(uu), 'AccErrT',sdfAcc.ErrT(uu), 'AccErrD',sdfAcc.ErrD(uu));
   
   %% Parameterize the SDF
-  ccNS = ninfo(cc).unitNum;
+  uuNS = unitData.aIndex(uu);
   
   %magnitude
-%   [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, nstats(ccNS));
-%   nstats(ccNS).A_ChcErr_magErr_Acc = magAcc;
-%   nstats(ccNS).A_ChcErr_magErr_Fast = magFast;
+%   [magAcc,magFast] = calcMagErrSignal(sdfCombined, OFFSET, unitData(uuNS));
+%   unitData(uuNS).A_ChcErr_magErr_Acc = magAcc;
+%   unitData(uuNS).A_ChcErr_magErr_Fast = magFast;
   
   %plot individual cell activity
-  plotSDFChcErrXendptSATcc(tVec, sdfCombined, ninfo(cc), nstats(ccNS))
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff'); pause(0.1); close()
+  plotSDFChcErrXendptSATcc(tVec, sdfCombined, unitData(uu,:), unitData(uuNS))
+%   print([ROOTDIR, unitData.aArea{uu},'-',unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff'); pause(0.1); close()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = nstats;
+  varargout{1} = unitData;
   if (nargout > 1)
     varargout{2} = effectSecondary;
   end
@@ -269,7 +269,7 @@ effectStruct = struct('AccPrimary',effectAccPrimary, 'AccSecondary',effectAccSec
 end%util:testSecondaryEndpoint()
 
 
-function [ ] = plotSDFChcErrXendptSATcc( TIME , sdfPlot , ninfo , nstats )
+function [ ] = plotSDFChcErrXendptSATcc( TIME , sdfPlot , unitData , unitData )
 %plotSDFChcErrXendptSATcc Summary of this function goes here
 %   TIME.Primary - Time from primary saccade (ms)
 %   TIME.Secondary - Time from secondary saccade (ms)
@@ -293,12 +293,12 @@ plot(TIME.Primary-3500, sdfPlot.FastCorr.Primary, '-', 'Color',[0 .7 0], 'LineWi
 plot(TIME.Primary-3500, sdfPlot.FastErrT.Primary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(TIME.Primary-3500, sdfPlot.FastErrD.Primary, ':', 'Color',[0 .3 0], 'LineWidth',1.0)
 
-plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(2)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(4)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
 xlim([TIME.Primary(1) TIME.Primary(end)]-3500)
 ylabel('Activity (sp/sec)')
-print_session_unit(gca , ninfo,[])
+print_session_unit(gca , unitData,[])
 
 
 %Time from secondary saccade
@@ -323,8 +323,8 @@ plot(TIME.Primary-3500, sdfPlot.AccCorr.Primary, '-', 'Color',[1 0 0], 'LineWidt
 plot(TIME.Primary-3500, sdfPlot.AccErrT.Primary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
 plot(TIME.Primary-3500, sdfPlot.AccErrD.Primary, ':', 'Color',[.4 0 0], 'LineWidth',1.0)
 
-plot(nstats.A_ChcErr_tErr_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErrEnd_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(1)*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(3)*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
 
 xlim([TIME.Primary(1) TIME.Primary(end)]-3500)
 ylabel('Activity (sp/sec)')

@@ -1,17 +1,17 @@
-function [ ] = plotPActiveRewErrSAT( ninfo , nstats )
+function [ ] = plotPActiveRewErrSAT( unitData , unitData )
 %plotPActiveRewErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 
-idxRew = ((abs([ninfo.rewGrade]) >= 2) & ~isnan([nstats.A_Reward_tErrStart_Fast]));
-% idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxRew = ((abs(unitData.Basic_RewGrade) >= 2) & ~isnan([unitData.TimingErrorSignal_Time(2)]));
+% idxRew = (abs(unitData.Basic_RewGrade) >= 2);
 idxKeep = (idxArea & idxMonkey & idxRew);
 
 NUM_CELLS = sum(idxKeep)
 return
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
 
 T_VEC = (-100 : 800);  OFFSET = 101;
 
@@ -19,23 +19,23 @@ T_VEC = (-100 : 800);  OFFSET = 101;
 PActiveAcc = false(NUM_CELLS,length(T_VEC));
 PActiveFast = false(NUM_CELLS,length(T_VEC));
 
-for cc = 1:NUM_CELLS
-  tErrStart_Acc = nstats(cc).A_Reward_tErrStart_Acc;
-  tErrStart_Fast = nstats(cc).A_Reward_tErrStart_Fast;
+for uu = 1:NUM_CELLS
+  tErrStart_Acc = unitData.TimingErrorSignal_Time(uu,1);
+  tErrStart_Fast = unitData.TimingErrorSignal_Time(uu,2);
   
-  tErrEnd_Acc = nstats(cc).A_Reward_tErrEnd_Acc;
-  tErrEnd_Fast = nstats(cc).A_Reward_tErrEnd_Fast;
+  tErrEnd_Acc = unitData.TimingErrorSignal_Time(uu,3);
+  tErrEnd_Fast = unitData.TimingErrorSignal_Time(uu,4);
   
   PActiveAcc(cc,(tErrStart_Acc : tErrEnd_Acc) + OFFSET) = true;
   PActiveFast(cc,(tErrStart_Fast : tErrEnd_Fast) + OFFSET) = true;
-end%for:cells-Acc(cc)
+end%for:cells-Acc(uu)
 
 PActiveAcc = sum(PActiveAcc,1) / NUM_CELLS;
 PActiveFast = sum(PActiveFast,1) / NUM_CELLS;
 
 %% Plotting
-tCDFAcc = sort([nstats.A_Reward_tErrStart_Acc]);
-tCDFFast = sort([nstats.A_Reward_tErrStart_Fast]);
+tCDFAcc = sort([unitData.TimingErrorSignal_Time(1)]);
+tCDFFast = sort([unitData.TimingErrorSignal_Time(2)]);
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)

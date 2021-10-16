@@ -1,14 +1,14 @@
-function [ ] = plotSpkCount_X_RT_ReStim_SAT( binfo , ninfo , spikes , varargin )
+function [ ] = plotSpkCount_X_RT_ReStim_SAT( behavData , unitData , spikes , varargin )
 %plotSpkCount_X_RT_ReStim_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}, {'interval','Baseline'}});
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);
-idxMove = ([ninfo.moveGrade] >= 2);
+idxVis = ([unitData.Basic_VisGrade] >= 2);
+idxMove = (unitData.Basic_MovGrade >= 2);
 
 if strcmp(args.interval, 'Baseline')
   idxKeep = (idxArea & idxMonkey & (idxVis | idxMove));
@@ -21,7 +21,7 @@ else %Visual response
 end
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 RTBIN_ACC = (0 : 30 : 300);     NBIN_ACC = length(RTBIN_ACC) - 1;
@@ -34,26 +34,26 @@ RTLIM_FAST = [150 450];
 zSpkCtAcc = NaN(NUM_CELLS,NBIN_ACC);
 zSpkCtFast = NaN(NUM_CELLS,NBIN_FAST);
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  RTkk = double(binfo(kk).resptime);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+  RTkk = double(behavData.Sacc_RT{kk});
   
   %compute spike count for all trials
-  spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(cc).SAT);
+  spkCtCC = cellfun(@(x) sum((x > T_TEST(1)) & (x < T_TEST(2))), spikes(uu).SAT);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_nosacc);
+  idxCorr = ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk});
   %index by RT limits
   idxCutAcc = (RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk));
   idxCutFast = (RTkk < RTLIM_FAST(1) | RTkk > RTLIM_FAST(2) | isnan(RTkk));
   %index by condition and RT limits
-  idxAcc = ((binfo(kk).condition == 1) & idxCorr & ~idxIso & ~idxCutAcc);
-  idxFast = ((binfo(kk).condition == 3) & idxCorr & ~idxIso & ~idxCutFast);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & idxCorr & ~idxIso & ~idxCutAcc);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & idxCorr & ~idxIso & ~idxCutFast);
   
-  spkCountAcc = spkCtCC(idxAcc);    RTacc = RTkk(idxAcc) - double(binfo(kk).deadline(idxAcc));
-  spkCountFast = spkCtCC(idxFast);  RTfast = RTkk(idxFast) - double(binfo(kk).deadline(idxFast));
+  spkCountAcc = spkCtCC(idxAcc);    RTacc = RTkk(idxAcc) - double(behavData.Task_Deadline{kk}(idxAcc));
+  spkCountFast = spkCtCC(idxFast);  RTfast = RTkk(idxFast) - double(behavData.Task_Deadline{kk}(idxFast));
   
   %remove outliers
   if (nanmedian(spkCountAcc) >= 1.0) %make sure we have a minimum spike count
@@ -83,7 +83,7 @@ for cc = 1:NUM_CELLS
     end
   end%for:bin-Fast
   
-end%for:cell(cc)
+end%for:cell(uu)
 
 
 %% Plotting

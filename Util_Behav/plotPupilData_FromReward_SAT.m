@@ -1,4 +1,4 @@
-function [ ] = plotPupilData_FromReward_SAT( pupilData , binfo )
+function [ ] = plotPupilData_FromReward_SAT( pupilData , behavData )
 %plotPupilData_FromReward_SAT Summary of this function goes here
 %   Detailed explanation goes here
 DIR_PRINT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Pupil\FromReward\';
@@ -9,8 +9,8 @@ NUM_SAMP = length(T_WIN_PLOT);
 
 T_REWARD_MAX = 1800; %maximum acceptable value of reward time from array
 
-binfo = utilIsolateMonkeyBehavior({'D','E'}, binfo);
-NUM_SESSION = length(binfo);
+behavData = utilIsolateMonkeyBehavior({'D','E'}, behavData);
+NUM_SESSION = length(behavData);
 
 %initialization
 pupilMat_AccCorr   = NaN(NUM_SESSION,NUM_SAMP);
@@ -19,16 +19,16 @@ pupilMat_FastCorr  = NaN(NUM_SESSION,NUM_SAMP);
 
 for kk = 1:NUM_SESSION
   
-  tReward = double(binfo(kk).resptime) + double(binfo(kk).rewtime);
+  tReward = double(behavData.Sacc_RT{kk}) + double(behavData.Task_TimeReward{kk});
   idxNaN = (isnan(tReward) | (tReward > T_REWARD_MAX));
   
   %index by task condition
-  idxAcc =  (binfo(kk).condition == 1);
-  idxFast =  (binfo(kk).condition == 3);
+  idxAcc =  (behavData.Task_SATCondition{kk} == 1);
+  idxFast =  (behavData.Task_SATCondition{kk} == 3);
   
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErrTime = (binfo(kk).err_time & ~binfo(kk).err_dir);
+  idxCorr = ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErrTime = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk});
   
   %combine indexes
   trial_AC = find(idxAcc & idxCorr & ~idxNaN);      n_AC = length(trial_AC);
@@ -63,8 +63,8 @@ for kk = 1:NUM_SESSION
 %   shadedErrorBar(T_WIN_PLOT-3500, pup_AC_kk, {@nanmean,@nanstd}, 'lineprops',{'-', 'Color','r'}, 'transparent',true);
 %   shadedErrorBar(T_WIN_PLOT-3500, pup_AE_kk, {@nanmean,@nanstd}, 'lineprops',{':', 'Color','r'}, 'transparent',true);
 %   shadedErrorBar(T_WIN_PLOT-3500, pup_FC_kk, {@nanmean,@nanstd}, 'lineprops',{'-', 'Color',[0 .7 0]}, 'transparent',true);
-%   xlabel('Time from array (ms)'); ylabel('Pupil (a.u.)'); title(binfo(kk).session)
-%   print([DIR_PRINT, binfo(kk).session, '.tif'], '-dtiff');
+%   xlabel('Time from array (ms)'); ylabel('Pupil (a.u.)'); title(behavData.Task_Session{kk})
+%   print([DIR_PRINT, behavData.Task_Session{kk}, '.tif'], '-dtiff');
 %   pause(0.25); close()
   
 end % for :: session (kk)

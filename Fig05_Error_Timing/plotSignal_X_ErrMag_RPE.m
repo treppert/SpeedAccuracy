@@ -1,15 +1,15 @@
-function [ ] = plotSignal_X_ErrMag_RPE( binfo , ninfo , nstats , spikes )
+function [ ] = plotSignal_X_ErrMag_RPE( behavData , unitData , unitData , spikes )
 %plotSignal_X_ErrMag_RPE Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
-idxRew = ([ninfo.rewGrade] >= 2);
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxRew = (unitData.Basic_RewGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxRew);
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 DEBUG = false;
@@ -24,26 +24,26 @@ T_ERR = T_LIM(1:N_BIN) + diff(T_LIM)/2;
 %initializations
 spkCT_All = NaN(NUM_CELLS,N_BIN);
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
-  trewKK = double(binfo(kk).rewtime) + double(binfo(kk).resptime);
-  errKK = double(binfo(kk).resptime) - double(binfo(kk).deadline);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+  trewKK = double(behavData.Task_TimeReward{kk}) + double(behavData.Sacc_RT{kk});
+  errKK = double(behavData.Sacc_RT{kk}) - double(behavData.Task_Deadline{kk});
   
   %get window over which to count spikes
-  tCountRew = nstats(cc).A_Reward_tErrStart_Acc + T_COUNT_REW + nanmedian(trewKK);
+  tCountRew = unitData.TimingErrorSignal_Time(uu,1) + T_COUNT_REW + nanmedian(trewKK);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by condition
-  idxAcc = (binfo(kk).condition == 1 & ~idxIso & ~isnan(trewKK));
+  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso & ~isnan(trewKK));
   %index by trial outcome
-  idxErr = (binfo(kk).err_time & ~binfo(kk).err_dir);
+  idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk});
   %index by screen clear on Fast trials
-%   idxClear = logical(binfo(kk).clearDisplayFast);
+%   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   
   %compute the BASELINE-CORRECTED spike count for each trial
-  spkCTcc = cellfun(@(x) sum((x > tCountRew(1)) & (x < tCountRew(2))), spikes(cc).SAT);
-  spkCTbase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikes(cc).SAT);
+  spkCTcc = cellfun(@(x) sum((x > tCountRew(1)) & (x < tCountRew(2))), spikes(uu).SAT);
+  spkCTbase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikes(uu).SAT);
   spkCTcc = spkCTcc - spkCTbase;
   
   %z-score spike counts
@@ -73,7 +73,7 @@ for cc = 1:NUM_CELLS
     plot(T_ERR, spkCT_All(cc,:), 'k.-', 'LineWidth',1.25)
   end
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 %% Stats
 DV_Signal = reshape(spkCT_All', NUM_CELLS*N_BIN,1);

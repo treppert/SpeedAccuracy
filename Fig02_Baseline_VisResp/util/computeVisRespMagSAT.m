@@ -1,4 +1,4 @@
-function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, nstats , offset )
+function [ VRmagAcc , VRmagFast ] = computeVisRespMagSAT( sdfVRAcc, sdfVRFast, unitData , offset )
 %computeVisRespMagSAT Summary of this function goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
 %   sdfVRFast - Single-trial visual response SDFs in the Fast condition
@@ -16,12 +16,12 @@ sdfVRAcc = mean(sdfVRAcc(:,offset+1:end));
 sdfVRFast = mean(sdfVRFast(:,offset+1:end));
 
 %load mean baseline activity
-blineAcc = nstats.blineAccMEAN;
-blineFast = nstats.blineFastMEAN;
+blineAcc = unitData.Baseline_Mean(1);
+blineFast = unitData.Baseline_Mean(2);
 
 %load VR latency
-latAcc = nstats.VRlatAcc;
-latFast = nstats.VRlatFast;
+latAcc = unitData.VRlatAcc;
+latFast = unitData.VRlatFast;
 
 %subtract off baseline activity
 sdfVRAcc = sdfVRAcc - blineAcc;

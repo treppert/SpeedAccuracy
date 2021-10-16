@@ -9,8 +9,8 @@ info = index_timing_errors_SAT(info, moves);
 idx_acc = ([info.condition] == 1);
 idx_fast = ([info.condition] == 3);
 
-idx_corr = ~([info.err_dir] | [info.err_time] | [info.err_hold]);
-idx_errdir = ([info.err_dir] & ~[info.err_time]);
+idx_corr = ~([info.Task_ErrChoice] | [info.Task_ErrTime] | [info.Task_ErrHold]);
+idx_errdir = ([info.Task_ErrChoice] & ~[info.Task_ErrTime]);
 
 vigor = [moves.vigor];
 velprof = [moves.vel];

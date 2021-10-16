@@ -1,9 +1,9 @@
-function [ movesPP ] = parse_PPsacc_SAT( movesAll , moves , binfo )
+function [ movesPP ] = parse_PPsacc_SAT( movesAll , moves , behavData )
 %parse_PPsacc_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 INDEX = 2; %index of the saccade re. stimulus appearance
-NUM_SESSION = length(binfo);
+NUM_SESSION = length(behavData);
 
 fields_ = fieldnames(movesAll);
 NUM_FIELDS = length(fields_);
@@ -15,19 +15,19 @@ for kk = 1:NUM_SESSION
   %initialize output struct for this session
   for ff = 1:NUM_FIELDS
     if isa(movesAll(kk).(fields_{ff})(1), 'single')
-      movesPP(kk).(fields_{ff}) = single(NaN(1,binfo(kk).num_trials));
+      movesPP(kk).(fields_{ff}) = single(NaN(1,behavData.Task_NumTrials{kk}));
     elseif isa(movesAll(kk).(fields_{ff})(1), 'uint16')
-      movesPP(kk).(fields_{ff}) = uint16(zeros(1,binfo(kk).num_trials));
+      movesPP(kk).(fields_{ff}) = uint16(zeros(1,behavData.Task_NumTrials{kk}));
     elseif isa(movesAll(kk).(fields_{ff})(1), 'logical')
-      movesPP(kk).(fields_{ff}) = false(1,binfo(kk).num_trials);
+      movesPP(kk).(fields_{ff}) = false(1,behavData.Task_NumTrials{kk});
     else
       error('Data type of field %s not recognized', fields_{ff});
     end
   end
-  movesPP(kk).endpt = uint16(zeros(1,binfo(kk).num_trials));
+  movesPP(kk).endpt = uint16(zeros(1,behavData.Task_NumTrials{kk}));
   
   num_noPP = 0; %keep track of number of trials with no post-primary
-  for jj = 1:binfo(kk).num_trials
+  for jj = 1:behavData.Task_NumTrials{kk}
     
     %isolate saccade from trial jj with index INDEX
     idxPPjj = ( (movesAll(kk).trial == jj) & (movesAll(kk).index == INDEX) );
@@ -46,17 +46,17 @@ for kk = 1:NUM_SESSION
   end%for:trials(jj)
   
   %split PP saccades by endpoint (1=Target, 2=Distractor, 3=Fixation)
-  movesPP(kk) = classify_endpt_PPsacc(binfo(kk), movesPP(kk), moves(kk));
+  movesPP(kk) = classify_endpt_PPsacc(behavData(kk,:), movesPP(kk), moves(kk));
   
-  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idx_errdir = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   fprintf('**** Sess %d -- %d/%d trials (%d/%d err-dir) no post-primary\n', ...
-    kk, num_noPP, binfo(kk).num_trials, sum(isnan(movesPP(kk).amplitude(idx_errdir))), sum(idx_errdir))
+    kk, num_noPP, behavData.Task_NumTrials{kk}, sum(isnan(movesPP(kk).amplitude(idx_errdir))), sum(idx_errdir))
   
 end%for:sessions(kk)
 
 end%fxn:parse_PostPrimary_sacc_SAT()
 
-function [ movesPP ] = classify_endpt_PPsacc( binfo , movesPP , moves )
+function [ movesPP ] = classify_endpt_PPsacc( behavData , movesPP , moves )
 %classify_endpt_ppsacc Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -64,13 +64,13 @@ ISI = movesPP.resptime - moves.resptime;
 idxNoPP = ((ISI == 0) | (ISI > 700)); %no post-primary saccade
 
 rFin = sqrt(movesPP.x_fin.*movesPP.x_fin + movesPP.y_fin.*movesPP.y_fin);
-rErr = rFin - unique(binfo.tgt_eccen);
+rErr = rFin - unique(behavData.tgt_eccen);
 
 idxFix = ((rErr < -6) | (rFin < 3)); %re-fixating movement
 idxStim = ((rErr > -6) & (rErr < 2)); %stimulus (Target or Distractor)
 idxOther = (rErr > 2);
 
-dOctant = movesPP.octant - uint16(binfo.tgt_octant);
+dOctant = movesPP.octant - uint16(behavData.tgt_octant);
 idxTgt = (~idxFix & (dOctant == 0));
 idxDistr = (~idxFix & (dOctant ~= 0));
 

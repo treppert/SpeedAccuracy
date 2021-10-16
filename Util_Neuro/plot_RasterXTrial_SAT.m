@@ -1,25 +1,25 @@
-function [  ] = plot_RasterXTrial_SAT( uInfo , spikes , bInfo )
+function [  ] = plot_RasterXTrial_SAT( unitData , spikes , behavData )
 %plot_RasterXTrial_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA = {'FEF'};
 MONKEY = {'Q'};
 
-idxArea = ismember(uInfo.area, AREA);
-idxMonkey = ismember(uInfo.monkey, MONKEY);
+idxArea = ismember(unitData.aArea, AREA);
+idxMonkey = ismember(unitData.aMonkey, MONKEY);
 idxKeep = [157,252]; %idxArea & idxMonkey;
 
-uInfo = uInfo(idxKeep, :);
+unitData = unitData(idxKeep, :);
 spikes = spikes(idxKeep);
 
-NUM_UNITS = size(uInfo, 1);
+NUM_UNITS = size(unitData, 1);
 TIME_PLOT = (-1000 : 2000); %time from stimulus
 
 %% Spike rasters
 
 for uu = 1:NUM_UNITS
   %unit-specific initialization
-  unitID = [uInfo.Properties.RowNames{uu}, '-', uInfo.area{uu}];
+  unitID = [unitData.Properties.RowNames{uu}, '-', unitData.aArea{uu}];
   numTrials = length(spikes{uu});
   
   %% Organization of spike times by trial
@@ -43,9 +43,9 @@ for uu = 1:NUM_UNITS
   jjSpike = jjSpike(idxPlot);
   
   %parse trials by task condition
-  kk = ismember(bInfo.session, uInfo.sess{uu});
-  trialAcc = find(bInfo.condition{kk} == 1);
-  trialFast = find(bInfo.condition{kk} == 3);
+  kk = ismember(behavData.Task_Session, unitData.Task_Session{uu});
+  trialAcc = find(behavData.Task_SATCondition{kk} == 1);
+  trialFast = find(behavData.Task_SATCondition{kk} == 3);
   
   %sort spikes by task condition
   idxAcc = ismember(jjSpike, trialAcc);

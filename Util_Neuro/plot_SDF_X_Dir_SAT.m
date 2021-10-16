@@ -1,14 +1,14 @@
-function [  ] = plot_SDF_X_Dir_SAT( binfoSAT , primarySaccade , unitInfo , spikesSAT , varargin )
+function [  ] = plot_SDF_X_Dir_SAT( behavDataSAT , primarySaccade , unitData , spikesSAT , varargin )
 %plot_SDF_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\SDF-X-Direction\';
 
-idxArea = ismember(unitInfo.area, args.area);
-idxMonkey = ismember(unitInfo.monkey, args.monkey);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-unitInfo = unitInfo(idxArea & idxMonkey, :); %table
+unitData = unitData(idxArea & idxMonkey, :); %table
 spikesSAT = spikesSAT(idxArea & idxMonkey); %cell array
 
 NUM_CELLS = length(spikesSAT);
@@ -18,22 +18,22 @@ T_RESP = 3500 + (-400 : 200);
 IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-  kk = ismember(binfoSAT.session, unitInfo.sess{cc});
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.unit{uu})
+  kk = ismember(behavDataSAT.session, unitData.Task_Session(uu));
   RTkk = double(primarySaccade.resptime{kk});
   
   %compute spike density function and align on primary response
-  sdfKKstim = compute_spike_density_fxn(spikesSAT{cc});
+  sdfKKstim = compute_spike_density_fxn(spikesSAT{uu});
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
   %index by isolation quality
-%   idxIso = identify_trials_poor_isolation_SAT(unitInfo(cc), binfoSAT(kk).num_trials, 'task','SAT');
+%   idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavDataSAT(kk).num_trials, 'task','SAT');
   %index by condition
-  idxAcc = ((binfoSAT.condition{kk} == 1));% & ~idxIso);
-  idxFast = ((binfoSAT.condition{kk} == 3));% & ~idxIso);
+  idxAcc = ((behavDataSAT.condition{kk} == 1));% & ~idxIso);
+  idxFast = ((behavDataSAT.condition{kk} == 3));% & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfoSAT.err_dir{kk} | binfoSAT.err_time{kk} | binfoSAT.err_hold{kk} | binfoSAT.err_nosacc{kk});
+  idxCorr = ~(behavDataSAT.Task_ErrChoice{kk} | behavDataSAT.Task_ErrTime{kk} | behavDataSAT.Task_ErrHold{kk} | behavDataSAT.Task_ErrNoSacc{kk});
   
   %initializations
   sdf_AccStim = NaN(8,length(T_STIM));
@@ -73,7 +73,7 @@ for cc = 1:NUM_CELLS
       ylabel('Activity (sp/sec)');  xticklabels([])
     elseif (IDX_STIM_PLOT(dd) == 15)
       xlabel('Time from array (ms)');  yticklabels([])
-      print_session_unit(gca , unitInfo(cc,:), binfoSAT(kk,:), 'horizontal')
+      print_session_unit(gca , unitData(cc,:), behavDataSAT(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -92,7 +92,7 @@ for cc = 1:NUM_CELLS
     
     if (IDX_RESP_PLOT(dd) == 16)
       xlabel('Time from response (ms)');  yticklabels([])
-      print_session_unit(gca , unitInfo(cc,:), binfoSAT(kk,:), 'horizontal')
+      print_session_unit(gca , unitData(cc,:), behavDataSAT(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -101,9 +101,9 @@ for cc = 1:NUM_CELLS
   end%for:direction(dd)
   
   ppretty([16,8])
-  pause(0.1); print([ROOTDIR, unitInfo.sess{cc},'-',unitInfo.unit{cc},'.tif'], '-dtiff')
+  pause(0.1); print([ROOTDIR, unitData.Task_Session(uu),'-',unitData.unit{uu},'.tif'], '-dtiff')
   pause(0.1); close(); pause(0.1)
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%fxn:plotSDFXdirSAT()

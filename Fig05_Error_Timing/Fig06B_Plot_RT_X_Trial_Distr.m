@@ -1,12 +1,12 @@
-function [  ] = Fig06B_Plot_RT_X_Trial_Distr( binfo )
+function [  ] = Fig06B_Plot_RT_X_Trial_Distr( behavData )
 %Fig06B_Plot_RT_X_Trial_Distr Summary of this function goes here
 %   Detailed explanation goes here
 
 MIN_NUM_TRIAL = 5; %single-session min number per RT bin
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(binfo.monkey, MONKEY);
-NUM_SESS = sum(sessKeep);   binfo = binfo(sessKeep, :);
+MONKEY = {'D','E'};         sessKeep = ismember(behavData.Monkey, MONKEY);
+NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 rtStartAcc = cell(1,NUM_SESS);   rtEndAcc = cell(1,NUM_SESS);
 rtStartFast = cell(1,NUM_SESS);  rtEndFast = cell(1,NUM_SESS);
@@ -14,7 +14,7 @@ rtStartFast = cell(1,NUM_SESS);  rtEndFast = cell(1,NUM_SESS);
 dlineAcc = NaN(1,NUM_SESS);
 dlineFast = NaN(1,NUM_SESS);
 
-trialSwitch = identify_condition_switch(binfo);
+trialSwitch = identify_condition_switch(behavData);
 
 %% Collect RT on single-trial
 
@@ -23,13 +23,13 @@ for kk = 1:NUM_SESS
   jjA2F = trialSwitch.A2F{kk};
   jjF2A = trialSwitch.F2A{kk};
   
-  rtStartAcc{kk} = binfo.resptime{kk}(jjF2A);   rtEndAcc{kk} = binfo.resptime{kk}(jjA2F - 1);
-  rtStartFast{kk} = binfo.resptime{kk}(jjA2F);  rtEndFast{kk} = binfo.resptime{kk}(jjF2A - 1);
+  rtStartAcc{kk} = behavData.Sacc_RT{kk}(jjF2A);   rtEndAcc{kk} = behavData.Sacc_RT{kk}(jjA2F - 1);
+  rtStartFast{kk} = behavData.Sacc_RT{kk}(jjA2F);  rtEndFast{kk} = behavData.Sacc_RT{kk}(jjF2A - 1);
   
-  idxAcc = (binfo.condition{kk} == 1);
-  idxFast = (binfo.condition{kk} == 3);
-  dlineAcc(kk) = nanmedian(binfo.deadline{kk}(idxAcc));
-  dlineFast(kk) = nanmedian(binfo.deadline{kk}(idxFast));
+  idxAcc = (behavData.Task_Condition{kk} == 1);
+  idxFast = (behavData.Task_Condition{kk} == 3);
+  dlineAcc(kk) = nanmedian(behavData.Task_Deadline{kk}(idxAcc));
+  dlineFast(kk) = nanmedian(behavData.Task_Deadline{kk}(idxFast));
   
 end%for:sessions(kk)
 

@@ -1,18 +1,18 @@
-function [  ] = plotSDFChoiceErrXdirSAT( binfo , moves , movesPP , ninfo , nstats , spikes , varargin )
+function [  ] = plotSDFChoiceErrXdirSAT( behavData , moves , movesPP , unitData , unitData , spikes , varargin )
 %plotSDFChoiceErrXdirSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
-idxSEF = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxErr = (abs([ninfo.errGrade]) >= 1);
+idxSEF = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxErr = (abs(unitData.Basic_ErrGrade) >= 1);
 
 idxKeep = (idxSEF & idxMonkey & idxErr);
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 T_PRIMARY = 3500 + (-200 : 200); %time from primary saccade
@@ -20,8 +20,8 @@ T_SECOND  = 3500 + (-200 : 200); %time from secondary saccade
 
 IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RTPkk = double(moves(kk).resptime); %RT of primary saccade
   RTPkk(RTPkk > 900) = NaN; %hard limit on primary RT
@@ -29,16 +29,16 @@ for cc = 1:NUM_CELLS
   RTSkk(RTSkk < 0) = NaN; %trials with no secondary saccade
   
   %compute spike density function and align on primary response
-  sdfKK = compute_spike_density_fxn(spikes(cc).SAT);
+  sdfKK = compute_spike_density_fxn(spikes(uu).SAT);
   sdfKK = align_signal_on_response(sdfKK, RTPkk); 
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by condition
-  idxFast = ((binfo(kk).condition == 3) & ~idxIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %initializations
   sdf.corr.P = NaN(8,length(T_PRIMARY));    sdf.err.P = NaN(8,length(T_PRIMARY));
@@ -69,8 +69,8 @@ for cc = 1:NUM_CELLS
     plot(T_PRIMARY-3500, sdf.corr.P(dd,:), '-', 'Color',[0 .7 0], 'LineWidth',1.25);
     plot(T_PRIMARY-3500, sdf.err.P(dd,:), '--', 'Color',[0 .7 0], 'LineWidth',1.25);
     
-    plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-    plot(nstats.A_ChcErr_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+    plot(unitData.ChoiceErrorSignal_Time(2)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+    plot(unitData.ChoiceErrorSignal_Time(4)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
     
     if (IDX_DD_PLOT(dd) == 4)
       ylabel('Activity (sp/sec)')
@@ -89,13 +89,13 @@ for cc = 1:NUM_CELLS
     pause(.05)
   end%for:direction(dd)
   
-  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
   ppretty('image_size',[12,8])
 %   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/Error-Choice/SDF-PostChoiceError-xDir-FAST/', ...
-%     ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%     unitData.aArea{uu},'-',unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff')
 %   pause(0.1); close()
   pause()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%fxn:plotSDFChoiceErrXdirSAT()

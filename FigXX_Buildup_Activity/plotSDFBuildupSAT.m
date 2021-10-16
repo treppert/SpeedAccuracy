@@ -1,20 +1,20 @@
-function [ varargout ] = plotSDFBuildupSAT( binfo , moves , ninfo , nstats , spikes , varargin )
+function [ varargout ] = plotSDFBuildupSAT( behavData , moves , unitData , unitData , spikes , varargin )
 %plotSDFBuildupSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 % ROOTDIR = 'C:\Users\Tom\Dropbox\SAT\Figs-SDF-All-TaskRel';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-idxVis = ([ninfo.visGrade] >= 2);   idxMove = ([ninfo.moveGrade] >= 2);
-idxErr = ([ninfo.errGrade] >= 2);   idxRew = (abs([ninfo.rewGrade]) >= 2);
+idxVis = ([unitData.Basic_VisGrade] >= 2);   idxMove = (unitData.Basic_MovGrade >= 2);
+idxErr = (unitData.Basic_ErrGrade >= 2);   idxRew = (abs(unitData.Basic_RewGrade) >= 2);
 idxTaskRel = (idxVis | idxMove | idxErr | idxRew);
 
 idxKeep = (idxArea & idxMonkey & idxTaskRel);
 
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 NUM_CELLS = length(spikes);
 
@@ -29,75 +29,75 @@ IDX_PLOT = (1:300); %cut at time of saccade
 tmp = NaN(NUM_CELLS,length(tVec.Resp));
 sdfAll = struct('AccCorr',tmp, 'AccErr',tmp, 'FastCorr',tmp, 'FastErr',tmp);
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   RespTimeKK = double(moves(kk).resptime);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by condition
-  idxAcc = (binfo(kk).condition == 1 & ~idxIso);
-  idxFast = (binfo(kk).condition == 3 & ~idxIso);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso);
+  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (~(binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc) & binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}) & behavData.Task_ErrTime{kk});
   %index by saccade direction (relative to MF)
-  if isempty(ninfo(cc).moveField)
-    idxMF = true(1,binfo(kk).num_trials);
+  if isempty(unitData.Basic_MovField{uu})
+    idxMF = true(1,behavData.Task_NumTrials{kk});
   else
-    idxMF = ismember(moves(kk).octant, ninfo(cc).moveField);
+    idxMF = ismember(moves(kk).octant, unitData.Basic_MovField{uu});
   end
   %index by screen clear on Fast trials
-%   idxClear = logical(binfo(kk).clearDisplayFast);
+%   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   
   %get single-trials SDFs
   trials = struct('AccCorr',find(idxAcc & idxCorr & idxMF), 'AccErr',find(idxAcc & idxErr & idxMF), ...
     'FastCorr',find(idxFast & idxCorr & idxMF), 'FastErr',find(idxFast & idxErr & idxMF));
   
   %compute mean SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RespTimeKK, spikes(cc).SAT, trials, tVec);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RespTimeKK, spikes(uu).SAT, trials, tVec);
   sdfMeanAcc = computeMeanSDF( sdfAccST );
   sdfMeanFast = computeMeanSDF( sdfFastST );
     
   %% Parameterize the SDF
-  ccNS = ninfo(cc).unitNum;
+  uuNS = unitData.aIndex(uu);
   
   %discharge rate at saccade initiation
-%   nstats(ccNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
-%   nstats(ccNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
+%   unitData(uuNS).A_Buildup_Threshold_AccCorr = mean(sdfMeanAcc.Resp.Corr(IDX_EST_THRESH));
+%   unitData(uuNS).A_Buildup_Threshold_AccErr = mean(sdfMeanAcc.Resp.Err(IDX_EST_THRESH));
+%   unitData(uuNS).A_Buildup_Threshold_FastCorr = mean(sdfMeanFast.Resp.Corr(IDX_EST_THRESH));
+%   unitData(uuNS).A_Buildup_Threshold_FastErr = mean(sdfMeanFast.Resp.Err(IDX_EST_THRESH));
   
   %normalization factor
-%   nstats(ccNS).NormFactor_Move = max(sdfMeanFast.Resp.Corr);
+%   unitData(uuNS).NormFactor_Move = max(sdfMeanFast.Resp.Corr);
   
   %plot individual cell activity
-%   plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, ninfo(cc), nstats(ccNS), IDX_PLOT)
-%   print([ROOTDIR, ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+%   plotSDFcc(tVec, sdfMeanAcc, sdfMeanFast, unitData(uu,:), unitData(uuNS), IDX_PLOT)
+%   print([ROOTDIR, unitData.aArea{uu},'-',unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff')
 %   pause(0.05); close()
   
   sdfAll.AccCorr(cc,:) = sdfMeanAcc.Resp.Corr;
   sdfAll.AccErr(cc,:) =  sdfMeanAcc.Resp.Err;
   sdfAll.FastCorr(cc,:) = sdfMeanFast.Resp.Corr;
   sdfAll.FastErr(cc,:) =  sdfMeanFast.Resp.Err;
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = nstats;
+  varargout{1} = unitData;
 end
 
 %% Plotting - Across neurons
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
 
 NSEM_FAST_ERR = sum(~isnan(sdfAll.FastErr(:,1)));
 NSEM_ACC_ERR = sum(~isnan(sdfAll.AccErr(:,1)));
 
 %normalization
-for cc = 1:NUM_CELLS
+for uu = 1:NUM_CELLS
 %   normFactor = max(sdfAll.FastCorr(cc,:));
-  normFactor = nstats(cc).NormFactor_Move;
+  normFactor = unitData(uu).NormFactor_Move;
   sdfAll.AccCorr(cc,:) = sdfAll.AccCorr(cc,:) / normFactor;
   sdfAll.FastCorr(cc,:) = sdfAll.FastCorr(cc,:) / normFactor;
   sdfAll.AccErr(cc,:) = sdfAll.AccErr(cc,:) / normFactor;
@@ -171,7 +171,7 @@ end
 
 end%util:computeMeanSDF()
 
-function [ ] = plotSDFcc( tVec , sdfAcc , sdfFast , ninfo , nstats , IDX_PLOT )
+function [ ] = plotSDFcc( tVec , sdfAcc , sdfFast , unitData , unitData , IDX_PLOT )
 %plotSDFcc Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -194,7 +194,7 @@ yLim = [min(tmp) max(tmp)];
 % 
 % xlabel('Time from array (ms)'); xlim([tVec.Stim(1) tVec.Stim(end)])
 % ylabel('Activity (sp/sec)')
-% print_session_unit(gca , ninfo,[])
+% print_session_unit(gca , unitData,[])
 
 % subplot(1,2,2); hold on %buildup activity
 figure(); hold on
@@ -207,10 +207,10 @@ plot(tVec.Resp, sdfFast.Resp.Err(IDX_PLOT), ':', 'Color',[0 .7 0], 'LineWidth',1
 
 xlim([tVec.Resp(1) 25])
 xlabel('Time from response (ms)')
-print_session_unit(gca , ninfo, [], 'horizontal')
+print_session_unit(gca , unitData, [], 'horizontal')
 
-title(['Acc=', num2str(nstats.A_Buildup_Threshold_AccCorr), '   Fast=', ...
-  num2str(nstats.A_Buildup_Threshold_FastCorr), ' sp/s'], 'FontSize',8)
+title(['Acc=', num2str(unitData.Buildup_Correct(1)), '   Fast=', ...
+  num2str(unitData.Buildup_Correct(2)), ' sp/s'], 'FontSize',8)
 
 ppretty([6,3],'yRight')
 

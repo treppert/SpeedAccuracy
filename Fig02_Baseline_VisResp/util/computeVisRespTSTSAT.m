@@ -1,4 +1,4 @@
-function [ TSTAcc , TSTFast , varargout ] = computeVisRespTSTSAT(sdfVRAcc, sdfVRFast, nstats, offset)
+function [ TSTAcc , TSTFast , varargout ] = computeVisRespTSTSAT(sdfVRAcc, sdfVRFast, unitData, offset)
 %computeVisRespTSTSAT Summary of this function goes here
 %   Detailed explanation goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
@@ -7,7 +7,7 @@ function [ TSTAcc , TSTFast , varargout ] = computeVisRespTSTSAT(sdfVRAcc, sdfVR
 %   timestamps of significant diff. from the U-test
 % 
 
-MIN_TST = min([nstats.VRlatAcc, nstats.VRlatFast]) + 10; %min acceptable TST (re. VR latency)
+MIN_TST = min([unitData.VRlatAcc, unitData.VRlatFast]) + 10; %min acceptable TST (re. VR latency)
 
 sdfVRAcc.Tin = sdfVRAcc.Tin(:,offset+MIN_TST+1:end); %only consider time points beyond VR initiation
 sdfVRAcc.Din = sdfVRAcc.Din(:,offset+MIN_TST+1:end);

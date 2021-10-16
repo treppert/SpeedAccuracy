@@ -1,25 +1,25 @@
-function [ ] = plotDistrBuildupThresholdSAT( ninfo , nstats , varargin )
+function [ ] = plotDistrBuildupThresholdSAT( unitData , unitData , varargin )
 %plotDistrBuildupThresholdSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOTDIR_STAT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Stats\';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxMove = ([ninfo.moveGrade] >= 2);
-idxEfficiency = ([ninfo.taskType] == 1);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxMove = (unitData.Basic_MovGrade >= 2);
+idxEfficiency = (unitData.Task_LevelDifficulty == 1);
 
 idxKeep = (idxArea & idxMonkey & idxMove);
 
-ninfo = ninfo(idxKeep);
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
+unitData = unitData(idxKeep);
 NUM_CELLS = sum(idxKeep);
 
-threshAccCorr =  [nstats.A_Buildup_Threshold_AccCorr];
-threshAccErr =  [nstats.A_Buildup_Threshold_AccErr];
-threshFastCorr = [nstats.A_Buildup_Threshold_FastCorr];
-threshFastErr = [nstats.A_Buildup_Threshold_FastErr];
+threshAccCorr =  [unitData.Buildup_Correct(1)];
+threshAccErr =  [unitData.Buildup_Error(1)];
+threshFastCorr = [unitData.Buildup_Correct(2)];
+threshFastErr = [unitData.Buildup_Error(2)];
 
 %% Plots of absolute values
 meanAccCorr = nanmean(threshAccCorr);      SEAccCorr = nanstd(threshAccCorr)/sqrt(NUM_CELLS);
@@ -60,9 +60,9 @@ if (length(args.monkey) > 1) %don't save stats for single monkeys
   Outcome = cell(2*NUM_CELLS,1); Outcome(1:NUM_CELLS) = {'Correct'}; Outcome(NUM_CELLS+1:end) = {'Error'}; Outcome = [Outcome; Outcome];
   Threshold = [threshAccCorr threshAccErr threshFastCorr threshFastErr]';
   structOut = struct('Neuron',Neuron', 'Parameter',Threshold');
-  for cc = 1:(4*NUM_CELLS)
-    structOut.Condition(cc) = Condition(cc);
-    structOut.Efficiency(cc) = Outcome(cc);
+  for uu = 1:(4*NUM_CELLS)
+    structOut.Condition(uu) = Condition(uu);
+    structOut.Efficiency(uu) = Outcome(uu);
   end
   save([ROOTDIR_STAT, args.area,'-BuildupActivity.mat'], 'structOut')
 end

@@ -1,25 +1,25 @@
-function [ binfo ] = index_timing_errors_SAT( binfo )
+function [ behavData ] = index_timing_errors_SAT( behavData )
 %index_timing_errors_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESSION = length(binfo);
+NUM_SESSION = length(behavData);
 
 MAX_DLINE_FAST = 600; %enforce a hard deadline on the Fast condition
 
 for kk = 1:NUM_SESSION
   
-%   ierr_dir = info(kk).err_dir;
-  deadline = binfo(kk).deadline;
+%   ierr_dir = info(kk).Task_ErrChoice;
+  deadline = behavData.Task_Deadline{kk};
   
-  idx_acc = (binfo(kk).condition == 1);
-  idx_fast = (binfo(kk).condition == 3);
+  idx_acc = (behavData.Task_SATCondition{kk} == 1);
+  idx_fast = (behavData.Task_SATCondition{kk} == 3);
   
-  resptime = binfo(kk).resptime;
+  resptime = behavData.Sacc_RT{kk};
   
   ierr_time_Fast = (idx_fast & ((resptime > deadline) | (resptime > MAX_DLINE_FAST)));
   ierr_time_Acc = (idx_acc & (resptime < deadline));
   
-  binfo(kk).err_time(ierr_time_Fast | ierr_time_Acc) = true;
+  behavData.Task_ErrTime{kk}(ierr_time_Fast | ierr_time_Acc) = true;
   
 end%for:session(kk)
 

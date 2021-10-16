@@ -1,4 +1,4 @@
-function [ varargout ] = testTErrVSisi( binfo , moves , movesPP , ninfo , nstats , varargin )
+function [ varargout ] = testTErrVSisi( behavData , moves , movesPP , unitData , unitData , varargin )
 %testTErrVSisi This function computes the ratio of the difference in time
 %of error encoding vs. the difference in ISI, for two groups comprised of
 %Short and Long ISI. If the ratio is above a pre-determined threshold, then
@@ -8,31 +8,31 @@ function [ varargout ] = testTErrVSisi( binfo , moves , movesPP , ninfo , nstats
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxErrorGrade = ((abs([ninfo.errGrade]) >= 0.5) & ~isnan([nstats.A_ChcErr_tErr_ISIshort]));
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxErrorGrade = ((abs(unitData.Basic_ErrGrade) >= 0.5) & ~isnan([unitData.A_ChcErr_tErr_ISIshort]));
 
 idxKeep = (idxArea & idxMonkey & idxErrorGrade);
 
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 
-NUM_CELLS = length(ninfo);
+NUM_CELLS = length(unitData);
 medISI_ISIsh = NaN(1,NUM_CELLS); %median ISI for short-ISI group
 medISI_ISIlo = NaN(1,NUM_CELLS); %median ISI for long-ISI group
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RTkk = double(moves(kk).resptime);
   ISIkk = double(movesPP(kk).resptime) - RTkk;
   ISIkk(ISIkk < 0) = NaN;
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by condition
-  idxFast = (binfo(kk).condition == 3 & ~idxIso);
+  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %index by ISI
   ISI_FastErr = ISIkk(idxFast & idxErr);
@@ -40,21 +40,21 @@ for cc = 1:NUM_CELLS
   idxISIsh = (ISI_FastErr <= medISI_FastErr);
   idxISIlo = (ISI_FastErr >  medISI_FastErr);
   
-  medISI_ISIsh(cc) = median(ISI_FastErr(idxISIsh));
-  medISI_ISIlo(cc) = median(ISI_FastErr(idxISIlo));
+  medISI_ISIsh(uu) = median(ISI_FastErr(idxISIsh));
+  medISI_ISIlo(uu) = median(ISI_FastErr(idxISIlo));
   
-  ccNS = ninfo(cc).unitNum;
-  dtErr_ccNS = nstats(ccNS).A_ChcErr_tErr_ISIlong - nstats(ccNS).A_ChcErr_tErr_ISIshort;
-  dtISI = medISI_ISIlo(cc) - medISI_ISIsh(cc);
-  nstats(ccNS).A_ChcErr_dtErr_vs_dISI = dtErr_ccNS / dtISI;
+  uuNS = unitData.aIndex(uu);
+  dtErr_uuNS = unitData(uuNS).A_ChcErr_tErr_ISIlong - unitData(uuNS).A_ChcErr_tErr_ISIshort;
+  dtISI = medISI_ISIlo(uu) - medISI_ISIsh(uu);
+  unitData(uuNS).A_ChcErr_dtErr_vs_dISI = dtErr_uuNS / dtISI;
   
-end%for:neuron(cc)
+end%for:neuron(uu)
 
 dISI = medISI_ISIlo - medISI_ISIsh;
-dTErr = [nstats(idxKeep).A_ChcErr_tErr_ISIlong] - [nstats(idxKeep).A_ChcErr_tErr_ISIshort];
+dTErr = [unitData(idxKeep).A_ChcErr_tErr_ISIlong] - [unitData(idxKeep).A_ChcErr_tErr_ISIshort];
 
 if (nargout > 0)
-  varargout{1} = nstats;
+  varargout{1} = unitData;
 end
 %% Plotting
 

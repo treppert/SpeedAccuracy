@@ -16,8 +16,8 @@ for kk = 1:NUM_SESSION
   
   if (num_F2A < MIN_NUM_TRIALS); continue; end
   
-  idx_err = find(info(kk).err_time);
-  idx_corr = find(~info(kk).err_time);
+  idx_err = find(info(kk).Task_ErrTime);
+  idx_corr = find(~info(kk).Task_ErrTime);
   
 %   err_RT = moves(kk).resptime - info(kk).tgt_dline;
 %   idx_err = find(err_RT < -25);

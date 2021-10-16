@@ -24,8 +24,8 @@ for kk = 1:NUM_SESSION
   
   resptime = double(moves(kk).resptime);
   
-  idx_errdir = info(kk).err_dir & ~info(kk).err_time;
-  idx_corr = ~(info(kk).err_dir | info(kk).err_hold | info(kk).err_nosacc | info(kk).err_time);
+  idx_errdir = info(kk).Task_ErrChoice & ~info(kk).Task_ErrTime;
+  idx_corr = ~(info(kk).Task_ErrChoice | info(kk).Task_ErrHold | info(kk).Task_ErrNoSacc | info(kk).Task_ErrTime);
   
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);

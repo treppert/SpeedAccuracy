@@ -1,4 +1,4 @@
-function [  ] = barplot_RT_SAT( binfo , moves )
+function [  ] = barplot_RT_SAT( behavData , moves )
 %compute_avg_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,9 +13,9 @@ RTntrl = new_struct({'corr','errdir'}, 'dim',[1,NUM_SESSIONS]);
 for kk = 1:NUM_SESSIONS
   
   %index by condition
-  idx_acc = (binfo(kk).condition == 1);
-  idx_fast = (binfo(kk).condition == 3);
-  idx_ntrl = (binfo(kk).condition == 4);
+  idx_acc = (behavData.Task_SATCondition{kk} == 1);
+  idx_fast = (behavData.Task_SATCondition{kk} == 3);
+  idx_ntrl = (behavData.Task_SATCondition{kk} == 4);
   
   RT_kk = double(moves(kk).resptime);
   
@@ -24,8 +24,8 @@ for kk = 1:NUM_SESSIONS
   RT(kk).ntrl = nanmean(RT_kk(idx_ntrl));
   
   %index by trial outcome
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idx_errdir = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idx_corr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idx_errdir = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %control for choice error direction
   [idx_errdir, idx_corr] = equate_respdir_err_vs_corr(idx_errdir, idx_corr, moves(kk).octant);

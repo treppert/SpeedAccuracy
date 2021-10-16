@@ -14,8 +14,8 @@ for kk = 1:NUM_SESSION
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);
   
-  ierr_dir = info(kk).err_dir;
-  ierr_time = info(kk).err_time;
+  ierr_dir = info(kk).Task_ErrChoice;
+  ierr_time = info(kk).Task_ErrTime;
   
   vigor_A(kk) = nanmean(moves(kk).vigor(idx_acc));
   vigor_F(kk) = nanmean(moves(kk).vigor(idx_fast));
@@ -45,8 +45,8 @@ for kk = 1:NUM_SESSION
   idx_acc = (info(kk).condition == 1);
   idx_fast = (info(kk).condition == 3);
   
-  idx_corr = ~(info(kk).err_dir | info(kk).err_hold);
-  idx_errdir = info(kk).err_dir;
+  idx_corr = ~(info(kk).Task_ErrChoice | info(kk).Task_ErrHold);
+  idx_errdir = info(kk).Task_ErrChoice;
 
   vigor_corr_A(kk) = nanmean(moves(kk).vigor(idx_corr & idx_acc));
   vigor_corr_F(kk) = nanmean(moves(kk).vigor(idx_corr & idx_fast));

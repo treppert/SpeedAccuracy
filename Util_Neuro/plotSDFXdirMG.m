@@ -1,14 +1,14 @@
-function [  ] = plotSDFXdirMG( binfo , moves , ninfo , spikes , varargin )
+function [  ] = plotSDFXdirMG( behavData , moves , unitData , spikes , varargin )
 %plotSDFXdirMG() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Figs\1-Classification\SDFXdir-MG\';
 
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-ninfo = ninfo(idxArea & idxMonkey);
+unitData = unitData(idxArea & idxMonkey);
 spikes = spikes(idxArea & idxMonkey);
 
 MIN_RT = 550; %enforce hard minimum on MG RT
@@ -20,19 +20,19 @@ T_RESP = 3500 + (-400 : 400);
 IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   RTkk = double(moves(kk).resptime);
   
   %compute spike density function and align on primary response
-  sdfKKstim = compute_spike_density_fxn(spikes(cc).MG);
+  sdfKKstim = compute_spike_density_fxn(spikes(uu).MG);
   sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials, 'task','MG');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','MG');
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   %index by hard min RT
   idxRT = (RTkk >= MIN_RT);
   
@@ -65,7 +65,7 @@ for cc = 1:NUM_CELLS
       ylabel('Activity (sp/sec)');  xticklabels([])
     elseif (IDX_STIM_PLOT(dd) == 15)
       xlabel('Time from array (ms)');  yticklabels([])
-      print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+      print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -82,7 +82,7 @@ for cc = 1:NUM_CELLS
     
     if (IDX_RESP_PLOT(dd) == 16)
       xlabel('Time from response (ms)');  yticklabels([])
-      print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+      print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -91,9 +91,9 @@ for cc = 1:NUM_CELLS
   end%for:direction(dd)
   
   ppretty([16,8])
-  print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'.tif'], '-dtiff')
+  print([ROOTDIR, unitData.Task_Session(uu),'-',unitData.aID{uu},'.tif'], '-dtiff')
   pause(0.1); close(); pause(0.1)
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%fxn:plotSDFXdirMG()

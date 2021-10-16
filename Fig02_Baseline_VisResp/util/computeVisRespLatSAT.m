@@ -1,4 +1,4 @@
-function [ VRlatAcc , VRlatFast ] = computeVisRespLatSAT(sdfVRAcc, sdfVRFast, nstats, offset)
+function [ VRlatAcc , VRlatFast ] = computeVisRespLatSAT(sdfVRAcc, sdfVRFast, unitData, offset)
 %computeVisRespLatSAT Summary of this function goes here
 %   Detailed explanation goes here
 %   sdfVRAcc - Single-trial visual response SDFs in the Accurate condition
@@ -10,8 +10,8 @@ MIN_DURATION = 50; %minimum duration (ms) of the response
 CUTOFF = [3, 6]; %number of SDs above mean baseline firing rate
 
 %compute threshold/cutoff values based on baseline activity
-cutoffAcc = nstats.blineAccMEAN + CUTOFF * nstats.blineAccSD;
-cutoffFast = nstats.blineFastMEAN + CUTOFF * nstats.blineFastSD;
+cutoffAcc = unitData.Baseline_Mean(1) + CUTOFF * unitData.Baseline_SD(1);
+cutoffFast = unitData.Baseline_Mean(2) + CUTOFF * unitData.Baseline_SD(2);
 
 %use trials for both Target In and Distractor In to compute latency
 sdfVRAcc = [sdfVRAcc.Tin ; sdfVRAcc.Din];

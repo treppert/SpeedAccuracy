@@ -1,17 +1,17 @@
-function [ varargout ] = plotSDFChoiceErrSAT( behavInfo , primarySacc , secondSacc , unitInfo , unitStats , spikes )
+function [ varargout ] = plotSDFChoiceErrSAT( behavData , primarySacc , secondSacc , unitData , unitData , spikes )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\';
 
-idxArea = ismember(unitInfo.area, {'SEF'});
-idxMonkey = ismember(unitInfo.monkey, {'D','E'});
-idxErrUnit = (unitInfo.errGrade >= 2);
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxErrUnit = (unitData.Basic_ErrGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxErrUnit);
 
 NUM_CELLS = sum(idxKeep);
-unitInfo = unitInfo(idxKeep,:);
-unitStats = unitStats(idxKeep,:);
+unitData = unitData(idxKeep,:);
+unitData = unitData(idxKeep,:);
 spikes = spikes(idxKeep);
 
 TIME.PRIMARY = 3500 + (-300 : 500); OFFSET = 300; %time from primary saccade
@@ -22,9 +22,9 @@ sdfAcc = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS])
 sdfAcc = struct('Corr',sdfAcc, 'Err',sdfAcc);
 sdfFast = sdfAcc;
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.unit{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   RT_Primary_kk = primarySacc.resptime{kk};
   RT_Primary_kk(RT_Primary_kk > 900) = NaN; %hard limit on primary RT
@@ -32,21 +32,21 @@ for cc = 1:NUM_CELLS
   RT_Second_kk(RT_Second_kk < 0) = NaN; %trials with no secondary saccade
   
   %prepare event-aligned SDFs
-  SDF_FromArray = compute_spike_density_fxn(spikes{cc});
+  SDF_FromArray = compute_spike_density_fxn(spikes{uu});
   SDF_FromPrimary = align_signal_on_response(SDF_FromArray, RT_Primary_kk);
   SDF_FromSecond  = align_signal_on_response(SDF_FromArray, RT_Second_kk);
   
   %index by isolation quality
-  idxPoorIso = identify_trials_poor_isolation_SAT(unitInfo(cc), behavInfo(kk).num_trials, 'task','SAT');
+  idxPoorIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by second saccade endpoint
   idxSS2Tgt = (secondSacc.endpt{kk} == 1);
   idxSS2Distr = (secondSacc.endpt{kk} == 2);
   %index by condition
-  idxAcc = ((behavInfo(kk).condition == 1) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
-  idxFast = ((behavInfo(kk).condition == 3) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
   %index by trial outcome
-  idxCorr = ~(behavInfo(kk).err_dir | behavInfo(kk).err_time | behavInfo(kk).err_hold | behavInfo(kk).err_nosacc);
-  idxErrChc = (behavInfo(kk).err_dir & ~behavInfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData(kk).Task_ErrHold | behavData(kk).Task_ErrNoSacc);
+  idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   
   %set "ISI" on correct trials as median ISI of choice error trials
 %   ISI_kk(idxFast & idxCorr) = round(nanmedian(ISI_kk(idxFast & idxErrChc)));
@@ -57,23 +57,23 @@ for cc = 1:NUM_CELLS
   [Trials.FastCorr, Trials.FastErr] = matchRT_Correct_Error(RT_Primary_kk, idxFast, idxCorr, idxErrChc);
   
   %get single-trials SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RT_Primary_kk, RT_Second_kk, spikes(cc).SAT, trials, TIME);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RT_Primary_kk, RT_Second_kk, spikes(uu).SAT, trials, TIME);
   
   %compute mean SDFs
-  [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
-  [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
-  sdfCombined = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
+  [sdfAcc.Corr(uu),sdfAcc.Err(uu)] = computeMeanSDF( sdfAccST );
+  [sdfFast.Corr(uu),sdfFast.Err(uu)] = computeMeanSDF( sdfFastST );
+  sdfCombined = struct('AccCorr',sdfAcc.Corr(uu), 'AccErr',sdfAcc.Err(uu), 'FastCorr',sdfFast.Corr(uu), 'FastErr',sdfFast.Err(uu));
     
   %% Parameterize the SDF
-  ccStats = unitInfo(cc).unitNum;
+  uuStats = unitData.aIndex(uu);
   
   %plot individual cell activity
-  plotSDF_UnitCC(TIME, sdfCombined, unitInfo(cc,:), nstats(ccStats))
+  plotSDF_UnitCC(TIME, sdfCombined, unitData(cc,:), unitData(uuStats,:))
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = unitStats;
+  varargout{1} = unitData;
 end
 
 end%fxn:plotSDFChoiceErrSAT()
@@ -117,7 +117,7 @@ sdfErr.ReSecondary = nanmean(sdfSingleTrial.Err.ReSecondary)';
 end%util:computeMeanSDF()
 
 
-function [ ] = plotSDF_UnitCC( TIME , sdfPlot , ninfo , nstats )
+function [ ] = plotSDF_UnitCC( TIME , sdfPlot , unitData , unitData )
 %plotSDF_UnitCC Summary of this function goes here
 % 
 
@@ -133,10 +133,10 @@ subplot(2,2,1); hold on %from primary saccade
 plot([0 0], yLim, 'k:')
 plot(TIME.PRIMARY-3500, sdfPlot.FastCorr.RePrimary, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(TIME.PRIMARY-3500, sdfPlot.FastErr.RePrimary, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErr_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(2)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
-print_session_unit(gca , ninfo,[])
+print_session_unit(gca , unitData,[])
 
 subplot(2,2,2); hold on %from second saccade
 plot([0 0], yLim, 'k:')
@@ -151,7 +151,7 @@ subplot(2,2,3); hold on %from primary saccade
 plot([0 0], yLim, 'k:')
 plot(TIME.PRIMARY-3500, sdfPlot.AccCorr.RePrimary, '-', 'Color',[1 0 0], 'LineWidth',1.0)
 plot(TIME.PRIMARY-3500, sdfPlot.AccErr.RePrimary, ':', 'Color',[1 0 0], 'LineWidth',1.0)
-plot(nstats.A_ChcErr_tErr_Acc*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
+plot(unitData.ChoiceErrorSignal_Time(1)*ones(1,2), yLim, ':', 'Color',[1 0 0], 'LineWidth',1.0)
 xlim([TIME.PRIMARY(1) TIME.PRIMARY(end)]-3500); xticks((TIME.PRIMARY(1):50:TIME.PRIMARY(end))-3500)
 ylabel('Activity (sp/sec)')
 xlabel('Time from primary saccade (ms)')

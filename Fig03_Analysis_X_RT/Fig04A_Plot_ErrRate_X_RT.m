@@ -1,15 +1,15 @@
-function [ ] = Fig04A_Plot_ErrRate_X_RT( binfo , pSacc )
+function [ ] = Fig04A_Plot_ErrRate_X_RT( behavData , pSacc )
 %Fig04A_Plot_ErrRate_X_RT Summary of this function goes here
 %   Inputs
-%     binfo - binfoSAT
+%     behavData - behavDataSAT
 %     pSacc - primarySaccade
 
 MONKEY = {'D','E'};
 MIN_NUM_TRIAL = 5; %min number of trials per bin
 
 %isolate sessions from MONKEY
-sessKeep = ismember(binfo.monkey, MONKEY);
-binfo = binfo(sessKeep, :);
+sessKeep = ismember(behavData.Monkey, MONKEY);
+behavData = behavData(sessKeep, :);
 pSacc = pSacc(sessKeep, :);
 NUM_SESS = sum(sessKeep);
 
@@ -21,13 +21,13 @@ chcErrRateFast = NaN(NUM_SESS,NBIN_FAST);
 
 for kk = 1:NUM_SESS
   %RT from deadline
-  rtKK = double(pSacc.resptime{kk}) - double(binfo.deadline{kk});
+  rtKK = double(pSacc.resptime{kk}) - double(behavData.Task_Deadline{kk});
   
   %index by condition
-  idxAcc = (binfo.condition{kk} == 1);
-  idxFast = (binfo.condition{kk} == 3);
+  idxAcc = (behavData.Task_Condition{kk} == 1);
+  idxFast = (behavData.Task_Condition{kk} == 3);
   %index by trial outcome
-  idxErrChc = binfo.err_dir{kk};
+  idxErrChc = behavData.Task_ErrChoice{kk};
   
   for ii = 1:NBIN_ACC %loop over Time Err bins -- Accurate
     idxII = ((rtKK > RT_ACC(ii)) & (rtKK <= RT_ACC(ii+1)));

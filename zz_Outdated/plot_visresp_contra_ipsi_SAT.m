@@ -1,4 +1,4 @@
-function [ ] = plot_visresp_contra_ipsi_SAT( spikes , ninfo , binfo , moves )
+function [ ] = plot_visresp_contra_ipsi_SAT( spikes , unitData , behavData , moves )
 %plot_visresp_contra_ipsi_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -15,27 +15,27 @@ NUM_CELLS = length(spikes);
 VR_MG = struct('in',NaN(NUM_CELLS,NUM_SAMP), 'out',NaN(NUM_CELLS,NUM_SAMP));
 VR_SAT = struct('in',NaN(NUM_CELLS,NUM_SAMP), 'out',NaN(NUM_CELLS,NUM_SAMP));
 
-for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
+for uu = 1:NUM_CELLS
+  if (unitData.Basic_VisGrade{uu} < MIN_GRADE); continue; end
   
   %get session number corresponding to behavioral data
-  kk = ismember({binfo.SAT.session}, ninfo(cc).sess);
+  kk = ismember({behavData.SAT.session}, unitData.Task_Session(uu));
   
   %index by isolation quality (SAT)
-  idxIsoSAT = identify_trials_poor_isolation_SAT(ninfo(cc), binfo.SAT(kk).num_trials);
+  idxIsoSAT = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.SAT(kk).num_trials);
   %index by condition (SAT)
-%   idxCondSAT = ((binfo.SAT(kk).condition == 1) | (binfo.SAT(kk).condition == 3));
-  idxCondSAT = (binfo.SAT(kk).condition == 3);
+%   idxCondSAT = ((behavData.SAT(kk).condition == 1) | (behavData.SAT(kk).condition == 3));
+  idxCondSAT = (behavData.SAT(kk).condition == 3);
   
   %index by trial outcome
-  idxCorrMG = ~(binfo.MG(kk).err_dir | binfo.MG(kk).err_hold | binfo.MG(kk).err_nosacc);
-  idxCorrSAT = ~(binfo.SAT(kk).err_dir | binfo.SAT(kk).err_time | binfo.SAT(kk).err_hold);
+  idxCorrMG = ~(behavData.MG(kk).Task_ErrChoice | behavData.MG(kk).Task_ErrHold | behavData.MG(kk).Task_ErrNoSacc);
+  idxCorrSAT = ~(behavData.SAT(kk).Task_ErrChoice | behavData.SAT(kk).Task_ErrTime | behavData.SAT(kk).Task_ErrHold);
   
   %get location of RF by hemifield
-  if strcmp(binfo.SAT(kk).session(1), 'D')
+  if strcmp(behavData.SAT(kk).session(1), 'D')
     LOC_RF_IN = [4 5 6];
     LOC_RF_OUT = [1 2 8];
-  elseif strcmp(binfo.SAT(kk).session(1), 'E')
+  elseif strcmp(behavData.SAT(kk).session(1), 'E')
     LOC_RF_OUT = [4 5 6];
     LOC_RF_IN = [1 2 8];
   end
@@ -47,10 +47,10 @@ for cc = 1:NUM_CELLS
   idxOutSAT = ismember(moves.SAT(kk).octant, LOC_RF_OUT);
   
   %compute SDF
-  sdfInMGcc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxInMG));
-  sdfOutMGcc = compute_spike_density_fxn(spikes(cc).MG(idxCorrMG & idxOutMG));
-  sdfInSATcc = compute_spike_density_fxn(spikes(cc).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxInSAT));
-  sdfOutSATcc = compute_spike_density_fxn(spikes(cc).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxOutSAT));
+  sdfInMGcc = compute_spike_density_fxn(spikes(uu).MG(idxCorrMG & idxInMG));
+  sdfOutMGcc = compute_spike_density_fxn(spikes(uu).MG(idxCorrMG & idxOutMG));
+  sdfInSATcc = compute_spike_density_fxn(spikes(uu).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxInSAT));
+  sdfOutSATcc = compute_spike_density_fxn(spikes(uu).SAT(~idxIsoSAT & idxCondSAT & idxCorrSAT & idxOutSAT));
   
   %save SDF
   VR_MG.in(cc,:) = nanmean(sdfInMGcc(:,3500+TIME_PLOT));
@@ -58,13 +58,13 @@ for cc = 1:NUM_CELLS
   VR_SAT.in(cc,:) = nanmean(sdfInSATcc(:,3500+TIME_PLOT));
   VR_SAT.out(cc,:) = nanmean(sdfOutSATcc(:,3500+TIME_PLOT));
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 
 %% Plotting -- Individual neurons
 if (PLOT_INDIV_CELLS)
-for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
+for uu = 1:NUM_CELLS
+  if (unitData.Basic_VisGrade{uu} < MIN_GRADE); continue; end
   
   tmp = [VR_MG.in(cc,:), VR_MG.out(cc,:), VR_SAT.in(cc,:), VR_SAT.out(cc,:)];
   limLin = [min(tmp), max(tmp)];
@@ -77,7 +77,7 @@ for cc = 1:NUM_CELLS
   plot(TIME_PLOT, VR_MG.in(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',1.25)
   plot(TIME_PLOT, VR_MG.out(cc,:), '-', 'Color',[.5 .5 .5], 'LineWidth',0.75)
   
-  print_session_unit(gca , ninfo(cc))
+  print_session_unit(gca , unitData(uu,:))
   
   subplot(1,2,2); hold on
   
@@ -89,20 +89,20 @@ for cc = 1:NUM_CELLS
   
   pause(0.5)
   
-end%for:cells(cc)
+end%for:cells(uu)
 end%if:PLOT-INDIV-CELLS
 
 %% Plotting -- All neurons
-NUM_SEM = sum([ninfo.vis] >= MIN_GRADE);
+NUM_SEM = sum([unitData.Basic_VisGrade] >= MIN_GRADE);
 
 %compute the normalization factor for each cell
 aNormMG = NaN(1,NUM_CELLS);
 aNormSAT = NaN(1,NUM_CELLS);
-for cc = 1:NUM_CELLS
-  if (ninfo(cc).vis < MIN_GRADE); continue; end
-  aNormMG(cc) = max(VR_MG.in(cc,:));
-  aNormSAT(cc) = max(VR_SAT.in(cc,:));
-end%for:cells(cc)
+for uu = 1:NUM_CELLS
+  if (unitData.Basic_VisGrade{uu} < MIN_GRADE); continue; end
+  aNormMG(uu) = max(VR_MG.in(cc,:));
+  aNormSAT(uu) = max(VR_SAT.in(cc,:));
+end%for:cells(uu)
 
 %normalize all SDFs
 VR_MG.in = VR_MG.in ./ aNormMG';

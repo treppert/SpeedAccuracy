@@ -8,8 +8,8 @@ NUM_TRIAL = info_kk.num_trials;
 
 idx_acc = (info_kk.condition == 1);
 
-idx_corr = ~(info_kk.err_dir | info_kk.err_time);
-idx_errtime = (~info_kk.err_dir & info_kk.err_time);
+idx_corr = ~(info_kk.Task_ErrChoice | info_kk.Task_ErrTime);
+idx_errtime = (~info_kk.Task_ErrChoice & info_kk.Task_ErrTime);
 
 [~,t_rew] = determine_time_reward_SAT(info_kk, moves_kk);
 t_rew = t_rew{1};

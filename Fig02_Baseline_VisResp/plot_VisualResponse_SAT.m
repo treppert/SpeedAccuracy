@@ -1,19 +1,19 @@
-function [ varargout ] = plot_VisualResponse_SAT( bInfo , unitInfo , unitStats , spikes )
+function [ varargout ] = plot_VisualResponse_SAT( behavData , unitData , unitData , spikes )
 %plot_VisualResponse_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 AREA_TEST = 'FEF';
 DIR_PRINT = ['C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Figs-VisResp-', AREA_TEST, '\'];
 
-idxArea = ismember(unitInfo.area, {AREA_TEST});
-idxMonkey = ismember(unitInfo.monkey, {'D','E','Q','S'});
-idxVisUnit = (unitInfo.visGrade >= 2);
+idxArea = ismember(unitData.aArea, {AREA_TEST});
+idxMonkey = ismember(unitData.aMonkey, {'D','E','Q','S'});
+idxVisUnit = (unitData.Basic_VisGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
 
 NUM_CELLS = sum(idxKeep);
 spikes = spikes(idxKeep);
-unitInfo = unitInfo(idxKeep,:);
-% unitStats = unitStats(idxKeep,:);
+unitData = unitData(idxKeep,:);
+% unitData = unitData(idxKeep,:);
 
 T_STIM = 3500 + (0 : 400);  OFFSET = 0;
 NUM_SAMP = length(T_STIM);
@@ -21,25 +21,25 @@ NUM_SAMP = length(T_STIM);
 sdf_AccTgt = NaN(NUM_CELLS, NUM_SAMP);    sdf_FastTgt = NaN(NUM_CELLS, NUM_SAMP);
 sdf_AccDistr = NaN(NUM_CELLS, NUM_SAMP);  sdf_FastDistr = NaN(NUM_CELLS, NUM_SAMP);
 
-for cc = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitInfo.sess{cc}, unitInfo.unit{cc})
-  kk = ismember(bInfo.session, unitInfo.sess{cc});
+for uu = 1:NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.unit{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   %compute spike density function
-  sdf_FromArray = compute_spike_density_fxn(spikes{cc});
+  sdf_FromArray = compute_spike_density_fxn(spikes{uu});
   
   %index by isolation quality
-  idxPoorIso = identify_trials_poor_isolation_SAT(unitInfo.trRemSAT{cc}, bInfo.num_trials(kk));
+  idxPoorIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
-  idxAcc = ((bInfo.condition{kk} == 1) & ~idxPoorIso);
-  idxFast = ((bInfo.condition{kk} == 3) & ~idxPoorIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxPoorIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxPoorIso);
   %index by trial outcome
-  idxCorr = ~(bInfo.err_dir{kk} | bInfo.err_time{kk} | bInfo.err_nosacc{kk} | bInfo.err_hold{kk});
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk} | behavData.Task_ErrHold{kk});
   %index by response dir re. response field
-  if ismember(9, unitInfo.visField{cc})
-    idxRF = true(1,bInfo.num_trials(kk));
+  if ismember(9, unitData.Basic_VisField{uu})
+    idxRF = true(1,behavData.Task_NumTrials(kk));
   else %standard response field
-    idxRF = ismember(bInfo.octant{kk}, unitInfo.visField{cc});
+    idxRF = ismember(behavData.octant{kk}, unitData.Basic_VisField{uu});
   end
   
   %get single-trial SDF
@@ -53,32 +53,32 @@ for cc = 1:NUM_CELLS
   sdf_AccDistr(cc,:) = mean(sdfST_AccDistr);  sdf_FastDistr(cc,:) = mean(sdfST_FastDistr);
   
   %% Parameterize the visual response
-  ccStats = unitInfo.unitNum(cc);
+  uuStats = unitData.unitNum(uu);
   
-  %latency - TODO: Util to be updated to compute unitInfo.VR_Latency
-%   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, nstats(ccStats), OFFSET);
+  %latency - TODO: Util to be updated to compute unitData.VisualResponse_Latency
+%   [VRlatAcc,VRlatFast] = computeVisRespLatSAT(VRAcc, VRFast, unitData(uuStats,:), OFFSET);
   %magnitude
-%   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAcc, VRFast, nstats(ccStats), OFFSET);
-%   nstats(ccStats).VRmagAcc = VRmagAcc;
-%   nstats(ccStats).VRmagFast = VRmagFast;
+%   [VRmagAcc,VRmagFast] = computeVisRespMagSAT(VRAcc, VRFast, unitData(uuStats,:), OFFSET);
+%   unitData.VisualResponse_Magnitude(uuStats,1) = VRmagAcc;
+%   unitData.VisualResponse_Magnitude(uuStats,2) = VRmagFast;
   %target selection
-%   [VRTSTAcc,VRTSTFast,tVecTSH1] = computeVisRespTSTSAT(VRAcc, VRFast, nstats(ccStats), OFFSET);
-%   nstats(ccStats).VRTSTAcc = VRTSTAcc;
-%   nstats(ccStats).VRTSTFast = VRTSTFast;
+%   [VRTSTAcc,VRTSTFast,tVecTSH1] = computeVisRespTSTSAT(VRAcc, VRFast, unitData(uuStats,:), OFFSET);
+%   unitData.VisResp_TST(uuStats,1) = VRTSTAcc;
+%   unitData.VisResp_TST(uuStats,2) = VRTSTFast;
   %normalization factor
-%   unitStats.NormFactor_Vis(ccStats) = max(visResp(cc).FastTin);
+%   unitData.NormFactor_Vis(uuStats) = max(visResp(uu).FastTin);
   
   %plot individual cell activity
   sdf_UnitCC = struct('AccTgt',sdf_AccTgt(cc,:), 'AccDistr',sdf_AccDistr(cc,:), ...
     'FastTgt',sdf_FastTgt(cc,:), 'FastDistr',sdf_FastDistr(cc,:));
-  plotSDF_UnitCC(T_STIM, sdf_UnitCC, unitInfo(cc,:), unitStats(ccStats,:));
-  print([DIR_PRINT, unitInfo.sess{cc},'-',unitInfo.unit{cc},'-U',num2str(ccStats),'.tif'], '-dtiff')
+  plotSDF_UnitCC(T_STIM, sdf_UnitCC, unitData(cc,:), unitData(uuStats,:));
+  print([DIR_PRINT, unitData.Task_Session(uu),'-',unitData.unit{uu},'-U',num2str(uuStats),'.tif'], '-dtiff')
   pause(0.1); close()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = unitStats;
+  varargout{1} = unitData;
 end
 
 return
@@ -103,7 +103,7 @@ end%fxn:plotVisRespSAT()
 
 
 
-function [ ] = plotSDF_UnitCC(T_STIM, SDF, unitInfo, unitStats)
+function [ ] = plotSDF_UnitCC(T_STIM, SDF, unitData, unitData)
 
 figure()
 
@@ -111,19 +111,19 @@ tmp = [SDF.AccTgt , SDF.AccDistr , SDF.FastTgt , SDF.FastDistr ];
 yLim = [min(tmp) max(tmp)];
 
 subplot(3,1,1); hold on %RESPONSIVENESS
-plot(unitStats.VR_Latency*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
+plot(unitData.VisualResponse_Latency*ones(1,2), yLim, 'k:', 'LineWidth',0.5)
 plot(T_STIM-3500, SDF.FastTgt, '-', 'Color',[0 .7 0])
 plot(T_STIM-3500, SDF.AccTgt, 'r-')
 ylabel('Activity (sp/sec)')
-print_session_unit(gca , unitInfo, [])
+print_session_unit(gca , unitData, [])
 
 subplot(3,1,2); hold on %TARGET DISCRIM :: Accurate condition
-plot(unitStats.VRTSTAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
+plot(unitData.VRTSTAcc*ones(1,2), yLim, 'r:', 'LineWidth',0.5)
 plot(T_STIM-3500, SDF.AccTgt, 'r-', 'LineWidth',0.75)
 plot(T_STIM-3500, SDF.AccDistr, 'r:', 'LineWidth',0.5)
 
 subplot(3,1,3); hold on %TARGET DISCRIM :: Fast condition
-plot(unitStats.VRTSTFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
+plot(unitData.VRTSTFast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 plot(T_STIM-3500, SDF.FastTgt, '-', 'Color',[0 .7 0], 'LineWidth',0.75)
 plot(T_STIM-3500, SDF.FastDistr, ':', 'Color',[0 .7 0], 'LineWidth',0.5)
 xlabel('Time from array (ms)')

@@ -1,13 +1,13 @@
-function [  ] = plotRasterStimXdirSAT( binfo , moves , ninfo , spikes , varargin )
+function [  ] = plotRasterStimXdirSAT( behavData , moves , unitData , spikes , varargin )
 %plotRasterStimXdirSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idx_area = ismember(unitData.aArea, args.area);
+idx_monkey = ismember(unitData.aMonkey, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
+unitData = unitData(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
 NUM_CELLS = length(spikes);
@@ -16,17 +16,17 @@ SORT_X_RT = true;
 T_PLOT  = 3500 + (-200 : 800);
 IDX_DD_PLOT = [6, 3, 2, 1, 4, 7, 8, 9];
 
-for cc = 1:NUM_CELLS
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   figure(); ppretty([12,8])
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by condition
-  idxCond = ((binfo(kk).condition == 1) & ~idxIso);
+  idxCond = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
   %index by trial outcome
-  idxOutcome = ~(binfo(kk).err_dir | binfo(kk).err_hold);
+  idxOutcome = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk});
   
   yMax = 0;
   for dd = 1:8 %loop over directions and plot
@@ -34,7 +34,7 @@ for cc = 1:NUM_CELLS
     %index by direction
     idxDD = (moves(kk).octant == dd);
     
-    spikesDD = spikes(cc).SAT(idxCond & idxOutcome & idxDD);
+    spikesDD = spikes(uu).SAT(idxCond & idxOutcome & idxDD);
     nTrialDD = sum(idxCond & idxOutcome & idxDD);
     
     RT = moves(kk).resptime(idxCond & idxOutcome & idxDD);
@@ -82,13 +82,13 @@ for cc = 1:NUM_CELLS
     yticks(yTicks); xticks(xTicks); ylim([0 yMax])
   end
   
-  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , ninfo(cc), binfo(kk), 'horizontal')
+  subplot(3,3,5); xticks([]); yticks([]); print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
   ppretty([12,8])
-%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',ninfo(cc).area,'-',ninfo(cc).sess,'-',ninfo(cc).unit,'-ACC.tif'], '-dtiff')
+%   pause(0.1); print(['~/Dropbox/Speed Accuracy/SEF_SAT/Figs/0-Raster/',unitData.aArea{uu},'-',unitData.Task_Session(uu),'-',unitData.aID{uu},'-ACC.tif'], '-dtiff')
 %   pause(0.1); close()
   pause()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%util:plotRasterStimSAT()
 

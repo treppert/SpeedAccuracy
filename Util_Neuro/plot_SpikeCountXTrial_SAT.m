@@ -18,7 +18,7 @@ NUM_UNITS = size(unitData, 1);
 
 for uu = 1:NUM_UNITS
   %unit-specific initialization
-  unitID = [unitData.Properties.RowNames{uu}, '-', unitData.area{uu}];
+  unitID = [unitData.Properties.RowNames{uu}, '-', unitData.aArea{uu}];
   numTrials = length(spikesSAT{uu});
   
   %compute spike count for all trials

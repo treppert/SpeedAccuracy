@@ -9,7 +9,7 @@ idxArea = ismember(unitData.aArea, {AREA_TEST});
 idxMonkey = ismember(unitData.aMonkey, {'D','E','Q','S'});
 idxVisUnit = (unitData.Basic_VisGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
-% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitInfo.Task_LevelDifficulty == 2));
+% idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitData.Task_LevelDifficulty == 2));
 
 idxTST_All = ~(isnan(unitData.VisualResponse_TST(:,1)) | isnan(unitData.VisualResponse_TST(:,2)));
 idxTST_AccOnly = ~isnan(unitData.VisualResponse_TST(:,1)) & isnan(unitData.VisualResponse_TST(:,2));
@@ -59,9 +59,9 @@ end
 
 
 %% Report the number of visual neurons of each sub-type
-% idxRF_WholeScreen = false(1,length(unitStats));
-% for cc = 1:length(unitInfo)
-%   if ismember(unitInfo(cc).visField, 9); idxRF_WholeScreen(cc) = true; end
+% idxRF_WholeScreen = false(1,length(unitData));
+% for uu = 1:length(unitData)
+%   if ismember(unitData.Basic_VisField{uu}, 9); idxRF_WholeScreen(uu) = true; end
 % end
 % 
 % fprintf('Number of visually-responsive neurons :: %d\n', sum(idxKeep))

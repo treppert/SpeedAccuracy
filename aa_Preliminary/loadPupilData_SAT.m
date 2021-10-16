@@ -1,7 +1,7 @@
 function [ pupilData ] = loadPupilData_SAT( )
 
-% binfo = load('C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\binfo_moves_SAT.mat', 'binfo');
-% binfo = utilIsolateMonkeyBehavior({'D','E'}, binfo.binfo.SAT);
+% behavData = load('C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\behavData_moves_SAT.mat', 'behavData');
+% behavData = utilIsolateMonkeyBehavior({'D','E'}, behavData.behavData.SAT);
 
 %locate recording sessions for Da & Eu
 dataDir_Da = 'T:\data\Darwin\SAT\Matlab\';

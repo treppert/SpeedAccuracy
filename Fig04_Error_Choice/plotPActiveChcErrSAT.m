@@ -1,17 +1,17 @@
-function [ ] = plotPActiveChcErrSAT( ninfo , nstats , binfo , moves , movesPP )
+function [ ] = plotPActiveChcErrSAT( unitData , unitData , behavData , moves , movesPP )
 %plotPActiveChcErrSAT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxSEF = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
+idxSEF = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 
-idxError = ([ninfo.errGrade] >= 2);
-idxEfficient = ismember([ninfo.taskType], [1,2]);
+idxError = (unitData.Basic_ErrGrade >= 2);
+idxEfficient = ismember(unitData.Task_LevelDifficulty, [1,2]);
 
 idxKeep = (idxSEF & idxMonkey & idxError & idxEfficient);
 
 NUM_CELLS = sum(idxKeep);
-nstats = nstats(idxKeep);
+unitData = unitData(idxKeep);
 
 T_RE_SACCADE = (-350 : 250);  OFFSET = 350;
 NUM_SAMP = length(T_RE_SACCADE);
@@ -20,15 +20,15 @@ NUM_SAMP = length(T_RE_SACCADE);
 PActiveAcc = false(NUM_CELLS,NUM_SAMP);
 PActiveFast = false(NUM_CELLS,NUM_SAMP);
 
-for cc = 1:NUM_CELLS
+for uu = 1:NUM_CELLS
   %% Time of second saccade
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   %index by condition
-  idxAcc = (binfo(kk).condition == 1);
-  idxFast = (binfo(kk).condition == 3);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErr = (binfo(kk).err_dir & ~binfo(kk).err_time);
+  idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   %skip trials with no recorded post-primary saccade
   idxNoPP = (movesPP(kk).resptime == 0);
   
@@ -41,23 +41,23 @@ for cc = 1:NUM_CELLS
   isiFast = median(isiKK(idxFast & idxErr & ~idxNoPP));
   
   %% Compute time of error-related modulation relative to second saccade
-  tErrStart_Acc = nstats(cc).A_ChcErr_tErr_Acc - isiAcc;
-  tErrStart_Fast = nstats(cc).A_ChcErr_tErr_Fast - isiFast;
+  tErrStart_Acc = unitData.ChoiceErrorSignal_Time(uu,1) - isiAcc;
+  tErrStart_Fast = unitData.ChoiceErrorSignal_Time(uu,2) - isiFast;
   
-  tErrEnd_Acc = nstats(cc).A_ChcErr_tErrEnd_Acc - isiAcc;
-  tErrEnd_Fast = nstats(cc).A_ChcErr_tErrEnd_Fast - isiFast;
+  tErrEnd_Acc = unitData.ChoiceErrorSignal_Time(uu,3) - isiAcc;
+  tErrEnd_Fast = unitData.ChoiceErrorSignal_Time(uu,4) - isiFast;
   
   PActiveAcc(cc,(tErrStart_Acc : tErrEnd_Acc) + OFFSET) = true;
   PActiveFast(cc,(tErrStart_Fast : tErrEnd_Fast) + OFFSET) = true;
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 PActiveAcc = sum(PActiveAcc,1) / NUM_CELLS;
 PActiveFast = sum(PActiveFast,1) / NUM_CELLS;
 
 %% Plotting
-tCDFAcc = sort([nstats.A_ChcErr_tErr_Acc]);
-tCDFFast = sort([nstats.A_ChcErr_tErr_Fast]);
+tCDFAcc = sort([unitData.ChoiceErrorSignal_Time(1)]);
+tCDFFast = sort([unitData.ChoiceErrorSignal_Time(2)]);
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)

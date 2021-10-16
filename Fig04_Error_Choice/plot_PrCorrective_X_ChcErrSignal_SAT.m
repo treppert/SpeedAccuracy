@@ -1,14 +1,14 @@
-function [ ] = plot_PrCorrective_X_ChcErrSignal_SAT( behavInfo , secondSacc , unitInfo , unitStats , spikesSAT )
+function [ ] = plot_PrCorrective_X_ChcErrSignal_SAT( behavData , secondSacc , unitData , unitData , spikesSAT )
 %plot_PrCorrective_X_ChcErrSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxSEF = ismember(unitInfo.area, 'SEF');
-idxMonkey = ismember(unitInfo.monkey, {'D','E'});
-idxErrUnit = (idxSEF & idxMonkey & (unitInfo.errGrade >= 2));
+idxSEF = ismember(unitData.aArea, 'SEF');
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxErrUnit = (idxSEF & idxMonkey & (unitData.Basic_ErrGrade >= 2));
 
 NUM_CELLS = sum(idxErrUnit);
-unitInfo = unitInfo(idxErrUnit,:);
-unitStats = unitStats(idxErrUnit,:);
+unitData = unitData(idxErrUnit,:);
+unitData = unitData(idxErrUnit,:);
 spikesSAT = spikesSAT(idxErrUnit);
 
 T_COUNT_BASE = [-50, 50] + 3500; %interval over which to count baseline spikes as control
@@ -24,21 +24,21 @@ ZPLOT = BINLIM_Z(1:NBIN) + diff(BINLIM_Z)/2;
 PTarget = NaN(NUM_CELLS, NBIN);
 RespTime = NaN(NUM_CELLS, NBIN); %save RT as control
 
-for cc = 1:NUM_CELLS
-%   fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember(behavInfo.session, unitInfo.sess{cc});
+for uu = 1:NUM_CELLS
+%   fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  RT_kk = double(behavInfo(kk).resptime);
-  RTerr_kk = RT_kk - double(behavInfo(kk).deadline);
+  RT_kk = double(behavData.Sacc_RT{kk});
+  RTerr_kk = RT_kk - double(behavData.Task_Deadline{kk});
   ssEndKK = secondSacc(kk).endpt; %second saccade endpoint
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitInfo(cc), behavInfo(kk).num_trials, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
   %index by task condition
-  idxAcc = (behavInfo(kk).condition == 1);
-  idxFast = (behavInfo(kk).condition == 3);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErrDir = ( behavInfo(kk).err_dir );
+  idxErrDir = ( behavData.Task_ErrChoice{kk} );
   %index by timing error magnitude
   idxErrTime = ( (idxAcc & (RTerr_kk < -MAX_ERR_TIME)) | (idxFast & (RTerr_kk > MAX_ERR_TIME)) );
   
@@ -55,17 +55,17 @@ for cc = 1:NUM_CELLS
   %% Compute single-trial spike counts
   
   %compute baseline spike count to control for effect of Trial Number
-  spkBase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesSAT(cc).SAT);
+  spkBase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesSAT(uu).SAT);
   spkBase = spkBase(trialErr);
   
   %get error interval for each task condition
-  tErrCC = unitStats(cc).A_ChcErr_tErr_Fast + T_COUNT_ERR;
+  tErrCC = unitData.ChoiceErrorSignal_Time(uu,2) + T_COUNT_ERR;
   tErrCC = RT_kk(trialErr)'*ones(1,2) + tErrCC;
   
   spkErr = NaN(1,numTrial);
   for jj = 1:numTrial
     %spike times aligned on primary saccade
-    tSpkJJ = spikesSAT(cc).SAT{trialErr(jj)};
+    tSpkJJ = spikesSAT(uu).SAT{trialErr(jj)};
     %compute number of spikes during Accurate error interval
     spkErr(jj) = sum( (tSpkJJ >= tErrCC(jj,1)) & (tSpkJJ <= tErrCC(jj,2)) );
   end%for:trialsAcc(jj)
@@ -86,7 +86,7 @@ for cc = 1:NUM_CELLS
     end
   end%for:zscore-bin(bb)
   
-end%for:neuron(cc)
+end%for:neuron(uu)
 
 %% Plotting
 %probability of corrective saccade

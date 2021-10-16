@@ -1,4 +1,4 @@
-function [ ninfoSAT ] = load_neuron_info_SAT( binfo )
+function [ unitDataSAT ] = load_neuron_info_SAT( behavData )
 %load_neuron_info_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -32,7 +32,7 @@ COL_VISTYPE = 'O';
 COL_TR_REM_SAT = 'P';
 COL_TR_REM_MG = 'Q';
 
-ninfoSAT = [];
+unitDataSAT = [];
 
 for mm = 1:4
   
@@ -58,24 +58,24 @@ for mm = 1:4
   
   rewGrade = num2cell(xlsread(FILE, MONKEY{mm}, build_col(COL_REWGRADE,idx_mm)));
   
-  for cc = 1:NUM_UNIT(mm)
+  for uu = 1:NUM_UNIT(mm)
     
-    trRemSAT{cc} = str2num(trRemSAT{cc});
-    trRemMG{cc} = str2num(trRemMG{cc});
+    trRemSAT{uu} = str2num(trRemSAT{uu});
+    trRemMG{uu} = str2num(trRemMG{uu});
     
-    visField{cc} = str2num(visField{cc});
-    moveField{cc} = str2num(moveField{cc});
-    errField{cc} = str2num(errField{cc});
+    visField{uu} = str2num(visField{uu});
+    moveField{uu} = str2num(moveField{uu});
+    errField{uu} = str2num(errField{uu});
     
-    if ismember(area{cc}, {'FEF','SC'})
+    if ismember(area{uu}, {'FEF','SC'})
       %increment RF from 0-7 (Rich) to 1-8 (Thomas) convention
-      visField{cc} = visField{cc} + 1;
-      moveField{cc} = moveField{cc} + 1;
+      visField{uu} = visField{uu} + 1;
+      moveField{uu} = moveField{uu} + 1;
     end
     
-  end%for:unit(cc)
+  end%for:unit(uu)
   
-  ninfo_mm = struct('monkey',MONKEY{mm}(1), ...
+  unitData_mm = struct('monkey',MONKEY{mm}(1), ...
     'sessNum',sessNum, 'sess',sess, ...
     'unitNum',unitNum, 'unit',unit, ...
     'area',area, 'trRemSAT',trRemSAT, 'trRemMG',trRemMG, ...
@@ -84,22 +84,22 @@ for mm = 1:4
     'errGrade',errGrade, 'errField',errField, ...
     'rewGrade',rewGrade);
   
-  ninfoSAT = cat(1, ninfoSAT, ninfo_mm);
+  unitDataSAT = cat(1, unitDataSAT, unitData_mm);
   
 end%for:monkey(mm)
 
 %mark all units with unacceptable isolation quality
-for cc = 1:sum(NUM_UNIT)
-  ninfoSAT(cc).poorIso = poorIso(cc);
+for uu = 1:sum(NUM_UNIT)
+  unitDataSAT(uu).poorIso = poorIso(uu);
 end
 
 %label neurons by session type: more efficient or less efficient
-for cc = 1:sum(NUM_UNIT)
-  kk = ismember({binfo.session}, ninfoSAT(cc).sess);
-  ninfoSAT(cc).taskType = binfo(kk).taskType;
+for uu = 1:sum(NUM_UNIT)
+  kk = ismember(behavData.Task_Session, unitDataSAT(uu).sess);
+  unitDataSAT(uu).taskType = behavData.Task_LevelDifficulty{kk};
 end
 
-ninfoSAT = transpose(ninfoSAT);
+unitDataSAT = transpose(unitDataSAT);
 
 end%fxn:load_neuron_info_SAT()
 

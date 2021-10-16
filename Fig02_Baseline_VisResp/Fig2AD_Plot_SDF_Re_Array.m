@@ -48,23 +48,23 @@ NUM_UNIT = sum(uKeep);
 sdfAcc = NaN(NUM_UNIT, length(T_PLOT));
 sdfFast = NaN(NUM_UNIT, length(T_PLOT));
 
-for cc = 1:NUM_UNIT
-  fprintf('%s\n', unitData.Properties.RowNames{cc})
+for uu = 1:NUM_UNIT
+  fprintf('%s\n', unitData.Properties.RowNames{uu})
   
-  kk = ismember(behavData.Task_Session, unitData.Task_Session{cc});
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
   %compute single-trial SDF
-  SDFcc = compute_spike_density_fxn(spikes{cc});
+  SDFcc = compute_spike_density_fxn(spikes{uu});
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{cc}, behavData.Task_NumTrials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by trial outcome
   idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & idxCorr & ~idxIso);
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & idxCorr & ~idxIso);
   %index by response direction relative to RF and MF
-  [Basic_VisField,~] = determineFieldsVisMove(unitData.Basic_VisField{cc}, unitData.Basic_MovField{cc});
+  [Basic_VisField,~] = determineFieldsVisMove(unitData.Basic_VisField{uu}, unitData.Basic_MovField{uu});
   idxRF = ismember(behavData.Sacc_Octant{kk}, Basic_VisField);
   
   %split single-trial SDF by condition
@@ -75,7 +75,7 @@ for cc = 1:NUM_UNIT
   sdfAcc(cc,:) = mean(sdfAccST);
   sdfFast(cc,:) = mean(sdfFastST);
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 %% Plotting
 
@@ -84,8 +84,8 @@ sdfAcc = sdfAcc ./ unitData.Basic_NormFactor(:,1);
 sdfFast = sdfFast ./ unitData.Basic_NormFactor(:,1);
 
 %split neurons by level of search efficiency
-ccMore = ([unitData.Task_LevelDifficulty] == 1);   NUM_MORE = sum(ccMore);
-ccLess = ([unitData.Task_LevelDifficulty] == 2);   NUM_LESS = sum(ccLess);
+ccMore = (unitData.Task_LevelDifficulty == 1);   NUM_MORE = sum(ccMore);
+ccLess = (unitData.Task_LevelDifficulty == 2);   NUM_LESS = sum(ccLess);
 ccBoth = (ccMore | ccLess);   NUM_BOTH = sum(ccBoth);
 sdfAccMore = sdfAcc(ccMore,:);     sdfFastMore = sdfFast(ccMore,:);
 sdfAccLess = sdfAcc(ccLess,:);     sdfFastLess = sdfFast(ccLess,:);

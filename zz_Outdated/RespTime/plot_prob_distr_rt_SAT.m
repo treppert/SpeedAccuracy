@@ -3,8 +3,8 @@ function [  ] = plot_prob_distr_rt_SAT( moves , info )
 idx_fast = ([info.condition] == 3);
 idx_acc  = ([info.condition] == 1);
 
-idx_corr = ~([info.err_dir] | [info.err_hold]);
-idx_err = [info.err_dir];
+idx_corr = ~([info.Task_ErrChoice] | [info.Task_ErrHold]);
+idx_err = [info.Task_ErrChoice];
 
 resptime = double([moves.resptime]);
 

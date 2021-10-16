@@ -1,32 +1,32 @@
-function [  ] = plotRasterStimSAT( binfo , moves , ninfo , spikes , varargin )
+function [  ] = plotRasterStimSAT( behavData , moves , unitData , spikes , varargin )
 %plotRasterStimSAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {'sort_RT', {'area=','SC'}, {'monkey=','D'}});
 
-idx_area = ismember({ninfo.area}, args.area);
-idx_monkey = ismember({ninfo.monkey}, args.monkey);
+idx_area = ismember(unitData.aArea, args.area);
+idx_monkey = ismember(unitData.aMonkey, args.monkey);
 
-ninfo = ninfo(idx_area & idx_monkey);
+unitData = unitData(idx_area & idx_monkey);
 spikes = spikes(idx_area & idx_monkey);
 
-NUM_CELLS = length(ninfo);
+NUM_CELLS = length(unitData);
 IDX_PLOT = (-500 : 1000);
 
 %% Spike rasters
 
-for cc = 1:NUM_CELLS
+for uu = 1:NUM_CELLS
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  idx_corr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold);
-  idx_cond = (binfo(kk).condition == 1);
+  idx_corr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk});
+  idx_cond = (behavData.Task_SATCondition{kk} == 1);
   
   resptime = double(moves(kk).resptime(idx_cond & idx_corr));
   num_trials = sum(idx_cond & idx_corr);
   
   %organize spikes as 1-D array for plotting
-  tmp = spikes(cc).SAT(idx_cond & idx_corr);
+  tmp = spikes(uu).SAT(idx_cond & idx_corr);
   t_spikes = cell2mat(tmp) - 3500;
   trials = NaN(1,length(t_spikes));
   
@@ -67,14 +67,14 @@ for cc = 1:NUM_CELLS
   xlabel('Time re. stimulus (ms)')
   ylabel('Trial number')
   
-  title([ninfo(cc).sess,'-',ninfo(cc).unit,' -- N_{trial} = ',num2str(num_trials)], 'FontSize',8)
+  title([unitData.Task_Session(uu),'-',unitData.aID{uu},' -- N_{trial} = ',num2str(num_trials)], 'FontSize',8)
   ppretty([8,10])
   pause()
 %   pause(0.5)
-%   print_fig_SAT(ninfo(cc), gcf, '-dtiff')
+%   print_fig_SAT(unitData(uu,:), gcf, '-dtiff')
 %   pause(0.5)
 %   close(gcf)
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%util:plot_spike_raster_SAT()

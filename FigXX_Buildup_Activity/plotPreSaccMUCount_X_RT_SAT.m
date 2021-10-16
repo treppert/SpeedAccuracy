@@ -1,17 +1,17 @@
-function [ ] = plotPreSaccMUCount_X_RT_SAT( binfo , moves , ninfo , spikes , varargin )
+function [ ] = plotPreSaccMUCount_X_RT_SAT( behavData , moves , unitData , spikes , varargin )
 %plotPreSaccMUCount_X_RT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
 
 %index neurons by type
-idxArea = ismember({ninfo.area}, args.area);
-idxMonkey = ismember({ninfo.monkey}, args.monkey);
-idxMove = ([ninfo.moveGrade] >= 2);
+idxArea = ismember(unitData.aArea, args.area);
+idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxMove = (unitData.Basic_MovGrade >= 2);
 
 idxKeep = (idxArea & idxMonkey & idxMove);
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 T_PRESACC = [-100, 0]; %from primary saccade
@@ -31,14 +31,14 @@ zSpkCtAcc = NaN(NUM_CELLS,NBIN_ACC);
 zMuAcc = NaN(1,NUM_CELLS); %average across RT bins
 zMuFast = NaN(1,NUM_CELLS);
 
-for cc = 1:NUM_CELLS
-  spikesCC = spikes(cc).SAT;
+for uu = 1:NUM_CELLS
+  spikesCC = spikes(uu).SAT;
   
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   RTkk = double(moves(kk).resptime);
   
   %ref spikes to time of primary saccade
-  for jj = 1:binfo(kk).num_trials
+  for jj = 1:behavData.Task_NumTrials{kk}
     spikesCC{jj} = spikesCC{jj} - (3500 + RTkk(jj));
   end
   
@@ -46,15 +46,15 @@ for cc = 1:NUM_CELLS
   spkCountCC = cellfun(@(x) sum((x > T_PRESACC(1)) & (x < T_PRESACC(2))), spikesCC);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by trial outcome
-  idxErrTime = binfo(kk).err_time & ~binfo(kk).err_dir;
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_nosacc | binfo(kk).err_hold);
+  idxErrTime = behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk};
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk} | behavData.Task_ErrHold{kk});
   %index by response direction relative to movement field MF
-  idxMF = ismember(moves(kk).octant, ninfo(cc).moveField);
+  idxMF = ismember(moves(kk).octant, unitData.Basic_MovField{uu});
   %index by task condition
-  idxAcc = ((binfo(kk).condition == 1) & idxCorr & idxMF & ~(idxIso | RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk)));
-  idxFast = ((binfo(kk).condition == 3) & idxCorr & idxMF & ~(idxIso | RTkk < RTLIM_FAST(1) | RTkk > RTLIM_FAST(2) | isnan(RTkk)));
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & idxCorr & idxMF & ~(idxIso | RTkk < RTLIM_ACC(1) | RTkk > RTLIM_ACC(2) | isnan(RTkk)));
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & idxCorr & idxMF & ~(idxIso | RTkk < RTLIM_FAST(1) | RTkk > RTLIM_FAST(2) | isnan(RTkk)));
   
   %split spike count by condition
   spkCountAcc = spkCountCC(idxAcc);
@@ -75,8 +75,8 @@ for cc = 1:NUM_CELLS
   spkCountFast = (spkCountFast - muSpkCt) / sdSpkCt;
   
   %save average spike count (z) per condition
-  zMuAcc(cc) = mean(spkCountAcc);
-  zMuFast(cc) = mean(spkCountFast);
+  zMuAcc(uu) = mean(spkCountAcc);
+  zMuFast(uu) = mean(spkCountFast);
   
   %save for across-session average
   for ii = 1:NBIN_ACC
@@ -95,8 +95,8 @@ for cc = 1:NUM_CELLS
 end%for:session(kk)
 
 %% Plotting -- Mean multi-unit spike count
-ccMore = ([ninfo.taskType] == 1) & ~isnan(zMuAcc);    NUM_MORE = sum(ccMore);
-ccLess = ([ninfo.taskType] == 2) & ~isnan(zMuFast);   NUM_LESS = sum(ccLess);
+ccMore = (unitData.Task_LevelDifficulty == 1) & ~isnan(zMuAcc);    NUM_MORE = sum(ccMore);
+ccLess = (unitData.Task_LevelDifficulty == 2) & ~isnan(zMuFast);   NUM_LESS = sum(ccLess);
 
 %multi-unit spike count average
 ctAccMore = zMuAcc(ccMore);       ctAccLess = zMuAcc(ccLess);

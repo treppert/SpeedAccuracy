@@ -1,4 +1,4 @@
-function [ moves , varargout ] = parse_saccades_SAT( gaze , binfo )
+function [ moves , varargout ] = parse_saccades_SAT( gaze , behavData )
 %[ moves ] = parse_saccades_vandy( data , info )
 
 global DEBUG VEL_CUT MIN_IMI MIN_HOLD ALLOT APPEND IDX_SURVEY
@@ -43,10 +43,10 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSION]);
 
 for kk = 1:NUM_SESSION
-  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,binfo(kk).num_trials));
-  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,binfo(kk).num_trials)));
-  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,binfo(kk).num_trials)));
-  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,binfo(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,behavData.Task_NumTrials{kk}));
+  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,behavData.Task_NumTrials{kk})));
+  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,behavData.Task_NumTrials{kk})));
+  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,behavData.Task_NumTrials{kk})));
 end%for:sessions(kk)
 
 moves = orderfields(moves);
@@ -55,21 +55,21 @@ movesAll = moves; %struct array for all movements, regardless of task relevance
 %% **** Movement identification ****
 
 for kk = 1:NUM_SESSION
-  fprintf('***Session %d -- %s (%d trials)\n', kk, binfo(kk).session, binfo(kk).num_trials)
+  fprintf('***Session %d -- %s (%d trials)\n', kk, behavData.Task_Session{kk}, behavData.Task_NumTrials{kk})
   
-  ALLOC_ALL = binfo(kk).num_trials;
+  ALLOC_ALL = behavData.Task_NumTrials{kk};
   idx_all = 1; %index for saving all saccades (task-rel. and irrel.)
   
   %start with estimate of response time and octant from TEMPO
-  moves(kk).resptime(:) = uint16(binfo(kk).resptime);
-  moves(kk).octant(:) = uint16(binfo(kk).octant);
+  moves(kk).resptime(:) = uint16(behavData.Sacc_RT{kk});
+  moves(kk).octant(:) = uint16(behavData(kk).octant);
   
   %keep track of trials w/o candidates and/or responses
-  idx_sin_cand = false(1,binfo(kk).num_trials);
-  idx_sin_sacc = false(1,binfo(kk).num_trials);
-  idx_sin_resp = false(1,binfo(kk).num_trials);
+  idx_sin_cand = false(1,behavData.Task_NumTrials{kk});
+  idx_sin_sacc = false(1,behavData.Task_NumTrials{kk});
+  idx_sin_resp = false(1,behavData.Task_NumTrials{kk});
 
-  for jj = 1:binfo(kk).num_trials
+  for jj = 1:behavData.Task_NumTrials{kk}
 
     %% Initialize trial-specific saccade kinematics
     kin_jj = initialize_saccade_kinematics(gaze(kk), jj);
@@ -93,7 +93,7 @@ for kk = 1:NUM_SESSION
   end%for:trials(jj)
 
   fprintf('num_trials_wo_[cand,sacc,taskrel] = [%d, %d, %d] / %d\n', sum(idx_sin_cand), ...
-    sum(idx_sin_sacc), sum(idx_sin_resp), binfo(kk).num_trials)
+    sum(idx_sin_sacc), sum(idx_sin_resp), behavData.Task_NumTrials{kk})
 
   %remove extra memory from struct with all saccades
   for ff = 1:length(FIELDS_LOGICAL)
@@ -112,7 +112,7 @@ for kk = 1:NUM_SESSION
 end%for:sessions(kk)
 
 if (nargout > 1) %return post-primary saccade
-  movesPP = parse_PPsacc_SAT(movesAll, moves, binfo);
+  movesPP = parse_PPsacc_SAT(movesAll, moves, behavData);
   varargout{1} = movesPP;
   if (nargout > 2) %return all saccades
     varargout{2} = movesAll;

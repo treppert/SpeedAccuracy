@@ -1,19 +1,19 @@
-function [ varargout ] = plotSDFRewardErrSAT( binfo , ninfo , nstats , spikes )
+function [ varargout ] = plotSDFRewardErrSAT( behavData , unitData , unitData , spikes )
 %plotSDFRewardErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
 ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Reward\';
 
-idxArea = ismember({ninfo.area}, {'SEF'});
-idxMonkey = ismember({ninfo.monkey}, {'D','E'});
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 
-idxRew = (abs([ninfo.rewGrade]) >= 2);
-idxEfficiency = ismember([ninfo.taskType], [1,2]);
+idxRew = (abs(unitData.Basic_RewGrade) >= 2);
+idxEfficiency = ismember(unitData.Task_LevelDifficulty, [1,2]);
 
 idxKeep = (idxArea & idxMonkey & idxRew & idxEfficiency);
 
 NUM_CELLS = sum(idxKeep);
-ninfo = ninfo(idxKeep);
+unitData = unitData(idxKeep);
 spikes = spikes(idxKeep);
 
 T_REW = 3500 + (-400 : 800); OFFSET = 401;
@@ -22,29 +22,29 @@ T_REW = 3500 + (-400 : 800); OFFSET = 401;
 sdfAcc.Corr = NaN(NUM_CELLS,length(T_REW));   sdfAcc.Err = NaN(NUM_CELLS,length(T_REW));
 sdfFast.Corr = NaN(NUM_CELLS,length(T_REW));  sdfFast.Err = NaN(NUM_CELLS,length(T_REW));
 
-for cc = 1:NUM_CELLS
-  if ~isempty(nstats(ninfo(cc).unitNum).NormFactor_Rew); continue; end
-  fprintf('%s - %s\n', ninfo(cc).sess, ninfo(cc).unit)
-  kk = ismember({binfo.session}, ninfo(cc).sess);
+for uu = 1:NUM_CELLS
+  if ~isempty(unitData(unitData.aIndex(uu)).NormFactor_Rew); continue; end
+  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  trewKK = double(binfo(kk).rewtime) + double(binfo(kk).resptime);
+  trewKK = double(behavData.Task_TimeReward{kk}) + double(behavData.Sacc_RT{kk});
   idxNaN = isnan(trewKK);
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(ninfo(cc), binfo(kk).num_trials);
+  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
   %index by condition
-  idxAcc = (binfo(kk).condition == 1 & ~idxIso & ~idxNaN);
-  idxFast = (binfo(kk).condition == 3 & ~idxIso & ~idxNaN);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso & ~idxNaN);
+  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso & ~idxNaN);
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_dir | binfo(kk).err_time | binfo(kk).err_hold | binfo(kk).err_nosacc);
-  idxErr = (binfo(kk).err_time);
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrTime{kk});
   %index by screen clear on Fast trials
-  idxClear = logical(binfo(kk).clearDisplayFast);
+  idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   
   %get single-trials SDFs
   trials = struct('AccCorr',find(idxAcc & idxCorr), 'AccErr',find(idxAcc & idxErr), ...
     'FastCorr',find(idxFast & idxCorr), 'FastErr',find(idxFast & idxErr & ~idxClear));
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(trewKK, spikes(cc).SAT, trials, T_REW);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(trewKK, spikes(uu).SAT, trials, T_REW);
   
   %compute mean SDFs
   sdfAcc.Corr(cc,:) = nanmean(sdfAccST.Corr);    sdfFast.Corr(cc,:) = nanmean(sdfFastST.Corr);
@@ -53,35 +53,35 @@ for cc = 1:NUM_CELLS
     'FastCorr',sdfFast.Corr(cc,:), 'FastErr',sdfFast.Err(cc,:));
     
   %% Parameterize the SDF
-  ccNS = ninfo(cc).unitNum;
+  uuNS = unitData.aIndex(uu);
   
-  if isnan(nstats(ccNS).A_Reward_tErrStart_Acc) %latency
+  if isnan(unitData(uuNS).A_Reward_tErrStart_Acc) %latency
     [tErrAcc,tErrFast] = computeTimeRPE(sdfAccST, sdfFastST, OFFSET);
-    nstats(ccNS).A_Reward_tErrStart_Acc = tErrAcc.Start;
-    nstats(ccNS).A_Reward_tErrStart_Fast = tErrFast.Start;
-    nstats(ccNS).A_Reward_tErrEnd_Acc = tErrAcc.End;
-    nstats(ccNS).A_Reward_tErrEnd_Fast = tErrFast.End;
+    unitData(uuNS).A_Reward_tErrStart_Acc = tErrAcc.Start;
+    unitData(uuNS).A_Reward_tErrStart_Fast = tErrFast.Start;
+    unitData(uuNS).A_Reward_tErrEnd_Acc = tErrAcc.End;
+    unitData(uuNS).A_Reward_tErrEnd_Fast = tErrFast.End;
   end
   
   %magnitude
-%   [magAcc,magFast] = calcMagRewSignal(sdfAll, OFFSET, nstats(ccNS));
-%   nstats(ccNS).A_Reward_magErr_Acc = magAcc;
-%   nstats(ccNS).A_Reward_magErr_Fast = magFast;
+%   [magAcc,magFast] = calcMagRewSignal(sdfAll, OFFSET, unitData(uuNS));
+%   unitData(uuNS).A_Reward_magErr_Acc = magAcc;
+%   unitData(uuNS).A_Reward_magErr_Fast = magFast;
   
   %normalization factor
-  if isempty(nstats(ccNS).NormFactor_Rew)
-    nstats(ccNS).NormFactor_All = max(sdfAcc.Corr(cc,:));
+  if isempty(unitData(uuNS).NormFactor_Rew)
+    unitData(uuNS).NormFactor_All = max(sdfAcc.Corr(cc,:));
   end
   
   %plot individual cell activity
-%   plotSDFRewErrSATcc(T_REW, sdfAll, ninfo(cc), nstats(ccNS))
-%   print([ROOTDIR, ninfo(cc).sess,'-',ninfo(cc).unit,'-U',num2str(ccNS),'.tif'], '-dtiff')
+%   plotSDFRewErrSATcc(T_REW, sdfAll, unitData(uu,:), unitData(uuNS))
+%   print([ROOTDIR, unitData.Task_Session(uu),'-',unitData.aID{uu},'-U',num2str(uuNS),'.tif'], '-dtiff')
 %   pause(0.1); close()
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 if (nargout > 0)
-  varargout{1} = nstats;
+  varargout{1} = unitData;
 end
 
 end%fxn:plotSDFRewardErrSAT()
@@ -102,7 +102,7 @@ sdfAccST.Err = sdfReRew(trials.AccErr, tRew);
 
 end%util:getSingleTrialSDF()
 
-function [ ] = plotSDFRewErrSATcc( TIME , sdfPlot , ninfo , nstats )
+function [ ] = plotSDFRewErrSATcc( TIME , sdfPlot , unitData , unitData )
 
 %compute y-limits for vertical lines
 tmp = [sdfPlot.AccCorr sdfPlot.AccErr sdfPlot.FastCorr sdfPlot.FastErr];
@@ -118,12 +118,12 @@ plot([0 0], yLim, 'k:')
 plot(TIME-3500, sdfPlot.FastCorr, '-', 'Color',[0 .7 0], 'LineWidth',1.0)
 plot(TIME-3500, sdfPlot.FastErr, ':', 'Color',[0 .7 0], 'LineWidth',1.0)
 
-plot(nstats.A_Reward_tErrStart_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
-plot(nstats.A_Reward_tErrEnd_Fast*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+plot(unitData.TimingErrorSignal_Time(2)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+plot(unitData.TimingErrorSignal_Time(4)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
 
 xlim([TIME(1) TIME(end)]-3500)
-title(['Mag. = ', num2str(nstats.A_Reward_magErr_Fast), ' sp'])
-print_session_unit(gca , ninfo,[])
+title(['Mag. = ', num2str(unitData.A_Reward_magErr_Fast), ' sp'])
+print_session_unit(gca , unitData,[])
 xticklabels([])
 
 %% Accurate condition
@@ -134,10 +134,10 @@ plot([0 0], yLim, 'k:')
 plot(TIME-3500, sdfPlot.AccCorr, 'r-', 'LineWidth',1.0)
 plot(TIME-3500, sdfPlot.AccErr, 'r:', 'LineWidth',1.0)
 
-plot(nstats.A_Reward_tErrStart_Acc*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
-plot(nstats.A_Reward_tErrEnd_Acc*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
+plot(unitData.TimingErrorSignal_Time(1)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
+plot(unitData.TimingErrorSignal_Time(3)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
 
-title(['Mag. = ', num2str(nstats.A_Reward_magErr_Acc), ' sp'])
+title(['Mag. = ', num2str(unitData.A_Reward_magErr_Acc), ' sp'])
 xlim([TIME(1) TIME(end)]-3500)
 xlabel('Time from reward (ms)')
 

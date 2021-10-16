@@ -1,8 +1,8 @@
-function [ ] = plot_EndptSS_Bar( behavInfo , secondSacc )
+function [ ] = plot_EndptSS_Bar( behavData , secondSacc )
 %plot_EndptSS_Bar Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESS = size(behavInfo,1);
+NUM_SESS = size(behavData,1);
 
 Ptgt_Acc = NaN(1,NUM_SESS);     Ptgt_Fast = NaN(1,NUM_SESS);
 Pdistr_Acc = NaN(1,NUM_SESS);   Pdistr_Fast = NaN(1,NUM_SESS);
@@ -10,10 +10,10 @@ Pdistr_Acc = NaN(1,NUM_SESS);   Pdistr_Fast = NaN(1,NUM_SESS);
 for kk = 1:NUM_SESS
   
   %index by condition
-  idxAcc = (behavInfo.condition{kk} == 1);
-  idxFast = (behavInfo.condition{kk} == 3);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErrChc = (behavInfo.err_dir{kk} & ~behavInfo.err_time{kk});
+  idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   %index by second saccade endpoint
   idxTgt = (secondSacc.endpt{kk} == 1);
   idxDistr = (secondSacc.endpt{kk} == 2);

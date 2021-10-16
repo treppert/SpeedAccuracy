@@ -1,9 +1,9 @@
 %explorePupilData_SAT.m
 if (0)
 MONKEY = 'Darwin';
-binfo = load('C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\binfo_moves_SAT.mat','binfo');
-binfo = binfo.binfo.SAT;    tmp = length(binfo);
-binfo = utilIsolateMonkeyBehavior(binfo, zeros(1,tmp), zeros(1,tmp), {MONKEY(1)});
+behavData = load('C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\SEF_SAT\Data\behavData_moves_SAT.mat','behavData');
+behavData = behavData.behavData.SAT;    tmp = length(behavData);
+behavData = utilIsolateMonkeyBehavior(behavData, zeros(1,tmp), zeros(1,tmp), {MONKEY(1)});
 
 ROOT_DIR = ['T:\data\', MONKEY, '\SAT\Matlab\'];
 DIR_PRINT = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Pupil\';
@@ -41,11 +41,11 @@ for kk = 1:NUM_SESSION
 %   figure(); plot(pupil(1:100,T_WIN_PLOT)')
   
   %index by task condition
-  idxFast = (binfo(kk).condition == 3);
-  idxAcc =  (binfo(kk).condition == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
+  idxAcc =  (behavData.Task_SATCondition{kk} == 1);
 
   %index by trial outcome
-  idxCorr = ~(binfo(kk).err_time | binfo(kk).err_dir | binfo(kk).err_hold | binfo(kk).err_nosacc);
+  idxCorr = ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
 
   pupil_FastCorr = pupil(idxFast & idxCorr, T_WIN_PLOT);
   pupil_AccCorr =  pupil(idxAcc & idxCorr, T_WIN_PLOT);
