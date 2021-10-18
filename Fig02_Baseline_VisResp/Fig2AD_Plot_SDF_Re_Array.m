@@ -72,8 +72,8 @@ for uu = 1:NUM_UNIT
   sdfFastST = SDFcc(idxFast & idxRF, T_PLOT);
   
   %compute mean SDF
-  sdfAcc(cc,:) = mean(sdfAccST);
-  sdfFast(cc,:) = mean(sdfFastST);
+  sdfAcc(uu,:) = mean(sdfAccST);
+  sdfFast(uu,:) = mean(sdfFastST);
   
 end%for:cells(uu)
 
@@ -112,13 +112,14 @@ elseif strcmp(args.fig, 'D') %split on task difficulty
   plot([0 0], yLim, 'k:')
   shaded_error_bar(T_PLOT, mean(sdfAccLess), std(sdfAccLess)/sqrt(NUM_LESS), {'r-', 'LineWidth',1.25})
   shaded_error_bar(T_PLOT, nanmean(sdfFastLess), nanstd(sdfFastLess)/sqrt(NUM_LESS), {'-', 'Color',[0 .7 0], 'LineWidth',1.25})
+  ylabel('Normalized activity'); ytickformat('%2.1f')
   xlabel('Time from array (ms)'); ytickformat('%2.1f')
   %Less difficult
   subplot(1,2,2); hold on
   plot([0 0], yLim, 'k:')
   shaded_error_bar(T_PLOT, mean(sdfAccMore), std(sdfAccMore)/sqrt(NUM_MORE), {'r-', 'LineWidth',0.75})
   shaded_error_bar(T_PLOT, mean(sdfFastMore), std(sdfFastMore)/sqrt(NUM_MORE), {'-', 'Color',[0 .7 0], 'LineWidth',0.75})
-  ylabel('Norm. activity'); ytickformat('%2.1f')
+  ytickformat('%2.1f')
   ppretty([8,2])
 end
 
