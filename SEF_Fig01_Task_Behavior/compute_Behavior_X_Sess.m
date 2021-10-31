@@ -46,7 +46,7 @@ for kk = 1:NUM_SESS
   
   %inter-saccade interval
   ISIkk = double(behavData.Sacc2_RT{kk}) - (double(behavData.Sacc_RT{kk}) + double(behavData.Sacc_Duration{kk}));
-  idxNoPP = (behavData.Sacc_RT{kk} == 0);
+  idxNoPP = (behavData.Sacc2_RT{kk} == 0);
   
   isiAcc(kk) = median(ISIkk(idxAcc & idxErrChc & ~idxNoPP));
   isiFast(kk) = median(ISIkk(idxFast & idxErrChc & ~idxNoPP));

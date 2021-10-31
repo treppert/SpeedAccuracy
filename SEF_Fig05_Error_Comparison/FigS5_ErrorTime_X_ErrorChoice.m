@@ -1,20 +1,20 @@
-function [ ] = plotSDF_ErrorCompare_SAT( behavData , moves , unitData , unitData , spikes , varargin )
-%plotSDF_ErrorCompare_SAT() Summary of this function goes here
+function [ ] = FigS5_ErrorTime_X_ErrorChoice( behavData , unitData , spikesSAT , varargin )
+%FigS5_ErrorTime_X_ErrorChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
+args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
 
 idxArea = ismember(unitData.aArea, args.area);
 idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
-idxErr = (unitData.Basic_ErrGrade >= 2);
-idxRew = (abs(unitData.Basic_RewGrade) >= 2 & ~isnan([unitData.TimingErrorSignal_Time(2)]));
+idxErrChoice = (unitData.Basic_ErrGrade >= 2);
+idxErrTime = (abs(unitData.Basic_RewGrade) >= 2) & ~isnan(unitData.TimingErrorSignal_Time(:,2));
 
-idxKeep = (idxArea & idxMonkey & (idxErr | idxRew));
+idxKeep = (idxArea & idxMonkey & (~idxErrChoice & idxErrTime));
 
 NUM_CELLS = sum(idxKeep);
-unitData = unitData(idxKeep);
-spikes = spikes(idxKeep);
+unitData = unitData(idxKeep,:);
+spikesSAT = spikesSAT(idxKeep);
 
 tplotResp = (-200 : 450);   offsetResp = 200;
 tplotRew  = (-50 : 600);    offsetRew = 50;
@@ -27,7 +27,7 @@ for uu = 1:NUM_CELLS
   fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  rtKK = double(moves(kk).resptime);
+  rtKK = double(behavData.Sacc_RT{kk});
   trewKK = double(behavData.Task_TimeReward{kk} + behavData.Sacc_RT{kk});
   
   %index by isolation quality
@@ -43,7 +43,7 @@ for uu = 1:NUM_CELLS
   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   
   %compute single-trial SDF
-  sdfStim = compute_spike_density_fxn(spikes(uu).SAT);
+  sdfStim = compute_spike_density_fxn(spikesSAT(uu).SAT);
   sdfResp = align_signal_on_response(sdfStim, rtKK);
   sdfRew  = align_signal_on_response(sdfStim, trewKK);
   
@@ -70,4 +70,4 @@ xlabel('Contrast ratio - Choice error')
 ylabel('Contrast ratio - Timing error')
 ppretty([4.8,3])
 
-end%fxn:plotSDF_ErrorCompare_SAT()
+end%fxn:FigS5_ErrorTime_X_ErrorChoice()

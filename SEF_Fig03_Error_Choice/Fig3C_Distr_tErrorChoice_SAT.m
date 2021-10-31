@@ -18,16 +18,20 @@ numSession = length(sess_ChcErr);
 
 behavData = behavData(sess_ChcErr,:);
 
-%get time of second saccade re. time of primary saccade
+%time of second saccade re. time of primary saccade
 tSS_Acc = [];
 tSS_Fast = [];
+%inter-saccade interval (ISI) -- take into account primary sacc. duration
+isiAcc = NaN(numSession,1);
+isiFast = NaN(numSession,1);
 
 for kk = 1:numSession
   
   %get time of second saccade re. primary saccade
   %NOTE: this is not the inter-saccade interval, which takes into account
   %   primary saccade duration
-  t_SecondSacc = behavData.Sacc2_RT{kk} - behavData.Sacc_RT{kk};
+  t_SecondSacc_kk = behavData.Sacc2_RT{kk} - behavData.Sacc_RT{kk};
+  isi_kk = behavData.Sacc2_RT{kk} - (behavData.Sacc_RT{kk} + behavData.Sacc_Duration{kk});
   
   %index by condition
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
@@ -42,8 +46,11 @@ for kk = 1:numSession
   idxAcc = (idxAcc & idxErr & (idxTgt | idxDistr));
   idxFast = (idxFast & idxErr & (idxTgt | idxDistr));
   
-  tSS_Acc = cat(2, tSS_Acc, t_SecondSacc(idxAcc));
-  tSS_Fast = cat(2, tSS_Fast, t_SecondSacc(idxFast));
+  tSS_Acc = cat(2, tSS_Acc, t_SecondSacc_kk(idxAcc));
+  tSS_Fast = cat(2, tSS_Fast, t_SecondSacc_kk(idxFast));
+  
+  isiAcc(kk) = median(isi_kk(idxAcc));
+  isiFast(kk) = median(isi_kk(idxFast));
   
 end%for:cells(uu)
 
@@ -59,6 +66,13 @@ cdfplotTR(tSS_Fast, 'Color',[0 .7 0])
 xlabel('Time from primary saccade (ms)'); %xlim([-100 500])
 ylabel('Cum. probability'); ytickformat('%2.1f')
 ppretty([4.8,3.0])
+
+%barplot
+figure(); hold on
+bar(mean([isiAcc isiFast]))
+errorbar(mean([isiAcc isiFast]), std([isiAcc isiFast]/sqrt(numSession)), 'Color','k')
+ylim([250 290])
+ppretty([2,4])
 
 end % fxn : plot_Distr_ChcErrSignal_Time_SAT ()
 

@@ -2,7 +2,9 @@ function [ ] = Fig3B_EndptSS_Bar( behavData )
 %plot_EndptSS_Bar Summary of this function goes here
 %   Detailed explanation goes here
 
-NUM_SESS = size(behavData,1);
+MONKEY = {'D','E'};
+sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
+NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 Ptgt_Acc = NaN(1,NUM_SESS);     Ptgt_Fast = NaN(1,NUM_SESS);
 Pdistr_Acc = NaN(1,NUM_SESS);   Pdistr_Fast = NaN(1,NUM_SESS);
