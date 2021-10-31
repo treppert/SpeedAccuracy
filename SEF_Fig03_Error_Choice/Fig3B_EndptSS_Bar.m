@@ -1,4 +1,4 @@
-function [ ] = plot_EndptSS_Bar( behavData , secondSacc )
+function [ ] = Fig3B_EndptSS_Bar( behavData )
 %plot_EndptSS_Bar Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -15,10 +15,10 @@ for kk = 1:NUM_SESS
   %index by trial outcome
   idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   %index by second saccade endpoint
-  idxTgt = (secondSacc.endpt{kk} == 1);
-  idxDistr = (secondSacc.endpt{kk} == 2);
-%   idxNone = (secondSacc.endpt{kk} == 0);
-%   idxFix = (secondSacc.endpt{kk} == 3);
+  idxTgt = (behavData.Sacc2_Endpoint{kk} == 1);
+  idxDistr = (behavData.Sacc2_Endpoint{kk} == 2);
+%   idxNone = (behavData.Sacc2_Endpoint{kk} == 0);
+%   idxFix = (behavData.Sacc2_Endpoint{kk} == 3);
   
   Ptgt_Acc(kk) = sum(idxAcc & idxErrChc & idxTgt) / sum(idxAcc & idxErrChc & (idxTgt | idxDistr));
   Ptgt_Fast(kk) = sum(idxFast & idxErrChc & idxTgt) / sum(idxFast & idxErrChc & (idxTgt | idxDistr));
@@ -41,7 +41,7 @@ errorbar([1 2 3 4], [muTgt_Acc muTgt_Fast muDistr_Acc muDistr_Fast], [seTgt_Acc 
 ppretty([3,3]); xticks([1 2 3 4]); xticklabels({'A','F','A','F'}); ytickformat('%2.1f')
 
 %% Stats - two-way between-subjects ANOVA
-matStats = [Ptgt_Acc Pdistr_Acc ; Ptgt_Fast Pdistr_Fast]';
-anova2_TR(matStats, NUM_SESS)
+% matStats = [Ptgt_Acc Pdistr_Acc ; Ptgt_Fast Pdistr_Fast]';
+% anova2_TR(matStats, NUM_SESS)
 
 end%fxn:plot_EndptSS_Bar()

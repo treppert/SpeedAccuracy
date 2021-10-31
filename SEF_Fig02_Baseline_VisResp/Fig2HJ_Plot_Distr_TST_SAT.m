@@ -11,10 +11,10 @@ idxVisUnit = (unitData.Basic_VisGrade >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
 % idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitData.Task_LevelDifficulty == 2));
 
-idxTST_All = ~(isnan(unitData.VisualResponse_TST(:,1)) | isnan(unitData.VisualResponse_TST(:,2)));
-idxTST_AccOnly = ~isnan(unitData.VisualResponse_TST(:,1)) & isnan(unitData.VisualResponse_TST(:,2));
-idxTST_FastOnly = isnan(unitData.VisualResponse_TST(:,1)) & ~isnan(unitData.VisualResponse_TST(:,2));
-idxNoTST = (isnan(unitData.VisualResponse_TST(:,1)) & isnan(unitData.VisualResponse_TST(:,2)));
+idxTST_All = ~(isnan(unitData.VisResp_TST(:,1)) | isnan(unitData.VisResp_TST(:,2)));
+idxTST_AccOnly = ~isnan(unitData.VisResp_TST(:,1)) & isnan(unitData.VisResp_TST(:,2));
+idxTST_FastOnly = isnan(unitData.VisResp_TST(:,1)) & ~isnan(unitData.VisResp_TST(:,2));
+idxNoTST = (isnan(unitData.VisResp_TST(:,1)) & isnan(unitData.VisResp_TST(:,2)));
 
 %compute neuron counts for barplot of TST diversity
 nNeuron_None = sum(idxKeep & idxNoTST);       nNeuron_Both = sum(idxKeep & idxTST_All);
@@ -31,10 +31,10 @@ unitData = unitData(idxKeep,:);
 ccMore = (unitData.Task_LevelDifficulty == 1);
 ccLess = (unitData.Task_LevelDifficulty == 2);
 
-TST_Acc_More = unitData.VisualResponse_TST(ccMore,1);     TST_Acc_More(isnan(TST_Acc_More)) = [];
-TST_Acc_Less = unitData.VisualResponse_TST(ccLess,1);     TST_Acc_Less(isnan(TST_Acc_Less)) = [];
-TST_Fast_More = unitData.VisualResponse_TST(ccMore,2);    TST_Fast_More(isnan(TST_Fast_More)) = [];
-TST_Fast_Less = unitData.VisualResponse_TST(ccLess,2);    TST_Fast_Less(isnan(TST_Fast_Less)) = [];
+TST_Acc_More = unitData.VisResp_TST(ccMore,1);     TST_Acc_More(isnan(TST_Acc_More)) = [];
+TST_Acc_Less = unitData.VisResp_TST(ccLess,1);     TST_Acc_Less(isnan(TST_Acc_Less)) = [];
+TST_Fast_More = unitData.VisResp_TST(ccMore,2);    TST_Fast_More(isnan(TST_Fast_More)) = [];
+TST_Fast_Less = unitData.VisResp_TST(ccLess,2);    TST_Fast_Less(isnan(TST_Fast_Less)) = [];
 nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
 nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
 

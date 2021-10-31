@@ -1,4 +1,4 @@
-function [ ] = plot_Distr_ChcErrSignal_Time_SAT( unitData , unitData , behavData , primarySacc , secondSacc )
+function [ ] = Fig3C_Distr_tErrorChoice_SAT( behavData , unitData )
 %plot_Distr_ChcErrSignal_Time_SAT Plot cumulative distribution of time of error
 %encoding and time of second saccade, relative to time of primary saccade.
 %   Detailed explanation goes here
@@ -17,8 +17,6 @@ sess_ChcErr = unique(unitData.Task_Session(idxErrUnit));
 numSession = length(sess_ChcErr);
 
 behavData = behavData(sess_ChcErr,:);
-primarySacc = primarySacc(sess_ChcErr,:);
-secondSacc = secondSacc(sess_ChcErr,:);
 
 %get time of second saccade re. time of primary saccade
 tSS_Acc = [];
@@ -29,7 +27,7 @@ for kk = 1:numSession
   %get time of second saccade re. primary saccade
   %NOTE: this is not the inter-saccade interval, which takes into account
   %   primary saccade duration
-  t_SecondSacc = secondSacc.resptime{kk} - primarySacc.resptime{kk};
+  t_SecondSacc = behavData.Sacc2_RT{kk} - behavData.Sacc_RT{kk};
   
   %index by condition
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
@@ -37,8 +35,8 @@ for kk = 1:numSession
   %index by trial outcome
   idxErr = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
   %index by second saccade endpoint
-  idxTgt = (secondSacc.endpt{kk} == 1);
-  idxDistr = (secondSacc.endpt{kk} == 2);
+  idxTgt = (behavData.Sacc2_Endpoint{kk} == 1);
+  idxDistr = (behavData.Sacc2_Endpoint{kk} == 2);
   
   %combine for easy indexing
   idxAcc = (idxAcc & idxErr & (idxTgt | idxDistr));
