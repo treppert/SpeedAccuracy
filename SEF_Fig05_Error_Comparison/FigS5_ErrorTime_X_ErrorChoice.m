@@ -8,7 +8,7 @@ idxArea = ismember(unitData.aArea, args.area);
 idxMonkey = ismember(unitData.aMonkey, args.monkey);
 
 idxErrChoice = (unitData.Basic_ErrGrade >= 2);
-idxErrTime = (abs(unitData.Basic_RewGrade) >= 2) & ~isnan(unitData.TimingErrorSignal_Time(:,2));
+idxErrTime = (abs(unitData.Basic_RewGrade) >= 2);
 
 idxKeep = (idxArea & idxMonkey & (~idxErrChoice & idxErrTime));
 

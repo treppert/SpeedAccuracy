@@ -1,4 +1,4 @@
-function [ ] = Fig07C_plotRscSinglePair_2( spkCorr )
+function [ ] = Fig6A_plotRscSinglePair( spkCorr )
 
 %PAIR_0195 - Da-20130828001-14a-U37(SEF)  and Da-20130828001-10a-U31(FEF)
 %PAIR_0251 - Da-20130828001-14a-U37(SEF)  and Da-20130828001-17a-U42(SC)
@@ -116,5 +116,5 @@ for pp = 1:1
   
 end % for : pair (pp)
 
-end % fxn : Fig07C_plotRscSinglePair_2()
+end % fxn : Fig6A_plotRscSinglePair()
 
