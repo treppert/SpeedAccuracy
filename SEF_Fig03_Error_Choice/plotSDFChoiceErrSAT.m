@@ -1,8 +1,8 @@
-function [ varargout ] = plotSDFChoiceErrSAT( behavData , primarySacc , secondSacc , unitData , unitData , spikes )
+function [ varargout ] = plotSDFChoiceErrSAT( behavData , unitData , spikesSAT )
 %plotSDFChoiceErrSAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\';
+% ROOTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT\Figures\Post-Response\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
@@ -12,7 +12,7 @@ idxKeep = (idxArea & idxMonkey & idxErrUnit);
 NUM_CELLS = sum(idxKeep);
 unitData = unitData(idxKeep,:);
 unitData = unitData(idxKeep,:);
-spikes = spikes(idxKeep);
+spikesSAT = spikesSAT(idxKeep);
 
 TIME.PRIMARY = 3500 + (-300 : 500); OFFSET = 300; %time from primary saccade
 TIME.SECONDARY = 3500 + (-200 : 300); %time from secondary saccade
@@ -22,28 +22,28 @@ sdfAcc = new_struct({'RePrimary','ReSecondary','Baseline'}, 'dim',[1,NUM_CELLS])
 sdfAcc = struct('Corr',sdfAcc, 'Err',sdfAcc);
 sdfFast = sdfAcc;
 
-for uu = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.unit{uu})
-  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+for cc = 1:1%NUM_CELLS
+  fprintf('%s - %s\n', unitData.Task_Session(cc), unitData.unit{cc})
+  kk = ismember(behavData.Task_Session, unitData.Task_Session(cc));
   
-  RT_Primary_kk = primarySacc.resptime{kk};
+  RT_Primary_kk = behavData.Sacc_RT{kk};
   RT_Primary_kk(RT_Primary_kk > 900) = NaN; %hard limit on primary RT
-  RT_Second_kk = secondSacc.resptime{kk};
+  RT_Second_kk = behavData.Sacc2_RT{kk};
   RT_Second_kk(RT_Second_kk < 0) = NaN; %trials with no secondary saccade
   
   %prepare event-aligned SDFs
-  SDF_FromArray = compute_spike_density_fxn(spikes{uu});
+  SDF_FromArray = compute_spike_density_fxn(spikesSAT{cc});
   SDF_FromPrimary = align_signal_on_response(SDF_FromArray, RT_Primary_kk);
   SDF_FromSecond  = align_signal_on_response(SDF_FromArray, RT_Second_kk);
   
   %index by isolation quality
-  idxPoorIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk}, 'task','SAT');
+  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{cc}, behavData.Task_NumTrials(kk));
   %index by second saccade endpoint
-  idxSS2Tgt = (secondSacc.endpt{kk} == 1);
-  idxSS2Distr = (secondSacc.endpt{kk} == 2);
+  idxSS2Tgt = (behavData.endpt{kk} == 1);
+  idxSS2Distr = (behavData.endpt{kk} == 2);
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
-  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxPoorIso & (idxSS2Tgt | idxSS2Distr));
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso & (idxSS2Tgt | idxSS2Distr));
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso & (idxSS2Tgt | idxSS2Distr));
   %index by trial outcome
   idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData(kk).Task_ErrHold | behavData(kk).Task_ErrNoSacc);
   idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
@@ -57,15 +57,15 @@ for uu = 1:NUM_CELLS
   [Trials.FastCorr, Trials.FastErr] = matchRT_Correct_Error(RT_Primary_kk, idxFast, idxCorr, idxErrChc);
   
   %get single-trials SDFs
-  [sdfAccST, sdfFastST] = getSingleTrialSDF(RT_Primary_kk, RT_Second_kk, spikes(uu).SAT, trials, TIME);
+  [sdfAccST, sdfFastST] = getSingleTrialSDF(RT_Primary_kk, RT_Second_kk, spikesSAT{cc}, trials, TIME);
   
   %compute mean SDFs
-  [sdfAcc.Corr(uu),sdfAcc.Err(uu)] = computeMeanSDF( sdfAccST );
-  [sdfFast.Corr(uu),sdfFast.Err(uu)] = computeMeanSDF( sdfFastST );
-  sdfCombined = struct('AccCorr',sdfAcc.Corr(uu), 'AccErr',sdfAcc.Err(uu), 'FastCorr',sdfFast.Corr(uu), 'FastErr',sdfFast.Err(uu));
+  [sdfAcc.Corr(cc),sdfAcc.Err(cc)] = computeMeanSDF( sdfAccST );
+  [sdfFast.Corr(cc),sdfFast.Err(cc)] = computeMeanSDF( sdfFastST );
+  sdfCombined = struct('AccCorr',sdfAcc.Corr(cc), 'AccErr',sdfAcc.Err(cc), 'FastCorr',sdfFast.Corr(cc), 'FastErr',sdfFast.Err(cc));
     
   %% Parameterize the SDF
-  uuStats = unitData.aIndex(uu);
+  uuStats = unitData.aIndex(cc);
   
   %plot individual cell activity
   plotSDF_UnitCC(TIME, sdfCombined, unitData(cc,:), unitData(uuStats,:))
@@ -117,7 +117,7 @@ sdfErr.ReSecondary = nanmean(sdfSingleTrial.Err.ReSecondary)';
 end%util:computeMeanSDF()
 
 
-function [ ] = plotSDF_UnitCC( TIME , sdfPlot , unitData , unitData )
+function [ ] = plotSDF_UnitCC( TIME , sdfPlot , unitData )
 %plotSDF_UnitCC Summary of this function goes here
 % 
 
