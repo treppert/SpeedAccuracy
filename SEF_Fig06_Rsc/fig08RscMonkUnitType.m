@@ -1,5 +1,6 @@
 function [anovaResultTbl] = fig08RscMonkUnitType(rscData, monkeys, cellArrUnitTypes,pdfFilename,titleStr)
 %FIG08RSCMONKUNITTYPE Summary of this function goes here
+printDir = 'C:\Users\Tom\Documents\Data\SpeedAccuracy\SpkCorr\';
 
 % check if if you need to add CI box to the barplots
 doCiBox = true;
@@ -8,9 +9,9 @@ if evalin('base','exist(''addCiBox'',''var'')')
     doCiBox = evalin('base','addCiBox');
 end
 if doCiBox
-    figDir = '_fig08_With_CI_Box';
+    figDir = [printDir, '_fig08_With_CI_Box'];
 else
-    figDir = '_fig08_No_CI_Box';
+    figDir = [printDir, '_fig08_No_CI_Box'];
 
 end
 
@@ -65,7 +66,7 @@ ha = annotation('textbox','String',titleStr,...
 set(H_axes,'Box','off','TickDir','out','XMinorTick','off','YMinorTick','on');
 set(gcf,'Position',[120 120 1400 900]);
 set(gcf,'PaperOrientation','landscape')
-ppretty([5 7],'XMinorTick','off')
+ppretty([5 7])
 drawnow
 print(oPdfFile,'-dpdf')
 

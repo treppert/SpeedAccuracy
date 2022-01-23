@@ -5,7 +5,8 @@
 %  h = plotGraph(objGr);
 
 %% Read and trim data for network graph
-allSpkCorr = load('dataProcessed/satSefPaper/rscSubSampl1K_PostSaccade.mat');
+% allSpkCorr = load('dataProcessed/satSefPaper/rscSubSampl1K_PostSaccade.mat');
+allSpkCorr = load('dataProcessed/satSefPaper/rscSubSampl1K_PostSaccade_0_TrialsThresh.mat');
 % output dir 
 oPdfDir = 'dataProcessed/satSefPaper/Figures/fig08/networkGraph';
 if ~exist(oPdfDir,'dir')
