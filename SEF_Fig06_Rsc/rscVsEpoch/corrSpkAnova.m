@@ -96,6 +96,7 @@ errorbar((1:2:5), rsc_Epoch_Acc(1,:), rsc_Epoch_Acc(2,:), 'CapSize',0, 'Color','
 bar((2:2:6),      rsc_Epoch_Fast(1,:), 'FaceColor',[0 .7 0], 'BarWidth',0.35)
 errorbar((2:2:6), rsc_Epoch_Fast(1,:), rsc_Epoch_Fast(2,:), 'CapSize',0, 'Color','k')
 xticks([1.5 3.5 5.5]); xticklabels({'Correct','Choice error','Timing error'});
+set(gca, 'XTickLabelRotation',30)
 ytickformat('%3.2f'); ylabel('rsc')
 ppretty([3,3])
 
