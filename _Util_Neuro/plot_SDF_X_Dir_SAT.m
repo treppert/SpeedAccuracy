@@ -2,7 +2,7 @@ function [  ] = plot_SDF_X_Dir_SAT( behavData , unitData , spikesSAT , varargin 
 %plot_SDF_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+args = getopt(varargin, {{'area=',{'FEF','SC','SEF'}}, {'monkey=',{'D','E'}}});
 PRINTDIR = 'C:\Users\Tom\Dropbox\Speed Accuracy\__SEF_SAT\Figs\SDF_X_Dir_SAT\';
 
 idxArea = ismember(unitData.aArea, args.area);
@@ -54,7 +54,7 @@ for uu = 1:NUM_CELLS
   
   %% Plotting
   sdfAll = [sdf_AccStim sdf_AccResp sdf_FastStim sdf_FastResp];
-  figure();  yLim = [min(min(sdfAll)) max(max(sdfAll))];
+  figure('visible','off');  yLim = [min(min(sdfAll)) max(max(sdfAll))];
   
   for dd = 1:8 %loop over directions and plot
     
@@ -92,7 +92,6 @@ for uu = 1:NUM_CELLS
     
     if (IDX_RESP_PLOT(dd) == 14)
       xlabel('Time from response (ms)');  yticklabels([])
-%       print_session_unit(gca , unitData(uu,:), behavData(kk,:), 'horizontal')
     else
       xticklabels([]);  yticklabels([])
     end
@@ -100,7 +99,7 @@ for uu = 1:NUM_CELLS
     pause(.05)
   end%for:direction(dd)
   
-  ppretty([16,8])
+  ppretty([12,6])
   pause(0.1); print([PRINTDIR, unitData.Task_Session{uu},'-',unitData.aID{uu},'.tif'], '-dtiff')
   pause(0.1); close(); pause(0.1)
   
