@@ -3,7 +3,7 @@ function [ ] = plot_SpikeCountXTrial_SAT( unitData , spikesSAT )
 %   Detailed explanation goes here
 
 SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Figs\SpikeCount-X-Trial\';
-AREA = {'SEF','NSEFN'};
+AREA = {'SEF'};
 MONKEY = {'D','E'};
 
 T_TEST = [-800 0] + 3500;

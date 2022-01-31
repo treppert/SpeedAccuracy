@@ -1,5 +1,5 @@
-function [  ] = plotSDFXdirMG( behavData , moves , unitData , spikes , varargin )
-%plotSDFXdirMG() Summary of this function goes here
+function [  ] = plot_SDF_X_Dir_MG( behavData , moves , unitData , spikes , varargin )
+%plot_SDF_X_Dir_MG() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E','Q','S'}}});
