@@ -12,7 +12,7 @@ elseif (trialRemove(1) == 9999) %remove all trials from consideration
   
 else %specified interval of trials to remove
   idx_poor_isolation(trialRemove(1) : trialRemove(2)) = true;
-  
+  fprintf('Skipping trials %d - %d \n', trialRemove);
 end
 
 end % util : identify_trials_poor_isolation_SAT()
