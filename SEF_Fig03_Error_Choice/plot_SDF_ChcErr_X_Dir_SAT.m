@@ -2,10 +2,10 @@ function [  ] = plot_SDF_ChcErr_X_Dir_SAT( behavData , unitData , spikesSAT )
 %plot_SDF_ChcErr_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\Figs\ChoiceErrorSignal\AllDirections\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_SAT_ChoiceError\';
 
-idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxArea = ismember(unitData.aArea, {'SC'});
+idxMonkey = ismember(unitData.aMonkey, {'D'});
 idxErrUnit = (unitData.Basic_ErrGrade >= 2);
 idxKeep = (idxArea & idxMonkey);
 
@@ -32,11 +32,6 @@ for cc = 1:NUM_CELLS
   
   ISI_kk = RTS_kk - RTP_kk; %inter-saccade interval
   
-  %compute spike density function and align on primary response
-  sdf_kk = compute_spike_density_fxn(spikesSAT{cc});
-  sdfP_kk = align_signal_on_response(sdf_kk, RTP_kk); %sdf from primary
-  sdfS_kk = align_signal_on_response(sdf_kk, RTS_kk); %sdf from second
-  
   %index by isolation quality
   idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{cc}, behavData.Task_NumTrials(kk));
   %index by condition
@@ -45,6 +40,11 @@ for cc = 1:NUM_CELLS
   %index by trial outcome
   idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
+  
+  %compute spike density function and align on primary response
+  sdf_kk = compute_spike_density_fxn(spikesSAT{cc});
+  sdfP_kk = align_signal_on_response(sdf_kk, RTP_kk); %sdf from primary
+  sdfS_kk = align_signal_on_response(sdf_kk, RTS_kk); %sdf from second
   
   %initializations
   sdf_Fast_Corr = NaN(16, NUM_SAMP); %index 1-8: sdf re. primary | index 9-16: sdf re. second
@@ -104,8 +104,8 @@ for cc = 1:NUM_CELLS
     plot([0 0], yLim, 'k:')
     plot(-med_ISI(1,dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
     plot(-med_ISI(2,dd)*ones(1,2), yLim, 'r:')
-    plot(tPlot-3500, sdf_Fast_Corr(dd+8,:), '-', 'Color',[0 .7 0]);
-    plot(tPlot-3500, sdf_Acc_Corr(dd+8,:), 'r-');
+%     plot(tPlot-3500, sdf_Fast_Corr(dd+8,:), '-', 'Color',[0 .7 0]);
+%     plot(tPlot-3500, sdf_Acc_Corr(dd+8,:), 'r-');
     plot(tPlot-3500, sdf_Fast_Err(dd+8,:), ':', 'Color',[0 .7 0]);
     plot(tPlot-3500, sdf_Acc_Err(dd+8,:), 'r:');
     
@@ -122,7 +122,7 @@ for cc = 1:NUM_CELLS
   end%for:direction(dd)
   
   ppretty([12,6])
-  pause(0.1); print([PRINTDIR, unitData.Properties.RowNames{cc},'.tif'], '-dtiff')
+  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{cc},'-',unitData.aArea{cc},'.tif'], '-dtiff')
   pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
