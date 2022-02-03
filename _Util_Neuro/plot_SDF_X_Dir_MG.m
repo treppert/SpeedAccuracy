@@ -3,7 +3,7 @@ function [  ] = plot_SDF_X_Dir_MG( behavData , unitData , spikesMG , varargin )
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=',{'FEF','SC','SEF'}}, {'monkey=',{'D','E'}}});
-PRINTDIR = 'C:\Users\Tom\Dropbox\Speed Accuracy\__SEF_SAT\Figs\SDF_X_Dir_MG2\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_MG\';
 
 idxArea = ismember(unitData.aArea, args.area);
 idxMonkey = ismember(unitData.aMonkey, args.monkey);
@@ -48,7 +48,7 @@ for uu = 1:NUM_CELLS
   end%for:direction(dd)
   
   %% Plotting
-  figure('visible','off');  yLim = [min(min([sdfStim sdfResp])) max(max([sdfStim sdfResp]))];
+  fig_uu = figure('visible','off');  yLim = [min(min([sdfStim sdfResp])) max(max([sdfStim sdfResp]))];
   
   for dd = 1:8 %loop over directions and plot
     
@@ -91,7 +91,7 @@ for uu = 1:NUM_CELLS
   
   ppretty([12,6])
   print([PRINTDIR, unitData.Task_Session{uu},'-',unitData.aID{uu},'.tif'], '-dtiff')
-  pause(0.1); close(); pause(0.1)
+  pause(0.1); close(fig_uu); pause(0.1)
   
 end%for:cells(uu)
 

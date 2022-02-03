@@ -3,7 +3,7 @@ function [  ] = plot_SDF_X_Dir_SAT( behavData , unitData , spikesSAT , varargin 
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=',{'FEF','SC','SEF'}}, {'monkey=',{'D','E'}}});
-PRINTDIR = 'C:\Users\Tom\Dropbox\Speed Accuracy\__SEF_SAT\Figs\SDF_X_Dir_SAT\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_SAT\';
 
 idxArea = ismember(unitData.aArea, args.area);
 idxMonkey = ismember(unitData.aMonkey, args.monkey);
@@ -54,7 +54,7 @@ for uu = 1:NUM_CELLS
   
   %% Plotting
   sdfAll = [sdf_AccStim sdf_AccResp sdf_FastStim sdf_FastResp];
-  figure('visible','off');  yLim = [min(min(sdfAll)) max(max(sdfAll))];
+  fig_uu = figure('visible','off');  yLim = [min(min(sdfAll)) max(max(sdfAll))];
   
   for dd = 1:8 %loop over directions and plot
     
@@ -100,8 +100,8 @@ for uu = 1:NUM_CELLS
   end%for:direction(dd)
   
   ppretty([12,6])
-  pause(0.1); print([PRINTDIR, unitData.Task_Session{uu},'-',unitData.aID{uu},'.tif'], '-dtiff')
-  pause(0.1); close(); pause(0.1)
+  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
+  pause(0.1); close(fig_uu); pause(0.1)
   
 end%for:cells(uu)
 

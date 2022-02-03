@@ -5,8 +5,8 @@ function [  ] = plot_SDF_ChcErr_X_Dir_SAT( behavData , unitData , spikesSAT )
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_SAT_ChoiceError\';
 
 idxArea = ismember(unitData.aArea, {'SC'});
-idxMonkey = ismember(unitData.aMonkey, {'D'});
-idxErrUnit = (unitData.Basic_ErrGrade >= 2);
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxErrUnit = (unitData.Grade_Err >= 2);
 idxKeep = (idxArea & idxMonkey);
 
 NUM_CELLS = sum(idxKeep);
@@ -53,7 +53,7 @@ for cc = 1:NUM_CELLS
   sdf_Acc_Err = sdf_Fast_Corr;
   med_ISI = NaN(2,8); %median inter-saccade interval (Fast;Acc)
   
-  for dd = 1:8 %loop over response directions
+  for dd = 1:8 %loop over possible target locations
     %index this direction
     idxDD = (behavData.Task_TgtOctant{kk} == dd);
     %compute median inter-saccade interval
@@ -75,10 +75,21 @@ for cc = 1:NUM_CELLS
   yLim = [min(min(min(sdfAll))) max(max(max(sdfAll)))];
   figure('visible','off');
   
+  %color-code plot axes by neuron functional type and response field
+  colorAxis = ['k','k','k','k','k','k','k','k'];
+  if ((abs(unitData.Grade_Vis(cc)) >= 3) && (unitData.Grade_Mov(cc) >= 3))
+    colorAxis(unitData.Field_Vis{cc}) = 'b';
+  elseif (abs(unitData.Grade_Vis(cc)) >= 3)
+    colorAxis(unitData.Field_Vis{cc}) = 'm';
+  elseif (unitData.Grade_Mov(cc) >= 3)
+    colorAxis(unitData.Field_Vis{cc}) = 'm';
+  end
+  
   for dd = 1:8 %loop over directions and plot
     
     %% Plot from PRIMARY SACCADE
     subplot(3,6,IDX_SACC1_PLOT(dd)); hold on
+    set(gca, 'XColor',colorAxis(dd)); set(gca, 'YColor',colorAxis(dd))
     plot([0 0], yLim, 'k:')
     plot(med_ISI(1,dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
     plot(med_ISI(2,dd)*ones(1,2), yLim, 'r:')
@@ -101,6 +112,7 @@ for cc = 1:NUM_CELLS
     
     %% Plot from SECOND SACCADE
     subplot(3,6,IDX_SACC2_PLOT(dd)); hold on
+    set(gca, 'XColor',colorAxis(dd)); set(gca, 'YColor',colorAxis(dd))
     plot([0 0], yLim, 'k:')
     plot(-med_ISI(1,dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
     plot(-med_ISI(2,dd)*ones(1,2), yLim, 'r:')
