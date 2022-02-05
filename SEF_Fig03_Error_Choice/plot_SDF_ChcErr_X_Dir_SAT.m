@@ -2,10 +2,10 @@ function [  ] = plot_SDF_ChcErr_X_Dir_SAT( behavData , unitData , spikesSAT )
 %plot_SDF_ChcErr_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_SAT_ChoiceError\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SC'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxMonkey = ismember(unitData.aMonkey, {'E'});
 idxErrUnit = (unitData.Grade_Err >= 2);
 idxKeep = (idxArea & idxMonkey);
 
@@ -53,9 +53,10 @@ for cc = 1:NUM_CELLS
   sdf_Acc_Err = sdf_Fast_Corr;
   med_ISI = NaN(2,8); %median inter-saccade interval (Fast;Acc)
   
-  for dd = 1:8 %loop over possible target locations
-    %index this direction
-    idxDD = (behavData.Task_TgtOctant{kk} == dd);
+  for dd = 1:8 %loop over directions
+    %index by direction
+    idxDD = (behavData.Task_TgtOctant{kk} == dd); %target direction
+    idxDD = (behavData.Sacc2_{kk} == dd); %second saccade direction
     %compute median inter-saccade interval
     med_ISI(1,dd) = nanmedian(ISI_kk(idxFast & idxErrChc & idxDD));
     med_ISI(2,dd) = nanmedian(ISI_kk(idxAcc  & idxErrChc & idxDD));
