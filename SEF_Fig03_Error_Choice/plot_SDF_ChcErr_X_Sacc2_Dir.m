@@ -4,8 +4,8 @@ function [  ] = plot_SDF_ChcErr_X_Sacc2_Dir( behavData , unitData , spikesSAT )
 
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'SC'});
-idxMonkey = ismember(unitData.aMonkey, {'D'});
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'E'});
 idxErrUnit = (unitData.Grade_Err >= 2);
 idxKeep = (idxArea & idxMonkey);
 
@@ -56,20 +56,26 @@ for cc = 1:NUM_CELLS
   med_ISI = NaN(2,8); %median inter-saccade interval (Fast;Acc)
   
   Sacc2_Direction = behavData.Sacc2_Direction{kk};
+  Sacc1_Direction = behavData.Sacc_Direction{kk};
   for dd = 1:NUM_DIR %loop over directions
     %index by direction
-    binLimDD = [(BIN_DIR(dd)-H_DIFF_DIR) , (BIN_DIR(dd)+H_DIFF_DIR) ];
-    idxDD = transpose((Sacc2_Direction > binLimDD(1) & Sacc2_Direction < binLimDD(2)));
+    if ((dd == 1) || (dd == NUM_DIR))
+      binLimDD = [(BIN_DIR(1)+H_DIFF_DIR) , (BIN_DIR(end)-H_DIFF_DIR) ];
+      idxDD = transpose((Sacc2_Direction < binLimDD(1) | Sacc2_Direction > binLimDD(2)));
+%       idxDD = transpose((Sacc1_Direction < binLimDD(1) | Sacc1_Direction > binLimDD(2)));
+    else
+      binLimDD = [(BIN_DIR(dd)-H_DIFF_DIR) , (BIN_DIR(dd)+H_DIFF_DIR) ];
+      idxDD = transpose((Sacc2_Direction > binLimDD(1) & Sacc2_Direction < binLimDD(2)));
+%       idxDD = transpose((Sacc1_Direction > binLimDD(1) & Sacc1_Direction < binLimDD(2)));
+    end
     %compute median inter-saccade interval
     med_ISI(1,dd) = nanmedian(ISI_kk(idxFast & idxErrChc & idxDD));
     med_ISI(2,dd) = nanmedian(ISI_kk(idxAcc  & idxErrChc & idxDD));
     %compute SDFs
     sdf_Fast_Corr(dd,:) = nanmean(sdfP_kk(idxFast & idxCorr & idxDD, tPlot)); %re. primary
-%     sdf_Fast_Corr(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxFast & idxCorr & idxDD, tPlot)); %re. second
     sdf_Fast_Err(dd,:) = nanmean(sdfP_kk(idxFast & idxErrChc & idxDD, tPlot));
     sdf_Fast_Err(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxFast & idxErrChc & idxDD, tPlot));
     sdf_Acc_Corr(dd,:) = nanmean(sdfP_kk(idxAcc & idxCorr & idxDD, tPlot));
-%     sdf_Acc_Corr(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxAcc & idxCorr & idxDD, tPlot));
     sdf_Acc_Err(dd,:) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxDD, tPlot));
     sdf_Acc_Err(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxAcc & idxErrChc & idxDD, tPlot));
   end%for:direction(dd)
@@ -78,6 +84,8 @@ for cc = 1:NUM_CELLS
   sdfAll = [sdf_Fast_Corr sdf_Fast_Err sdf_Acc_Corr sdf_Acc_Err];
   cLim = [min(min(min(sdfAll))) max(max(max(sdfAll)))];
   figure('visible','off')
+  yTickLabel = num2cell(rad2deg(BIN_DIR));
+  yTickLabel(2:2:end) = {''};
   
   subplot(2,2,1); hold on %Fast re. primary
   title('Fast - Choice error', 'FontSize',9)
@@ -85,8 +93,9 @@ for cc = 1:NUM_CELLS
   plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
   plot(med_ISI(1,dd)*ones(1,2), [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.2)
   xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-  ylabel('Saccade direction (deg)')
-  yticks(BIN_DIR); yticklabels(num2cell(rad2deg(BIN_DIR)))
+  yticks(BIN_DIR); yticklabels(yTickLabel)
+  ylabel('Second saccade direction (deg)')
+%   ylabel('Primary saccade direction (deg)')
   
   subplot(2,2,2); hold on %Fast re. second
   title('Fast - Choice error', 'FontSize',9)
@@ -102,18 +111,20 @@ for cc = 1:NUM_CELLS
   plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
   plot(med_ISI(2,dd)*ones(1,2), [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.2)
   xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
+  yticks(BIN_DIR); yticklabels(yTickLabel)
   xlabel('Time from primary saccade(ms)')
-  ylabel('Saccade direction (deg)')
-  yticks(BIN_DIR); yticklabels(num2cell(rad2deg(BIN_DIR)))
+  ylabel('Second saccade direction (deg)')
+%   ylabel('Primary saccade direction (deg)')
   
   subplot(2,2,4); hold on %Accurate re. second
   title('Accurate - Choice error', 'FontSize',9)
-  imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(NUM_DIR+1:end,:), cLim);
+  imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(NUM_DIR+1:end,:), cLim)
+  colorbar('location','east', 'Color','w')
   plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
   plot(-med_ISI(2,dd)*ones(1,2), [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.2)
   xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-  xlabel('Time from second saccade (ms)')
   set(gca, 'YAxisLocation','right'); yticks([])
+  xlabel('Time from second saccade (ms)')
     
   ppretty([12,8])
   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{cc},'-',unitData.aArea{cc},'.tif'], '-dtiff')

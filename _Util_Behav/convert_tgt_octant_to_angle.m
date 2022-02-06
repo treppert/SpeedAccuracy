@@ -11,9 +11,9 @@ angle(octant == 2) = pi/4;
 angle(octant == 3) = pi/2;
 angle(octant == 4) = 3*pi/4;
 angle(octant == 5) = pi;
-angle(octant == 6) = 5*pi/4;
-angle(octant == 7) = 3*pi/2;
-angle(octant == 8) = 7*pi/4;
+angle(octant == 6) = 5*pi/4 - 2*pi;
+angle(octant == 7) = 3*pi/2 - 2*pi;
+angle(octant == 8) = 7*pi/4 - 2*pi;
 
 end%function:convert_tgt_octant_to_angle()
 
