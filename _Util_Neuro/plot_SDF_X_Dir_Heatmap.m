@@ -56,7 +56,6 @@ for uu = 1:NUM_UNITS
   sdf_Acc_Corr = sdf_Fast_Corr;
   sdf_Acc_Err = sdf_Fast_Corr;
   
-%   Direction = transpose(convert_tgt_octant_to_angle(behavData.Task_TgtOctant{kk}));
 %   Direction = behavData.Sacc2_Direction{kk};
   Direction = behavData.Sacc_Direction{kk};
   for dd = 1:NUM_DIR %loop over directions
@@ -94,7 +93,8 @@ for uu = 1:NUM_UNITS
   switch (TRIAL_OUTCOME_PLOT)
     case 'correct'
       %% Plot: Correct trial outcome
-      sdfAll = [sdf_Fast_Corr(1:NUM_DIR,:) sdf_Acc_Corr(1:NUM_DIR,:)];
+      sdfAll = [sdf_Fast_Corr(1:NUM_DIR,:) sdf_Fast_Err(1:NUM_DIR,:) ...
+        sdf_Acc_Corr(1:NUM_DIR,:) sdf_Acc_Err(1:NUM_DIR,:)];
       cLim = [0, max(sdfAll,[],'all')];
       
       subplot(2,1,1); hold on %Fast re. primary
@@ -112,13 +112,14 @@ for uu = 1:NUM_UNITS
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks(BIN_DIR); yticklabels(yTickLabel)
       xlabel('Time from primary saccade (ms)')
-      ylabel('Target location (deg)')
+      ylabel('Primary saccade direction (deg)')
       
       ppretty([6,8])
       
     case 'error_primary_only'
       %% Plot: Error trial outcome re. primary only
-      sdfAll = [sdf_Fast_Err(1:NUM_DIR,:) sdf_Acc_Err(1:NUM_DIR,:)];
+      sdfAll = [sdf_Fast_Corr(1:NUM_DIR,:) sdf_Fast_Err(1:NUM_DIR,:) ...
+        sdf_Acc_Corr(1:NUM_DIR,:) sdf_Acc_Err(1:NUM_DIR,:)];
       cLim = [0, max(sdfAll,[],'all')];
       
       subplot(2,1,1); hold on %Fast re. primary
