@@ -3,7 +3,7 @@ function [  ] = plot_SDF_X_Dir_Heatmap( behavData , unitData , spikesSAT )
 %   Detailed explanation goes here
 
 MIN_TRIAL_COUNT = 3;
-TRIAL_OUTCOME_PLOT = 'difference'; %{'correct','error','difference'}
+PLOT_TYPE = 'SDF_RF'; %{'SDF_RF','heatmap'}
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SC','SEF'});
@@ -48,10 +48,10 @@ for uu = 1:NUM_UNITS
   sdfP_kk = align_signal_on_response(sdfA_kk, RTP_kk); %sdf from Primary
   sdfS_kk = align_signal_on_response(sdfA_kk, RTS_kk); %sdf from Second
   
-  %initializations
-  sdf_Fast_Corr = NaN(2*NUM_DIR, NUM_SAMP); %1st half: sdf re. array | 2nd half: sdf re. primary
+  %% Compute SDF heatmaps across all 8 directions
+  sdf_Fast_Corr = NaN(3*NUM_DIR, NUM_SAMP); %sdf re. array | sdf re. primary | sdf re. second
   sdf_Acc_Corr = sdf_Fast_Corr;
-  sdf_Fast_Err = sdf_Fast_Corr; %1st half: sdf re. primary | 2nd half: sdf re. second
+  sdf_Fast_Err = sdf_Fast_Corr;
   sdf_Acc_Err = sdf_Fast_Corr;
   
   Dir_Sacc1 = behavData.Sacc_Direction{kk};
@@ -77,134 +77,207 @@ for uu = 1:NUM_UNITS
     
     %compute SDFs - Choice error trial outcome
     if (sum(idxFast & idxErrChc & idxDD1) >= MIN_TRIAL_COUNT)
-      sdf_Fast_Err(dd,:) = nanmean(sdfP_kk(idxFast & idxErrChc & idxDD1, tPlot)); %re. primary
+      sdf_Fast_Err(dd,:) = nanmean(sdfA_kk(idxFast & idxErrChc & idxDD1, tPlot)); %re. array
+      sdf_Fast_Err(dd+NUM_DIR,:) = nanmean(sdfP_kk(idxFast & idxErrChc & idxDD1, tPlot)); %re. primary
     end
     if (sum(idxFast & idxErrChc & idxDD2) >= MIN_TRIAL_COUNT)
-      sdf_Fast_Err(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxFast & idxErrChc & idxDD2, tPlot)); %re. second
+      sdf_Fast_Err(dd+2*NUM_DIR,:) = nanmean(sdfS_kk(idxFast & idxErrChc & idxDD2, tPlot)); %re. second
     end
     if (sum(idxAcc & idxErrChc & idxDD1) >= MIN_TRIAL_COUNT)
-      sdf_Acc_Err(dd,:) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxDD1, tPlot)); %re. primary
+      sdf_Acc_Err(dd,:) = nanmean(sdfA_kk(idxAcc & idxErrChc & idxDD1, tPlot)); %re. array
+      sdf_Acc_Err(dd+NUM_DIR,:) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxDD1, tPlot)); %re. primary
     end
     if (sum(idxAcc & idxErrChc & idxDD2) >= MIN_TRIAL_COUNT)
-      sdf_Acc_Err(dd+NUM_DIR,:) = nanmean(sdfS_kk(idxAcc & idxErrChc & idxDD2, tPlot)); %re. second
+      sdf_Acc_Err(dd+2*NUM_DIR,:) = nanmean(sdfS_kk(idxAcc & idxErrChc & idxDD2, tPlot)); %re. second
     end
   end%for:direction(dd)
-    
-%   figure('visible','on')
+  
+  %% Compute mean SDF for response into RF
+  meanSDF_Fast_Corr = NaN(NUM_SAMP,2); %sdf re. array | sdf re. primary
+  meanSDF_Fast_Err = NaN(NUM_SAMP,3); %sdf re. array | sdf re. primary | sdf re. second
+  meanSDF_Acc_Corr = NaN(NUM_SAMP,2);
+  meanSDF_Acc_Err = NaN(NUM_SAMP,3);
+  
+  Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
+  Octant_Sacc2 = behavData.Sacc_Octant{kk};
+  RF = unitData.RF{uu};
+  
+  if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
+    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr, tPlot)); %re. array
+    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr, tPlot)); %re. primary
+    meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErrChc, tPlot)); %re. array
+    meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErrChc, tPlot)); %re. primary
+    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr, tPlot)); %re. array
+    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr, tPlot)); %re. primary
+    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErrChc, tPlot)); %re. array
+    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErrChc, tPlot)); %re. primary
+  else %average only trials with saccade into RF
+    idxRF = ismember(Octant_Sacc1, RF);
+    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF, tPlot)); %re. array
+    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF, tPlot)); %re. primary
+    if (sum(idxFast & idxErrChc & idxRF) > MIN_TRIAL_COUNT)
+      meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErrChc & idxRF, tPlot)); %re. array
+      meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErrChc & idxRF, tPlot)); %re. primary
+    end
+    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. array
+    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. primary
+    if (sum(idxAcc & idxErrChc & idxRF) > MIN_TRIAL_COUNT)
+      meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErrChc & idxRF, tPlot)); %re. array
+      meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxRF, tPlot)); %re. primary
+    end
+  end
+  
   figure('visible','off')
   yTickLabel = num2cell(rad2deg(BIN_DIR));
   yTickLabel(2:2:end) = {''};
   
   %% Plotting
-  switch (TRIAL_OUTCOME_PLOT)
-    case 'correct'
-      %% Trial outcome -- Correct
-      sdfAll = [sdf_Fast_Corr sdf_Fast_Err sdf_Acc_Corr sdf_Acc_Err];
-      cLim = [0, max(sdfAll,[],'all')];
+  switch (PLOT_TYPE)
+    case 'SDF_RF'
+      %% Plot: Mean SDF for response into RF
+      sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
+      maxFR = max(sdfAll,[],'all');
+      yLim = [0, maxFR];
       
-      subplot(2,2,1); hold on %Fast re. array
-      title('Fast - Correct', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Corr(1:NUM_DIR,:), cLim);
-      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
-      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-      yticks(BIN_DIR); yticklabels(yTickLabel)
+      subplot(2,3,1); hold on %Fast re. array
+      plot(tPlot-3500, meanSDF_Fast_Corr(:,1), 'Color',[0 .7 0])
+      plot(tPlot-3500, meanSDF_Fast_Err(:,1), ':', 'Color',[0 .7 0])
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
       
-      subplot(2,2,2); hold on %Fast re. primary
-      title('Fast - Correct', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Corr(NUM_DIR+1:end,:), cLim);
-      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
-      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-      yticks([])
+      subplot(2,3,2); hold on %Fast re. primary
+      plot(tPlot-3500, meanSDF_Fast_Corr(:,2), 'Color',[0 .7 0])
+      plot(tPlot-3500, meanSDF_Fast_Err(:,2), ':', 'Color',[0 .7 0])
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
+      set(gca, 'YColor','none')
       
-      subplot(2,2,3); hold on %Accurate re. array
-      title('Accurate - Correct', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Corr(1:NUM_DIR,:), cLim);
-      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
-      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-      yticks(BIN_DIR); yticklabels(yTickLabel)
-      ylabel('Primary saccade direction (deg)')
+      subplot(2,3,3); hold on %Fast re. second
+      set(gca, 'YColor','none')
+      
+      subplot(2,3,4); hold on %Accurate re. array
+      plot(tPlot-3500, meanSDF_Acc_Corr(:,1), 'r')
+      plot(tPlot-3500, meanSDF_Acc_Err(:,1), 'r:')
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
       xlabel('Time from array (ms)')
+      ylabel('Activity (sp/sec)')
       
-      subplot(2,2,4); hold on %Accurate re. primary
-      title('Accurate - Correct', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Corr(NUM_DIR+1:end,:), cLim);
-      colorbar('location','east', 'Color','w')
-      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
-      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-      yticks([])
+      subplot(2,3,5); hold on %Accurate re. primary
+      plot(tPlot-3500, meanSDF_Acc_Corr(:,2), 'r')
+      plot(tPlot-3500, meanSDF_Acc_Err(:,2), 'r:')
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
+      set(gca, 'YColor','none')
       xlabel('Time from primary saccade (ms)')
       
-      ppretty([11,7])
+      subplot(2,3,6); hold on %Accurate re. second
+      set(gca, 'YColor','none')
+      xlabel('Time from second saccade (ms)')
       
-    case 'error'
-      %% Trial outcome -- Choice error
+      ppretty([11,5])
+      
+    case 'heatmap'
+      %% Plot of heatmap: Correct, error and difference plots
       sdfAll = [sdf_Fast_Corr sdf_Fast_Err sdf_Acc_Corr sdf_Acc_Err];
-      cLim = [0, max(sdfAll,[],'all')];
+      maxFR = max(sdfAll,[],'all');
       
-      subplot(2,2,1); hold on %Fast re. primary
-      title('Fast - Choice error', 'FontSize',9)
+      sdf_Fast_Diff = (sdf_Fast_Err(NUM_DIR+(1:NUM_DIR),:) - sdf_Fast_Corr(NUM_DIR+(1:NUM_DIR),:)) / maxFR;
+      sdf_Acc_Diff = (sdf_Acc_Err(NUM_DIR+(1:NUM_DIR),:) - sdf_Acc_Corr(NUM_DIR+(1:NUM_DIR),:)) / maxFR;
+      
+      cLim = [0, maxFR];
+      cLimDiff = [-1 1];
+      
+      subplot(4,3,1); hold on %Fast re. array
+      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Corr(1:NUM_DIR,:), cLim);
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
+      yticks(BIN_DIR); yticklabels(yTickLabel)
+      
+      subplot(4,3,2); hold on %Fast re. primary
+      title('Fast - Correct', 'FontSize',9)
+      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Corr(NUM_DIR+(1:NUM_DIR),:), cLim);
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
+      yticks([])
+      
+      subplot(4,3,3); hold on %Fast: Diff plot - Error vs correct re. primary
+      title('Fast - Difference', 'FontSize',9)
+      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Diff, cLimDiff);
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end])); set(gca, 'XColor',[0 0 .9])
+      yticks([]); set(gca, 'YColor',[0 0 .9])
+      
+      subplot(4,3,4); hold on %Fast re. array
       imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Err(1:NUM_DIR,:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks(BIN_DIR); yticklabels(yTickLabel)
       
-      subplot(2,2,2); hold on %Fast re. second
+      subplot(4,3,5); hold on %Fast re. primary
       title('Fast - Choice error', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Err(NUM_DIR+1:end,:), cLim);
+      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Err(NUM_DIR+(1:NUM_DIR),:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks([])
       
-      subplot(2,2,3); hold on %Accurate re. primary
-      title('Accurate - Choice error', 'FontSize',9)
+      subplot(4,3,6); hold on %Accurate: Diff plot - Error vs correct re. primary
+      title('Accurate - Difference', 'FontSize',9)
+      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Diff, cLimDiff);
+      colorbar('location','east', 'Color','w')
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end])); set(gca, 'XColor',[0 0 .9])
+      yticks(BIN_DIR); yticklabels(yTickLabel); set(gca, 'YColor',[0 0 .9])
+      xlabel('Time from primary saccade (ms)')
+      ylabel('Primary saccade direction (deg)')
+      
+      subplot(4,3,7); hold on %Accurate re. array
+      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Corr(1:NUM_DIR,:), cLim);
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
+      yticks(BIN_DIR); yticklabels(yTickLabel)
+      
+      subplot(4,3,8); hold on %Accurate re. primary
+      title('Accurate - Correct', 'FontSize',9)
+      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Corr(NUM_DIR+(1:NUM_DIR),:), cLim);
+      plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
+      yticks([])
+      
+      subplot(4,3,10); hold on %Accurate re. array
       imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(1:NUM_DIR,:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks(BIN_DIR); yticklabels(yTickLabel)
-      xlabel('Time from primary saccade (ms)')
+      xlabel('Time from array (ms)')
       ylabel('Primary saccade direction (deg)')
       
-      subplot(2,2,4); hold on %Accurate re. second
+      subplot(4,3,11); hold on %Accurate re. primary
       title('Accurate - Choice error', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(NUM_DIR+1:end,:), cLim);
-      colorbar('location','east', 'Color','w')
+      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(NUM_DIR+(1:NUM_DIR),:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks([])
-      xlabel('Time from second saccade (ms)')
-      ylabel('Second saccade direction (deg)')
+      xlabel('Time from primary saccade (ms)')
       
-      ppretty([11,7])
-      
-    case 'difference'
-      %% Plot: Difference in activation between error and correct trials
-      %normalize to the maximum firing rate across all groups
-      sdfAll = [sdf_Fast_Corr sdf_Fast_Err sdf_Acc_Corr sdf_Acc_Err];
-      maxFR = max(sdfAll,[],'all');
-      
-      sdf_Fast_Diff = (sdf_Fast_Err(1:NUM_DIR,:) - sdf_Fast_Corr(NUM_DIR+1:end,:)) / maxFR;
-      sdf_Acc_Diff = (sdf_Acc_Err(1:NUM_DIR,:) - sdf_Acc_Corr(NUM_DIR+1:end,:)) / maxFR;
-      
-      cLim = [-1 1];
-      
-      subplot(2,1,1); hold on %Fast re. primary
-      title('Fast - Difference (Error - Correct)', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Diff(1:NUM_DIR,:), cLim);
+      subplot(4,3,9); hold on %Fast re. second
+      imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Err(2*NUM_DIR+(1:NUM_DIR),:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
-      yticks(BIN_DIR); yticklabels(yTickLabel)
+      yticks([])
+      set(gca, 'XColor',[.8 0 0]); set(gca, 'YColor',[.8 0 0])
       
-      subplot(2,1,2); hold on %Accurate re. primary
-      title('Accurate - Difference (Error - Correct)', 'FontSize',9)
-      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Diff(1:NUM_DIR,:), cLim);
+      subplot(4,3,12); hold on %Accurate re. second
+      imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(2*NUM_DIR+(1:NUM_DIR),:), cLim);
       colorbar('location','east', 'Color','w')
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
       yticks(BIN_DIR); yticklabels(yTickLabel)
-      xlabel('Time from primary saccade (ms)')
-      ylabel('Primary saccade direction (deg)')
+      set(gca, 'XColor',[.8 0 0]); set(gca, 'YColor',[.8 0 0])
+      xlabel('Time from second saccade (ms)')
+      ylabel('Second saccade direction (deg)')
       
-      ppretty([6,8])
+      ppretty([13,11])
       
   end
   
