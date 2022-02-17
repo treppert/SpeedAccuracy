@@ -99,7 +99,7 @@ for uu = 1:NUM_UNITS
   meanSDF_Acc_Err = NaN(NUM_SAMP,3);
   
   Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
-  Octant_Sacc2 = behavData.Sacc_Octant{kk};
+  Octant_Sacc2 = transpose(behavData.Sacc2_Octant{kk});
   RF = unitData.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
@@ -107,23 +107,32 @@ for uu = 1:NUM_UNITS
     meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr, tPlot)); %re. primary
     meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErrChc, tPlot)); %re. array
     meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErrChc, tPlot)); %re. primary
+    meanSDF_Fast_Err(:,3) = nanmean(sdfS_kk(idxFast & idxErrChc, tPlot)); %re. second
     meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr, tPlot)); %re. array
     meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr, tPlot)); %re. primary
     meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErrChc, tPlot)); %re. array
     meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErrChc, tPlot)); %re. primary
+    meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErrChc, tPlot)); %re. second
   else %average only trials with saccade into RF
-    idxRF = ismember(Octant_Sacc1, RF);
-    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF, tPlot)); %re. array
-    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF, tPlot)); %re. primary
-    if (sum(idxFast & idxErrChc & idxRF) > MIN_TRIAL_COUNT)
-      meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErrChc & idxRF, tPlot)); %re. array
-      meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErrChc & idxRF, tPlot)); %re. primary
+    idxRF1 = ismember(Octant_Sacc1, RF);
+    idxRF2 = ismember(Octant_Sacc2, RF);
+    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. array
+    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. primary
+    if (sum(idxFast & idxErrChc & idxRF1) > MIN_TRIAL_COUNT)
+      meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErrChc & idxRF1, tPlot)); %re. array
+      meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErrChc & idxRF1, tPlot)); %re. primary
     end
-    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. array
-    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. primary
-    if (sum(idxAcc & idxErrChc & idxRF) > MIN_TRIAL_COUNT)
-      meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErrChc & idxRF, tPlot)); %re. array
-      meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxRF, tPlot)); %re. primary
+    if (sum(idxFast & idxErrChc & idxRF2) > MIN_TRIAL_COUNT)
+      meanSDF_Fast_Err(:,3) = nanmean(sdfS_kk(idxFast & idxErrChc & idxRF2, tPlot)); %re. second
+    end
+    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. array
+    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. primary
+    if (sum(idxAcc & idxErrChc & idxRF1) > MIN_TRIAL_COUNT)
+      meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErrChc & idxRF1, tPlot)); %re. array
+      meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErrChc & idxRF1, tPlot)); %re. primary
+    end
+    if (sum(idxAcc & idxErrChc & idxRF2) > MIN_TRIAL_COUNT)
+      meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErrChc & idxRF2, tPlot)); %re. second
     end
   end
   
@@ -146,6 +155,7 @@ for uu = 1:NUM_UNITS
       xlim(tPlot([1,NUM_SAMP])-3500)
       
       subplot(2,3,2); hold on %Fast re. primary
+      title(['RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
       plot(tPlot-3500, meanSDF_Fast_Corr(:,2), 'Color',[0 .7 0])
       plot(tPlot-3500, meanSDF_Fast_Err(:,2), ':', 'Color',[0 .7 0])
       plot([0 0], yLim, 'k:', 'LineWidth',1.5)
@@ -153,6 +163,9 @@ for uu = 1:NUM_UNITS
       set(gca, 'YColor','none')
       
       subplot(2,3,3); hold on %Fast re. second
+      plot(tPlot-3500, meanSDF_Fast_Err(:,3), ':', 'Color',[0 .7 0])
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
       
       subplot(2,3,4); hold on %Accurate re. array
@@ -172,10 +185,13 @@ for uu = 1:NUM_UNITS
       xlabel('Time from primary saccade (ms)')
       
       subplot(2,3,6); hold on %Accurate re. second
+      plot(tPlot-3500, meanSDF_Acc_Err(:,3), 'r:')
+      plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+      xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
       xlabel('Time from second saccade (ms)')
       
-      ppretty([11,5])
+      ppretty([10,4])
       
     case 'heatmap'
       %% Plot of heatmap: Correct, error and difference plots
@@ -261,6 +277,7 @@ for uu = 1:NUM_UNITS
       xlabel('Time from primary saccade (ms)')
       
       subplot(4,3,9); hold on %Fast re. second
+      title('Fast - Choice error', 'FontSize',9)
       imagesc(tPlot-3500, BIN_DIR, sdf_Fast_Err(2*NUM_DIR+(1:NUM_DIR),:), cLim);
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500); ylim(BIN_DIR([1,end]))
@@ -268,6 +285,7 @@ for uu = 1:NUM_UNITS
       set(gca, 'XColor',[.8 0 0]); set(gca, 'YColor',[.8 0 0])
       
       subplot(4,3,12); hold on %Accurate re. second
+      title('Accurate - Choice error', 'FontSize',9)
       imagesc(tPlot-3500, BIN_DIR, sdf_Acc_Err(2*NUM_DIR+(1:NUM_DIR),:), cLim);
       colorbar('location','east', 'Color','w')
       plot([0 0], [BIN_DIR(1) BIN_DIR(end)], 'k:', 'LineWidth',1.5)
