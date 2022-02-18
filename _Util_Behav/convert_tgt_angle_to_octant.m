@@ -5,7 +5,7 @@ function [ octant ] = convert_tgt_angle_to_octant( angle )
 NUM_TRIAL = length(angle);
 octant = NaN(NUM_TRIAL,1);
 
-octLim = pi/8 * [(-7:2:-1) , (1:2:7)]
+octLim = pi/8 * [(-7:2:-1) , (1:2:7)];
 
 idx_oct1 = ( (angle > octLim(4)) & (angle < octLim(5)) );
 idx_oct2 = ( (angle > octLim(5)) & (angle < octLim(6)) );
