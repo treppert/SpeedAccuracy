@@ -3,12 +3,13 @@ function [  ] = plot_SDF_X_Dir_Heatmap_ErrChoice( behavData , unitData , spikesS
 %   Detailed explanation goes here
 
 MIN_TRIAL_COUNT = 3;
-PLOT_TYPE = 'heatmap'; %{'SDF_RF','heatmap'}
-PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
+PLOT_TYPE = 'SDF_RF'; %{'SDF_RF','heatmap'}
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'SC'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxKeep = (idxArea & idxMonkey);
+idxArea = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D'});
+idxFunction = (unitData.Grade_Err == -1);
+idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNITS = sum(idxKeep);
 unitData = unitData(idxKeep,:);
@@ -27,25 +28,29 @@ for uu = 1:NUM_UNITS
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  RTP_kk = double(behavData.Sacc_RT{kk}); %RT of primary saccade
+  RTP_kk = double(behavData.Sacc_RT{kk}); %Primary saccade RT
   RTP_kk(RTP_kk > RT_MAX) = NaN; %hard limit on primary RT
-  
-  RTS_kk = double(behavData.Sacc2_RT{kk}); %Time of second re. array
+  RTS_kk = double(behavData.Sacc2_RT{kk}); %Second saccade RT
   RTS_kk(RTS_kk == 0) = NaN; %trials with no second saccade
-  
-  %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
-  %index by condition
-  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso);
-  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso);
-  %index by trial outcome
-  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
-  idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk}); %timing error
+  ISI_kk = RTS_kk - RTP_kk;
   
   %compute spike density function and align on primary response
   sdfA_kk = compute_spike_density_fxn(spikesSAT{uu});  %sdf from Array
   sdfP_kk = align_signal_on_response(sdfA_kk, RTP_kk); %sdf from Primary
   sdfS_kk = align_signal_on_response(sdfA_kk, RTS_kk); %sdf from Second
+  
+  %index by isolation quality
+  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  %index by condition
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
+  %index by inter-saccade interval (ISI) length
+  idxShort = (ISI_kk < 320);
+  idxLong = (ISI_kk > 280);
+  %index by trial outcome
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErr = (behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+%   idxErr = (idxErr & idxShort);
   
   %% Compute SDF heatmaps across all 8 directions
   sdf_Fast_Corr = NaN(3*NUM_DIR, NUM_SAMP); %sdf re. array | sdf re. primary | sdf re. second
@@ -60,12 +65,12 @@ for uu = 1:NUM_UNITS
     %index by direction
     if ((dd == 1) || (dd == NUM_DIR))
       binLimDD = [(BIN_DIR(1)+H_DIFF_DIR) , (BIN_DIR(end)-H_DIFF_DIR) ];
-      idxDD1 = transpose((Dir_Sacc1 < binLimDD(1) | Dir_Sacc1 > binLimDD(2)));
-      idxDD2 = transpose((Dir_Sacc2 < binLimDD(1) | Dir_Sacc2 > binLimDD(2)));
+      idxDD1 = (Dir_Sacc1 < binLimDD(1) | Dir_Sacc1 > binLimDD(2));
+      idxDD2 = (Dir_Sacc2 < binLimDD(1) | Dir_Sacc2 > binLimDD(2));
     else
       binLimDD = [(BIN_DIR(dd)-H_DIFF_DIR) , (BIN_DIR(dd)+H_DIFF_DIR) ];
-      idxDD1 = transpose((Dir_Sacc1 > binLimDD(1) & Dir_Sacc1 < binLimDD(2)));
-      idxDD2 = transpose((Dir_Sacc2 > binLimDD(1) & Dir_Sacc2 < binLimDD(2)));
+      idxDD1 = (Dir_Sacc1 > binLimDD(1) & Dir_Sacc1 < binLimDD(2));
+      idxDD2 = (Dir_Sacc2 > binLimDD(1) & Dir_Sacc2 < binLimDD(2));
     end
     
     %compute SDFs - Correct trial outcome
@@ -96,46 +101,45 @@ for uu = 1:NUM_UNITS
   meanSDF_Fast_Err = NaN(NUM_SAMP,3); %sdf re. array | sdf re. primary | sdf re. second
   meanSDF_Acc_Corr = NaN(NUM_SAMP,2);
   meanSDF_Acc_Err = NaN(NUM_SAMP,3);
+  tSigA_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);  tSigP_Acc = tSigA_Acc;
+  tSigA_Fast = tSigA_Acc;  tSigP_Fast = tSigA_Acc;
   
   Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
-  Octant_Sacc2 = transpose(behavData.Sacc2_Octant{kk});
+  Octant_Sacc2 = behavData.Sacc2_Octant{kk};
   RF = unitData.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
-    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr, tPlot)); %re. array
-    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr, tPlot)); %re. primary
-    meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr, tPlot)); %re. array
-    meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr, tPlot)); %re. primary
-    meanSDF_Fast_Err(:,3) = nanmean(sdfS_kk(idxFast & idxErr, tPlot)); %re. second
-    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr, tPlot)); %re. array
-    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr, tPlot)); %re. primary
-    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr, tPlot)); %re. array
-    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr, tPlot)); %re. primary
-    meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErr, tPlot)); %re. second
+    idxRF1 = true(behavData.Task_NumTrials(kk),1);
+    idxRF2 = idxRF1;
   else %average only trials with saccade into RF
     idxRF1 = ismember(Octant_Sacc1, RF);
     idxRF2 = ismember(Octant_Sacc2, RF);
-    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. array
-    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. primary
-    if (sum(idxFast & idxErr & idxRF1) > MIN_TRIAL_COUNT)
-      meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr & idxRF1, tPlot)); %re. array
-      meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr & idxRF1, tPlot)); %re. primary
-    end
-    if (sum(idxFast & idxErr & idxRF2) > MIN_TRIAL_COUNT)
-      meanSDF_Fast_Err(:,3) = nanmean(sdfS_kk(idxFast & idxErr & idxRF2, tPlot)); %re. second
-    end
-    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. array
-    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. primary
-    if (sum(idxAcc & idxErr & idxRF1) > MIN_TRIAL_COUNT)
-      meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. array
-      meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. primary
-    end
-    if (sum(idxAcc & idxErr & idxRF2) > MIN_TRIAL_COUNT)
-      meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErr & idxRF2, tPlot)); %re. second
-    end
   end
   
-  figure('visible','off')
+  meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. array
+  meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF1, tPlot)); %re. primary
+  if (sum(idxFast & idxErr & idxRF1) > MIN_TRIAL_COUNT)
+    meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr & idxRF1, tPlot)); %re. array
+    meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr & idxRF1, tPlot)); %re. primary
+    tSigA_Fast = calc_tSignal_ChoiceErr(sdfA_kk(idxFast & idxCorr & idxRF1, tPlot), sdfA_kk(idxFast & idxErr & idxRF1, tPlot));
+    tSigP_Fast = calc_tSignal_ChoiceErr(sdfP_kk(idxFast & idxCorr & idxRF1, tPlot), sdfP_kk(idxFast & idxErr & idxRF1, tPlot));
+  end
+  if (sum(idxFast & idxErr & idxRF2) > MIN_TRIAL_COUNT)
+    meanSDF_Fast_Err(:,3) = nanmean(sdfS_kk(idxFast & idxErr & idxRF2, tPlot)); %re. second
+  end
+  meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. array
+  meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF1, tPlot)); %re. primary
+  if (sum(idxAcc & idxErr & idxRF1) > MIN_TRIAL_COUNT)
+    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. array
+    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. primary
+    tSigA_Acc = calc_tSignal_ChoiceErr(sdfA_kk(idxAcc & idxCorr & idxRF1, tPlot), sdfA_kk(idxAcc & idxErr & idxRF1, tPlot));
+    tSigP_Acc = calc_tSignal_ChoiceErr(sdfP_kk(idxAcc & idxCorr & idxRF1, tPlot), sdfP_kk(idxAcc & idxErr & idxRF1, tPlot));
+  end
+  if (sum(idxAcc & idxErr & idxRF2) > MIN_TRIAL_COUNT)
+    meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErr & idxRF2, tPlot)); %re. second
+  end
+  
+  hFig = figure('visible','on');
   yTickLabel = num2cell(rad2deg(BIN_DIR));
   yTickLabel(2:2:end) = {''};
   
@@ -143,6 +147,7 @@ for uu = 1:NUM_UNITS
   switch (PLOT_TYPE)
     case 'SDF_RF'
       %% Plot: Mean SDF for response into RF
+      OFFSET_PRE = 300;
       sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
       maxFR = max(sdfAll,[],'all');
       yLim = [0, maxFR];
@@ -152,6 +157,8 @@ for uu = 1:NUM_UNITS
       plot(tPlot-3500, meanSDF_Fast_Err(:,1), ':', 'Color',[0 .7 0])
       plot([0 0], yLim, 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500)
+      scatter(tSigA_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigA_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       subplot(2,3,2); hold on %Fast re. primary
       title(['RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
@@ -160,6 +167,8 @@ for uu = 1:NUM_UNITS
       plot([0 0], yLim, 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
+      scatter(tSigP_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigP_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       subplot(2,3,3); hold on %Fast re. second
       plot(tPlot-3500, meanSDF_Fast_Err(:,3), ':', 'Color',[0 .7 0])
@@ -174,6 +183,8 @@ for uu = 1:NUM_UNITS
       xlim(tPlot([1,NUM_SAMP])-3500)
       xlabel('Time from array (ms)')
       ylabel('Activity (sp/sec)')
+      scatter(tSigA_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigA_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       subplot(2,3,5); hold on %Accurate re. primary
       plot(tPlot-3500, meanSDF_Acc_Corr(:,2), 'r')
@@ -182,6 +193,8 @@ for uu = 1:NUM_UNITS
       xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
       xlabel('Time from primary saccade (ms)')
+      scatter(tSigP_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigP_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       subplot(2,3,6); hold on %Accurate re. second
       plot(tPlot-3500, meanSDF_Acc_Err(:,3), 'r:')
@@ -298,9 +311,9 @@ for uu = 1:NUM_UNITS
       
   end
   
-  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-  pause(0.1); close(); pause(0.1)
+%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
+%   pause(0.1); close(hFig); pause(0.1)
   
-end%for:cells(cc)
+end%for:cells(uu)
 
 end%fxn:plot_SDF_X_Dir_Heatmap_ErrChoice()

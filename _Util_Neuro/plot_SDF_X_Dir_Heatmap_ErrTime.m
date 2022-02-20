@@ -3,18 +3,19 @@ function [  ] = plot_SDF_X_Dir_Heatmap_ErrTime( behavData , unitData , spikesSAT
 %   Detailed explanation goes here
 
 MIN_TRIAL_COUNT = 3;
-PLOT_TYPE = 'heatmap'; %{'SDF_RF','heatmap'}
+PLOT_TYPE = 'SDF_RF'; %{'SDF_RF','heatmap'}
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'FEF'});
+idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxKeep = (idxArea & idxMonkey);
+idxFunction = (unitData.Grade_Rew == 2);
+idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNITS = sum(idxKeep);
 unitData = unitData(idxKeep,:);
 spikesSAT = spikesSAT(idxKeep);
 
-tPlot = 3500 + (-300 : 400); %plot time vector
+tPlot = 3500 + (-300 : 600); %plot time vector
 NUM_SAMP = length(tPlot);
 
 RT_MAX = 900; %hard ceiling on primary RT
@@ -23,7 +24,7 @@ NUM_DIR = 9; %binning by saccade direction for heatmap
 BIN_DIR = linspace(-pi, pi, NUM_DIR);
 H_DIFF_DIR = diff(BIN_DIR([1,2]))/2;
 
-for uu = 1:NUM_UNITS
+for uu = 6:NUM_UNITS
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
@@ -60,10 +61,10 @@ for uu = 1:NUM_UNITS
     %index by direction
     if ((dd == 1) || (dd == NUM_DIR))
       binLimDD = [(BIN_DIR(1)+H_DIFF_DIR) , (BIN_DIR(end)-H_DIFF_DIR) ];
-      idxDD = transpose((Dir_Sacc1 < binLimDD(1) | Dir_Sacc1 > binLimDD(2)));
+      idxDD = (Dir_Sacc1 < binLimDD(1) | Dir_Sacc1 > binLimDD(2));
     else
       binLimDD = [(BIN_DIR(dd)-H_DIFF_DIR) , (BIN_DIR(dd)+H_DIFF_DIR) ];
-      idxDD = transpose((Dir_Sacc1 > binLimDD(1) & Dir_Sacc1 < binLimDD(2)));
+      idxDD = (Dir_Sacc1 > binLimDD(1) & Dir_Sacc1 < binLimDD(2));
     end
     
     %compute SDFs - Correct trial outcome
@@ -92,45 +93,38 @@ for uu = 1:NUM_UNITS
   meanSDF_Fast_Err = NaN(NUM_SAMP,3); %sdf re. array | sdf re. primary | sdf re. reward
   meanSDF_Acc_Corr = NaN(NUM_SAMP,3);
   meanSDF_Acc_Err = NaN(NUM_SAMP,3);
+  tSigR_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);
+  tSigR_Fast = tSigR_Acc;
   
   Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
-  Octant_Sacc2 = transpose(behavData.Sacc2_Octant{kk});
   RF = unitData.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
-    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr, tPlot)); %re. array
-    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr, tPlot)); %re. primary
-    meanSDF_Fast_Corr(:,3) = nanmean(sdfR_kk(idxFast & idxCorr, tPlot)); %re. reward
-    meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr, tPlot)); %re. array
-    meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr, tPlot)); %re. primary
-    meanSDF_Fast_Err(:,3) = nanmean(sdfR_kk(idxFast & idxErr, tPlot)); %re. reward
-    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr, tPlot)); %re. array
-    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr, tPlot)); %re. primary
-    meanSDF_Acc_Corr(:,3) = nanmean(sdfR_kk(idxAcc & idxCorr, tPlot)); %re. reward
-    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr, tPlot)); %re. array
-    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr, tPlot)); %re. primary
-    meanSDF_Acc_Err(:,3) = nanmean(sdfR_kk(idxAcc & idxErr, tPlot)); %re. reward
+    idxRF = true(behavData.Task_NumTrials(kk),1);
   else %average only trials with saccade into RF
     idxRF = ismember(Octant_Sacc1, RF);
-    meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF, tPlot)); %re. array
-    meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF, tPlot)); %re. primary
-    meanSDF_Fast_Corr(:,3) = nanmean(sdfR_kk(idxFast & idxCorr & idxRF, tPlot)); %re. reward
-    if (sum(idxFast & idxErr & idxRF) > MIN_TRIAL_COUNT)
-      meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr & idxRF, tPlot)); %re. array
-      meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr & idxRF, tPlot)); %re. primary
-      meanSDF_Fast_Err(:,3) = nanmean(sdfR_kk(idxFast & idxErr & idxRF, tPlot)); %re. reward
-    end
-    meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. array
-    meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. primary
-    meanSDF_Acc_Corr(:,3) = nanmean(sdfR_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. reward
-    if (sum(idxAcc & idxErr & idxRF) > MIN_TRIAL_COUNT)
-      meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr & idxRF, tPlot)); %re. array
-      meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr & idxRF, tPlot)); %re. primary
-      meanSDF_Acc_Err(:,3) = nanmean(sdfR_kk(idxAcc & idxErr & idxRF, tPlot)); %re. reward
-    end
   end
   
-  figure('visible','off')
+  meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFast & idxCorr & idxRF, tPlot)); %re. array
+  meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFast & idxCorr & idxRF, tPlot)); %re. primary
+  meanSDF_Fast_Corr(:,3) = nanmean(sdfR_kk(idxFast & idxCorr & idxRF, tPlot)); %re. reward
+  if (sum(idxFast & idxErr & idxRF) > MIN_TRIAL_COUNT)
+    meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr & idxRF, tPlot)); %re. array
+    meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr & idxRF, tPlot)); %re. primary
+    meanSDF_Fast_Err(:,3) = nanmean(sdfR_kk(idxFast & idxErr & idxRF, tPlot)); %re. reward
+    tSigR_Fast = calc_tSignal_ChoiceErr(sdfR_kk(idxFast & idxCorr & idxRF, tPlot), sdfR_kk(idxFast & idxErr & idxRF, tPlot));
+  end
+  meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. array
+  meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. primary
+  meanSDF_Acc_Corr(:,3) = nanmean(sdfR_kk(idxAcc & idxCorr & idxRF, tPlot)); %re. reward
+  if (sum(idxAcc & idxErr & idxRF) > MIN_TRIAL_COUNT)
+    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr & idxRF, tPlot)); %re. array
+    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr & idxRF, tPlot)); %re. primary
+    meanSDF_Acc_Err(:,3) = nanmean(sdfR_kk(idxAcc & idxErr & idxRF, tPlot)); %re. reward
+    tSigR_Acc = calc_tSignal_ChoiceErr(sdfR_kk(idxAcc & idxCorr & idxRF, tPlot), sdfR_kk(idxAcc & idxErr & idxRF, tPlot));
+  end
+  
+  figure('visible','on')
   yTickLabel = num2cell(rad2deg(BIN_DIR));
   yTickLabel(2:2:end) = {''};
   
@@ -138,6 +132,7 @@ for uu = 1:NUM_UNITS
   switch (PLOT_TYPE)
     case 'SDF_RF'
       %% Plot: Mean SDF for response into RF
+      OFFSET_PRE = 300;
       sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
       maxFR = max(sdfAll,[],'all');
       yLim = [0, maxFR];
@@ -162,6 +157,8 @@ for uu = 1:NUM_UNITS
       plot([0 0], yLim, 'k:', 'LineWidth',1.5)
       xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
+      scatter(tSigR_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigR_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       subplot(2,3,4); hold on %Accurate re. array
       plot(tPlot-3500, meanSDF_Acc_Corr(:,1), 'r')
@@ -186,6 +183,8 @@ for uu = 1:NUM_UNITS
       xlim(tPlot([1,NUM_SAMP])-3500)
       set(gca, 'YColor','none')
       xlabel('Time from reward (ms)')
+      scatter(tSigR_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+      scatter(tSigR_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
       
       ppretty([10,4])
       
@@ -285,8 +284,8 @@ for uu = 1:NUM_UNITS
       
   end
   
-  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-  pause(0.1); close(); pause(0.1)
+%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
+%   pause(0.1); close(); pause(0.1)
   
 end%for:cells(cc)
 

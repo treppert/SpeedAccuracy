@@ -5,15 +5,16 @@ function [ ] = Fig3C_Distr_tErrorChoice_SAT( behavData , unitData )
 % 
 
 idxSEF = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxErrUnit = (idxSEF & idxMonkey & (unitData.Basic_ErrGrade >= 2));
+idxMonkey = ismember(unitData.aMonkey, {'E'});
+idxErrUnit = (unitData.Grade_Err == 1);
+idxKeep = (idxSEF & idxMonkey & idxErrUnit);
 
 %get start time of choice error signal
-tSignal_Acc = unitData.ChoiceErrorSignal_Time(idxErrUnit, 1);
-tSignal_Fast = unitData.ChoiceErrorSignal_Time(idxErrUnit, 3);
+tSignal_Acc = unitData.ErrorSignal_Time(idxKeep,3);
+tSignal_Fast = unitData.ErrorSignal_Time(idxKeep,1);
 
 %identify sessions with neurons that signal choice error
-sess_ChcErr = unique(unitData.Task_Session(idxErrUnit));
+sess_ChcErr = unique(unitData.Task_Session(idxKeep));
 numSession = length(sess_ChcErr);
 
 behavData = behavData(sess_ChcErr,:);
@@ -28,8 +29,6 @@ isiFast = NaN(numSession,1);
 for kk = 1:numSession
   
   %get time of second saccade re. primary saccade
-  %NOTE: this is not the inter-saccade interval, which takes into account
-  %   primary saccade duration
   t_SecondSacc_kk = behavData.Sacc2_RT{kk} - behavData.Sacc_RT{kk};
   isi_kk = behavData.Sacc2_RT{kk} - (behavData.Sacc_RT{kk} + behavData.Sacc_Duration{kk});
   
@@ -46,13 +45,13 @@ for kk = 1:numSession
   idxAcc = (idxAcc & idxErr & (idxTgt | idxDistr));
   idxFast = (idxFast & idxErr & (idxTgt | idxDistr));
   
-  tSS_Acc = cat(2, tSS_Acc, t_SecondSacc_kk(idxAcc));
-  tSS_Fast = cat(2, tSS_Fast, t_SecondSacc_kk(idxFast));
+  tSS_Acc = cat(1, tSS_Acc, t_SecondSacc_kk(idxAcc));
+  tSS_Fast = cat(1, tSS_Fast, t_SecondSacc_kk(idxFast));
   
   isiAcc(kk) = median(isi_kk(idxAcc));
   isiFast(kk) = median(isi_kk(idxFast));
   
-end%for:cells(uu)
+end % for : session(kk)
 
 %% Plotting
 figure(); hold on
@@ -63,7 +62,7 @@ cdfplotTR(tSignal_Fast, 'Color',[0 .7 0], 'LineStyle',':')
 cdfplotTR(tSS_Acc, 'Color','r')  %time of second saccade
 cdfplotTR(tSS_Fast, 'Color',[0 .7 0])
 
-xlabel('Time from primary saccade (ms)'); %xlim([-100 500])
+xlabel('Time from primary saccade (ms)'); xlim([-200 500])
 ylabel('Cum. probability'); ytickformat('%2.1f')
 ppretty([4.8,3.0])
 
