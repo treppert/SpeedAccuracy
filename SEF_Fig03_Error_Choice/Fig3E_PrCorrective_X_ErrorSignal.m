@@ -4,18 +4,19 @@ function [ ] = Fig3E_PrCorrective_X_ErrorSignal( behavData , unitData , spikesSA
 
 idxSEF = ismember(unitData.aArea, 'SEF');
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxErrUnit = (idxSEF & idxMonkey & (unitData.Basic_ErrGrade >= 2));
+idxErrUnit = ismember(unitData.Grade_Err, 1);
+idxKeep = (idxSEF & idxMonkey & idxErrUnit);
 
-NUM_CELLS = sum(idxErrUnit);
-unitData = unitData(idxErrUnit,:);
-spikesSAT = spikesSAT(idxErrUnit);
+NUM_CELLS = sum(idxKeep);
+unitData = unitData(idxKeep,:);
+spikesSAT = spikesSAT(idxKeep);
 
-T_COUNT_BASE = [-50, 50] + 3500; %interval over which to count baseline spikes as control
-T_COUNT_ERR = [0, 200] + 3500; %interval (re. signal onset) over which to count spikes
-MAX_ERR_TIME = 10; %maximum timing error for trials allowed
+T_COUNT_BASE = [-250, 50] + 3500; %interval over which to count baseline spikes as control
+T_COUNT_ERR = [50, 350] + 3500; %interval (re. signal onset) over which to count spikes
+MAX_ERR_TIME = 20; %maximum timing error for trials allowed
 
 %bin trials by error signal (z-score)
-MIN_PER_BIN = 5; %mininum number of trials
+MIN_PER_BIN = 10; %mininum number of trials
 BINLIM_Z = (-2.5 : 1.0 : 2.5); NBIN = length(BINLIM_Z) - 1;
 ZPLOT = BINLIM_Z(1:NBIN) + diff(BINLIM_Z)/2;
 
@@ -58,8 +59,8 @@ for cc = 1:NUM_CELLS
   spkBase = spkBase(trialErr);
   
   %sync choice error interval to start of signal in Fast condition
-  tErrCC = unitData.ChoiceErrorSignal_Time(cc,3) + T_COUNT_ERR;
-  tErrCC = RT_kk(trialErr)'*ones(1,2) + tErrCC;
+  tErrCC = unitData.ErrorSignal_Time(cc,1) + T_COUNT_ERR;
+  tErrCC = RT_kk(trialErr)*ones(1,2) + tErrCC;
   
   spkErr = NaN(1,numTrial);
   for jj = 1:numTrial
@@ -70,6 +71,7 @@ for cc = 1:NUM_CELLS
   end%for:trialsAcc(jj)
   
   %compute baseline correction and z-score
+  spkErr = zscore(spkErr);
   spkErr = zscore(spkErr - spkBase);
   
   %% Bin trials by spike count
@@ -91,16 +93,16 @@ seProb = nanstd(PTarget) ./ sqrt(nCellXbin);
 muProb = nanmean(PTarget);
 
 figure(); hold on
-% plot(ZPLOT, PTarget, 'Color',[.4 .4 .4], 'LineWidth',0.75)
+plot(ZPLOT, PTarget, 'Color',[.4 .4 .4], 'LineWidth',0.75)
 errorbar(ZPLOT, muProb, seProb, 'Color','k', 'LineWidth',1.25, 'CapSize',0)
 xlabel('Error signal magnitude (z)'); xlim([-2.1 2.1]); xticks(-2:2)
 ylabel('P (Saccade to target)'); ytickformat('%3.2f'); ylim([.6 .9])
 ppretty([4.8,3])
 
 %% Stats
-DV_Prob = reshape(PTarget', NUM_CELLS*NBIN,1);
-F_Signal = ZPLOT; F_Signal = repmat(F_Signal, 1,NUM_CELLS)';
-anovan(DV_Prob, {F_Signal});
+% DV_Prob = reshape(PTarget', NUM_CELLS*NBIN,1);
+% F_Signal = ZPLOT; F_Signal = repmat(F_Signal, 1,NUM_CELLS)';
+% anovan(DV_Prob, {F_Signal});
 
 %save for ANOVA in R
 % save('C:\Users\Thomas Reppert\Dropbox\SAT\Stats\PTgtXSignalErr.mat', 'DV_Prob','F_Signal')
