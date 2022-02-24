@@ -1,6 +1,6 @@
 function [anovaResultTbl] = fig08RscMonkUnitType(rscData, monkeys, cellArrUnitTypes,pdfFilename,titleStr)
 %FIG08RSCMONKUNITTYPE Summary of this function goes here
-printDir = 'C:\Users\Tom\Documents\Data\SpeedAccuracy\SpkCorr\';
+printDir = 'C:\Users\Tom\Documents\Data - SAT\';
 
 % check if if you need to add CI box to the barplots
 doCiBox = true;

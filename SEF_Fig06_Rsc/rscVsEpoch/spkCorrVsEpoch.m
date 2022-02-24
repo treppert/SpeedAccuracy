@@ -24,12 +24,13 @@
 %%
 % Spike count correlation data for different pairs by pair-areas in file:
 % spkCorrFile = [rootDir, 'summary/spkCorrAllPairsStaticNew.mat'];
-spkCorrFile = [rootDir, 'summary/SAT_SEF_StaticRscAllPairs.mat'];
+rootDir = 'C:\Users\Tom\Dropbox\Speed Accuracy\Data\SpkCorr\';
+spkCorrFile = [rootDir, 'summary/SAT_SEF_StaticRscAllPairs_New.mat'];
 
 %% Figure parameters
 pairAreas = {'SEF-FEF', 'SEF-SC'};
-% neuronTypes = {'AllN','ErrorChoiceN','ErrorTimingN','ErrorChoiceAndTimingN','VisualN'};
-neuronTypes = {'ErrorChoiceN','ErrorTimingN','ErrorChoiceAndTimingN','VisualN'};
+neuronTypes = {'AllN','ErrorChoiceN','ErrorTimingN','ErrorChoiceAndTimingN','VisualN'};
+% neuronTypes = {'AllN'};
 
 % outcomes = {'Correct','ErrorChoice','ErrorTiming'};
 outcomes = {'Correct'};
@@ -126,60 +127,50 @@ for pa = 1:numel(usePairAreas)
     figure('Name',currPairAreaStr)
     p = 0;
     nRos = numel(neuronTypes);
-    nCos = numel(mainConditions);
     for ro = 1:nRos
-        for co = 1:nCos
-            p = p + 1;
-            H_ax(p) = subplot(nRos,nCos,p);
-        end
+      p = p + 1;
+      H_ax(p) = subplot(nRos,1,p);
     end
     lineStyle = {'-','--',':'};
-    lineColor = {[.6 0 1],[0 0 1],[1 0 1],[0 1 1]};
-    %ylimPlot = [0.04 0.18];
-    yLimPlot = round([.03 .11]+0.005,2);
+    yLimPlot = round([.02 .14]+0.005,2);
     
     for ro = 1:numel(neuronTypes)
-%         plt_ax = H_ax((1:2)+(ro-1)*nCos);
-        neuronType = neuronTypes{ro};
-        currData = statsTbl.(neuronType);
-%         titleStr = [regexprep(neuronType,'N$',' Neurons') ' - ' currPairAreaStr];
-        doXlabel = 0;
-        if ro==numel(neuronTypes)
-            doXlabel = 1;
+      subplot(nRos,1,ro); hold on
+      set(gca, 'YGrid','on')
+      set(gca, 'YMinorGrid','on')
+      title(neuronTypes{ro},'FontSize',9);
+      
+      neuronType = neuronTypes{ro};
+      currData = statsTbl.(neuronType);
+      doXlabel = 0;
+      if ro==numel(neuronTypes)
+          doXlabel = 1;
+      end
+
+      for jj = 1:numel(outcomes)
+        idxOutcome = strcmp(currData.outcome,outcomes{jj});
+        idxAccOutcome = strcmp(currData.mainCondition,'Accurate') & idxOutcome;
+        idxFastOutcome = strcmp(currData.mainCondition,'Fast') & idxOutcome;
+        acc = currData(idxAccOutcome,{'mean_rsc','se_rsc','epoch'});
+        fast = currData(idxFastOutcome,{'mean_rsc','se_rsc','epoch'});
+
+        % Accurate
+        plot(1:4,acc.mean_rsc,'Color','r', 'LineStyle',lineStyle{jj});
+        errorbar((1:4), acc.mean_rsc, acc.se_rsc, 'CapSize',0, 'Color','r', 'LineStyle',lineStyle{jj},'HandleVisibility','off')
+
+        % Fast
+        plot(1:4,fast.mean_rsc,'Color',[0 .7 0], 'LineStyle',lineStyle{jj});
+        errorbar((1:4), fast.mean_rsc, fast.se_rsc, 'CapSize',0, 'Color',[0 .7 0], 'LineStyle',lineStyle{jj},'HandleVisibility','off')
+
+        ylabel('rsc'); ylim(yLimPlot); ytickformat('%3.2f') %yticks([])
+        xticks(1:4); xticklabels([]); xlim([.8 4.2])
+        if doXlabel
+            set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
         end
-        
-        for jj = 1:numel(outcomes)
-            idxOutcome = strcmp(currData.outcome,outcomes{jj});
-            idxAccOutcome = strcmp(currData.mainCondition,'Accurate') & idxOutcome;
-            idxFastOutcome = strcmp(currData.mainCondition,'Fast') & idxOutcome;
-            acc = currData(idxAccOutcome,{'mean_rsc','se_rsc','epoch'});
-            fast = currData(idxFastOutcome,{'mean_rsc','se_rsc','epoch'});
-            
-            % Accurate
-            subplot(1,2,1); hold on
-            plot(1:4,acc.mean_rsc,'Color',lineColor{ro}, 'LineStyle',lineStyle{jj});
-            errorbar((1:4), acc.mean_rsc, acc.se_rsc, 'CapSize',0, 'Color',lineColor{ro}, 'LineStyle',lineStyle{jj},'HandleVisibility','off')
-            xticks(1:4); xticklabels([]); xlim([.8 4.2]); ylim(yLimPlot); ytickformat('%3.2f')
-%             h_t = title(titleStr,'Position',[numel(neuronTypes)-0.5 max(yLimPlot)*1.05]);
-            ylabel('rsc')
-            if doXlabel
-                set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
-            end
-            
-            % Fast
-            subplot(1,2,2); hold on
-            plot(1:4,fast.mean_rsc,'Color',lineColor{ro}, 'LineStyle',lineStyle{jj});
-            errorbar((1:4), fast.mean_rsc, fast.se_rsc, 'CapSize',0, 'Color',lineColor{ro}, 'LineStyle',lineStyle{jj},'HandleVisibility','off')
-            xticks(1:4); xticklabels([]); xlim([.8 4.2]); ylim(yLimPlot); ytickformat('%3.2f') %yticks([])
-            if doXlabel
-                set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
-            end
-                        
-        end
-        drawnow;        
+
+      end
+      drawnow;        
     end
-    subplot(1,2,1); legend(neuronTypes,'Location','northwest','Box','off','FontSize',7,'NumColumns',2);
-    title(currPairAreaStr,'Position',[numel(neuronTypes)+0.5 max(yLimPlot)*1.04])
 %     print(pdfFile,'-dpdf','-fillpage')
     %%
 end

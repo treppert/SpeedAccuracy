@@ -13,23 +13,20 @@ spikesSAT = spikesSAT(idxKeep);
 
 T_COUNT_BASE = [-250, 50] + 3500; %interval over which to count baseline spikes as control
 T_COUNT_ERR = [50, 350] + 3500; %interval (re. signal onset) over which to count spikes
-MAX_ERR_TIME = 20; %maximum timing error for trials allowed
 
 %bin trials by error signal (z-score)
-MIN_PER_BIN = 10; %mininum number of trials
-BINLIM_Z = (-2.5 : 1.0 : 2.5); NBIN = length(BINLIM_Z) - 1;
+MIN_PER_BIN = 5; %mininum number of trials
+BINLIM_Z = (-1.5 : 1.0 : 1.5); NBIN = length(BINLIM_Z) - 1;
 ZPLOT = BINLIM_Z(1:NBIN) + diff(BINLIM_Z)/2;
 
 %initializations
 PTarget = NaN(NUM_CELLS, NBIN);
-RespTime = NaN(NUM_CELLS, NBIN); %save RT as control
 
 for cc = 1:NUM_CELLS
 %   fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(cc));
   
   RT_kk = double(behavData.Sacc_RT{kk});
-  RTerr_kk = RT_kk - double(behavData.Task_Deadline{kk});
   ssEndptKK = behavData.Sacc2_Endpoint{kk};
   
   %index by isolation quality
@@ -38,15 +35,10 @@ for cc = 1:NUM_CELLS
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
   idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErrDir = ( behavData.Task_ErrChoice{kk} );
-  %index by timing error magnitude
-  idxErrTime = ( (idxAcc & (RTerr_kk < -MAX_ERR_TIME)) | (idxFast & (RTerr_kk > MAX_ERR_TIME)) );
+  idxErrDir = (behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
   
-  trialErr = find(idxErrDir & (idxAcc | idxFast) & ~idxErrTime & ~idxIso);
+  trialErr = find(idxErrDir & idxFast & ~idxIso);
   numTrial = length(trialErr);
-  
-  %save RT as a control
-  rtErr = RT_kk(trialErr);
   
   %second saccade endpoint as binary (Target = TRUE, Other = FALSE)
   ssEndErr = false(1,numTrial);
@@ -58,9 +50,9 @@ for cc = 1:NUM_CELLS
   spkBase = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesSAT{cc});
   spkBase = spkBase(trialErr);
   
-  %sync choice error interval to start of signal in Fast condition
-  tErrCC = unitData.ErrorSignal_Time(cc,1) + T_COUNT_ERR;
-  tErrCC = RT_kk(trialErr)*ones(1,2) + tErrCC;
+  %sync choice error interval to start of signal in correct condition
+  tErrCC = RT_kk(trialErr) + unitData.ErrorSignal_Time(cc,1) + T_COUNT_ERR; %Fast
+%   tErrCC = RT_kk(trialErr) + unitData.ErrorSignal_Time(cc,3) + T_COUNT_ERR; %Accurate
   
   spkErr = NaN(1,numTrial);
   for jj = 1:numTrial
@@ -71,7 +63,6 @@ for cc = 1:NUM_CELLS
   end%for:trialsAcc(jj)
   
   %compute baseline correction and z-score
-  spkErr = zscore(spkErr);
   spkErr = zscore(spkErr - spkBase);
   
   %% Bin trials by spike count
@@ -80,7 +71,6 @@ for cc = 1:NUM_CELLS
     
     if (sum(idxBB) >= MIN_PER_BIN)
       PTarget(cc,bb) = sum(ssEndErr & idxBB) / sum(idxBB);
-      RespTime(cc,bb) = median(rtErr(idxBB));
     end
   end%for:zscore-bin(bb)
   

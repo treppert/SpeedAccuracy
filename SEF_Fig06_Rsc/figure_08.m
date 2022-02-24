@@ -10,8 +10,8 @@ function [] = figure_08()
 % datafile : 
 %% Load spkCorr data created in the above step
 % spkCorr = load('dataProcessed/satSefPaper/rscSubSampl1K_PostSaccade_0_TrialsThresh.mat');
-rootDir = 'C:\Users\Tom\Documents\Data\SpeedAccuracy\SpkCorr\';
-spkCorr = load([rootDir, 'rscSubSampl1K_PostSaccade_0_TrialsThresh.mat']);
+rootDir = 'C:\Users\Tom\Documents\Data - SAT\';
+spkCorr = load([rootDir, 'rscSubSampl1K_PostSaccade_10_TrialsThresh.mat']);
 spkCorr = spkCorr.spkCorr;
 
 colNames = getColNamesToUse();
@@ -99,7 +99,7 @@ outSpkCorr(outSpkCorr.nTrials < MIN_NUM_TRIAL, :) = []; % TR 06/22/2020
 % end
 
 %% [Absolute|Signed|Positive|Negative] Rsc bar plots for FEF/SC pairs by monks
-useMonkeys = {'Da_Eu','Da','Eu'};
+useMonkeys = {'Da_Eu'};%,'Da','Eu'};
 useAreaTypes = {{'ALL_NEURONS','FEF','SC'}};
 rhoTypes = {'Positive'};
 for rt = 1:numel(rhoTypes)

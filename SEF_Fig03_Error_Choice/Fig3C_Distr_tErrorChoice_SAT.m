@@ -5,8 +5,8 @@ function [ ] = Fig3C_Distr_tErrorChoice_SAT( behavData , unitData )
 % 
 
 idxSEF = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'E'});
-idxErrUnit = (unitData.Grade_Err == 1);
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxErrUnit = ismember(unitData.Grade_Err, 1);
 idxKeep = (idxSEF & idxMonkey & idxErrUnit);
 
 %get start time of choice error signal
@@ -67,11 +67,11 @@ ylabel('Cum. probability'); ytickformat('%2.1f')
 ppretty([4.8,3.0])
 
 %barplot
-figure(); hold on
-bar(mean([isiAcc isiFast]))
-errorbar(mean([isiAcc isiFast]), std([isiAcc isiFast]/sqrt(numSession)), 'Color','k')
-ylim([250 290])
-ppretty([2,4])
+% figure(); hold on
+% bar(mean([isiAcc isiFast]))
+% errorbar(mean([isiAcc isiFast]), std([isiAcc isiFast]/sqrt(numSession)), 'Color','k')
+% ylim([250 290])
+% ppretty([2,4])
 
 end % fxn : plot_Distr_ChcErrSignal_Time_SAT ()
 
