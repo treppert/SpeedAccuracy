@@ -41,7 +41,7 @@ for uu = 1:NUM_UNITS
   idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso);
   %index by trial outcome
   idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
-  idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk}); %timing error
+  idxErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
   
   %compute spike density function and align on primary response
   sdfA_kk = compute_spike_density_fxn(spikesSAT{uu});  %sdf from Array
