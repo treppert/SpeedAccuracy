@@ -1,4 +1,4 @@
-function [ ] = plotSignal_X_ErrMag_RPE( behavData , unitData , unitData , spikes )
+function [ ] = plotSignal_X_ErrMag_RPE( behavData , unitData , spikes )
 %plotSignal_X_ErrMag_RPE Summary of this function goes here
 %   Detailed explanation goes here
 

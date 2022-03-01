@@ -3,7 +3,7 @@ function [ ] = Fig4C_ProbActive_ErrorTime( unitData )
 %   Detailed explanation goes here
 
 idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'E'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 
 idxRew = (unitData.Grade_Rew == 2);
 idxKeep = (idxArea & idxMonkey & idxRew);

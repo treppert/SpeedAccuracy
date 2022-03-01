@@ -3,7 +3,7 @@ function [  ] = plot_errRT_SAT( behavData )
 %   Detailed explanation goes here
 
 %isolate sessions from monkey of choice
-kkKeep = (ismember(behavData.Monkey, {'E'}) & behavData.Task_RecordedSEF);
+kkKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
 behavData = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 
@@ -25,8 +25,8 @@ for kk = 1:NUM_SESS
   dlineAcc =  median(behavData.Task_Deadline{kk}(idxAcc));
   dlineFast = median(behavData.Task_Deadline{kk}(idxFast));
   
-  errRT_Acc{kk}  = RTkk(idxAcc & idxErr) - dlineAcc;
-  errRT_Fast{kk} = RTkk(idxFast & idxErr) - dlineFast;
+  errRT_Acc{kk}  = transpose(RTkk(idxAcc & idxErr) - dlineAcc);
+  errRT_Fast{kk} = transpose(RTkk(idxFast & idxErr) - dlineFast);
   
 end%for:sessions(kk)
 
