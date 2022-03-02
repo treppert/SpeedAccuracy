@@ -2,12 +2,11 @@ function [ ] = Fig2HJ_Plot_Distr_TST_SAT( unitData )
 %Fig2HJ_Plot_Distr_TST_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-ANALYZE_PAIRED_ONLY = true;
-AREA_TEST = 'SEF';
+ANALYZE_PAIRED_ONLY = true; %neurons with TST in both task conditions
 
-idxArea = ismember(unitData.aArea, {AREA_TEST});
+idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E','Q','S'});
-idxVisUnit = (unitData.Basic_VisGrade >= 2);
+idxVisUnit = (unitData.Grade_Vis >= 2);
 idxKeep = (idxArea & idxMonkey & idxVisUnit);
 % idxKeep = (idxArea & idxMonkey & idxVisUnit & (unitData.Task_LevelDifficulty == 2));
 
@@ -28,32 +27,32 @@ end
 unitData = unitData(idxKeep,:);
 
 %split analysis on search efficiency
-ccMore = (unitData.Task_LevelDifficulty == 1);
-ccLess = (unitData.Task_LevelDifficulty == 2);
+uu_Less = (unitData.Task_LevelDifficulty == 1);
+uu_More = (unitData.Task_LevelDifficulty == 2);
 
-TST_Acc_More = unitData.VisResp_TST(ccMore,1);     TST_Acc_More(isnan(TST_Acc_More)) = [];
-TST_Acc_Less = unitData.VisResp_TST(ccLess,1);     TST_Acc_Less(isnan(TST_Acc_Less)) = [];
-TST_Fast_More = unitData.VisResp_TST(ccMore,2);    TST_Fast_More(isnan(TST_Fast_More)) = [];
-TST_Fast_Less = unitData.VisResp_TST(ccLess,2);    TST_Fast_Less(isnan(TST_Fast_Less)) = [];
-nAM = length(TST_Acc_More);     nAL = length(TST_Acc_Less);
-nFM = length(TST_Fast_More);    nFL = length(TST_Fast_Less);
+TST_Acc_Less = unitData.VisResp_TST(uu_Less,1);     TST_Acc_Less(isnan(TST_Acc_Less)) = [];
+TST_Acc_More = unitData.VisResp_TST(uu_More,1);     TST_Acc_More(isnan(TST_Acc_More)) = [];
+TST_Fast_Less = unitData.VisResp_TST(uu_Less,2);    TST_Fast_Less(isnan(TST_Fast_Less)) = [];
+TST_Fast_More = unitData.VisResp_TST(uu_More,2);    TST_Fast_More(isnan(TST_Fast_More)) = [];
+nAL = length(TST_Acc_Less);     nAM = length(TST_Acc_More);
+nFL = length(TST_Fast_Less);    nFM = length(TST_Fast_More);
 
 
 %% Plotting
-y_AM = mean(TST_Acc_More);    se_AM = std(TST_Acc_More)/sqrt(nAM);
 y_AL = mean(TST_Acc_Less);    se_AL = std(TST_Acc_Less)/sqrt(nAL);
-y_FM = mean(TST_Fast_More);   se_FM = std(TST_Fast_More)/sqrt(nFM);
+y_AM = mean(TST_Acc_More);    se_AM = std(TST_Acc_More)/sqrt(nAM);
 y_FL = mean(TST_Fast_Less);   se_FL = std(TST_Fast_Less)/sqrt(nFL);
+y_FM = mean(TST_Fast_More);   se_FM = std(TST_Fast_More)/sqrt(nFM);
 
 figure(); hold on
-errorbar([1 2]-.01, [y_FM y_AM], [se_FM se_AM], 'k-', 'CapSize',0, 'LineWidth',0.75)
-errorbar([1 2]+.01, [y_FL y_AL], [se_FL se_AL], 'k-', 'CapSize',0, 'LineWidth',1.75)
+errorbar([1 2]-.01, [y_FL y_AL], [se_FL se_AL], 'k-', 'CapSize',0, 'LineWidth',0.75)
+errorbar([1 2]+.01, [y_FM y_AM], [se_FM se_AM], 'k-', 'CapSize',0, 'LineWidth',1.75)
 ppretty([2,3]); xticks([])
 
 
 %% Stats - Two-way split-plot ANOVA
 if (ANALYZE_PAIRED_ONLY)
-  TST_All = struct('AccMore',TST_Acc_More', 'AccLess',TST_Acc_Less', 'FastMore',TST_Fast_More', 'FastLess',TST_Fast_Less');
+  TST_All = struct('AccMore',TST_Acc_Less', 'AccLess',TST_Acc_More', 'FastMore',TST_Fast_Less', 'FastLess',TST_Fast_More');
 %   writeData_SplitPlotANOVA_SAT(TST_All, [AREA_TEST, '-TST.mat'])
 end
 
