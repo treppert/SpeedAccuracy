@@ -14,7 +14,8 @@ NUM_UNITS = sum(idxKeep);
 unitData = unitData(idxKeep,:);
 spikesSAT = spikesSAT(idxKeep);
 
-tPlot = 3500 + (-300 : 400); %plot time vector
+tPlot = 3500 + (-350 : 500); %plot time vector
+OFFSET_PRE = 350;
 NUM_SAMP = length(tPlot);
 
 RT_MAX = 900; %hard ceiling on primary RT
@@ -22,7 +23,7 @@ RT_MAX = 900; %hard ceiling on primary RT
 NUM_DIR = 9; %binning by saccade direction for heatmap
 BIN_DIR = linspace(-pi, pi, NUM_DIR);
 
-for uu = 2:NUM_UNITS
+for uu = 1:NUM_UNITS
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
@@ -55,8 +56,8 @@ for uu = 2:NUM_UNITS
   meanSDF_Fast_Err = NaN(NUM_SAMP,3); %sdf re. array | sdf re. primary | sdf re. second
   meanSDF_Acc_Corr = NaN(NUM_SAMP,2);
   meanSDF_Acc_Err = NaN(NUM_SAMP,3);
-  tSigA_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);  tSigP_Acc = tSigA_Acc;
-  tSigA_Fast = tSigA_Acc;  tSigP_Fast = tSigA_Acc;
+  tSigP_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);
+  tSigP_Fast = tSigP_Acc;
   
   Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
   Octant_Sacc2 = behavData.Sacc2_Octant{kk};
@@ -75,7 +76,6 @@ for uu = 2:NUM_UNITS
   if (sum(idxFast & idxErr & idxRF1) > MIN_TRIAL_COUNT)
     meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFast & idxErr & idxRF1, tPlot)); %re. array
     meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFast & idxErr & idxRF1, tPlot)); %re. primary
-    tSigA_Fast = calc_tSignal_ChoiceErr(sdfA_kk(idxFast & idxCorr & idxRF1, tPlot), sdfA_kk(idxFast & idxErr & idxRF1, tPlot));
     tSigP_Fast = calc_tSignal_ChoiceErr(sdfP_kk(idxFast & idxCorr & idxRF1, tPlot), sdfP_kk(idxFast & idxErr & idxRF1, tPlot));
   end
   if (sum(idxFast & idxErr & idxRF2) > MIN_TRIAL_COUNT)
@@ -86,36 +86,48 @@ for uu = 2:NUM_UNITS
   if (sum(idxAcc & idxErr & idxRF1) > MIN_TRIAL_COUNT)
     meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. array
     meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAcc & idxErr & idxRF1, tPlot)); %re. primary
-    tSigA_Acc = calc_tSignal_ChoiceErr(sdfA_kk(idxAcc & idxCorr & idxRF1, tPlot), sdfA_kk(idxAcc & idxErr & idxRF1, tPlot));
     tSigP_Acc = calc_tSignal_ChoiceErr(sdfP_kk(idxAcc & idxCorr & idxRF1, tPlot), sdfP_kk(idxAcc & idxErr & idxRF1, tPlot));
   end
   if (sum(idxAcc & idxErr & idxRF2) > MIN_TRIAL_COUNT)
     meanSDF_Acc_Err(:,3) = nanmean(sdfS_kk(idxAcc & idxErr & idxRF2, tPlot)); %re. second
   end
   
-  hFig = figure('visible','on');
-  yTickLabel = num2cell(rad2deg(BIN_DIR));
-  yTickLabel(2:2:end) = {''};
+  %compute signal magnitude as the integrated difference between Err and Corr SDFs
+  Sig_Time = unitData.ErrorSignal_Time(uu,:);
+  Sig_Idx = Sig_Time + OFFSET_PRE;
+  if ~isnan(Sig_Time(1)) %if error signal was observed for Fast condition
+    A_Err_Fast = mean(meanSDF_Fast_Err(Sig_Idx(1):Sig_Idx(2),2) - meanSDF_Fast_Corr(Sig_Idx(1):Sig_Idx(2),2)) * diff(Sig_Time(1:2))/1000;
+  else
+    A_Err_Fast = NaN;
+  end
+  if ~isnan(Sig_Time(3)) %if error signal was observed for Accurate condition
+    A_Err_Acc = mean(meanSDF_Acc_Err(Sig_Idx(3):Sig_Idx(4),2) - meanSDF_Acc_Corr(Sig_Idx(3):Sig_Idx(4),2)) * diff(Sig_Time(3:4))/1000;
+  else
+    A_Err_Acc = NaN;
+  end
   
   %% Plot: Mean SDF for response into RF
-  OFFSET_PRE = 300;
+  hFig = figure('visible','off');
+  
   sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
   maxFR = max(sdfAll,[],'all');
   yLim = [0, maxFR];
 
   subplot(2,3,1); hold on %Fast re. array
+  title([unitData.Properties.RowNames{uu}, '-', unitData.aArea{uu}, '  ', ...
+    'RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Fast_Corr(:,1), 'Color',[0 .7 0])
   plot(tPlot-3500, meanSDF_Fast_Err(:,1), ':', 'Color',[0 .7 0])
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
-  scatter(tSigA_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
-  scatter(tSigA_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
 
   subplot(2,3,2); hold on %Fast re. primary
-  title(['RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
+  title(['Signal = ', num2str(A_Err_Fast)], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Fast_Corr(:,2), 'Color',[0 .7 0])
   plot(tPlot-3500, meanSDF_Fast_Err(:,2), ':', 'Color',[0 .7 0])
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+  plot(Sig_Time(1)*ones(1,2), yLim, 'k:', 'LineWidth',.75)
+  plot(Sig_Time(2)*ones(1,2), yLim, 'k:', 'LineWidth',.75)
   xlim(tPlot([1,NUM_SAMP])-3500)
   set(gca, 'YColor','none')
   scatter(tSigP_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
@@ -134,13 +146,14 @@ for uu = 2:NUM_UNITS
   xlim(tPlot([1,NUM_SAMP])-3500)
   xlabel('Time from array (ms)')
   ylabel('Activity (sp/sec)')
-  scatter(tSigA_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
-  scatter(tSigA_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
 
   subplot(2,3,5); hold on %Accurate re. primary
+  title(['Signal = ', num2str(A_Err_Acc)], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Acc_Corr(:,2), 'r')
   plot(tPlot-3500, meanSDF_Acc_Err(:,2), 'r:')
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
+  plot(Sig_Time(3)*ones(1,2), yLim, 'k:', 'LineWidth',.75)
+  plot(Sig_Time(4)*ones(1,2), yLim, 'k:', 'LineWidth',.75)
   xlim(tPlot([1,NUM_SAMP])-3500)
   set(gca, 'YColor','none')
   xlabel('Time from primary saccade (ms)')
@@ -156,9 +169,9 @@ for uu = 2:NUM_UNITS
 
   ppretty([10,4])
   
-%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-%   pause(0.1); close(hFig); pause(0.1)
+  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
+  pause(0.1); close(hFig); pause(0.1)
   
-end%for:cells(uu)
+end % for : unit(uu)
 
 end%fxn:plot_SDF_X_Dir_RF_ErrChoice()

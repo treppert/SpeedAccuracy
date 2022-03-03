@@ -1,4 +1,4 @@
-function [ ] = plot_SpkCt_X_Sacc2Endpt(behavData, unitData, spikesSAT)
+function [ ] = plot_SpkCt_X_Sacc2Endpt( behavData , unitData , spikesSAT )
 %plot_SpkCt_X_Sacc2Endpt Summary of this function goes here
 %   Detailed explanation goes here
 
