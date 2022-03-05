@@ -1,4 +1,4 @@
-function [ varargout ] = plot_SDF_X_Dir_RF_ErrTime( behavData , unitData , spikesSAT )
+% function [ varargout ] = plot_SDF_X_Dir_RF_ErrTime( behavData , unitData , spikesSAT )
 %plot_SDF_X_Dir_RF_ErrTime() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -16,7 +16,7 @@ NUM_UNIT = sum(idxKeep);
 unitData = unitData(idxKeep,:);
 spikesSAT = spikesSAT(idxKeep);
 
-OFFSET_PRE = 300;
+OFFSET_PRE = 100;
 tPlot = 3500 + (-OFFSET_PRE : 600); %plot time vector
 NUM_SAMP = length(tPlot);
 
@@ -29,7 +29,7 @@ BIN_DIR = linspace(-pi, pi, NUM_DIR);
 %initializations
 mean_dFR = NaN(NUM_UNIT,2); 
 
-for uu = 1:NUM_UNIT
+for uu = 8:NUM_UNIT
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
@@ -69,10 +69,11 @@ for uu = 1:NUM_UNIT
   meanSDF_Fast_Corr = NaN(NUM_SAMP,3); %sdf re. array | sdf re. primary | sdf re. reward
   meanSDF_Fast_Err = meanSDF_Fast_Corr; %sdf re. array | sdf re. primary | sdf re. reward
   meanSDF_Acc_Corr = meanSDF_Fast_Corr;
-  meanSDF_Acc_ErrLrg = meanSDF_Fast_Corr;
-  meanSDF_Acc_ErrSml = meanSDF_Fast_Corr;
-%   tSigR_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);
-%   tSigR_Fast = tSigR_Acc;
+  meanSDF_Acc_Err = meanSDF_Fast_Corr;
+%   meanSDF_Acc_ErrLrg = meanSDF_Fast_Corr;
+%   meanSDF_Acc_ErrSml = meanSDF_Fast_Corr;
+  tSigR_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);
+  tSigR_Fast = tSigR_Acc;
   
   %index by saccade octant re. response field (RF)
   Octant_Sacc1 = behavData.Sacc_Octant{kk};
@@ -86,9 +87,10 @@ for uu = 1:NUM_UNIT
   
   idxFC = (idxFast & idxCorr & idxRF);
   idxAC = (idxAcc  & idxCorr & idxRF);
-  idxFE = (idxFast & idxErr & idxRF & idxLargeErr);
-  idxAEL = (idxAcc  & idxErr & idxRF & idxLargeErr);
-  idxAES = (idxAcc  & idxErr & idxRF & idxSmallErr);
+  idxFE = (idxFast & idxErr & idxRF);
+  idxAE = (idxAcc  & idxErr & idxRF);
+%   idxAEL = (idxAcc  & idxErr & idxRF & idxLargeErr);
+%   idxAES = (idxAcc  & idxErr & idxRF & idxSmallErr);
   
   meanSDF_Fast_Corr(:,1) = nanmean(sdfA_kk(idxFC, tPlot)); %re. array
   meanSDF_Fast_Corr(:,2) = nanmean(sdfP_kk(idxFC, tPlot)); %re. primary
@@ -97,26 +99,29 @@ for uu = 1:NUM_UNIT
     meanSDF_Fast_Err(:,1) = nanmean(sdfA_kk(idxFE, tPlot)); %re. array
     meanSDF_Fast_Err(:,2) = nanmean(sdfP_kk(idxFE, tPlot)); %re. primary
     meanSDF_Fast_Err(:,3) = nanmean(sdfR_kk(idxFE, tPlot)); %re. reward
-%     tSigR_Fast = calc_tSignal_ChoiceErr(sdfR_kk(idxFast & idxCorr & idxRF, tPlot), sdfR_kk(idxFast & idxErr & idxRF, tPlot));
+    tSigR_Fast = calc_tSignal_ChoiceErr(sdfR_kk(idxFC, tPlot), sdfR_kk(idxFE, tPlot));
   end
   meanSDF_Acc_Corr(:,1) = nanmean(sdfA_kk(idxAC, tPlot));
   meanSDF_Acc_Corr(:,2) = nanmean(sdfP_kk(idxAC, tPlot));
   meanSDF_Acc_Corr(:,3) = nanmean(sdfR_kk(idxAC, tPlot));
-  if (sum(idxAcc & idxErr & idxRF) > MIN_TRIAL_COUNT)
-    meanSDF_Acc_ErrLrg(:,1) = nanmean(sdfA_kk(idxAEL, tPlot));
-    meanSDF_Acc_ErrLrg(:,2) = nanmean(sdfP_kk(idxAEL, tPlot));
-    meanSDF_Acc_ErrLrg(:,3) = nanmean(sdfR_kk(idxAEL, tPlot));
-    meanSDF_Acc_ErrSml(:,1) = nanmean(sdfA_kk(idxAES, tPlot));
-    meanSDF_Acc_ErrSml(:,2) = nanmean(sdfP_kk(idxAES, tPlot));
-    meanSDF_Acc_ErrSml(:,3) = nanmean(sdfR_kk(idxAES, tPlot));
-%     tSigR_Acc = calc_tSignal_ChoiceErr(sdfR_kk(idxAcc & idxCorr & idxRF, tPlot), sdfR_kk(idxAcc & idxErr & idxRF, tPlot));
+  if (sum(idxAE) > MIN_TRIAL_COUNT)
+    meanSDF_Acc_Err(:,1) = nanmean(sdfA_kk(idxAE, tPlot));
+    meanSDF_Acc_Err(:,2) = nanmean(sdfP_kk(idxAE, tPlot));
+    meanSDF_Acc_Err(:,3) = nanmean(sdfR_kk(idxAE, tPlot));
+%     meanSDF_Acc_ErrLrg(:,1) = nanmean(sdfA_kk(idxAEL, tPlot));
+%     meanSDF_Acc_ErrLrg(:,2) = nanmean(sdfP_kk(idxAEL, tPlot));
+%     meanSDF_Acc_ErrLrg(:,3) = nanmean(sdfR_kk(idxAEL, tPlot));
+%     meanSDF_Acc_ErrSml(:,1) = nanmean(sdfA_kk(idxAES, tPlot));
+%     meanSDF_Acc_ErrSml(:,2) = nanmean(sdfP_kk(idxAES, tPlot));
+%     meanSDF_Acc_ErrSml(:,3) = nanmean(sdfR_kk(idxAES, tPlot));
+    tSigR_Acc = calc_tSignal_ChoiceErr(sdfR_kk(idxAC, tPlot), sdfR_kk(idxAE, tPlot));
   end
   
   %compute mean diff in firing rate X magnitude of timing error (Accurate)
   idxTestDFR = OFFSET_PRE + (1:600);
 %   idxTestDFR = OFFSET_PRE + (unitData.RewardSignal_Time(uu,3) : unitData.RewardSignal_Time(uu,4));
-  mean_dFR(uu,:) = compute_FR_X_TErrMag(meanSDF_Acc_ErrSml(idxTestDFR,:), ...
-    meanSDF_Acc_ErrLrg(idxTestDFR,:), meanSDF_Acc_Corr(idxTestDFR,:));
+%   mean_dFR(uu,:) = compute_FR_X_TErrMag(meanSDF_Acc_ErrSml(idxTestDFR,:), ...
+%     meanSDF_Acc_ErrLrg(idxTestDFR,:), meanSDF_Acc_Corr(idxTestDFR,:));
   
   if (PLOT)
   %% Plot: Mean SDF for response into RF
@@ -124,7 +129,7 @@ for uu = 1:NUM_UNIT
   yTickLabel = num2cell(rad2deg(BIN_DIR));
   yTickLabel(2:2:end) = {''};
   
-  sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_ErrLrg];
+  sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
   maxFR = max(sdfAll,[],'all');
   yLim = [0, maxFR];
 
@@ -148,13 +153,14 @@ for uu = 1:NUM_UNIT
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
   set(gca, 'YColor','none')
-%   scatter(tSigR_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
-%   scatter(tSigR_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
+  scatter(tSigR_Fast.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+  scatter(tSigR_Fast.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
 
   subplot(2,3,4); hold on %Accurate re. array
   plot(tPlot-3500, meanSDF_Acc_Corr(:,1), 'r')
-  plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,1), 'r:', 'LineWidth',1.8)
-  plot(tPlot-3500, meanSDF_Acc_ErrSml(:,1), 'r:')
+  plot(tPlot-3500, meanSDF_Acc_Err(:,1), 'r:')
+%   plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,1), 'r:', 'LineWidth',1.8)
+%   plot(tPlot-3500, meanSDF_Acc_ErrSml(:,1), 'r:')
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
   xlabel('Time from array (ms)')
@@ -162,8 +168,9 @@ for uu = 1:NUM_UNIT
 
   subplot(2,3,5); hold on %Accurate re. primary
   plot(tPlot-3500, meanSDF_Acc_Corr(:,2), 'r')
-  plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,2), 'r:', 'LineWidth',1.8)
-  plot(tPlot-3500, meanSDF_Acc_ErrSml(:,2), 'r:')
+  plot(tPlot-3500, meanSDF_Acc_Err(:,2), 'r:')
+%   plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,2), 'r:', 'LineWidth',1.8)
+%   plot(tPlot-3500, meanSDF_Acc_ErrSml(:,2), 'r:')
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
   set(gca, 'YColor','none')
@@ -171,14 +178,15 @@ for uu = 1:NUM_UNIT
 
   subplot(2,3,6); hold on %Accurate re. reward
   plot(tPlot-3500, meanSDF_Acc_Corr(:,3), 'r')
-  plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,3), 'r:', 'LineWidth',1.8)
-  plot(tPlot-3500, meanSDF_Acc_ErrSml(:,3), 'r:')
+  plot(tPlot-3500, meanSDF_Acc_Err(:,3), 'r:')
+%   plot(tPlot-3500, meanSDF_Acc_ErrLrg(:,3), 'r:', 'LineWidth',1.8)
+%   plot(tPlot-3500, meanSDF_Acc_ErrSml(:,3), 'r:')
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
   set(gca, 'YColor','none')
   xlabel('Time from reward (ms)')
-%   scatter(tSigR_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
-%   scatter(tSigR_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
+  scatter(tSigR_Acc.p05-OFFSET_PRE, 3, 20, [.4 .6 1], 'filled')
+  scatter(tSigR_Acc.p01-OFFSET_PRE, 3, 20, [.1 .2 1], 'filled')
 
   ppretty([10,4])
   
@@ -188,23 +196,24 @@ for uu = 1:NUM_UNIT
   
 end% for : unit (uu)
 
-if (nargout > 0)
-  varargout{1} = mean_dFR;
-  
-  %plot distribution of dFR X timing error magnitude
-  figure(); hold on
-  title('Accurate condition', 'FontSize',10)
-  muPlot = mean(mean_dFR);
-  sePlot = std(mean_dFR) / sqrt(NUM_UNIT);
-  bar(muPlot, 'FaceColor','w')
-  errorbar(muPlot, sePlot, 'Color','k', 'CapSize',0)
-  ylabel('Diff. in firing rate (sp/sec)')
-  xticks(1:2); xticklabels({'Small error','Large error'})
-  ppretty([3,3])
-  
-end
+% if (nargout > 0)
+%   varargout{1} = mean_dFR;
+%   
+%   %plot distribution of dFR X timing error magnitude
+%   figure(); hold on
+%   title('Accurate condition', 'FontSize',10)
+%   muPlot = mean(mean_dFR);
+%   sePlot = std(mean_dFR) / sqrt(NUM_UNIT);
+%   bar(muPlot, 'FaceColor','w')
+%   errorbar(muPlot, sePlot, 'Color','k', 'CapSize',0)
+%   ylabel('Diff. in firing rate (sp/sec)')
+%   xticks(1:2); xticklabels({'Small error','Large error'})
+%   ppretty([3,3])
+%   
+% end
 
-end%fxn:plot_SDF_X_Dir_RF_ErrTime()
+clearvars -except behavData unitData spikesSAT
+% end%fxn:plot_SDF_X_Dir_RF_ErrTime()
 
 
 function [ diff_FR ] = compute_FR_X_TErrMag( sdf_ErrSml , sdf_ErrLrg , sdf_Corr )
