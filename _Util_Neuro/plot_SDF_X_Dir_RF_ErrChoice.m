@@ -1,45 +1,41 @@
-function [  ] = plot_SDF_X_Dir_RF_ErrChoice( behavData , unitData , spikesSAT )
+% function [  ] = plot_SDF_X_Dir_RF_ErrChoice( behavData , unitData , spikesSAT )
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
 MIN_TRIAL_COUNT = 3;
+RT_MAX = 900; %hard ceiling on primary RT
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'E'});
-idxFunction = (unitData.Grade_Err == -1);
+idxFunction = (unitData.Grade_Err == +1);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
-NUM_UNITS = sum(idxKeep);
-unitData = unitData(idxKeep,:);
-spikesSAT = spikesSAT(idxKeep);
+NUM_UNIT = sum(idxKeep);
+unitDataTest = unitData(idxKeep,:);
+spikesTest = spikesSAT(idxKeep);
 
 tPlot = 3500 + (-350 : 500); %plot time vector
 OFFSET_PRE = 350;
 NUM_SAMP = length(tPlot);
 
-RT_MAX = 900; %hard ceiling on primary RT
-
-NUM_DIR = 9; %binning by saccade direction for heatmap
-BIN_DIR = linspace(-pi, pi, NUM_DIR);
-
-for uu = 1:NUM_UNITS
-  fprintf('%s \n', unitData.Properties.RowNames{uu})
-  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+for uu = NUM_UNIT:NUM_UNIT
+  fprintf('%s \n', unitDataTest.Properties.RowNames{uu})
+  kk = ismember(behavData.Task_Session, unitDataTest.Task_Session(uu));
   
-  RTP_kk = double(behavData.Sacc_RT{kk}); %Primary saccade RT
+  RTP_kk = behavData.Sacc_RT{kk}; %Primary saccade RT
   RTP_kk(RTP_kk > RT_MAX) = NaN; %hard limit on primary RT
-  RTS_kk = double(behavData.Sacc2_RT{kk}); %Second saccade RT
+  RTS_kk = behavData.Sacc2_RT{kk}; %Second saccade RT
   RTS_kk(RTS_kk == 0) = NaN; %trials with no second saccade
   ISI_kk = RTS_kk - RTP_kk;
   
   %compute spike density function and align on primary response
-  sdfA_kk = compute_spike_density_fxn(spikesSAT{uu});  %sdf from Array
+  sdfA_kk = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
   sdfP_kk = align_signal_on_response(sdfA_kk, RTP_kk); %sdf from Primary
   sdfS_kk = align_signal_on_response(sdfA_kk, RTS_kk); %sdf from Second
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitDataTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
@@ -59,9 +55,10 @@ for uu = 1:NUM_UNITS
   tSigP_Acc = struct('p10',NaN, 'p05',NaN, 'p01',NaN);
   tSigP_Fast = tSigP_Acc;
   
-  Octant_Sacc1 = behavData.Sacc_Octant{kk}; %index by saccade octant re. response field (RF)
+  %index by saccade octant re. response field (RF)
+  Octant_Sacc1 = behavData.Sacc_Octant{kk};
   Octant_Sacc2 = behavData.Sacc2_Octant{kk};
-  RF = unitData.RF{uu};
+  RF = unitDataTest.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
     idxRF1 = true(behavData.Task_NumTrials(kk),1);
@@ -93,7 +90,7 @@ for uu = 1:NUM_UNITS
   end
   
   %compute signal magnitude as the integrated difference between Err and Corr SDFs
-  Sig_Time = unitData.ErrorSignal_Time(uu,:);
+  Sig_Time = unitDataTest.ErrorSignal_Time(uu,:);
   Sig_Idx = Sig_Time + OFFSET_PRE;
   if ~isnan(Sig_Time(1)) %if error signal was observed for Fast condition
     A_Err_Fast = mean(meanSDF_Fast_Err(Sig_Idx(1):Sig_Idx(2),2) - meanSDF_Fast_Corr(Sig_Idx(1):Sig_Idx(2),2)) * diff(Sig_Time(1:2))/1000;
@@ -107,14 +104,14 @@ for uu = 1:NUM_UNITS
   end
   
   %% Plot: Mean SDF for response into RF
-  hFig = figure('visible','off');
+  hFig = figure('visible','on');
   
   sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
   maxFR = max(sdfAll,[],'all');
   yLim = [0, maxFR];
 
   subplot(2,3,1); hold on %Fast re. array
-  title([unitData.Properties.RowNames{uu}, '-', unitData.aArea{uu}, '  ', ...
+  title([unitDataTest.Properties.RowNames{uu}, '-', unitDataTest.aArea{uu}, '  ', ...
     'RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Fast_Corr(:,1), 'Color',[0 .7 0])
   plot(tPlot-3500, meanSDF_Fast_Err(:,1), ':', 'Color',[0 .7 0])
@@ -169,9 +166,10 @@ for uu = 1:NUM_UNITS
 
   ppretty([10,4])
   
-  pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-  pause(0.1); close(hFig); pause(0.1)
+%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
+%   pause(0.1); close(hFig); pause(0.1)
   
 end % for : unit(uu)
 
-end%fxn:plot_SDF_X_Dir_RF_ErrChoice()
+clearvars -except behavData unitData spikesSAT
+% end%fxn:plot_SDF_X_Dir_RF_ErrChoice()

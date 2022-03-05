@@ -10,8 +10,12 @@ NUM_SESS = sum(kkKeep);
 tSacc2_Acc = cell(NUM_SESS,1);
 tSacc2_Fast = tSacc2_Acc;
 
-%% Collect dRT across sessions
+tMedSacc2_Acc = NaN(NUM_SESS,1); %median time of second saccade
+tMedSacc2_Fast = tMedSacc2_Acc;
+
+%% Collect time of second saccade across sessions
 for kk = 1:NUM_SESS
+  
   RT2_kk = behavData.Sacc2_RT{kk} - behavData.Sacc_RT{kk};
   
   %index by trial outcome -- choice errors
@@ -28,21 +32,25 @@ for kk = 1:NUM_SESS
   tSacc2_Acc{kk}  = transpose(RT2_kk(idxAcc & idxErr & (idxTgt | idxDistr))); %transpose for concatenation
   tSacc2_Fast{kk} = transpose(RT2_kk(idxFast & idxErr & (idxTgt | idxDistr)));
   
-end%for:sessions(kk)
+  tMedSacc2_Acc(kk) = median(RT2_kk(idxAcc & idxErr & (idxTgt | idxDistr)));
+  tMedSacc2_Fast(kk) = median(RT2_kk(idxFast & idxErr & (idxTgt | idxDistr)));
+  
+end % for : session(kk)
 
-%concatenate across sessions
+%concatenate single-trial data across sessions
 tSacc2_Acc = [ tSacc2_Acc{1:NUM_SESS} ];
 tSacc2_Fast = [ tSacc2_Fast{1:NUM_SESS} ];
 
-%% Plotting
+%plot -- distribution
 figure(); hold on
-
 cdfplotTR(tSacc2_Acc, 'Color','r')  %time of second saccade
 cdfplotTR(tSacc2_Fast, 'Color',[0 .7 0])
-
 xlabel('Time from primary saccade (ms)'); xlim([-200 500])
 ylabel('Cumulative probability'); ytickformat('%2.1f')
-
 ppretty([3.2,2])
+
+%plot -- average
+ttestTom(tMedSacc2_Acc, tMedSacc2_Fast, 'barplot')
+ylim([280 320]); ylabel('Time of second saccade (ms)')
 
 end % fxn : plot_tSacc2_SAT()

@@ -27,9 +27,9 @@ for uu = 1:NUM_UNITS
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
   
-  RTP_kk = double(behavData.Sacc_RT{kk}); %Primary saccade RT
+  RTP_kk = behavData.Sacc_RT{kk}; %Primary saccade RT
   RTP_kk(RTP_kk > RT_MAX) = NaN; %hard limit on primary RT
-  RTS_kk = double(behavData.Sacc2_RT{kk}); %Second saccade RT
+  RTS_kk = behavData.Sacc2_RT{kk}; %Second saccade RT
   RTS_kk(RTS_kk == 0) = NaN; %trials with no second saccade
   ISI_kk = RTS_kk - RTP_kk;
   
