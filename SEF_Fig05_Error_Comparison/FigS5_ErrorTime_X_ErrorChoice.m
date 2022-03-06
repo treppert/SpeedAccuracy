@@ -1,73 +1,95 @@
-function [ ] = FigS5_ErrorTime_X_ErrorChoice( behavData , unitData , spikesSAT , varargin )
+% function [ ] = FigS5_ErrorTime_X_ErrorChoice( behavData , unitData , spikesSAT )
 %FigS5_ErrorTime_X_ErrorChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}});
+idxSEF = ismember(unitData.aArea, {'SEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxCErrUnit = ismember(unitData.Grade_Err, 1);
+idxTErrUnit = ismember(unitData.Grade_Rew, 2);
 
-idxArea = ismember(unitData.aArea, args.area);
-idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxKeep = (idxSEF & idxMonkey & (idxCErrUnit | idxTErrUnit));
 
-idxErrChoice = (unitData.Basic_ErrGrade >= 2);
-idxErrTime = (abs(unitData.Basic_RewGrade) >= 2);
+NUM_UNIT = sum(idxKeep);
+unitDataTest = unitData(idxKeep,:);
+spikesTest = spikesSAT(idxKeep);
 
-idxKeep = (idxArea & idxMonkey & (~idxErrChoice & idxErrTime));
-
-NUM_CELLS = sum(idxKeep);
-unitData = unitData(idxKeep,:);
-spikesSAT = spikesSAT(idxKeep);
-
-tplotResp = (-200 : 450);   offsetResp = 200;
-tplotRew  = (-50 : 600);    offsetRew = 50;
+tCount_ChcErr = 3500 + (0:400);
+tCount_TimeErr = 3500 + (100:500);
 
 %initialization -- contrast ratio (A_err - A_corr) / (A_err + A_corr)
-CRacc = NaN(1,NUM_CELLS);   tEstAcc = (100 : 500) + offsetRew;
-CRfast = NaN(1,NUM_CELLS);  tEstFast = (100 : 300) + offsetResp;
+CR_Acc_TE = NaN(NUM_UNIT,1);
+CR_Fast_CE = CR_Acc_TE;
 
-for uu = 1:NUM_CELLS
-  fprintf('%s - %s\n', unitData.Task_Session(uu), unitData.aID{uu})
-  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+for uu = 1:NUM_UNIT
+  kk = ismember(behavData.Task_Session, unitDataTest.Task_Session(uu));
+  RT_kk = behavData.Sacc_RT{kk};
+  tRew_kk = RT_kk + behavData.Task_TimeReward{kk};
   
-  rtKK = double(behavData.Sacc_RT{kk});
-  trewKK = double(behavData.Task_TimeReward{kk} + behavData.Sacc_RT{kk});
+  %compute spike density function and align on primary response
+  sdfA_kk = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
+  sdfP_kk = align_signal_on_response(sdfA_kk, RT_kk); %sdf from Primary
+  sdfR_kk = align_signal_on_response(sdfA_kk, round(tRew_kk)); %sdf from Reward
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData(uu,:), behavData.Task_NumTrials{kk});
-  %index by condition
-  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso & ~isnan(trewKK));
-  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso & ~isnan(trewKK));
-  %index by trial outcome
-  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
-  idxErrChc = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
-  idxErrTime = (~behavData.Task_ErrChoice{kk} & behavData.Task_ErrTime{kk});
+  idxIso = identify_trials_poor_isolation_SAT(unitDataTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by screen clear on Fast trials
   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
+  %index by trial outcome
+  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxErrChc = (behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  idxErrTime = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  %index by condition
+  idxFast = (behavData.Task_SATCondition{kk} == 3 & ~idxIso & ~idxClear);
+  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso);
   
-  %compute single-trial SDF
-  sdfStim = compute_spike_density_fxn(spikesSAT(uu).SAT);
-  sdfResp = align_signal_on_response(sdfStim, rtKK);
-  sdfRew  = align_signal_on_response(sdfStim, trewKK);
+  %index by saccade octant re. response field (RF)
+  Octant_Sacc1 = behavData.Sacc_Octant{kk};
+  RF = unitDataTest.RF{uu};
   
-  %split SDF into groups and compute mean
-  sdfFastCorr = nanmean(sdfResp(idxFast & idxCorr, tplotResp + 3500));
-  sdfFastErr = nanmean(sdfResp(idxFast & idxErrChc & ~idxClear, tplotResp + 3500));
-  sdfAccCorr = nanmean(sdfRew(idxAcc & idxCorr, tplotRew + 3500));
-  sdfAccErr  = nanmean(sdfRew(idxAcc & idxErrTime, tplotRew + 3500));
+  if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
+    idxRF = true(behavData.Task_NumTrials(kk),1);
+  else %average only trials with saccade into RF
+    idxRF = ismember(Octant_Sacc1, RF);
+  end
   
-  %compute contrast ratio
-  muAccCorr = mean(sdfAccCorr(tEstAcc));      muAccErr = mean(sdfAccErr(tEstAcc));
-  muFastCorr = mean(sdfFastCorr(tEstFast));   muFastErr = mean(sdfFastErr(tEstFast));
+  idxFC = (idxFast & idxCorr & idxRF);
+  idxAC = (idxAcc  & idxCorr & idxRF);
+  idxFE = (idxFast & idxErrChc & idxRF); %Fast choice error
+  idxAE = (idxAcc & idxErrTime & idxRF); %Accurate timing error
   
-  CRacc(uu) = (muAccErr - muAccCorr) / (muAccErr + muAccCorr);
-  CRfast(uu) = (muFastErr - muFastCorr) / (muFastErr + muFastCorr);
+  meanSDF_FC = nanmean(sdfP_kk(idxFC, tCount_ChcErr));
+  meanSDF_FE = nanmean(sdfP_kk(idxFE, tCount_ChcErr));
+  meanSDF_AC = nanmean(sdfR_kk(idxAC, tCount_TimeErr));
+  meanSDF_AE = nanmean(sdfR_kk(idxAE, tCount_TimeErr));
+  
+  %compute contrast ratios
+  muAC = mean(meanSDF_AC);  muAE = mean(meanSDF_AE);
+  muFC = mean(meanSDF_FC);  muFE = mean(meanSDF_FE);
+  CR_Acc_TE(uu)  = (muAE - muAC) / (muAE + muAC);
+  CR_Fast_CE(uu) = (muFE - muFC) / (muFE + muFC);
   
 end%for:cells(uu)
+
+%split into three groups (only CE, only TE, and both)
+idxCErrUnit = ismember(unitDataTest.Grade_Err, 1);
+idxTErrUnit = ismember(unitDataTest.Grade_Rew, 2);
+idxCE_Only = (idxCErrUnit & ~idxTErrUnit);
+idxTE_Only = (~idxCErrUnit & idxTErrUnit);
+idx_Both = (idxCErrUnit & idxTErrUnit);
 
 %% Plotting - Contrast ratio
 
 figure(); hold on
-scatter(CRfast, CRacc, 30, 'r', 'filled')
+scatter(CR_Fast_CE(idxCE_Only), CR_Acc_TE(idxCE_Only), 30, [0 .7 0], 'filled')
+scatter(CR_Fast_CE(idxTE_Only), CR_Acc_TE(idxTE_Only), 30, 'r', 'filled')
+scatter(CR_Fast_CE(idx_Both), CR_Acc_TE(idx_Both), 30, 'k', 'filled')
+line([0 0], [-.2 .6], 'Color','k', 'LineStyle',':')
+line([-.2 .6], [0 0], 'Color','k', 'LineStyle',':')
 xlabel('Contrast ratio - Choice error')
 ylabel('Contrast ratio - Timing error')
-ppretty([4.8,3])
+ppretty([3.2,2])
 
-end%fxn:FigS5_ErrorTime_X_ErrorChoice()
+clearvars -except behavData unitData spikesSAT
+% end%fxn:FigS5_ErrorTime_X_ErrorChoice()
+
+

@@ -8,15 +8,15 @@ FIG_VISIBLE = 'on';
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxFunction = (unitData.Grade_Rew == 2);
+idxMonkey = ismember(unitData.aMonkey, {'E'});
+idxFunction = (unitData.Grade_Err == 1);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
-unitData = unitData(idxKeep,:);
-spikesSAT = spikesSAT(idxKeep);
+unitTest = unitData(idxKeep,:);
+spikesTest = spikesSAT(idxKeep);
 
-OFFSET_PRE = 100;
+OFFSET_PRE = 200;
 tPlot = 3500 + (-OFFSET_PRE : 600); %plot time vector
 NUM_SAMP = length(tPlot);
 
@@ -29,9 +29,9 @@ BIN_DIR = linspace(-pi, pi, NUM_DIR);
 %initializations
 mean_dFR = NaN(NUM_UNIT,2); 
 
-for uu = 8:NUM_UNIT
-  fprintf('%s \n', unitData.Properties.RowNames{uu})
-  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
+for uu = 3:3%1:NUM_UNIT
+  fprintf('%s \n', unitTest.Properties.RowNames{uu})
+  kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
   
   RTkk = behavData.Sacc_RT{kk}; %RT of primary saccade
   RTkk(RTkk > RT_MAX) = NaN; %hard limit on primary RT
@@ -39,7 +39,7 @@ for uu = 8:NUM_UNIT
   tRew_kk = RTkk + behavData.Task_TimeReward{kk};
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by screen clear on Fast trials
   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   %index by condition
@@ -61,7 +61,7 @@ for uu = 8:NUM_UNIT
   idxSmallErr = (abs(errRT) < rtThresh_Acc);
   
   %compute spike density function and align on primary response
-  sdfA_kk = compute_spike_density_fxn(spikesSAT{uu});  %sdf from Array
+  sdfA_kk = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
   sdfP_kk = align_signal_on_response(sdfA_kk, RTkk); %sdf from Primary
   sdfR_kk = align_signal_on_response(sdfA_kk, round(tRew_kk)); %sdf from Reward
   
@@ -77,7 +77,7 @@ for uu = 8:NUM_UNIT
   
   %index by saccade octant re. response field (RF)
   Octant_Sacc1 = behavData.Sacc_Octant{kk};
-  RF = unitData.RF{uu};
+  RF = unitTest.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
     idxRF = true(behavData.Task_NumTrials(kk),1);
@@ -134,13 +134,14 @@ for uu = 8:NUM_UNIT
   yLim = [0, maxFR];
 
   subplot(2,3,1); hold on %Fast re. array
+  title([unitTest.Properties.RowNames{uu}, '-', unitTest.aArea{uu}, '  ', ...
+    'RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Fast_Corr(:,1), 'Color',[0 .7 0])
   plot(tPlot-3500, meanSDF_Fast_Err(:,1), ':', 'Color',[0 .7 0])
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
   xlim(tPlot([1,NUM_SAMP])-3500)
 
   subplot(2,3,2); hold on %Fast re. primary
-  title(['RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
   plot(tPlot-3500, meanSDF_Fast_Corr(:,2), 'Color',[0 .7 0])
   plot(tPlot-3500, meanSDF_Fast_Err(:,2), ':', 'Color',[0 .7 0])
   plot([0 0], yLim, 'k:', 'LineWidth',1.5)
