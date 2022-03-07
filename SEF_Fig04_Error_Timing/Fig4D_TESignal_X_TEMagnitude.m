@@ -103,7 +103,8 @@ Xse = nanstd(tErr_Acc) / sqrt(NUM_UNIT);
 Yse = nanstd(spkCt_Acc) / sqrt(NUM_UNIT);
 
 figure(); hold on
-
+line([10 190], [0 0], 'Color','k', 'LineStyle',':', 'LineWidth',1.5)
+line(tErr_Acc', spkCt_Acc', 'Color',[.5 .5 .5], 'Marker','.', 'MarkerSize',8, 'LineWidth',0.5)
 errorbar(Xmu,Ymu, Yse,Yse, Xse,Xse, 'o', 'CapSize',0, 'Color','k')
 ylabel('Signal magnitude (z)'); ytickformat('%2.1f')
 xlabel('RT error (ms)')
