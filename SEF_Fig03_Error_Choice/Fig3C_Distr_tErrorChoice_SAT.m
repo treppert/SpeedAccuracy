@@ -17,20 +17,21 @@ figure(); hold on
 plot([0 0], [0 1], 'k:')
 cdfplotTR(tSig_Acc, 'Color','r', 'LineStyle',':') %time of error signal
 cdfplotTR(tSig_Fast, 'Color',[0 .7 0], 'LineStyle',':')
-xlabel('Time from primary saccade (ms)'); xlim([-200 500])
+xlabel('Time from primary saccade (ms)')
 ylabel('Cumulative probability'); ytickformat('%2.1f')
 ppretty([3.2,2])
 
 %stats -- signal time
 fprintf('Signal Time:\n')
 ttestTom(tSig_Acc, tSig_Fast, 'barplot')
+ylabel('Error signal onset (ms)')
 
 %stats -- signal magnitude
-mSig_Fast = abs( unitData.ErrorSignal_Mag(idxKeep,2) );
-mSig_Acc  = abs( unitData.ErrorSignal_Mag(idxKeep,1) );
-fprintf('\nSignal Magnitude:\n')
-ttestTom(mSig_Acc, mSig_Fast)
-ylabel('Onset of error signal (ms)')
+% mSig_Fast = abs( unitData.ErrorSignal_Mag(idxKeep,2) );
+% mSig_Acc  = abs( unitData.ErrorSignal_Mag(idxKeep,1) );
+% fprintf('\nSignal Magnitude:\n')
+% ttestTom(mSig_Acc, mSig_Fast)
+% ylabel('Error signal magnitude (sp)')
 
 end % fxn : Fig3C_Distr_tErrorChoice_SAT ()
 

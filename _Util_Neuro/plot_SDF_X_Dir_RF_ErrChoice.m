@@ -7,8 +7,8 @@ RT_MAX = 900; %hard ceiling on primary RT
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'E'});
-idxFunction = (unitData.Grade_Err == 1);
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxFunction = (unitData.Grade_Err == -1);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
@@ -19,7 +19,7 @@ tPlot = 3500 + (-350 : 500); %plot time vector
 OFFSET_PRE = 350;
 NUM_SAMP = length(tPlot);
 
-for uu = 3:3%1:NUM_UNIT
+for uu = 1:NUM_UNIT
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
   
@@ -104,7 +104,7 @@ for uu = 3:3%1:NUM_UNIT
   end
   
   %% Plot: Mean SDF for response into RF
-  hFig = figure('visible','on');
+  hFig = figure('visible','off');
   
   sdfAll = [meanSDF_Fast_Corr meanSDF_Fast_Err meanSDF_Acc_Corr meanSDF_Acc_Err];
   maxFR = max(sdfAll,[],'all');
@@ -166,8 +166,8 @@ for uu = 3:3%1:NUM_UNIT
 
   ppretty([10,4])
   
-%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-%   pause(0.1); close(hFig); pause(0.1)
+  pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+  pause(0.1); close(hFig); pause(0.1)
   
 end % for : unit(uu)
 
