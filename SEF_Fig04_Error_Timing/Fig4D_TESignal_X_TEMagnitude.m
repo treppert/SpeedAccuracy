@@ -16,12 +16,13 @@ T_COUNT_REW = 3500 + [0, 400]; %window over which to count spikes (0 = onset of 
 T_COUNT_BASE = 3500 + [-350, 50]; %window for BASELINE CORRECTION
 
 %prepare to bin trials by timing error magnitude
-TERR_LIM = linspace(.01, 1, 12); %quantile limits for binning
+TERR_LIM = linspace(.01, 1, 9); %quantile limits for binning
 NUM_BIN = length(TERR_LIM) - 1;
 
 %initializations
 spkCt_Fast = NaN(NUM_UNIT,NUM_BIN);
-spkCt_Acc = NaN(NUM_UNIT,NUM_BIN);
+spkCt_AccErr = spkCt_Fast;
+spkCt_AccCorr = NaN(NUM_UNIT,1);
 
 tErr_Fast = NaN(NUM_UNIT,NUM_BIN);
 tErr_Acc = NaN(NUM_UNIT,NUM_BIN);
@@ -79,12 +80,15 @@ for uu = 1:NUM_UNIT
     idx_bb = (idxAcc & idxErr & (errRT_kk > errLim_Acc(bb)) & (errRT_kk <= errLim_Acc(bb+1)));
     
     if (sum(idx_bb) >= MIN_PER_BIN)
-      spkCt_Acc(uu,bb) = median( spkCt_uu(idx_bb) );
+      spkCt_AccErr(uu,bb) = median( spkCt_uu(idx_bb) );
       tErr_Acc(uu,bb)  = mean( errLim_Acc(bb:bb+1) );
     else
       continue
     end
   end % for : RTerr-bin (bb)
+  
+  %compute signal magnitude on correct trials
+  spkCt_AccCorr(uu) = median( spkCt_uu(idxAcc & idxCorr) );
   
 end % for : unit(uu)
 
@@ -97,15 +101,15 @@ end % for : unit(uu)
 % save('C:\Users\Thomas Reppert\Dropbox\SAT\Stats\TErrSignalXRTErr.mat', 'F_Error','DV_Signal')
 
 %% Plotting
-Xmu = nanmean(tErr_Acc);
-Ymu = nanmean(spkCt_Acc);
-Xse = nanstd(tErr_Acc) / sqrt(NUM_UNIT);
-Yse = nanstd(spkCt_Acc) / sqrt(NUM_UNIT);
+Xmu = [0, nanmean(tErr_Acc)];
+Ymu = [mean(spkCt_AccCorr), nanmean(spkCt_AccErr)];
+Xse = [0, nanstd(tErr_Acc)] / sqrt(NUM_UNIT);
+Yse = [std(spkCt_AccCorr), nanstd(spkCt_AccErr)] / sqrt(NUM_UNIT);
 
 figure(); hold on
-line([10 190], [0 0], 'Color','k', 'LineStyle',':', 'LineWidth',1.5)
-line(tErr_Acc', spkCt_Acc', 'Color',[.5 .5 .5], 'Marker','.', 'MarkerSize',8, 'LineWidth',0.5)
-errorbar(Xmu,Ymu, Yse,Yse, Xse,Xse, 'o', 'CapSize',0, 'Color','k')
+% line([0 0], [0 1], 'Color','k', 'LineStyle',':', 'LineWidth',1.5)
+% line(tErr_Acc', spkCt_Acc', 'Color',[.5 .5 .5], 'Marker','.', 'MarkerSize',8, 'LineWidth',0.5)
+errorbar(-Xmu,Ymu, Yse,Yse, Xse,Xse, 'o', 'CapSize',0, 'Color','k')
 ylabel('Signal magnitude (z)'); ytickformat('%2.1f')
 xlabel('RT error (ms)')
 

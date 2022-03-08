@@ -4,20 +4,20 @@
 
 MIN_TRIAL_COUNT = 3;
 PLOT = true;
-FIG_VISIBLE = 'on';
-PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
+FIG_VISIBLE = 'off';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'E'});
-idxFunction = (unitData.Grade_Err == 1);
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxFunction = (unitData.Grade_Rew == 1);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
-OFFSET_PRE = 200;
-tPlot = 3500 + (-OFFSET_PRE : 600); %plot time vector
+OFFSET_PRE = 300;
+tPlot = 3500 + (-OFFSET_PRE : 500); %plot time vector
 NUM_SAMP = length(tPlot);
 
 RT_MAX = 900; %hard ceiling on primary RT
@@ -29,7 +29,7 @@ BIN_DIR = linspace(-pi, pi, NUM_DIR);
 %initializations
 mean_dFR = NaN(NUM_UNIT,2); 
 
-for uu = 3:3%1:NUM_UNIT
+for uu = 1:NUM_UNIT
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
   
@@ -191,8 +191,8 @@ for uu = 3:3%1:NUM_UNIT
 
   ppretty([10,4])
   
-%   pause(0.1); print([PRINTDIR,unitData.Properties.RowNames{uu},'-',unitData.aArea{uu},'.tif'], '-dtiff')
-%   pause(0.1); close(); pause(0.1)
+  pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+  pause(0.1); close(); pause(0.1)
   end % if (PLOT)
   
 end% for : unit (uu)
