@@ -12,8 +12,8 @@ unitDataTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
 MIN_PER_BIN = 5; %minimum number of trials per errRT bin
-T_COUNT_REW = 3500 + [0, 400]; %window over which to count spikes (0 = onset of encoding)
-T_COUNT_BASE = 3500 + [-350, 50]; %window for BASELINE CORRECTION
+% T_COUNT_REW = 3500 + [0, 400]; %window over which to count spikes (0 = onset of encoding)
+T_COUNT_BASE = 3500 + [-250, 50]; %window for BASELINE CORRECTION
 
 %prepare to bin trials by timing error magnitude
 TERR_LIM = linspace(.01, 1, 9); %quantile limits for binning
@@ -51,8 +51,8 @@ for uu = 1:NUM_UNIT
   dlineFast = median(behavData.Task_Deadline{kk}(idxFast));
   
   %get window over which to count spikes
-  tCount_Fast = unitDataTest.RewardSignal_Time(uu,1) + T_COUNT_REW + nanmedian(tRew_kk);
-  tCount_Acc  = unitDataTest.RewardSignal_Time(uu,3) + T_COUNT_REW + nanmedian(tRew_kk);
+  tCount_Fast = unitDataTest.RewardSignal_Time(uu,1:2) + 3500 + nanmedian(tRew_kk);
+  tCount_Acc  = unitDataTest.RewardSignal_Time(uu,3:4) + 3500 + nanmedian(tRew_kk);
   
   %compute spike counts over interval of interest
   spkCt_uu = NaN(nTrial_kk,1);
@@ -63,7 +63,7 @@ for uu = 1:NUM_UNIT
   spkCt_Base_uu  = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesTest{uu});
   
   %z-score the baseline-corrected spike counts
-  spkCt_uu = spkCt_uu - spkCt_Base_uu;
+%   spkCt_uu = spkCt_uu - spkCt_Base_uu;
   spkCt_uu = (spkCt_uu - nanmean(spkCt_uu)) / nanstd(spkCt_uu);
   
   %compute error in RT for each condition

@@ -11,7 +11,7 @@ idxKeep = (idxArea & idxMonkey & idxRew);
 NUM_UNIT = sum(idxKeep);
 unitData = unitData(idxKeep,:);
 
-T_VEC = (-200 : 600);  OFFSET = 201;
+T_VEC = (-300 : 800);  OFFSET = 301;
 
 %initializations
 PActiveAcc = false(NUM_UNIT,length(T_VEC));
@@ -54,7 +54,7 @@ ppretty([5,2.5])
 fprintf('Error signal time:\n')
 fprintf('Accurate: %5.2f +/- %5.2f\n', mean(tCDFAcc), std(tCDFAcc)/sqrt(NUM_UNIT))
 fprintf('Fast: %5.2f +/- %5.2f\n', mean(tCDFFast), std(tCDFFast)/sqrt(nFast))
-ttestTom(unitData.RewardSignal_Time(idxFast,3), unitData.RewardSignal_Time(idxFast,1), 'barplot')
+% ttestTom(unitData.RewardSignal_Time(idxFast,3), unitData.RewardSignal_Time(idxFast,1), 'barplot')
 ylabel('Error signal onset (ms)')
 
 end%fxn:Fig4C_ProbActive_ErrorTime()
