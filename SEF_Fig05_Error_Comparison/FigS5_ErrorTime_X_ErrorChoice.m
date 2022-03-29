@@ -10,18 +10,17 @@ idxTErrUnit = ismember(unitData.Grade_Rew, 2);
 idxKeep = (idxSEF & idxMonkey & (idxCErrUnit | idxTErrUnit));
 
 NUM_UNIT = sum(idxKeep);
-unitDataTest = unitData(idxKeep,:);
+unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
-tCount_ChcErr = 3500 + (0:400);
-tCount_TimeErr = 3500 + (100:500);
+T_COUNT = 3500 + (0:400);
 
 %initialization -- contrast ratio (A_err - A_corr) / (A_err + A_corr)
 CR_Acc_TE = NaN(NUM_UNIT,1);
 CR_Fast_CE = CR_Acc_TE;
 
 for uu = 1:NUM_UNIT
-  kk = ismember(behavData.Task_Session, unitDataTest.Task_Session(uu));
+  kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
   RT_kk = behavData.Sacc_RT{kk};
   tRew_kk = RT_kk + behavData.Task_TimeReward{kk};
   
@@ -31,7 +30,7 @@ for uu = 1:NUM_UNIT
   sdfR_kk = align_signal_on_response(sdfA_kk, round(tRew_kk)); %sdf from Reward
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitDataTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by screen clear on Fast trials
   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   %index by trial outcome
@@ -44,7 +43,7 @@ for uu = 1:NUM_UNIT
   
   %index by saccade octant re. response field (RF)
   Octant_Sacc1 = behavData.Sacc_Octant{kk};
-  RF = unitDataTest.RF{uu};
+  RF = unitTest.RF{uu};
   
   if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
     idxRF = true(behavData.Task_NumTrials(kk),1);
@@ -56,6 +55,9 @@ for uu = 1:NUM_UNIT
   idxAC = (idxAcc  & idxCorr & idxRF);
   idxFE = (idxFast & idxErrChc & idxRF); %Fast choice error
   idxAE = (idxAcc & idxErrTime & idxRF); %Accurate timing error
+  
+  tCount_ChcErr = T_COUNT + unitTest.ErrorSignal_Time(uu,1); %Fast condition
+  tCount_TimeErr = T_COUNT + unitTest.RewardSignal_Time(uu,3); %Accurate condition
   
   meanSDF_FC = nanmean(sdfP_kk(idxFC, tCount_ChcErr));
   meanSDF_FE = nanmean(sdfP_kk(idxFE, tCount_ChcErr));
@@ -71,8 +73,8 @@ for uu = 1:NUM_UNIT
 end%for:cells(uu)
 
 %split into three groups (only CE, only TE, and both)
-idxCErrUnit = ismember(unitDataTest.Grade_Err, 1);
-idxTErrUnit = ismember(unitDataTest.Grade_Rew, 2);
+idxCErrUnit = ismember(unitTest.Grade_Err, 1);
+idxTErrUnit = ismember(unitTest.Grade_Rew, 2);
 idxCE_Only = (idxCErrUnit & ~idxTErrUnit);
 idxTE_Only = (~idxCErrUnit & idxTErrUnit);
 idx_Both = (idxCErrUnit & idxTErrUnit);
