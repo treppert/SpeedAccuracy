@@ -27,15 +27,15 @@ for kk = 1:NUM_SESS
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
   idxFast = (behavData.Task_SATCondition{kk} == 3);
   
-  %Accurate condition
-  RT_Start{kk,2} = behavData.Sacc_RT{kk}(trialSwitch.F2A{kk});
-  RT_End{kk,2} = behavData.Sacc_RT{kk}(trialSwitch.A2F{kk}-1);
-  RT_dline(kk,2) = nanmean(behavData.Task_Deadline{kk}(idxAcc));
-  
   %Fast condition
   RT_Start{kk,1} = behavData.Sacc_RT{kk}(trialSwitch.A2F{kk});
   RT_End{kk,1} = behavData.Sacc_RT{kk}(trialSwitch.F2A{kk}-1);
-  RT_dline(kk,1) = nanmean(behavData.Task_Deadline{kk}(idxFast));
+  RT_dline(kk,1) = nanmedian(behavData.Task_Deadline{kk}(idxFast));
+  
+  %Accurate condition
+  RT_Start{kk,2} = behavData.Sacc_RT{kk}(trialSwitch.F2A{kk});
+  RT_End{kk,2} = behavData.Sacc_RT{kk}(trialSwitch.A2F{kk}-1);
+  RT_dline(kk,2) = nanmedian(behavData.Task_Deadline{kk}(idxAcc));
   
 end%for:sessions(kk)
 
@@ -83,7 +83,7 @@ shaded_error_bar(RT_BIN, nanmean(RT_Start_mean(NUM_SESS:end,:)), std(RT_Start_me
 shaded_error_bar(RT_BIN, nanmean(RT_End_mean(NUM_SESS:end,:)), std(RT_End_mean(NUM_SESS:end,:))/sqrt(NUM_SESS), {'Color','r'})
 plot(nanmean(RT_dline(:,2))*ones(1,2), [.02 .98], 'r:', 'LineWidth',1.2)
 
-xlim([0 800])
+xlim([100 800])
 xlabel('Response time (ms)')
 ylabel('Cumulative distribution function')
 ppretty([4.8,3])

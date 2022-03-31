@@ -9,4 +9,6 @@ Fig1C_ErrRate_X_RT( behavData )
 
 %generate Fig1D
 Fig1D_Behav_X_Trial( behavData )
+Fig1D_Behav_X_Trial_Simple( behavData ) %no effect of difficulty
 
+plot_RT_X_TrialHistory( behavData )

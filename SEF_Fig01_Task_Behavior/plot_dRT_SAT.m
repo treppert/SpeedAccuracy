@@ -12,7 +12,7 @@ dRT_Fast = dRT_Acc;
 
 %% Collect dRT across sessions
 for kk = 1:NUM_SESS
-  RTkk = behavData.Sacc_RT{kk};
+  RTkk = transpose(behavData.Sacc_RT{kk});
   
   %index by trial outcome
   idxCorr = (behavData.Task_Correct{kk});
