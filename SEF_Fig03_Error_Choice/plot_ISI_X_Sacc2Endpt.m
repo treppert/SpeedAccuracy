@@ -44,5 +44,9 @@ ylabel('Reaction time (ms)')
 xticks(1:4); xticklabels({'Fast','Acc','Fast','Acc'})
 ppretty([3,3])
 
+%stats
+fprintf('Fast: '); ttestFull(ISI_Sacc2T(:,1), ISI_Sacc2D(:,1)) %Fast
+fprintf('Acc: '); ttestFull(ISI_Sacc2T(:,2), ISI_Sacc2D(:,2)) %Accurate
+
 end % fxn : plot_ISI_X_Sacc2Endpt()
 
