@@ -40,7 +40,7 @@ sePlot = [std(ISI_Sacc2T) , std(ISI_Sacc2D)] / sqrt(NUM_SESS);
 figure(); hold on
 bar(muPlot, 'FaceColor','w')
 errorbar(muPlot, sePlot, 'Color','k', 'CapSize',0)
-ylabel('Reaction time (ms)')
+ylabel('Inter-saccade interval (ms)')
 xticks(1:4); xticklabels({'Fast','Acc','Fast','Acc'})
 ppretty([3,3])
 

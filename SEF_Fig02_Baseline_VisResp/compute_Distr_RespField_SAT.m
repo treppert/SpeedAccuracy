@@ -2,7 +2,7 @@ function [ ] = compute_Distr_RespField_SAT( unitData )
 %compute_Distr_RespField_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember(unitData.aArea, {'FEF','SC'});
+idxArea = ismember(unitData.aArea, {'SEF'});
 idxVisUnit = (unitData.Grade_Vis >= 3);
 
 idxDa = (idxArea & idxVisUnit & ismember(unitData.aMonkey, {'D'}));
@@ -45,12 +45,13 @@ RF_Eu_All = convert_tgt_octant_to_angle( RF_Eu_All );
 
 
 %% Plotting
+PLOT_STEP = pi/8;
 figure(); polaraxes(); hold on
-polarhistogram( RF_Da_All, ( pi/32 : pi/16 : 65*pi/32 ) - pi/64, 'Normalization','count' , 'FaceColor', 'b')
-polarhistogram( RF_Eu_All, ( pi/32 : pi/16 : 65*pi/32 ) + pi/64, 'Normalization','count' , 'FaceColor', 'm')
+polarhistogram( RF_Da_All, PLOT_STEP*(-1/2 : 1 : 2*pi/PLOT_STEP-1), 'Normalization','probability' , 'FaceColor', 'b')
+polarhistogram( RF_Eu_All, PLOT_STEP*(-1/2 : 1 : 2*pi/PLOT_STEP-1), 'Normalization','probability' , 'FaceColor', 'm')
 thetaticks(0:45:315) %tick in degrees
-rlim([0 20]); rticks(0:10:20)
-legend({'Da','Eu'}, 'Location','northeast')
+% rlim([0 20]); rticks(0:10:20)
+legend({'Da','Eu'}, 'Location','southeast')
 ppretty([3,3])
 
 end % fxn : compute_Distr_RespField_SAT()
