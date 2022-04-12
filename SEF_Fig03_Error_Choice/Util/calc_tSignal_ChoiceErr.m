@@ -3,9 +3,9 @@ function [ tStart , vecSig ] = calc_tSignal_ChoiceErr( sdfCorr , sdfErr , vararg
 %   Detailed explanation goes here
 % 
 
-args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','both'}});
+args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','both'}, {'durMW=',300}});
 
-MIN_DURATION = 300; %min duration (ms) of error signal
+MIN_DURATION = args.durMW; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window
 MIN_REL_MAGNITUDE = 0.1; %minimum effect size relative to max firing rate
 
