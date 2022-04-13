@@ -2,7 +2,7 @@
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT = true;
+PLOT = false;
 FIG_VISIBILITY = 'off';
 RT_MAX = 900; %hard ceiling on primary RT
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
@@ -10,14 +10,14 @@ PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 idxFunction = ismember(unitData.Grade_Err, 1);
-idxKeep = (idxArea & idxMonkey);% & idxFunction);
+idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
 OFFSET_PRE  = 500;
-OFFSET_POST = 700;
+OFFSET_POST = 600;
 tPlot = 3500 + (-OFFSET_PRE : OFFSET_POST); %plot time vector
 NUM_SAMP = length(tPlot);
 
@@ -124,7 +124,7 @@ for uu = 1:NUM_UNIT
   %Compute time of signaling re. second (long) - Accurate
   [tSig_Acc(uu,4),~]  = calc_tSignal_ChoiceErr(sdfS_Long(idxAC, tPlot), sdfS_Long(idxAEL, tPlot));
   
-  %% Plot: Mean SDF for response into RF
+  %% Plot: Mean SDF for response
   if (PLOT)
     hFig = figure('visible',FIG_VISIBILITY);
     yLim = [0, max([sdfAC sdfFC sdfAE sdfFE],[],'all')];
@@ -196,8 +196,8 @@ for uu = 1:NUM_UNIT
 
     ppretty([11,3.5])
 
-    pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
-    pause(0.1); close(hFig); pause(0.1)
+%     pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+%     pause(0.1); close(hFig); pause(0.1)
     
   end % if : (PLOT)
   
