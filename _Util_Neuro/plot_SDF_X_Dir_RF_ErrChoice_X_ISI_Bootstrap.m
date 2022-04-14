@@ -1,4 +1,4 @@
-% function [  ] = plot_SDF_X_Dir_RF_ErrChoice_X_ISI_Full( behavData , unitData , spikesSAT )
+% function [  ] = plot_SDF_X_Dir_RF_ErrChoice_X_ISI_Bootstrap( behavData , unitData , spikesSAT )
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -165,4 +165,4 @@ for uu = NUM_UNIT:-1:1
 end % for : unit(uu)
 
 clearvars -except behavData unitData spikesSAT
-% end % fxn : plot_SDF_X_Dir_RF_ErrChoice_X_ISI_Full()
+% end % fxn : plot_SDF_X_Dir_RF_ErrChoice_X_ISI_Bootstrap()

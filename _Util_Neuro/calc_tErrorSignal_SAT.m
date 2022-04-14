@@ -1,11 +1,11 @@
-function [ tStart , vecSig ] = calc_tSignal_ChoiceErr( sdfCorr , sdfErr , varargin )
-%calc_tSignal_ChoiceErr Summary of this function goes here
+function [ tStart , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin )
+%calc_tErrorSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 % 
 
-args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','left'}, {'durMW=',250}});
+args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','both'}});
 
-MIN_DURATION = args.durMW; %min duration (ms) of error signal
+MIN_DURATION = 300; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window
 MIN_REL_MAGNITUDE = 0.1; %minimum effect size relative to max firing rate
 
@@ -57,4 +57,4 @@ end % for : sample(ii)
 % tSig.p01 = find(pVal < .01);
 vecSig = find(pVal < args.pvalMW);
 
-end%function:calc_tSignal_ChoiceErr()
+end % function : calc_tErrorSignal_SAT()
