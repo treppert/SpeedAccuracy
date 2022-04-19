@@ -1,4 +1,4 @@
-function [ idx_poor_isolation ] = identify_trials_poor_isolation_SAT( trialRemove , numTrial )
+function [ idx_poor_isolation ] = removeTrials_Isolation( trialRemove , numTrial )
 %identify_trials_poor_isolation_SAT Summary of this function goes here
 %   Detailed explanation goes here
 

@@ -1,5 +1,5 @@
-function [  ] = plotRasterStimXdirSAT( behavData , moves , unitData , spikes , varargin )
-%plotRasterStimXdirSAT Summary of this function goes here
+function [  ] = plot_Raster_X_Dir( behavData , moves , unitData , spikes , varargin )
+%plot_Raster_X_Dir Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SC'}, {'monkey=','D'}});
@@ -90,7 +90,7 @@ for uu = 1:NUM_CELLS
   
 end%for:cells(uu)
 
-end%util:plotRasterStimSAT()
+end%util:plot_Raster_X_Dir()
 
 function [ tSpike , trialSpike ] = collectSpikeTimes( spikes , tPlot )
 

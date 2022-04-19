@@ -1,5 +1,5 @@
-function [ ] = plot_SpikeCountXTrial_SAT( unitData , spikesSAT )
-%plot_SpikeCountXTrial_SAT Summary of this function goes here
+function [ ] = plot_SpkCt_X_Trial( unitData , spikesSAT )
+%plot_SpkCt_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
 SAVEDIR = 'C:\Users\Thomas Reppert\Dropbox\__SEF_SAT_\Figs\SpikeCount-X-Trial\';
@@ -41,5 +41,5 @@ for uu = 1:NUM_UNITS
   
 end % for : units(uu)
 
-end % util :: plot_SpikeCountXTrial_SAT()
+end % util :: plot_SpkCt_X_Trial()
 

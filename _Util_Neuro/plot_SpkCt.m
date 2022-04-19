@@ -1,5 +1,5 @@
-function [ ] = plotSpkCount_ReStim_SAT( behavData , unitData , spikes )
-%plotSpkCount_ReStim_SAT Summary of this function goes here
+function [ ] = plot_SpkCt( behavData , unitData , spikes )
+%plot_SpkCt Summary of this function goes here
 %   Detailed explanation goes here
 
 MIN_MEDIAN_SPIKE_COUNT = 2;
@@ -98,7 +98,7 @@ xlim([0.6 2.4]); xticks([]); ytickformat('%3.2f')
 ylabel('Sp. ct. diff. (Fast - Accurate) (z)')
 ppretty([1.5,3])
 
-end%fxn:plotSpkCount_ReStim_SAT()
+end%fxn:plot_SpkCt()
 
 % %plotting - show each level of Condition*Efficiency separately
 % mu_AccMore = mean(sc_AccMore);       se_AccMore = std(sc_AccMore) / sqrt(NUM_MORE);

@@ -1,5 +1,5 @@
-function [ ] = plotSpkCount_X_RT_ReStim_SAT( behavData , unitData , spikes , varargin )
-%plotSpkCount_X_RT_ReStim_SAT Summary of this function goes here
+function [ ] = plot_SpkCt_X_RT( behavData , unitData , spikes , varargin )
+%plot_SpkCt_X_RT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'area=','SEF'}, {'monkey=',{'D','E'}}, {'interval','Baseline'}});
@@ -129,4 +129,4 @@ fprintf('Fast: R = %g  ||  p = %g || BF = %g\n', rhoFast, pvalFast, bfFast)
 % plot([-190,-10], fitFast([-190,-10]), '-', 'Color',[.4 .7 .4])
 % plot([10,200], fitAcc([10,200]), '-', 'Color',[1 .5 .5])
 
-end%fxn:plotSpkCount_X_RT_ReStim_SAT()
+end%fxn:plot_SpkCt_X_RT()

@@ -5,14 +5,14 @@
 PLOT = true;
 FIG_VISIBILITY = 'off';
 RT_MAX = 900; %hard ceiling on primary RT
-PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.aArea, {'SEF'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 idxFunction = (unitData.Grade_Err == 1);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
-NUM_UNIT = sum(idxKeep);
+NUM_UNIT = 1;%sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
@@ -35,7 +35,7 @@ for uu = 1:NUM_UNIT
   ISI = RT_S - RT_P; %Inter-saccade interval
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
