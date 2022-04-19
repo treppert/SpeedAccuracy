@@ -3,8 +3,8 @@
 
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D'});
+idxArea = ismember(unitData.aArea, {'FEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 % idxFunction = (unitTest.Grade_Err == 1);
 idxKeep = (idxArea & idxMonkey);
 
@@ -48,13 +48,13 @@ for uu = 1:NUM_UNIT
   RT_Acc = NaN(8,1);
   RT_Fast = RT_Acc;
   for dd = 1:8 %loop over response directions
-    idxDir = (behavData.Sacc_Octant{kk} == dd);
+    idxDir = (Octant_Sacc1 == dd);
     sdfAccA(:,dd) = nanmean(sdfA(idxAcc & idxCorr & idxDir, T_STIM_Acc));
     sdfAccP(:,dd) = nanmean(sdfP(idxAcc & idxCorr & idxDir, T_RESP_Acc));
     sdfFastA(:,dd) = nanmean(sdfA(idxFast & idxCorr & idxDir, T_STIM_Fast));
     sdfFastP(:,dd) = nanmean(sdfP(idxFast & idxCorr & idxDir, T_RESP_Fast));
-    RT_Acc(dd) = nanmedian(RT_P(idxAcc & idxCorr & idxDir));
-    RT_Fast(dd) = nanmedian(RT_P(idxFast & idxCorr & idxDir));
+    RT_Acc(dd) = median(RT_P(idxAcc & idxCorr & idxDir));
+    RT_Fast(dd) = median(RT_P(idxFast & idxCorr & idxDir));
   end%for:direction(dd)
   
   %% Plotting
@@ -101,6 +101,6 @@ for uu = 1:NUM_UNIT
   pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
   pause(0.1); close(hFig); pause(0.1)
   
-end%for:cells(uu)
+end % for : unit(uu)
 
-clearvars -except behavData unitData spikesSAT tSig_Fast tSig_Acc
+clearvars -except behavData unitData spikesSAT

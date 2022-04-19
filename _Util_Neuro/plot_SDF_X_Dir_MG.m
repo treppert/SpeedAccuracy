@@ -1,83 +1,70 @@
-function [  ] = plot_SDF_X_Dir_MG( behavData , unitData , spikesMG , varargin )
 %plot_SDF_X_Dir_MG() Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'area=',{'FEF','SC','SEF'}}, {'monkey=',{'D','E'}}});
-PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\SDF_X_Dir_MG\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, args.area);
-idxMonkey = ismember(unitData.aMonkey, args.monkey);
+idxArea = ismember(unitData.aArea, {'FEF'});
+idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxKeep = (idxArea & idxMonkey);
 
-unitData = unitData(idxArea & idxMonkey , :);
-spikesMG = spikesMG(idxArea & idxMonkey);
+NUM_UNIT = sum(idxKeep);
+unitTest = unitData(idxKeep,:);
+spikesTest = spikesMG(idxKeep);
 
-MIN_RT = 550; %enforce hard minimum on MG RT
-
-NUM_CELLS = length(spikesMG);
-T_STIM = 3500 + (-200 : 400);
-T_RESP = 3500 + (-400 : 200);
+T_STIM = 3500 + (-300 : 500);
+T_RESP = 3500 + (-500 : 300);
+NUM_SAMP = length(T_STIM);
 
 IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
-for uu = 1:NUM_CELLS
-  fprintf('%s\n', unitData.Properties.RowNames{uu})
-  kk = ismember(behavData.Task_Session, unitData.Task_Session(uu));
-  RTkk = double(behavData.Sacc_RT{kk});
+for uu = 1:NUM_UNIT
+  fprintf('%s - %s\n', unitTest.Task_Session{uu}, unitTest.aID{uu})
+  kk = ismember(behavDataMG.Task_Session, unitTest.Task_Session{uu});
+  RT_P = behavDataMG.Sacc_RT{kk};
   
   %compute spike density function and align on primary response
-  sdfKKstim = compute_spike_density_fxn(spikesMG{uu});
-  sdfKKresp = align_signal_on_response(sdfKKstim, RTkk); 
+  sdfMG_A = compute_spike_density_fxn(spikesTest{uu});
+  sdfMG_P = align_signal_on_response(sdfMG_A, RT_P); 
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitData.Task_TrialRemoveMG{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavDataMG.Task_NumTrials(kk));
   %index by trial outcome
-  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
-  %index by hard min RT
-  idxRT = (RTkk >= MIN_RT);
+  idxCorr = ~(behavDataMG.Task_ErrChoice{kk} | behavDataMG.Task_ErrHold{kk} | behavDataMG.Task_ErrNoSacc{kk});
   
   %initializations
-  sdfStim = NaN(8,length(T_STIM));
-  sdfResp = NaN(8,length(T_STIM));
-  RT = NaN(1,8);
+  Octant_Sacc1 = behavDataMG.Sacc_Octant{kk};
+  sdfA = NaN(NUM_SAMP,8);
+  sdfP = sdfA;
   for dd = 1:8 %loop over response directions
-    idxDir = (behavData.Sacc_Octant{kk} == dd);
-    sdfStim(dd,:) = nanmean(sdfKKstim(~idxIso & idxCorr & idxRT & idxDir, T_STIM));
-    sdfResp(dd,:) = nanmean(sdfKKresp(~idxIso & idxCorr & idxRT & idxDir, T_RESP));
-    RT(dd) = median(RTkk(idxCorr & idxRT & idxDir));
+    idxDir = (Octant_Sacc1 == dd);
+    sdfA(:,dd) = nanmean(sdfMG_A(idxCorr & idxDir, T_STIM));
+    sdfP(:,dd) = nanmean(sdfMG_P(idxCorr & idxDir, T_RESP));
   end%for:direction(dd)
   
   %% Plotting
-  fig_uu = figure('visible','off');  yLim = [min(min([sdfStim sdfResp])) max(max([sdfStim sdfResp]))];
+  hFig = figure('visible','off');
+  yLim = [0, max([sdfA sdfP],[],'all')];
+  xLimStim = T_STIM([1,NUM_SAMP]) - 3500;
+  xLimResp = T_RESP([1,NUM_SAMP]) - 3500;
   
   for dd = 1:8 %loop over directions and plot
     
-    %% Plot from Array
-    subplot(3,6,IDX_STIM_PLOT(dd)); hold on
+    subplot(3,6,IDX_STIM_PLOT(dd)); hold on %re. array
     plot([0 0], yLim, 'k:')
-    plot(RT(dd)*ones(1,2), yLim, 'k:')
-    plot(T_STIM-3500, sdfStim(dd,:), 'k-');
+    plot(T_STIM-3500, sdfA(:,dd), 'k-');
+    xlim(xLimStim)
     
-    xlim([T_STIM(1) T_STIM(end)]-3500)
-    xticks((T_STIM(1) : 200 : T_STIM(end)) - 3500)
-    
-    if (IDX_STIM_PLOT(dd) == 7)
+    if (IDX_STIM_PLOT(dd) == 13)
       ylabel('Activity (sp/sec)');  xticklabels([])
-    elseif (IDX_STIM_PLOT(dd) == 13)
       xlabel('Time from array (ms)');  yticklabels([])
-      print_session_unit(gca , unitData(uu,:), behavData(kk,:))
-    else
-      xticklabels([]);  yticklabels([])
+      print_session_unit(gca , unitTest(uu,:), behavDataMG(kk,:))
     end
     
-    %% Plot from Response
-    subplot(3,6,IDX_RESP_PLOT(dd)); hold on
+    subplot(3,6,IDX_RESP_PLOT(dd)); hold on %re. response
     plot([0 0], yLim, 'k:')
-    plot(-RT(dd)*ones(1,2), yLim, 'k:')
-    plot(T_RESP-3500, sdfResp(dd,:), 'k-');
-    
-    xlim([T_RESP(1) T_RESP(end)]-3500)
-    xticks((T_RESP(1) : 200 : T_RESP(end)) - 3500)
+    plot(T_RESP-3500, sdfP(:,dd), 'k-');
+    xlim(xLimResp)
     set(gca, 'YAxisLocation','right')
     
     if (IDX_RESP_PLOT(dd) == 14)
@@ -86,13 +73,15 @@ for uu = 1:NUM_CELLS
       xticklabels([]);  yticklabels([])
     end
     
-    pause(.05)
+    pause(.01)
+    
   end%for:direction(dd)
   
   ppretty([12,6])
-  print([PRINTDIR, unitData.Task_Session{uu},'-',unitData.aID{uu},'.tif'], '-dtiff')
-  pause(0.1); close(fig_uu); pause(0.1)
   
-end%for:cells(uu)
+  pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+  pause(0.1); close(hFig); pause(0.1)
+  
+end % for : unit(uu)
 
-end%fxn:plot_SDF_X_Dir_MG()
+clearvars -except behavData behavDataMG unitData spikesSAT spikesMG
