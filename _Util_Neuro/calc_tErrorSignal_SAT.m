@@ -3,9 +3,9 @@ function [ tStart , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargi
 %   Detailed explanation goes here
 % 
 
-args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','both'}});
+args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','left'}});
 
-MIN_DURATION = 300; %min duration (ms) of error signal
+MIN_DURATION = 150; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window
 MIN_REL_MAGNITUDE = 0.1; %minimum effect size relative to max firing rate
 
@@ -32,7 +32,7 @@ end % for:sample(jj)
 meanSDF_Corr = mean(sdfCorr);
 meanSDF_Err  = mean(sdfErr);
 
-relDiff_SDF = abs(meanSDF_Err - meanSDF_Corr) / max(meanSDF_Corr);
+relDiff_SDF = abs(meanSDF_Err - meanSDF_Corr) / max([meanSDF_Corr meanSDF_Err]);
 jjNoEffectSize = (relDiff_SDF < MIN_REL_MAGNITUDE);
 
 pVal(jjNoEffectSize) = 1.0; %save as not significant

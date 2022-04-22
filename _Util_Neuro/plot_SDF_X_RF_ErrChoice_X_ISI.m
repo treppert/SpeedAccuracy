@@ -2,22 +2,22 @@
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT = false;
+PLOT = true;
 FIG_VISIBILITY = 'off';
 RT_MAX = 900; %hard ceiling on primary RT
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'SEF'});
+idxArea = ismember(unitData.aArea, {'SC'});
 idxMonkey = ismember(unitData.aMonkey, {'D','E'});
 idxFunction = ismember(unitData.Grade_Err, 1);
-idxKeep = (idxArea & idxMonkey & idxFunction);
+idxKeep = (idxArea & idxMonkey);% & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
-OFFSET_PRE  = 500;
-OFFSET_POST = 600;
+OFFSET_PRE  = 300;
+OFFSET_POST = 500;
 tPlot = 3500 + (-OFFSET_PRE : OFFSET_POST); %plot time vector
 NUM_SAMP = length(tPlot);
 
@@ -35,7 +35,7 @@ for uu = 1:NUM_UNIT
   ISI_kk = RTS_kk - RTP_kk; %Inter-saccade interval
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
@@ -52,10 +52,10 @@ for uu = 1:NUM_UNIT
   isiFE = ISI_kk(idxFE);   medISI_FE = nanmedian(isiFE);
   
   %combine indexing and compute mean short and long ISI on error trials
-  idxAES = (idxAE & (ISI_kk <= medISI_AE));   muISI_AES = round(nanmean(ISI_kk(idxAES)));
-  idxAEL = (idxAE & (ISI_kk >  medISI_AE));   muISI_AEL = round(nanmean(ISI_kk(idxAEL)));
-  idxFES = (idxFE & (ISI_kk <= medISI_FE));   muISI_FES = round(nanmean(ISI_kk(idxFES)));
-  idxFEL = (idxFE & (ISI_kk >  medISI_FE));   muISI_FEL = round(nanmean(ISI_kk(idxFEL)));
+  idxAES = (idxAE & (ISI_kk <= medISI_AE));   muISI_AES = round(nanmedian(ISI_kk(idxAES)));
+  idxAEL = (idxAE & (ISI_kk >  medISI_AE));   muISI_AEL = round(nanmedian(ISI_kk(idxAEL)));
+  idxFES = (idxFE & (ISI_kk <= medISI_FE));   muISI_FES = round(nanmedian(ISI_kk(idxFES)));
+  idxFEL = (idxFE & (ISI_kk >  medISI_FE));   muISI_FEL = round(nanmedian(ISI_kk(idxFEL)));
   
   %set ISI of correct trials accordingly
   RTS_ShortISI = RTS_kk;
@@ -96,7 +96,7 @@ for uu = 1:NUM_UNIT
   %Error trials - Fast - Long ISI
   sdfFE(:,4) = nanmean(sdfA(idxFEL, tPlot)); %re. array
   sdfFE(:,5) = nanmean(sdfP(idxFEL, tPlot)); %re. primary
-  sdfFE(:,6) = nanmean(sdfS_Long(idxFEL, tPlot)); %re. second (short)
+  sdfFE(:,6) = nanmean(sdfS_Long(idxFEL, tPlot)); %re. second (long)
   
   %Error trials - Accurate - Short ISI
   sdfAE(:,1) = nanmean(sdfA(idxAES, tPlot)); %re. array
@@ -105,24 +105,24 @@ for uu = 1:NUM_UNIT
   %Error trials - Accurate - Long ISI
   sdfAE(:,4) = nanmean(sdfA(idxAEL, tPlot)); %re. array
   sdfAE(:,5) = nanmean(sdfP(idxAEL, tPlot)); %re. primary
-  sdfAE(:,6) = nanmean(sdfS_Long(idxAEL, tPlot)); %re. second (short)
+  sdfAE(:,6) = nanmean(sdfS_Long(idxAEL, tPlot)); %re. second (long)
   
-  %Compute time of signaling re. primary (short & long) - Fast
-  [tSig_Fast(uu,1),~] = calc_tSignal_ChoiceErr(sdfP(idxFC, tPlot), sdfP(idxFES, tPlot));
-  [tSig_Fast(uu,2),~] = calc_tSignal_ChoiceErr(sdfP(idxFC, tPlot), sdfP(idxFEL, tPlot));
-  %Compute time of signaling re. primary (short & long) - Accurate
-  [tSig_Acc(uu,1),~] = calc_tSignal_ChoiceErr(sdfP(idxAC, tPlot), sdfP(idxAES, tPlot));
-  [tSig_Acc(uu,2),~] = calc_tSignal_ChoiceErr(sdfP(idxAC, tPlot), sdfP(idxAEL, tPlot));
-  
-  %Compute time of signaling re. second (short) - Fast
-  [tSig_Fast(uu,3),~] = calc_tSignal_ChoiceErr(sdfS_Short(idxFC, tPlot), sdfS_Short(idxFES, tPlot));
-  %Compute time of signaling re. second (short) - Accurate
-  [tSig_Acc(uu,3),~]  = calc_tSignal_ChoiceErr(sdfS_Short(idxAC, tPlot), sdfS_Short(idxAES, tPlot));
-  
-  %Compute time of signaling re. second (long) - Fast
-  [tSig_Fast(uu,4),~] = calc_tSignal_ChoiceErr(sdfS_Long(idxFC, tPlot), sdfS_Long(idxFEL, tPlot));
-  %Compute time of signaling re. second (long) - Accurate
-  [tSig_Acc(uu,4),~]  = calc_tSignal_ChoiceErr(sdfS_Long(idxAC, tPlot), sdfS_Long(idxAEL, tPlot));
+%   %Compute time of signaling re. primary (short & long) - Fast
+%   [tSig_Fast(uu,1),~] = calc_tErrorSignal_SAT(sdfP(idxFC, tPlot), sdfP(idxFES, tPlot));
+%   [tSig_Fast(uu,2),~] = calc_tErrorSignal_SAT(sdfP(idxFC, tPlot), sdfP(idxFEL, tPlot));
+%   %Compute time of signaling re. primary (short & long) - Accurate
+%   [tSig_Acc(uu,1),~] = calc_tErrorSignal_SAT(sdfP(idxAC, tPlot), sdfP(idxAES, tPlot));
+%   [tSig_Acc(uu,2),~] = calc_tErrorSignal_SAT(sdfP(idxAC, tPlot), sdfP(idxAEL, tPlot));
+%   
+%   %Compute time of signaling re. second (short) - Fast
+%   [tSig_Fast(uu,3),~] = calc_tErrorSignal_SAT(sdfS_Short(idxFC, tPlot), sdfS_Short(idxFES, tPlot));
+%   %Compute time of signaling re. second (short) - Accurate
+%   [tSig_Acc(uu,3),~]  = calc_tErrorSignal_SAT(sdfS_Short(idxAC, tPlot), sdfS_Short(idxAES, tPlot));
+%   
+%   %Compute time of signaling re. second (long) - Fast
+%   [tSig_Fast(uu,4),~] = calc_tErrorSignal_SAT(sdfS_Long(idxFC, tPlot), sdfS_Long(idxFEL, tPlot));
+%   %Compute time of signaling re. second (long) - Accurate
+%   [tSig_Acc(uu,4),~]  = calc_tErrorSignal_SAT(sdfS_Long(idxAC, tPlot), sdfS_Long(idxAEL, tPlot));
   
   %% Plot: Mean SDF for response
   if (PLOT)
@@ -134,6 +134,7 @@ for uu = 1:NUM_UNIT
     plot(tPlot-3500, sdfFC(:,1), 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,1), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,4), ':', 'Color',[0 .3 0], 'LineWidth',0.75)
+    legend({'Correct','Error-Short','Error-Long'})
     xlim(xLim); ylim(yLim)
 
     subplot(2,4,2); hold on %Fast re. primary
@@ -141,22 +142,24 @@ for uu = 1:NUM_UNIT
     plot(tPlot-3500, sdfFC(:,2), 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,2), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,5), ':', 'Color',[0 .3 0], 'LineWidth',0.75)
-    plot((tSig_Fast(uu,1)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
-    plot((tSig_Fast(uu,2)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.25)
+    plot(muISI_FES*ones(1,2), yLim, ':', 'Color',[0 .7 0])
+    plot(muISI_FEL*ones(1,2), yLim, ':', 'Color',[0 .3 0])
+%     plot((tSig_Fast(uu,1)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+%     plot((tSig_Fast(uu,2)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
 
     subplot(2,4,3); hold on %Fast re. second (short)
     plot(tPlot-3500, sdfFC(:,3), 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,3), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
-    plot((tSig_Fast(uu,3)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+%     plot((tSig_Fast(uu,4)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .7 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
 
     subplot(2,4,4); hold on %Fast re. second (long)
     plot(tPlot-3500, sdfFC(:,4), 'Color',[0 .7 0], 'LineWidth',1.25)
     plot(tPlot-3500, sdfFE(:,6), ':', 'Color',[0 .3 0], 'LineWidth',1.25)
-    plot((tSig_Fast(uu,4)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.25)
+%     plot((tSig_Fast(uu,4)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[0 .3 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
 
@@ -164,6 +167,7 @@ for uu = 1:NUM_UNIT
     plot(tPlot-3500, sdfAC(:,1), 'r', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,1), 'r:', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,4), ':', 'Color',[.5 0 0], 'LineWidth',0.75)
+    legend({'Correct','Error-Short','Error-Long'})
     xlim(xLim); ylim(yLim)
     xlabel('Time from array (ms)')
     ylabel('Activity (sp/sec)')
@@ -172,8 +176,10 @@ for uu = 1:NUM_UNIT
     plot(tPlot-3500, sdfAC(:,2), 'r', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,2), 'r:', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,5), ':', 'Color',[.5 0 0], 'LineWidth',0.75)
-    plot((tSig_Acc(uu,1)-OFFSET_PRE)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
-    plot((tSig_Acc(uu,2)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[.5 0 0], 'LineWidth',1.25)
+    plot(muISI_AES*ones(1,2), yLim, 'r:')
+    plot(muISI_AEL*ones(1,2), yLim, ':', 'Color',[.5 0 0])
+%     plot((tSig_Acc(uu,1)-OFFSET_PRE)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
+%     plot((tSig_Acc(uu,2)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[.5 0 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
     xlabel('Time from primary saccade (ms)')
@@ -181,23 +187,23 @@ for uu = 1:NUM_UNIT
     subplot(2,4,7); hold on %Accurate re. second (short)
     plot(tPlot-3500, sdfAC(:,3), 'r', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,3), 'r:', 'LineWidth',1.25)
-    plot((tSig_Acc(uu,3)-OFFSET_PRE)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
+%     plot((tSig_Acc(uu,3)-OFFSET_PRE)*ones(1,2), yLim, 'r:', 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
-    xlabel('Time from early second saccade (ms)')
+    xlabel('Time from second saccade (ms)')
 
     subplot(2,4,8); hold on %Fast re. second (long)
     plot(tPlot-3500, sdfAC(:,4), 'r', 'LineWidth',1.25)
     plot(tPlot-3500, sdfAE(:,6), ':', 'Color',[.5 0 0], 'LineWidth',1.25)
-    plot((tSig_Acc(uu,4)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[.5 0 0], 'LineWidth',1.25)
+%     plot((tSig_Acc(uu,4)-OFFSET_PRE)*ones(1,2), yLim, ':', 'Color',[.5 0 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim)
     set(gca, 'YColor','none')
-    xlabel('Time from late second saccade (ms)')
+    xlabel('Time from second saccade (ms)')
 
-    ppretty([11,3.5])
+    ppretty([11,4.25])
 
-%     pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
-%     pause(0.1); close(hFig); pause(0.1)
+    pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+    pause(0.1); close(hFig); pause(0.1)
     
   end % if : (PLOT)
   
@@ -206,5 +212,5 @@ end % for : unit(uu)
 tSig_Acc  = tSig_Acc - OFFSET_PRE;
 tSig_Fast = tSig_Fast - OFFSET_PRE;
 
-clearvars -except behavData unitData spikesSAT tSig_Fast tSig_Acc
+clearvars -except behavData unitData spikesSAT tSig_Fast tSig_Acc tSigSEF
 % end % fxn : plot_SDF_X_Dir_RF_ErrChoice_X_ISI()
