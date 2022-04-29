@@ -97,6 +97,6 @@ ylabel('Pr. (Sacc. to target)')
 ppretty([2,2])
 
 %stats -- paired t-test
-ttestTom(Ptgt_Acc, Ptgt_Fast)
+ttestFull(Ptgt_Acc, Ptgt_Fast)
 
 end%fxn:Fig3B_EndptSS_Distr()
