@@ -1,9 +1,9 @@
-function [ tStart , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin )
+function [ tLim , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin )
 %calc_tErrorSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 % 
 
-args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','left'}});
+args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','right'}});
 
 MIN_DURATION = 200; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window
@@ -16,45 +16,77 @@ FILT_STEPSIZE = 1; %step size between MW tests
 inanCorr = isnan(sdfCorr(:,1));   sdfCorr(inanCorr,:) = [];
 inanErr  = isnan(sdfErr(:,1));    sdfErr(inanErr,:) = [];
 
-%% Mann-Whitney U-test for significant difference (Error/Correct)
+%% Compute start time
+%Mann-Whitney U-test for significant difference (Error/Correct)
 NUM_SAMP = size(sdfCorr,2);
-pVal = NaN(NUM_SAMP,1); %p-value
+pVal = NaN(NUM_SAMP,2); %re. start | end
 for jj = FILT_HALFWIN+1 : FILT_STEPSIZE : NUM_SAMP-FILT_HALFWIN
   idx_jj = ((jj - FILT_HALFWIN) : (jj + FILT_HALFWIN)); %averaging window
   
   sdfCorr_jj = mean(sdfCorr(:,idx_jj),2); %compute avg values over small window
   sdfErr_jj = mean(sdfErr(:,idx_jj),2);
   
-  pVal(jj) = ranksum(sdfCorr_jj, sdfErr_jj, 'tail',args.tailMW); %Mann-Whitney U-test
+  pVal(jj,1) = ranksum(sdfCorr_jj, sdfErr_jj, 'tail',args.tailMW); %Mann-Whitney U-test
 end % for:sample(jj)
 
-%% Check the effect size relative to max FR
+%Check the effect size relative to max FR on correct trials
+jjNoEffect = checkEffectSize(sdfCorr ,sdfErr ,MIN_REL_MAGNITUDE);
+pVal(jjNoEffect,1) = 1.0;
+
+%Search for MIN_DUR consecutive time points
+tLim(1) = checkMinDuration(pVal(:,1), args.pvalMW, MIN_DURATION, MAX_SKIP);
+
+%% Compute end time
+sdfCorr = fliplr(sdfCorr); %start search from last timepoint
+sdfErr = fliplr(sdfErr);
+
+%Mann-Whitney U-test for significant difference (Error/Correct)
+for jj = FILT_HALFWIN+1 : FILT_STEPSIZE : NUM_SAMP-FILT_HALFWIN
+  idx_jj = ((jj - FILT_HALFWIN) : (jj + FILT_HALFWIN)); %averaging window
+  
+  sdfCorr_jj = mean(sdfCorr(:,idx_jj),2); %compute avg values over small window
+  sdfErr_jj = mean(sdfErr(:,idx_jj),2);
+  
+  pVal(jj,2) = ranksum(sdfCorr_jj, sdfErr_jj, 'tail',args.tailMW); %Mann-Whitney U-test
+end % for:sample(jj)
+
+%Check the effect size relative to max FR on correct trials
+jjNoEffect = checkEffectSize(sdfCorr ,sdfErr ,MIN_REL_MAGNITUDE);
+pVal(jjNoEffect,2) = 1.0;
+
+%Search for MIN_DUR consecutive time points
+tLim(2) = checkMinDuration(pVal(:,2), args.pvalMW, MIN_DURATION, MAX_SKIP);
+
+%% Save output as time points for plotting
+vecSig = find(pVal(:,1) < args.pvalMW);
+
+end % function : calc_tErrorSignal_SAT()
+
+function [ jjNoEffect ] = checkEffectSize( sdfCorr , sdfErr , MIN_REL_MAGNITUDE )
+
 meanSDF_Corr = mean(sdfCorr);
 meanSDF_Err  = mean(sdfErr);
 
 relDiff_SDF = abs(meanSDF_Err - meanSDF_Corr) / max(meanSDF_Corr);
-jjNoEffectSize = (relDiff_SDF < MIN_REL_MAGNITUDE);
 
-pVal(jjNoEffectSize) = 1.0; %save as not significant
+jjNoEffect = (relDiff_SDF < MIN_REL_MAGNITUDE);
 
-%% Search for MIN_DUR consecutive time points
-sampSig = find(pVal < args.pvalMW);
+end
+
+function [ tSignal ] = checkMinDuration( pVal , pvalMW , MIN_DURATION , MAX_SKIP )
+
+sampSig = find(pVal < pvalMW);
 dsampSig = diff(sampSig);
 nSig = length(sampSig);
 
-tStart = NaN;
+tSignal = NaN; %set as NaN to start
+
 for ii = 1 : nSig-MIN_DURATION %loop over candidate timepoints
   runLengthII = sum(dsampSig(ii:ii+MIN_DURATION-1));
   
   if (runLengthII <= (MIN_DURATION+MAX_SKIP))
-    tStart = sampSig(ii); break
+    tSignal = sampSig(ii); break
   end
 end % for : sample(ii)
 
-%% Save output as time points for plotting
-% tSig.p10 = find(pVal < .10);
-% tSig.p05 = find(pVal < .05);
-% tSig.p01 = find(pVal < .01);
-vecSig = find(pVal < args.pvalMW);
-
-end % function : calc_tErrorSignal_SAT()
+end
