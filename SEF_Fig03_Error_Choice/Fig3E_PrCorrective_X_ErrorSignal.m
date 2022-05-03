@@ -1,15 +1,8 @@
-% function [ ] = Fig3E_PrCorrective_X_ErrorSignal( behavData , unitData , spikesSAT )
+function [ ] = Fig3E_PrCorrective_X_ErrorSignal( behavData , unitData , spikesSAT )
 %Fig3E_PrCorrective_X_ErrorSignal Summary of this function goes here
 %   Detailed explanation goes here
 
-idxSEF = ismember(unitData.aArea, 'SEF');
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxErrUnit = ismember(unitData.Grade_Err, 1);
-idxKeep = (idxSEF & idxMonkey & idxErrUnit);
-
-unitTest = unitData(idxKeep,:);
-spikesTest = spikesSAT(idxKeep);
-NUM_UNIT = sum(idxKeep);
+NUM_UNIT = size(unitData,1);
 
 T_COUNT_BASE = [-250, 50] + 3500; %interval over which to count baseline spikes as control
 T_COUNT_ERR = [50, 350] + 3500; %interval (re. signal onset) over which to count spikes
@@ -24,13 +17,13 @@ Z_PLOT = BINLIM_Z(1:NUM_BIN) + diff(BINLIM_Z)/2;
 P_Tgt = NaN(NUM_UNIT, NUM_BIN);
 
 for uu = 1:NUM_UNIT
-  kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
+  kk = ismember(behavData.Task_Session, unitData.Session(uu));
   
   RT_kk = behavData.Sacc_RT{kk};
   Sacc2_Endpt_kk = behavData.Sacc2_Endpoint{kk};
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by task condition
 %   idxCond = (behavData.Task_SATCondition{kk} == 1); %Accurate
   idxCond = (behavData.Task_SATCondition{kk} == 3); %Fast
@@ -47,17 +40,17 @@ for uu = 1:NUM_UNIT
   %% Compute single-trial spike counts
   
   %compute baseline spike count to control for effect of Trial Number
-  spkCt_Base = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesTest{uu});
+  spkCt_Base = cellfun(@(x) sum((x > T_COUNT_BASE(1)) & (x < T_COUNT_BASE(2))), spikesSAT{uu});
   spkCt_Base = spkCt_Base(trialErr);
   
   %sync choice error interval to start of signal in correct condition
-  tErr_uu = RT_kk(trialErr) + unitTest.ErrorSignal_Time(uu,1) + T_COUNT_ERR; %Fast
+  tErr_uu = RT_kk(trialErr) + unitData.SignalCE_Time_S(uu,1) + T_COUNT_ERR; %Fast
 %   tErr_uu = RT_kk(trialErr) + unitData.ErrorSignal_Time(cc,3) + T_COUNT_ERR; %Accurate
   
   spkCt_Err = NaN(num_TrialErr_kk,1);
   for jj = 1:num_TrialErr_kk
     %spike times aligned on primary saccade
-    tSpkJJ = spikesTest{uu}{trialErr(jj)};
+    tSpkJJ = spikesSAT{uu}{trialErr(jj)};
     %compute number of spikes during error interval
     spkCt_Err(jj) = sum( (tSpkJJ >= tErr_uu(jj,1)) & (tSpkJJ <= tErr_uu(jj,2)) );
   end%for:trialsAcc(jj)
@@ -97,6 +90,5 @@ ppretty([3.2,2])
 %save for ANOVA in R
 % save('C:\Users\Thomas Reppert\Dropbox\SAT\Stats\PTgtXSignalErr.mat', 'DV_Prob','F_Signal')
 
-clearvars -except behavData spikesSAT unitData
-% end%fxn:Fig3E_PrCorrective_X_ErrorSignal()
+end % fxn : Fig3E_PrCorrective_X_ErrorSignal()
 

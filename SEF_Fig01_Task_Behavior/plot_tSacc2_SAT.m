@@ -32,8 +32,8 @@ for kk = 1:NUM_SESS
   tSacc2_Acc{kk}  = transpose(RT2_kk(idxAcc & idxErr & (idxTgt | idxDistr))); %transpose for concatenation
   tSacc2_Fast{kk} = transpose(RT2_kk(idxFast & idxErr & (idxTgt | idxDistr)));
   
-  tMedSacc2_Acc(kk) = median(RT2_kk(idxAcc & idxErr & (idxTgt | idxDistr)));
-  tMedSacc2_Fast(kk) = median(RT2_kk(idxFast & idxErr & (idxTgt | idxDistr)));
+  tMedSacc2_Acc(kk) = nanmedian(RT2_kk(idxAcc & idxErr & (idxTgt | idxDistr)));
+  tMedSacc2_Fast(kk) = nanmedian(RT2_kk(idxFast & idxErr & (idxTgt | idxDistr)));
   
 end % for : session(kk)
 
@@ -50,7 +50,7 @@ ylabel('Cumulative probability'); ytickformat('%2.1f')
 ppretty([3.2,2])
 
 %plot -- average
-ttestTom(tMedSacc2_Acc, tMedSacc2_Fast, 'barplot')
-ylim([280 320]); ylabel('Time of second saccade (ms)')
+ttestFull(tMedSacc2_Acc, tMedSacc2_Fast, 'barplot', ...
+  'xticklabels',{'Acc','Fast'}, 'ylabel','Time of second saccade (ms)')
 
 end % fxn : plot_tSacc2_SAT()

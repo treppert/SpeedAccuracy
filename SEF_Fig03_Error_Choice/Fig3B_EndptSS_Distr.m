@@ -85,18 +85,8 @@ title('Accurate', 'FontSize',10)
 
 ppretty([5,3])
 
-%% Plotting - Barplot
-muTgt_Acc = mean(Ptgt_Acc);         seTgt_Acc = std(Ptgt_Acc) / sqrt(NUM_SESS);
-muTgt_Fast = mean(Ptgt_Fast);       seTgt_Fast = std(Ptgt_Fast) / sqrt(NUM_SESS);
-
-figure(); hold on
-bar([1 2], [muTgt_Acc muTgt_Fast], 0.4, 'FaceColor','none', 'LineWidth',0.5)
-errorbar([1 2], [muTgt_Acc muTgt_Fast], [seTgt_Acc seTgt_Fast], 'Color','k', 'CapSize',0)
-xticks([1 2]); xticklabels({'A','F'}); ytickformat('%2.1f')
-ylabel('Pr. (Sacc. to target)')
-ppretty([2,2])
-
-%stats -- paired t-test
-ttestFull(Ptgt_Acc, Ptgt_Fast)
+%% Plotting and stats -- paired t-test
+ttestFull(Ptgt_Acc', Ptgt_Fast', 'barplot', ...
+  'xticklabels',{'Acc','Fast'}, 'ylabel','Pr. (Saccade to target)')
 
 end%fxn:Fig3B_EndptSS_Distr()

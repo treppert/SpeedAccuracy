@@ -2,14 +2,12 @@
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT = true;
-FIG_VISIBILITY = 'off';
-RT_MAX = 900; %hard ceiling on primary RT
+PLOT = false;
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
-idxFunction = ismember(unitData.Grade_Err, [-1,1]);
+idxFunction = ismember(unitData.Grade_Err, -1);
 % idxFunction = ~cellfun(@isempty,unitData.RF);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
@@ -21,21 +19,27 @@ tLim_Plot = [-500,+500];
 tPlot = 3500 + (tLim_Plot(1) : tLim_Plot(2));
 nSamp_Plot = length(tPlot);
 
+COMPUTE_TIMING = false;
 tLim_Test = [-500,+500];
 tTest = 3500 + (tLim_Test(1) : tLim_Test(2));
 
-tSig_Fast = NaN(NUM_UNIT,4); %error signal start/end (re. P, re.S)
+%store average SDF
+sdfFC = cell(NUM_UNIT,1); %Fast correct
+sdfAC = sdfFC; %Accurate correct
+sdfFE = sdfFC; %Fast error
+sdfAE = sdfFC; %Accurate error
+
+%store error signal timing (re. Primary, re. Second)
+tSig_Fast = NaN(NUM_UNIT,4);
 tSig_Acc  = tSig_Fast;
+vecSig_Fast = cell(NUM_UNIT,1);
+vecSig_Acc = vecSig_Fast;
 
-magFast = NaN(NUM_UNIT,2); %(re. P, re. S)
-magAcc = magFast;
-
-for uu = 6:6%1:NUM_UNIT
+for uu = 1:NUM_UNIT
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitTest.Session(uu));
   
   RT_P = behavData.Sacc_RT{kk}; %Primary saccade RT
-  RT_P(RT_P > RT_MAX) = NaN; %hard limit on primary RT
   RT_S = behavData.Sacc2_RT{kk}; %Second saccade RT
   RT_S(RT_S == 0) = NaN;
   ISI = RT_S - RT_P; %Inter-saccade interval
@@ -58,103 +62,100 @@ for uu = 6:6%1:NUM_UNIT
   isiFE = ISI(idxFE);   medISI_FE = round(nanmedian(isiFE));
   RT_S(idxAC) = RT_P(idxAC) + medISI_AE;
   RT_S(idxFC) = RT_P(idxFC) + medISI_FE;
-  ISI = RT_S - RT_P;
   
   %compute spike density function and align appropriately
   sdfA = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
   sdfP = align_signal_on_response(sdfA, RT_P); %sdf from Primary
   sdfS = align_signal_on_response(sdfA, RT_S); %sdf from Second
   
-  %% Compute mean SDF for response into RF
-  sdfFC = NaN(nSamp_Plot,3); % re. array | re. primary | re. second
-  sdfFE = sdfFC;
-  sdfAC = sdfFC;
-  sdfAE = sdfFC;
+  %% Compute mean SDF
+  sdfFC{uu} = NaN(nSamp_Plot,3); % re. array | re. primary | re. second
+  sdfFE{uu} = sdfFC{uu};
+  sdfAC{uu} = sdfFC{uu};
+  sdfAE{uu} = sdfFC{uu};
   
   %Correct trials - Fast
-  sdfFC(:,1) = nanmean(sdfA(idxFC, tPlot));
-  sdfFC(:,2) = nanmean(sdfP(idxFC, tPlot));
-  sdfFC(:,3) = nanmean(sdfS(idxFC, tPlot));
+  sdfFC{uu}(:,1) = nanmean(sdfA(idxFC, tPlot));
+  sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, tPlot));
+  sdfFC{uu}(:,3) = nanmean(sdfS(idxFC, tPlot));
   %Correct trials - Accurate
-  sdfAC(:,1) = nanmean(sdfA(idxAC, tPlot));
-  sdfAC(:,2) = nanmean(sdfP(idxAC, tPlot));
-  sdfAC(:,3) = nanmean(sdfS(idxAC, tPlot));
+  sdfAC{uu}(:,1) = nanmean(sdfA(idxAC, tPlot));
+  sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, tPlot));
+  sdfAC{uu}(:,3) = nanmean(sdfS(idxAC, tPlot));
   
   %Error trials - Fast
-  sdfFE(:,1) = nanmean(sdfA(idxFE, tPlot));
-  sdfFE(:,2) = nanmean(sdfP(idxFE, tPlot));
-  sdfFE(:,3) = nanmean(sdfS(idxFE, tPlot));
+  sdfFE{uu}(:,1) = nanmean(sdfA(idxFE, tPlot));
+  sdfFE{uu}(:,2) = nanmean(sdfP(idxFE, tPlot));
+  sdfFE{uu}(:,3) = nanmean(sdfS(idxFE, tPlot));
   %Error trials - Accurate
-  sdfAE(:,1) = nanmean(sdfA(idxAE, tPlot));
-  sdfAE(:,2) = nanmean(sdfP(idxAE, tPlot));
-  sdfAE(:,3) = nanmean(sdfS(idxAE, tPlot));
+  sdfAE{uu}(:,1) = nanmean(sdfA(idxAE, tPlot));
+  sdfAE{uu}(:,2) = nanmean(sdfP(idxAE, tPlot));
+  sdfAE{uu}(:,3) = nanmean(sdfS(idxAE, tPlot));
   
-  %Compute time of signaling
-  [tSig_Fast(uu,1:2), vecSig_Fast_P] = calc_tErrorSignal_SAT(sdfP(idxFC, tTest), sdfP(idxFE, tTest)); %re. P
-  [tSig_Fast(uu,3:4), vecSig_Fast_S] = calc_tErrorSignal_SAT(sdfS(idxFC, tTest), sdfS(idxFE, tTest)); %re. S
-  [tSig_Acc(uu,1:2),  vecSig_Acc_P]  = calc_tErrorSignal_SAT(sdfP(idxAC, tTest), sdfP(idxAE, tTest));
-  [tSig_Acc(uu,3:4),  vecSig_Acc_S]  = calc_tErrorSignal_SAT(sdfS(idxAC, tTest), sdfS(idxAE, tTest));
-  tSig_Fast(uu,[1,3]) = tLim_Test(1) + tSig_Fast(uu,[1,3]);
-  tSig_Fast(uu,[2,4]) = tLim_Test(2) - tSig_Fast(uu,[2,4]);
-  tSig_Acc(uu,[1,3])  = tLim_Test(1) + tSig_Acc(uu,[1,3]);
-  tSig_Acc(uu,[2,4])  = tLim_Test(2) - tSig_Acc(uu,[2,4]);
+  %% Compute time of error signaling
+  vecSig_Fast{uu} = NaN(nSamp_Plot,2);
+  vecSig_Acc{uu}  = vecSig_Fast{uu};
+  if (COMPUTE_TIMING)
+    [tSig_Fast(uu,1:2), vecSig_Fast{uu}(:,1)] = calc_tErrorSignal_SAT(sdfP(idxFC, tTest), sdfP(idxFE, tTest)); %re. P
+    [tSig_Fast(uu,3:4), vecSig_Fast{uu}(:,2)] = calc_tErrorSignal_SAT(sdfS(idxFC, tTest), sdfS(idxFE, tTest)); %re. S
+    [tSig_Acc(uu,1:2),  vecSig_Acc{uu}(:,1)]  = calc_tErrorSignal_SAT(sdfP(idxAC, tTest), sdfP(idxAE, tTest));
+    [tSig_Acc(uu,3:4),  vecSig_Acc{uu}(:,2)]  = calc_tErrorSignal_SAT(sdfS(idxAC, tTest), sdfS(idxAE, tTest));
+    tSig_Fast(uu,[1,3]) = tLim_Test(1) + tSig_Fast(uu,[1,3]);
+    tSig_Fast(uu,[2,4]) = tLim_Test(2) - tSig_Fast(uu,[2,4]);
+    tSig_Acc(uu,[1,3])  = tLim_Test(1) + tSig_Acc(uu,[1,3]);
+    tSig_Acc(uu,[2,4])  = tLim_Test(2) - tSig_Acc(uu,[2,4]);
+  end %if COMPUTE_TIMING
   
-  %Compute magnitude of the error signal
-%   magFast(uu,1) = calc_ErrorSignalMag_SAT(sdfFC(:,2) ,sdfFE(:,2) ,'idxTest',IDX_CALC_MAG-tLim_Plot(1), 'abs'); %re. primary
-%   magFast(uu,2) = calc_ErrorSignalMag_SAT(sdfFC(:,3) ,sdfFE(:,3) ,'idxTest',IDX_CALC_MAG, 'abs'); %re. second
-%   magAcc(uu,1)  = calc_ErrorSignalMag_SAT(sdfAC(:,2) ,sdfAE(:,2) ,'idxTest',IDX_CALC_MAG-tLim_Plot(1), 'abs');
-%   magAcc(uu,2)  = calc_ErrorSignalMag_SAT(sdfAC(:,3) ,sdfAE(:,3) ,'idxTest',IDX_CALC_MAG, 'abs');
-  
-  %% Plot: Mean SDF for response into RF
+  %% Plotting
   if (PLOT)
     SIGDOT_SIZE = 3; %size of significant difference marker
-    hFig = figure('visible',FIG_VISIBILITY);
+    hFig = figure('visible','off');
 
-    yLim = [0, max([sdfAC sdfFC sdfAE sdfFE],[],'all')];
+    yLim = [0, max([sdfAC{uu} sdfFC{uu} sdfAE{uu} sdfFE{uu}],[],'all')];
     xLim = tPlot([1,nSamp_Plot]) - 3500;
 
     subplot(2,3,1); hold on %Fast re. array
     title([unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu}], 'FontSize',9)
-    plot(tPlot-3500, sdfFC(:,1), 'Color',[0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfFE(:,1), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+    plot(tPlot-3500, sdfFC{uu}(:,1), 'Color',[0 .7 0], 'LineWidth',1.25)
+    plot(tPlot-3500, sdfFE{uu}(:,1), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
     xlim(xLim); ylim(yLim);
 
     subplot(2,3,2); hold on %Fast re. primary
-    plot(tPlot-3500, sdfFC(:,2), 'Color',[0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfFE(:,2), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
-    scatter(tLim_Test(1)+vecSig_Fast_P, yLim(2)/25, SIGDOT_SIZE, 'k')
+    plot(tPlot-3500, sdfFC{uu}(:,2), 'Color',[0 .7 0], 'LineWidth',1.25)
+    plot(tPlot-3500, sdfFE{uu}(:,2), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+    if (COMPUTE_TIMING); scatter(tLim_Test(1)+vecSig_Fast{uu}(:,1), yLim(2)/25, SIGDOT_SIZE, 'k'); end
     plot(tSig_Fast(uu,1)*ones(1,2), yLim, 'k:') %start
     plot(tSig_Fast(uu,2)*ones(1,2), yLim, 'k:') %end
     xlim(xLim); ylim(yLim); set(gca, 'YColor','none')
 
     subplot(2,3,3); hold on %Fast re. second
-    plot(tPlot-3500, sdfFC(:,3), 'Color',[0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfFE(:,3), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
-    scatter(tLim_Test(1)+vecSig_Fast_S, yLim(2)/25, SIGDOT_SIZE, 'k')
+    plot(tPlot-3500, sdfFC{uu}(:,3), 'Color',[0 .7 0], 'LineWidth',1.25)
+    plot(tPlot-3500, sdfFE{uu}(:,3), ':', 'Color',[0 .7 0], 'LineWidth',1.25)
+    if (COMPUTE_TIMING); scatter(tLim_Test(1)+vecSig_Fast{uu}(:,2), yLim(2)/25, SIGDOT_SIZE, 'k'); end
     plot(tSig_Fast(uu,3)*ones(1,2), yLim, 'k:')
     plot(tSig_Fast(uu,4)*ones(1,2), yLim, 'k:')
     xlim(xLim); ylim(yLim); set(gca, 'YColor','none')
 
     subplot(2,3,4); hold on %Accurate re. array
-    plot(tPlot-3500, sdfAC(:,1), 'r', 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAE(:,1), 'r:', 'LineWidth',1.25)
+    plot(tPlot-3500, sdfAC{uu}(:,1), 'r', 'LineWidth',1.25)
+    plot(tPlot-3500, sdfAE{uu}(:,1), 'r:', 'LineWidth',1.25)
     ylabel('Activity (sp/sec)')
     xlabel('Time from array (ms)')
     xlim(xLim); ylim(yLim)
 
     subplot(2,3,5); hold on %Accurate re. primary
-    plot(tPlot-3500, sdfAC(:,2), 'r', 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAE(:,2), 'r:', 'LineWidth',1.25)
-    scatter(tLim_Test(1)+vecSig_Acc_P, yLim(2)/25, SIGDOT_SIZE, 'k')
+    plot(tPlot-3500, sdfAC{uu}(:,2), 'r', 'LineWidth',1.25)
+    plot(tPlot-3500, sdfAE{uu}(:,2), 'r:', 'LineWidth',1.25)
+    if (COMPUTE_TIMING); scatter(tLim_Test(1)+vecSig_Acc{uu}(:,1), yLim(2)/25, SIGDOT_SIZE, 'k'); end
     plot(tSig_Acc(uu,1)*ones(1,2), yLim, 'k:') %start
     plot(tSig_Acc(uu,2)*ones(1,2), yLim, 'k:') %end
     xlabel('Time from primary saccade (ms)')
     xlim(xLim); ylim(yLim); set(gca, 'YColor','none')
 
     subplot(2,3,6); hold on %Accurate re. second
-    plot(tPlot-3500, sdfAC(:,3), 'r', 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAE(:,3), 'r:', 'LineWidth',1.25)
-    scatter(tLim_Test(1)+vecSig_Acc_S, yLim(2)/25, SIGDOT_SIZE, 'k')
+    plot(tPlot-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
+    plot(tPlot-3500, sdfAE{uu}(:,3), 'r:', 'LineWidth',1.25)
+    if (COMPUTE_TIMING); scatter(tLim_Test(1)+vecSig_Acc{uu}(:,2), yLim(2)/25, SIGDOT_SIZE, 'k'); end
     plot(tSig_Acc(uu,3)*ones(1,2), yLim, 'k:')
     plot(tSig_Acc(uu,4)*ones(1,2), yLim, 'k:')
     xlabel('Time from second saccade (ms)')
@@ -169,5 +170,5 @@ for uu = 6:6%1:NUM_UNIT
   
 end % for : unit(uu)
 
-clearvars -except ROOTDIR_DATA_SAT behavData unitData spikesSAT tSig_*
+clearvars -except ROOTDIR_DATA_SAT behavData unitData spikesSAT sdfAC sdfAE sdfFC sdfFE
 % end % fxn : plot_SDF_ErrChoice()

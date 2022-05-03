@@ -14,7 +14,8 @@ else
 end
 
 %compute integral of difference between correct and error activation
-A_Err = sum(sdfErr(idxTest) - sdfCorr(idxTest));
+A_Err = sum(sdfErr(idxTest) - sdfCorr(idxTest)); %sp/sec
+A_Err = A_Err / (idxTest(end)-idxTest(1)) * 1000; %spikes
 
 if (args.abs)
   A_Err = abs(A_Err);
