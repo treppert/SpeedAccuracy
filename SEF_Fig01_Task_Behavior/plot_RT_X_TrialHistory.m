@@ -1,9 +1,11 @@
-function [  ] = plot_RT_X_TrialHistory( behavData )
+function [  ] = plot_RT_X_TrialHistory( behavData , varargin )
 %plot_RT_X_TrialHistory Summary of this function goes here
 %   Detailed explanation goes here
 
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
 %isolate sessions from monkey of choice
-kkKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
+kkKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
 behavData = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 
@@ -48,12 +50,12 @@ for kk = 1:NUM_SESS
   drtFast{kk,3} = RTkk(trialFET+1)-RTkk(trialFET); %timing error
   
   %save mean values
-  dRT_Acc(kk,1) = median(drtAcc{kk,1});
-  dRT_Acc(kk,2) = median(drtAcc{kk,2});
-  dRT_Acc(kk,3) = median(drtAcc{kk,3});
-  dRT_Fast(kk,1) = median(drtFast{kk,1});
-  dRT_Fast(kk,2) = median(drtFast{kk,2});
-  dRT_Fast(kk,3) = median(drtFast{kk,3});
+  dRT_Acc(kk,1) = nanmedian(drtAcc{kk,1});
+  dRT_Acc(kk,2) = nanmedian(drtAcc{kk,2});
+  dRT_Acc(kk,3) = nanmedian(drtAcc{kk,3});
+  dRT_Fast(kk,1) = nanmedian(drtFast{kk,1});
+  dRT_Fast(kk,2) = nanmedian(drtFast{kk,2});
+  dRT_Fast(kk,3) = nanmedian(drtFast{kk,3});
   
 end%for:sessions(kk)
 
@@ -75,11 +77,11 @@ xticks([1:3,5:7]); xticklabels({'AC','AEC','AET','FC','FEC','FET'})
 ylabel('Change in response time (ms)'); %ylim([200 600])
 ppretty([2,2])
 
-anova1(dRT_Acc);
-anova1(dRT_Fast);
+% anova1(dRT_Acc);
+% anova1(dRT_Fast);
 
 figure()
-XLIM = [-500 500];
+XLIM = [-600 600];
 subplot(2,3,1); title('Correct'); hold on %Accurate - Correct
 histogram(drtAC, 'FaceColor','r', 'BinWidth',50); xlim(XLIM)
 

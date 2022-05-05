@@ -6,7 +6,6 @@ PLOT = true;
 FIG_VISIBLE = 'off';
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-MIN_TRIAL_COUNT = 3;
 PVAL_MW = .05;
 TAIL_MW = 'left';
 
@@ -33,39 +32,49 @@ for uu = 1:NUM_UNIT
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
   
-  RTkk = behavData.Sacc_RT{kk}; %RT of primary saccade
-  RTkk(RTkk > RT_MAX) = NaN; %hard limit on primary RT
-  tRew_kk = RTkk + behavData.Task_TimeReward{kk}; %time of reward
+  RFuu = unitTest.RF{uu}; %response field
+  if (length(RFuu) == 8) %if RF is the entire visual field
+    switch unitTest.Monkey{uu}
+      case 'D' %set to contralateral hemifield
+        RFuu = [4 5 6];
+      case 'E'
+        RFuu = [8 1 2];
+    end
+  end
+  
+  RT_P = behavData.Sacc_RT{kk}; %RT of primary saccade
+  RT_P(RT_P > RT_MAX) = NaN; %hard limit on primary RT
+  tRew = round(nanmedian(RT_P + behavData.Task_TimeReward{kk})); %time of reward - fixed
   
   %compute spike density function and align appropriately
-  sdfA_kk = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
-  sdfP_kk = align_signal_on_response(sdfA_kk, RTkk); %sdf from Primary
-  sdfR_kk = align_signal_on_response(sdfA_kk, round(tRew_kk)); %sdf from Reward
+  sdfA = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
+  sdfP = align_signal_on_response(sdfA, RT_P); %sdf from Primary
+  sdfR = align_signal_on_response(sdfA, tRew); %sdf from Reward
   
   %index by isolation quality
-  idxIso = identify_trials_poor_isolation_SAT(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by screen clear on Fast trials
   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   %index by condition
-  idxAcc = (behavData.Task_SATCondition{kk} == 1 & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
   idxErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
-  
+  %index by saccade octant re. response field (RF)
+  Octant_Sacc1 = behavData.Sacc_Octant{kk};
+  idxRF  = ismember(Octant_Sacc1, RFuu);
+  idxRFn = (~idxRF & (Octant_Sacc1 ~= 0));
+    
+  %combine indexing
+  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr);
+  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr);
+    
   %get task deadline
   dlineAcc =  median(behavData.Task_Deadline{kk}(idxAcc));
   %compute error in RT
   errRT = NaN(behavData.Task_NumTrials(kk),1);
-  errRT(idxAcc) = RTkk(idxAcc) - dlineAcc;
-  
-  %index by saccade octant re. response field (RF)
-  Octant_Sacc1 = behavData.Sacc_Octant{kk};
-  RF = unitTest.RF{uu};
-  if ( isempty(RF) || (ismember(9,RF)) ) %average over all possible directions
-    idxRF = true(behavData.Task_NumTrials(kk),1);
-  else %average only trials with saccade into RF
-    idxRF = ismember(Octant_Sacc1, RF);
-  end
+  errRT(idxAcc) = RT_P(idxAcc) - dlineAcc;
   
   
   %% Compute mean SDF for response into RF
@@ -74,9 +83,9 @@ for uu = 1:NUM_UNIT
   sdfErr_R = sdfErr_A; %sdf re. reward
   
   idxAC = (idxAcc  & idxCorr & idxRF); %Accurate correct
-  sdfCorr_A = nanmean(sdfA_kk(idxAC, tPlot));
-  sdfCorr_P = nanmean(sdfP_kk(idxAC, tPlot));
-  sdfCorr_R = nanmean(sdfR_kk(idxAC, tPlot));
+  sdfCorr_A = nanmean(sdfA(idxAC, tPlot));
+  sdfCorr_P = nanmean(sdfP(idxAC, tPlot));
+  sdfCorr_R = nanmean(sdfR(idxAC, tPlot));
   
   qtl_errRT = quantile(errRT(idxAcc & idxErr & idxRF), TERR_LIM);
   
@@ -84,13 +93,11 @@ for uu = 1:NUM_UNIT
     idx_bb = (errRT > qtl_errRT(bb)) & (errRT <= qtl_errRT(bb+1));
     idxAE = (idxAcc  & idxErr & idxRF & idx_bb);  %Accurate timing error
 
-    if (sum(idxAE) >= MIN_TRIAL_COUNT)
-      sdfErr_A(:,bb) = nanmean(sdfA_kk(idxAE, tPlot));
-      sdfErr_P(:,bb) = nanmean(sdfP_kk(idxAE, tPlot));
-      sdfErr_R(:,bb) = nanmean(sdfR_kk(idxAE, tPlot));
-%       [tSig, vecSig] = calc_tErrorSignal_SAT(sdfR_kk(idxAC, tPlot), sdfR_kk(idxAE, tPlot), ...
-%         'pvalMW',PVAL_MW, 'tailMW',TAIL_MW);
-    end
+    sdfErr_A(:,bb) = nanmean(sdfA(idxAE, tPlot));
+    sdfErr_P(:,bb) = nanmean(sdfP(idxAE, tPlot));
+    sdfErr_R(:,bb) = nanmean(sdfR(idxAE, tPlot));
+%     [tSig, vecSig] = calc_tErrorSignal_SAT(sdfR_kk(idxAC, tPlot), sdfR_kk(idxAE, tPlot), ...
+%       'pvalMW',PVAL_MW, 'tailMW',TAIL_MW);
   end %for: RT error bin (ii)
   
   if (PLOT)

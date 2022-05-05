@@ -1,14 +1,18 @@
 %Fig1.m -- Figure 1 header file
-%load('C:\Users\Tom\Dropbox\Speed Accuracy\__SEF_SAT\Data\AllData_SAT.mat')
+MONKEY = {'D','E'};
 
 %compute mean task-related parameters per session
-compute_Behavior_X_Sess( behavData )
+% compute_Behavior_X_Sess(behavData, 'monkey',MONKEY)
 
 %generate Fig1C
-Fig1C_ErrRate_X_RT( behavData )
+% Fig1C_ErrRate_X_RT(behavData, 'monkey',MONKEY)
 
 %generate Fig1D
-Fig1D_Behav_X_Trial( behavData )
-Fig1D_Behav_X_Trial_Simple( behavData ) %no effect of difficulty
+% Fig1D_Behav_X_Trial(behavData, 'monkey',MONKEY)
+% Fig1D_Behav_X_Trial_Simple(behavData, 'monkey',MONKEY) %no effect of difficulty
 
-plot_RT_X_TrialHistory( behavData )
+% plot_RT_X_TrialHistory(behavData, 'monkey',MONKEY)
+
+% plot_hazardRT(behavData, 'monkey',MONKEY)
+fitHF = plot_hazard_RTerr(behavData, 'monkey',MONKEY);
+

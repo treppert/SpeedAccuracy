@@ -1,16 +1,17 @@
-function [ ] = Fig1C_ErrRate_X_RT( behavData )
+function [ ] = Fig1C_ErrRate_X_RT( behavData , varargin )
 %Fig1C_ErrRate_X_RT() Summary of this function goes here
 %   Detailed explanation goes here
+
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
 PLOT = true;
 STATS = true;
 PARAM = 'ER'; %{'RT','ER'}
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};
-sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
-NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
-
+kkKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
+behavData = behavData(kkKeep, :);
+NUM_SESS = sum(kkKeep);
 
 %% Compute RT/ER and split on Task Condition
 errRate_Acc = NaN(1,NUM_SESS);   rt_Acc = NaN(1,NUM_SESS);

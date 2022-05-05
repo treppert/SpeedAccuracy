@@ -171,4 +171,4 @@ for uu = 1:NUM_UNIT
 end % for : unit(uu)
 
 clearvars -except ROOTDIR_DATA_SAT behavData unitData spikesSAT sdfAC sdfAE sdfFC sdfFE
-% end % fxn : plot_SDF_ErrChoice()
+

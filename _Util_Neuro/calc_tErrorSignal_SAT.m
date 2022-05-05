@@ -3,7 +3,7 @@ function [ tLim , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin 
 %   Detailed explanation goes here
 % 
 
-args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','left'}});
+args = getopt(varargin, {{'pvalMW=',.05}, {'tailMW=','right'}});
 
 MIN_DURATION = 200; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window

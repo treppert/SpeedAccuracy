@@ -3,7 +3,7 @@ function [  ] = plot_rtDistr_X_Switch_SAT( behavData )
 %   Detailed explanation goes here
 
 PLOT_TYPE = 'cdf'; %'pdf' or 'cdf'
-MIN_NUM_TRIALS = 10; %min number of switch trials
+MIN_NUM_TRIALS = 5; %min number of switch trials
 
 %isolate sessions from monkey of choice
 kkKeep = (ismember(behavData.Monkey, {'E'}) & behavData.Task_RecordedSEF);
@@ -86,6 +86,7 @@ plot(nanmean(RT_dline(:,2))*ones(1,2), [.02 .98], 'r:', 'LineWidth',1.2)
 xlim([100 800])
 xlabel('Response time (ms)')
 ylabel('Cumulative distribution function')
+ytickformat('%2.1f')
 ppretty([4.8,3])
 
 end %fxn:plot_plot_rtDistr_X_Switch_SATrtDistr_X_SAT()

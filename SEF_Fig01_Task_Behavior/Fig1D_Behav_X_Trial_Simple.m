@@ -1,13 +1,14 @@
-function [  ] = Fig1D_Behav_X_Trial_Simple( behavData )
+function [  ] = Fig1D_Behav_X_Trial_Simple( behavData , varargin )
 %Fig1D_Behav_X_Trial_Simple Summary of this function goes here
 %   Detailed explanation goes here
+
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};
-sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
+sessKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
 NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 %initialize response time (RT)
@@ -32,8 +33,8 @@ for kk = 1:NUM_SESS
   jjA2F = trialSwitch.A2F{kk};  numA2F = length(jjA2F);
   jjF2A = trialSwitch.F2A{kk};  numF2A = length(jjF2A);
   
-  RT_A2F(kk,:) = median(RTkk(jjA2F+TRIAL_PLOT));
-  RT_F2A(kk,:) = median(RTkk(jjF2A+TRIAL_PLOT));
+  RT_A2F(kk,:) = nanmedian(RTkk(jjA2F+TRIAL_PLOT));
+  RT_F2A(kk,:) = nanmedian(RTkk(jjF2A+TRIAL_PLOT));
   
   %get RT relative to SAT deadlines
   idxAcc = (behavData.Task_SATCondition{kk} == 1);

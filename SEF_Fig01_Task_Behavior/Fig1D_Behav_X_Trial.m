@@ -1,13 +1,14 @@
-function [  ] = Fig1D_Behav_X_Trial( behavData )
+function [  ] = Fig1D_Behav_X_Trial( behavData , varargin )
 %Fig1D_Behav_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
+
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
 
 TRIAL_PLOT = ( -4 : 3 );
 NUM_TRIAL = length(TRIAL_PLOT);
 
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};
-sessKeep = (ismember(behavData.Monkey, MONKEY) & behavData.Task_RecordedSEF);
+sessKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
 NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);
 
 %initialize error rate (ER)

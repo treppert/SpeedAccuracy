@@ -1,10 +1,13 @@
-function [ ] = compute_Behavior_X_Sess( behavData )
+function [ ] = compute_Behavior_X_Sess( behavData , varargin )
 %compute_Behavior_X_Sess Summary of this function goes here
 %   Detailed explanation goes here
 
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
 %isolate sessions from MONKEY
-MONKEY = {'D','E'};         sessKeep = ismember(behavData.Monkey, MONKEY);
-NUM_SESS = sum(sessKeep);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);   behavData = behavData(sessKeep, :);
+kkKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
+behavData = behavData(kkKeep, :);
+NUM_SESS = sum(kkKeep);
 
 %% Initializations
 

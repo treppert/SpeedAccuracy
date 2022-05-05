@@ -1,14 +1,15 @@
-function [  ] = plot_errRT_SAT( behavData )
+function [ varargout ] = plot_errRT_SAT( behavData )
 %plot_errRT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 %isolate sessions from monkey of choice
-kkKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
+kkKeep = (ismember(behavData.Monkey, {'D','E'}));% & behavData.Task_RecordedSEF);
 behavData = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 
 errRT_Acc = cell(NUM_SESS,1);
 errRT_Fast = errRT_Acc;
+errRT = errRT_Acc;
 
 %% Collect dRT across sessions
 for kk = 1:NUM_SESS
@@ -22,13 +23,19 @@ for kk = 1:NUM_SESS
   idxFast = (behavData.Task_SATCondition{kk} == 3);
   
   %get deadline for each condition
-  dlineAcc =  median(behavData.Task_Deadline{kk}(idxAcc));
-  dlineFast = median(behavData.Task_Deadline{kk}(idxFast));
+  dlineAcc =  nanmedian(behavData.Task_Deadline{kk}(idxAcc));
+  dlineFast = nanmedian(behavData.Task_Deadline{kk}(idxFast));
   
   errRT_Acc{kk}  = transpose(RTkk(idxAcc & idxErr) - dlineAcc);
   errRT_Fast{kk} = transpose(RTkk(idxFast & idxErr) - dlineFast);
   
+  errRT{kk} = NaN(behavData.Task_NumTrials(kk),1);
+  errRT{kk}(idxAcc)  = RTkk(idxAcc) - dlineAcc;
+  errRT{kk}(idxFast) = RTkk(idxFast) - dlineFast;
+  
 end%for:sessions(kk)
+
+if (nargout > 0); varargout{1} = errRT; end
 
 %% Plotting
 figure()

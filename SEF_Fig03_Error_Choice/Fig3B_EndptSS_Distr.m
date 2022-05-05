@@ -1,8 +1,10 @@
-function [ ] = Fig3B_EndptSS_Distr( behavData )
+function [ ] = Fig3B_EndptSS_Distr( behavData , varargin )
 %Fig3B_EndptSS_Distr Summary of this function goes here
 %   Detailed explanation goes here
 
-sessKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
+sessKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
 behavData = behavData(sessKeep, :);
 NUM_SESS = sum(sessKeep);
 

@@ -1,9 +1,11 @@
-function [  ] = plot_tSacc2_SAT( behavData )
+function [  ] = plot_tSacc2_SAT( behavData , varargin )
 %plot_tSacc2_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
+args = getopt(varargin, {{'monkey=',{'D','E'}}});
+
 %isolate sessions from monkey of choice
-kkKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
+kkKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
 behavData = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 
