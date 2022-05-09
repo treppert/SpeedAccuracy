@@ -14,6 +14,7 @@ spikesTest = spikesSAT(idxKeep);
 % sigTE = Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4C_ProbActive_ErrorTime( unitData )
 
-Fig4D_TESignal_X_TEMagnitude( unitTest , sdfAC , sdfAE , errLim_Acc , fitHF )
+[~,pHF_Scale] = plot_hazard_RTerr(behavData, 'monkey',MONKEY);
+Fig4D_TESignal_X_TEMagnitude( unitTest , sdfAC , sdfAE , errLim_Acc , pHF_Scale )
 
 clear idx*
