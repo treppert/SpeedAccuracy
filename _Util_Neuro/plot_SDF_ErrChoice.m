@@ -8,7 +8,6 @@ PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
 idxFunction = ismember(unitData.Grade_Err, -1);
-% idxFunction = ~cellfun(@isempty,unitData.RF);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);

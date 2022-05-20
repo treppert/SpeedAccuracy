@@ -1,15 +1,13 @@
-% function [  ] = plot_SDF_X_Dir_RF_ErrChoice( behavData , unitData , spikesSAT )
 %plot_SDF_X_Dir_RF_ErrChoice() Summary of this function goes here
 %   Detailed explanation goes here
 
-PLOT = false;
-FIG_VISIBILITY = 'off';
+PLOT = true;
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 RT_MAX = 900; %hard ceiling on primary RT
-PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.Area, {'SC'});
+idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
-idxFunction = (unitData.SignalPostErr == 1);
+idxFunction = ismember(unitData.SignalPostErr, 1);
 % idxFunction = ~cellfun(@isempty,unitData.RF);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
@@ -24,15 +22,17 @@ nSamp_Plot = length(tPlot);
 tLim_Test = [-200,+500];
 tTest = 3500 + (tLim_Test(1) : tLim_Test(2));
 
-IDX_CALC_MAG = (101 : 300); %indexes for computing signal magnitude
-
 tSig_Fast = NaN(NUM_UNIT,2); %error signal onset (re. primary | second)
 tSig_Acc  = tSig_Fast;
+
+IDX_CALC_MAG = (101 : 300); %indexes for computing signal magnitude
 
 magFast = NaN(NUM_UNIT,4); %Primary saccade into RF (re. P, re. S) || Second saccade into RF
 magAcc = magFast;
 
 for uu = 1:NUM_UNIT
+  if ~ismember(unitTest.Index(uu), [40,110,126,131]); continue; end
+  
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitTest.Session(uu));
   
@@ -145,7 +145,7 @@ for uu = 1:NUM_UNIT
   %% Plot: Mean SDF for response into RF
   if (PLOT)
     SIGDOT_SIZE = 5; %size of significant difference marker
-    hFig = figure('visible',FIG_VISIBILITY);
+    hFig = figure('visible','off');
 
     yLim = [0, max([sdfAC sdfFC sdfAE sdfFE],[],'all')];
     xLim = tPlot([1,nSamp_Plot]) - 3500;
@@ -223,8 +223,8 @@ for uu = 1:NUM_UNIT
 
     ppretty([8,5])
 
-%     pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff')
-%     pause(0.1); close(hFig); pause(0.1)
+    pause(0.1); print(hFig, [PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff')
+    pause(0.1); close(hFig); pause(0.1)
     
   end % if (PLOT)
   
@@ -236,7 +236,6 @@ tSig_Fast = tSig_Fast - tLim_Plot(1);
 %compute the difference in error-related activation (primary into RF vs. second into RF)
 CR_Fast = [compute_ContrastRatio_SAT(magFast(:,1), magFast(:,3)) , compute_ContrastRatio_SAT(magFast(:,2), magFast(:,4))];
 CR_Acc  = [compute_ContrastRatio_SAT(magAcc(:,1), magAcc(:,3))  , compute_ContrastRatio_SAT(magAcc(:,2), magAcc(:,4))];
-CR_SC = [mean(CR_Fast,2) , mean(CR_Acc,2)];
+% CR_SC = [mean(CR_Fast,2) , mean(CR_Acc,2)];
 
 clearvars -except ROOTDIR_DATA_SAT behavData unitData spikesSAT CR_*
-% end % fxn : plot_SDF_X_Dir_RF_ErrChoice()

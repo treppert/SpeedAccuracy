@@ -1,5 +1,5 @@
 %Fig3.m -- Figure 3 header file
-%**Note: Run plot_SDF_ErrTime.m to get sdfAC sdfAE sdfFC sdfFE
+%**Note: Run plot_SDF_ErrChoice.m to get sdfAC sdfAE sdfFC sdfFE
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
@@ -19,3 +19,7 @@ Fig3D_Barplot_CESignal( unitTest )
 % Fig3E_PrCorrective_X_ErrorSignal( behavData , unitTest , spikesTest )
 
 clear idx*
+
+% Fig. S3E-H
+% Run script plot_SDF_X_Dir_RF_ErrChoice to calculate ratio rho for Fig.
+% S3E. This script also plots individual neuron data (Figs. S3F-H).
