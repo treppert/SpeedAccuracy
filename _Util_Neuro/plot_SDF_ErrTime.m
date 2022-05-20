@@ -1,6 +1,6 @@
 %plot_SDF_ErrTime() Summary of this function goes here
 
-PLOT = true;
+PLOT = false;
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 COMPUTE_TIMING = false;
 
@@ -66,7 +66,7 @@ for uu = 1:NUM_UNIT
   %work off of absolute error for Accurate condition
   RTerr = abs(RTerr);
   %compute RT error quantiles for binning based on distribution of error
-  errLim_Acc(uu,:)  = quantile(RTerr(idxAE), ERR_LIM);
+  errLim_Acc(uu,:) = quantile(RTerr(idxAE), ERR_LIM);
   errLim_Fast = quantile(RTerr(idxFE), ERR_LIM);
   
   %% Compute mean SDF

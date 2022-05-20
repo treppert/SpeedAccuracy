@@ -1,21 +1,19 @@
-function [ ] = Fig4D_TESignal_X_TEMagnitude( unitData , sdfAC , sdfAE , rtErrLim , pHF_Scale , varargin )
-%Fig4D_TESignal_X_TEMagnitude Summary of this function goes here
+function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData , parmFitDa, parmFitEu , varargin )
+%UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'sessHighlight=',[]}});
 kkHighlight = args.sessHighlight;
 
-NUM_UNIT = size(unitData,1);
-OFFSET_TIME = 501;
+%Quantiles of RT error averaged across sessions (Accurate condition)
+RTERR_QUANT_Da = [3.89	37.97	79.28	147.61	225.44];
+RTERR_QUANT_Eu = [4.14	38.18	68.29	98.14	188.00];
 
 %bin trials by timing error magnitude
-ERR_LIM = rtErrLim;
-NUM_BIN = size(ERR_LIM,2) - 1;
-RTerr_Plot = -(ERR_LIM(:,1:NUM_BIN) + diff(ERR_LIM,1,2)/2);
+NUM_BIN = length(RTERR_QUANT_Da) - 1;
 
-%quadratic fit to hazard rate data
-pHF_Da = [1.84e-6 , .001633 , .301060];
-pHF_Eu = [1.94e-6 , .001449 , .243276];
+NUM_UNIT = size(unitData,1);
+OFFSET_TIME = 501;
 
 %initializations
 sigCorr = NaN(NUM_UNIT,1);
@@ -26,23 +24,29 @@ for uu = 1:NUM_UNIT
   kk = unitData.SessionIndex(uu);
   
   %translate RT error to instantaneous hazard rate via quadratic model h(t)
-  X = RTerr_Plot(uu,:);
   switch (unitData.Monkey{uu})
     case 'D'
-      haz_Plot(uu,:) = pHF_Scale(kk) * (pHF_Da(1)*X.^2 + pHF_Da(2)*X + pHF_Da(3));
+      X = -(RTERR_QUANT_Da(:,1:NUM_BIN) + diff(RTERR_QUANT_Da,1,2)/2);
+      pHF_Fit = parmFitDa.fit;
+      pHF_Scale = parmFitDa.scale;
     case 'E'
-      haz_Plot(uu,:) = pHF_Scale(kk) * (pHF_Eu(1)*X.^2 + pHF_Eu(2)*X + pHF_Eu(3));
+      X = -(RTERR_QUANT_Eu(:,1:NUM_BIN) + diff(RTERR_QUANT_Eu,1,2)/2);
+      pHF_Fit = parmFitEu.fit;
+      pHF_Scale = parmFitEu.scale;
+      kk = kk - 9;
   end
+  
+  haz_Plot(uu,:) = pHF_Scale(kk) * (pHF_Fit(1)*X.^2 + pHF_Fit(2)*X + pHF_Fit(3));
   
   idxTest  = OFFSET_TIME + unitData.SignalTE_Time(uu,:);
   idxTest = idxTest(1):idxTest(2);
   
-  sdfAC_Rew = sdfAC{uu}(idxTest,3);
+  sdfAC_Rew = unitData.sdfAC_TE{uu}(idxTest,3);
   sigCorr(uu) = mean(sdfAC_Rew);
   
   for bb = 1:NUM_BIN
     
-    sdfAE_bb = sdfAE{uu}(idxTest,3*bb);
+    sdfAE_bb = unitData.sdfAE_TE{uu}(idxTest,3*bb);
     sigErr(uu,bb) = mean(sdfAE_bb);
     
   end % for : RTerr bin(bb)
@@ -52,27 +56,20 @@ end % for : unit(uu)
 sig_Plot = abs(sigErr-sigCorr)./mean(sigErr+sigCorr,2);
 
 %% Plotting
-% X_PLOT = haz_Plot;
-X_PLOT = RTerr_Plot;
-
-Xmu = nanmean(X_PLOT);
-Ymu = nanmean(sig_Plot);
-Xse = nanstd(X_PLOT) / sqrt(NUM_UNIT);
-Yse = nanstd(sig_Plot) / sqrt(NUM_UNIT);
-
 uuHighlight = find(ismember(unitData.SessionIndex, kkHighlight));
 
+X_PLOT = haz_Plot;
+% X_PLOT = RTerr_Plot;
+
 figure(); hold on
-% line([0 0], [0 10], 'Color','k', 'LineStyle',':', 'LineWidth',1.5)
 line(X_PLOT', sig_Plot', 'Color',.5*ones(1,3), 'Marker','.', 'MarkerSize',10, 'LineWidth',0.75)
 if ~isempty(uuHighlight)
   title(unitData.Session{uuHighlight(1)})
   line(X_PLOT(uuHighlight,:)', sig_Plot(uuHighlight,:)', 'Color','k', 'Marker','.', 'MarkerSize',12, 'LineWidth',1)
 end
-% errorbar(Xmu,Ymu, Yse,Yse, Xse,Xse, 'o', 'CapSize',0, 'Color','k')
 ylabel('Normalized error signal')
-xlabel('RT error (ms)')
+xlabel('Hazard rate (a.u.)')
 ppretty([5,3])
 
-end % fxn : Fig4D_TESignal_X_TEMagnitude()
+end
 

@@ -1,4 +1,4 @@
-function [ ] = plot_hazardRT( behavData , varargin )
+function [ ] = plot_hazard_RT( behavData , varargin )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
