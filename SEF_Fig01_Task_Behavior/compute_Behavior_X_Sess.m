@@ -1,43 +1,36 @@
-function [ ] = compute_Behavior_X_Sess( behavData , varargin )
 %compute_Behavior_X_Sess Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'monkey=',{'D','E'}}});
-
 %isolate sessions from MONKEY
-kkKeep = (ismember(behavData.Monkey, args.monkey) & behavData.Task_RecordedSEF);
-behavData = behavData(kkKeep, :);
+kkKeep = ismember(behavData.Monkey, MONKEY);
+behavTest = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 
 %% Initializations
+dlineAcc = NaN(NUM_SESS,1);    RTAcc = NaN(NUM_SESS,1);
+dlineFast = NaN(NUM_SESS,1);   RTFast = NaN(NUM_SESS,1);
 
-dlineAcc = NaN(1,NUM_SESS);    RTAcc = NaN(1,NUM_SESS);
-dlineFast = NaN(1,NUM_SESS);   RTFast = NaN(1,NUM_SESS);
-
-PerrChcAcc = NaN(1,NUM_SESS);  PerrTimeAcc = NaN(1,NUM_SESS);
-PerrChcFast = NaN(1,NUM_SESS); PerrTimeFast = NaN(1,NUM_SESS);
-
-isiAcc = NaN(1,NUM_SESS);
-isiFast = NaN(1,NUM_SESS);
+PerrChcAcc = NaN(NUM_SESS,1);  PerrTimeAcc = NaN(NUM_SESS,1);
+PerrChcFast = NaN(NUM_SESS,1); PerrTimeFast = NaN(NUM_SESS,1);
 
 %% Collect data
-
 for kk = 1:NUM_SESS
   
-  idxAcc = (behavData.Task_SATCondition{kk} == 1) & ~isnan(behavData.Task_Deadline{kk});
-  idxFast = (behavData.Task_SATCondition{kk} == 3) & ~isnan(behavData.Task_Deadline{kk});
+  idxAcc = (behavTest.Task_SATCondition{kk} == 1);
+  idxFast = (behavTest.Task_SATCondition{kk} == 3);
   
-  idxCorr = ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrTime{kk} | behavData.Task_ErrNoSacc{kk});
-  idxErrChc = behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk};
-  idxErrTime = behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk};
+  idxCorr = behavTest.Task_Correct{kk};
+  idxErrChc = behavTest.Task_ErrChoice{kk} & ~behavTest.Task_ErrTime{kk};
+  idxErrTime = behavTest.Task_ErrTime{kk} & ~(behavTest.Task_ErrChoice{kk} | behavTest.Task_ErrHold{kk});
+  idxErrBoth = (behavTest.Task_ErrChoice{kk} & behavTest.Task_ErrTime{kk});
   
   %deadline
-  dlineAcc(kk) = median(behavData.Task_Deadline{kk}(idxAcc));
-  dlineFast(kk) = median(behavData.Task_Deadline{kk}(idxFast));
+  dlineAcc(kk) = median(behavTest.Task_Deadline{kk}(idxAcc));
+  dlineFast(kk) = median(behavTest.Task_Deadline{kk}(idxFast));
   
   %response time
-  RTAcc(kk) = median(behavData.Sacc_RT{kk}(idxAcc & idxCorr));
-  RTFast(kk) = median(behavData.Sacc_RT{kk}(idxFast & idxCorr));
+  RTAcc(kk) = median(behavTest.Sacc_RT{kk}(idxAcc & idxCorr));
+  RTFast(kk) = median(behavTest.Sacc_RT{kk}(idxFast & idxCorr));
   
   %prob. choice error
   PerrChcAcc(kk) = sum(idxAcc & idxErrChc) / sum(idxAcc);
@@ -47,31 +40,6 @@ for kk = 1:NUM_SESS
   PerrTimeAcc(kk) = sum(idxAcc & idxErrTime) / sum(idxAcc);
   PerrTimeFast(kk) = sum(idxFast & idxErrTime) / sum(idxFast);
   
-  %inter-saccade interval
-  ISIkk = double(behavData.Sacc2_RT{kk}) - (double(behavData.Sacc_RT{kk}) + double(behavData.Sacc_Duration{kk}));
-  idxNoPP = (behavData.Sacc2_RT{kk} == 0);
-  
-  isiAcc(kk) = median(ISIkk(idxAcc & idxErrChc & ~idxNoPP));
-  isiFast(kk) = median(ISIkk(idxFast & idxErrChc & ~idxNoPP));
-  
 end%for:session(kk)
 
-%% Print mean +/- SE
-fprintf('Response deadline Acc: %g +/- %g\n', mean(dlineAcc), std(dlineAcc)/sqrt(NUM_SESS))
-fprintf('Response deadline Fast: %g +/- %g\n\n', mean(dlineFast), std(dlineFast)/sqrt(NUM_SESS))
-
-fprintf('RT Acc: %g +/- %g\n', mean(RTAcc), std(RTAcc)/sqrt(NUM_SESS))
-fprintf('RT Fast: %g +/- %g\n', mean(RTFast), std(RTFast)/sqrt(NUM_SESS))
-
-fprintf('ISI Acc: %g +/- %g\n', mean(isiAcc), std(isiAcc)/sqrt(NUM_SESS))
-fprintf('ISI Fast: %g +/- %g\n', mean(isiFast), std(isiFast)/sqrt(NUM_SESS))
-
-fprintf('P[ChcErr] Acc: %g +/- %g\n', mean(PerrChcAcc), std(PerrChcAcc)/sqrt(NUM_SESS))
-fprintf('P[ChcErr] Fast: %g +/- %g\n', mean(PerrChcFast), std(PerrChcFast)/sqrt(NUM_SESS))
-
-fprintf('P[TimeErr] Acc: %g +/- %g\n', mean(PerrTimeAcc), std(PerrTimeAcc)/sqrt(NUM_SESS))
-fprintf('P[TimeErr] Fast: %g +/- %g\n', mean(PerrTimeFast), std(PerrTimeFast)/sqrt(NUM_SESS))
-
-fprintf('\n')
-
-end%fxn:compute_Behavior_X_Sess()
+clear isi* RT* idx* Idx* dline* kkKeep *kk NUM_SESS

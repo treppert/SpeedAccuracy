@@ -2,7 +2,7 @@
 MONKEY = {'D','E'};
 
 %compute mean task-related parameters per session
-% compute_Behavior_X_Sess(behavData, 'monkey',MONKEY)
+% compute_Behavior_X_Sess
 
 %generate Fig1C
 % Fig1C_ErrRate_X_RT(behavData, 'monkey',MONKEY)
@@ -14,5 +14,5 @@ MONKEY = {'D','E'};
 % plot_RT_X_TrialHistory(behavData, 'monkey',MONKEY)
 
 % plot_hazardRT(behavData, 'monkey',MONKEY)
-fitHF = plot_hazard_RTerr(behavData, 'monkey',MONKEY);
+% fitHF = plot_hazard_RTerr(behavData, 'monkey',MONKEY);
 
