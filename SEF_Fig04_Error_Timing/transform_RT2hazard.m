@@ -12,8 +12,8 @@ end
 
 % Fit to single-session data with scaling factor -- Allow for variability
 % across recording sessions
-pScale_Da = ones(9,1); %TODO - update with correct values
-pScale_Eu = ones(7,1); %TODO - update
+pScale_Da = [1.7436, 1.3636, 1.0670, 0.7963, 1.2014, 0.6759, 0.7740, 0.8387, 0.5455];
+pScale_Eu = [1.4213, 0.9540, 1.5354, 0.6588, 0.9437, 0.6250, 0.8612];
 pScale_All = [pScale_Da; pScale_Eu];
 pScale = pScale_All(iSession);
 

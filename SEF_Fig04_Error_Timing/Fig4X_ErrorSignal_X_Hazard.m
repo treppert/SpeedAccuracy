@@ -3,22 +3,24 @@ function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData , parmFitDa, parmFitEu , var
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'sessHighlight=',[]}});
-kkHighlight = args.sessHighlight;
-
-%Quantiles of RT error averaged across sessions (Accurate condition)
-RTERR_QUANT_Da = [3.89	37.97	79.28	147.61	225.44];
-RTERR_QUANT_Eu = [4.14	38.18	68.29	98.14	188.00];
-
-%bin trials by timing error magnitude
-NUM_BIN = length(RTERR_QUANT_Da) - 1;
+kkHighlight = args.sessHighlight; %optional: specify session to highlight
 
 NUM_UNIT = size(unitData,1);
 OFFSET_TIME = 501;
 
+%Quantiles of RT error averaged across sessions (Accurate condition)
+% RTERR_QUANT_Da = [3.89	37.97	79.28	147.61	225.44];
+% RTERR_QUANT_Eu = [4.14	38.18	68.29	98.14	188.00];
+RTERR_QUANT_Da = [0.00	37.97	79.28	147.61  500.00];
+RTERR_QUANT_Eu = [0.00	38.18	68.29	 98.14  500.00];
+
+%bin trials by timing error magnitude
+NUM_RTBIN = length(RTERR_QUANT_Da) - 1;
+
 %initializations
 sigCorr = NaN(NUM_UNIT,1);
-sigErr  = NaN(NUM_UNIT,NUM_BIN);
-haz_Plot = NaN(NUM_UNIT,NUM_BIN);
+sigErr  = NaN(NUM_UNIT,NUM_RTBIN);
+haz_Plot = NaN(NUM_UNIT,NUM_RTBIN);
 
 for uu = 1:NUM_UNIT
   kk = unitData.SessionIndex(uu);
@@ -26,11 +28,11 @@ for uu = 1:NUM_UNIT
   %translate RT error to instantaneous hazard rate via quadratic model h(t)
   switch (unitData.Monkey{uu})
     case 'D'
-      X = -(RTERR_QUANT_Da(:,1:NUM_BIN) + diff(RTERR_QUANT_Da,1,2)/2);
+      X = -(RTERR_QUANT_Da(:,1:NUM_RTBIN) + diff(RTERR_QUANT_Da,1,2)/2);
       pHF_Fit = parmFitDa.fit;
       pHF_Scale = parmFitDa.scale;
     case 'E'
-      X = -(RTERR_QUANT_Eu(:,1:NUM_BIN) + diff(RTERR_QUANT_Eu,1,2)/2);
+      X = -(RTERR_QUANT_Eu(:,1:NUM_RTBIN) + diff(RTERR_QUANT_Eu,1,2)/2);
       pHF_Fit = parmFitEu.fit;
       pHF_Scale = parmFitEu.scale;
       kk = kk - 9;
@@ -44,7 +46,7 @@ for uu = 1:NUM_UNIT
   sdfAC_Rew = unitData.sdfAC_TE{uu}(idxTest,3);
   sigCorr(uu) = mean(sdfAC_Rew);
   
-  for bb = 1:NUM_BIN
+  for bb = 1:NUM_RTBIN
     
     sdfAE_bb = unitData.sdfAE_TE{uu}(idxTest,3*bb);
     sigErr(uu,bb) = mean(sdfAE_bb);

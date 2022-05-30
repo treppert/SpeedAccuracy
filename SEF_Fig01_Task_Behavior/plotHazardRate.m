@@ -1,4 +1,4 @@
-function [  ] = plotHazardRate( behavData , varargin )
+function [  ] = plotHazardRate( behavData )
 %plotHazardRate Plot the hazard rate associated with RT errors committed
 %during the Accurate task condition
 %   Detailed explanation goes here
@@ -29,7 +29,7 @@ for kk = 1:NUM_SESS
   rtAcc  = rtAcc - dlineAcc;
   
   %compute empirical pdf
-  for bb = 1:NBIN
+  for bb = 1:N_RTBIN
     idxBinAcc  = (rtAcc > rtLimAcc(bb))   & (rtAcc <= rtLimAcc(bb+1));
     pdfAcc(kk,bb)  = sum(idxBinAcc) / nAcc;
   end % for : RTbin(bb)

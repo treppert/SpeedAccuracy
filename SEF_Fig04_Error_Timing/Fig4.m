@@ -1,7 +1,7 @@
 %% Fig4.m -- Figure 4 header file
 
 %% Behavior: RT and hazard rate
-% Fig. 4A: Fig1D_Behav_X_Trial()
+% Fig1D_Behav_X_Trial() %Fig. 4A
 
 % These fits were computed with plot_hazard_RTerr()
 % pFitMean_Da = [1.595e-6, 1.013e-3, .1588];
@@ -15,6 +15,8 @@
 
 % parmFitDa = struct('fit',pFitMean_Da, 'scale',pScale_Da);
 % parmFitEu = struct('fit',pFitMean_Eu, 'scale',pScale_Eu);
+
+% % plotHazardRate(behavData(1:16,:)) *TODO - Debug
 
 %% Physiology
 % Notes
