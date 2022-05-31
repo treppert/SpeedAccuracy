@@ -9,10 +9,8 @@ NUM_UNIT = size(unitData,1);
 OFFSET_TIME = 501;
 
 %Quantiles of RT error averaged across sessions (Accurate condition)
-% RTERR_QUANT_Da = [3.89	37.97	79.28	147.61	225.44];
-% RTERR_QUANT_Eu = [4.14	38.18	68.29	98.14	188.00];
-RTERR_QUANT_Da = [0.00	37.97	79.28	147.61  500.00];
-RTERR_QUANT_Eu = [0.00	38.18	68.29	 98.14  500.00];
+RTERR_QUANT_Da = [3.89	37.97	79.28	147.61	225.44];
+RTERR_QUANT_Eu = [4.14	38.18	68.29	98.14   188.00];
 
 %bin trials by timing error magnitude
 NUM_RTBIN = length(RTERR_QUANT_Da) - 1;
@@ -20,25 +18,19 @@ NUM_RTBIN = length(RTERR_QUANT_Da) - 1;
 %initializations
 sigCorr = NaN(NUM_UNIT,1);
 sigErr  = NaN(NUM_UNIT,NUM_RTBIN);
-haz_Plot = NaN(NUM_UNIT,NUM_RTBIN);
+hazard = NaN(NUM_UNIT,NUM_RTBIN);
 
 for uu = 1:NUM_UNIT
-  kk = unitData.SessionIndex(uu);
   
-  %translate RT error to instantaneous hazard rate via quadratic model h(t)
   switch (unitData.Monkey{uu})
     case 'D'
       X = -(RTERR_QUANT_Da(:,1:NUM_RTBIN) + diff(RTERR_QUANT_Da,1,2)/2);
-      pHF_Fit = parmFitDa.fit;
-      pHF_Scale = parmFitDa.scale;
     case 'E'
       X = -(RTERR_QUANT_Eu(:,1:NUM_RTBIN) + diff(RTERR_QUANT_Eu,1,2)/2);
-      pHF_Fit = parmFitEu.fit;
-      pHF_Scale = parmFitEu.scale;
-      kk = kk - 9;
   end
   
-  haz_Plot(uu,:) = pHF_Scale(kk) * (pHF_Fit(1)*X.^2 + pHF_Fit(2)*X + pHF_Fit(3));
+  %translate RT error to instantaneous hazard rate via quadratic model h(t)
+  hazard(uu,:) = transform_RT2hazard(X, unitData.SessionIndex(uu));
   
   idxTest  = OFFSET_TIME + unitData.SignalTE_Time(uu,:);
   idxTest = idxTest(1):idxTest(2);
@@ -60,17 +52,14 @@ sig_Plot = abs(sigErr-sigCorr)./mean(sigErr+sigCorr,2);
 %% Plotting
 uuHighlight = find(ismember(unitData.SessionIndex, kkHighlight));
 
-X_PLOT = haz_Plot;
-% X_PLOT = RTerr_Plot;
-
 figure(); hold on
-line(X_PLOT', sig_Plot', 'Color',.5*ones(1,3), 'Marker','.', 'MarkerSize',10, 'LineWidth',0.75)
+line(hazard', sig_Plot', 'Color',.5*ones(1,3), 'Marker','.', 'MarkerSize',10, 'LineWidth',0.75)
 if ~isempty(uuHighlight)
   title(unitData.Session{uuHighlight(1)})
-  line(X_PLOT(uuHighlight,:)', sig_Plot(uuHighlight,:)', 'Color','k', 'Marker','.', 'MarkerSize',12, 'LineWidth',1)
+  line(hazard(uuHighlight,:)', sig_Plot(uuHighlight,:)', 'Color','k', 'Marker','.', 'MarkerSize',12, 'LineWidth',1)
 end
 ylabel('Normalized error signal')
-xlabel('Hazard rate (a.u.)')
+xlabel('Shannon information')
 ppretty([5,3])
 
 end

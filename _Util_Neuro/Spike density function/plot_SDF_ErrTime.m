@@ -1,7 +1,7 @@
 %plot_SDF_ErrTime() Summary of this function goes here
 
 PLOT = true;
-PRINTDIR = 'C:\Users\thoma\OneDrive\Documents\Figs - SAT\';
+PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 COMPUTE_TIMING = false;
 
 idxArea = ismember(unitData.Area, {'SEF'});
@@ -29,8 +29,8 @@ tSig_Acc = NaN(NUM_UNIT,2); %start|end
 vecSig_Acc = cell(NUM_UNIT,1);
 
 %bin by timing error magnitude
-% ERR_LIM = linspace(0, 1, 4);
-ERR_LIM = [0 1];
+ERR_LIM = linspace(0, 1, 4);
+% ERR_LIM = [0 1];
 NUM_BIN = length(ERR_LIM) - 1;
 errLim_Acc = NaN(NUM_UNIT,NUM_BIN+1);
 errLim_Fast = errLim_Acc;
@@ -56,8 +56,8 @@ for uu = 1:NUM_UNIT
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
-%   idxErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
-  idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk});
+  idxErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+%   idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk});
   
   %combine indexing
   idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (RTerr < 0));
@@ -113,11 +113,11 @@ for uu = 1:NUM_UNIT
   
   %% Plotting
   if (PLOT)
-    colorPlot = linspace(0.8, 0.1, NUM_BIN);
+    colorPlot = linspace(0.8, 0.5, NUM_BIN);
     figure('visible', 'off')
     SIGDOT_SIZE = 3;
     
-    yLim = [0, max([sdfAC{uu} sdfFC{uu} sdfAE{uu} sdfFE{uu}],[],'all')];
+    yLim = [0, max([sdfAC{uu} sdfFC{uu} sdfAE{uu}],[],'all')];
     xLimA = [-350 250];
     xLimP = [-250 350];
     xLimR1 = [-350 250];
@@ -149,8 +149,9 @@ for uu = 1:NUM_UNIT
     end
     if (COMPUTE_TIMING)
       scatter(vecSig_Acc{uu}, yLim(2)/25, SIGDOT_SIZE, 'k')
-      plot(tSig_Acc(uu,1)*ones(1,2), yLim, 'k:')
-      plot(tSig_Acc(uu,2)*ones(1,2), yLim, 'k:')
+      plot(ones(2,1)*tSig_Acc(uu,:), yLim, 'k:')
+    else
+      line(ones(2,1)*unitTest.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
     end
     xlim(xLimR1); ylim(yLim); set(gca, 'YColor','none')
     
@@ -162,8 +163,9 @@ for uu = 1:NUM_UNIT
     end
     if (COMPUTE_TIMING)
       scatter(vecSig_Acc{uu}, yLim(2)/25, SIGDOT_SIZE, 'k')
-      plot(tSig_Acc(uu,1)*ones(1,2), yLim, 'k:')
-      plot(tSig_Acc(uu,2)*ones(1,2), yLim, 'k:')
+      plot(ones(2,1)*tSig_Acc(uu,:), yLim, 'k:')
+    else
+      line(ones(2,1)*unitTest.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
     end
     xlim(xLimR2); ylim(yLim); set(gca, 'YColor','none')
     
@@ -192,7 +194,7 @@ for uu = 1:NUM_UNIT
     for bb = 1:NUM_BIN
       plot(tPlotRew-3500, sdfFE{uu}(:,3*(bb-1)+3), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
     end
-    xlim(xLimR1); ylim(yLim); set(gca, 'YColor','none')
+    xlim(xLimR1); ylim(yLim'); set(gca, 'YColor','none')
     xlabel('Time from reward (ms)')
     
     subplot(2,4,8); hold on %Fast re. reward #2
@@ -204,7 +206,7 @@ for uu = 1:NUM_UNIT
     xlim(xLimR2); ylim(yLim); set(gca, 'YColor','none')
     xlabel('Time from reward (ms)')
     
-    ppretty([14,3])
+    ppretty([11,3])
 
     pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff')
     pause(0.1); close(); pause(0.1)
