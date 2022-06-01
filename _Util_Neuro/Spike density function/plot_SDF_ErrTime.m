@@ -6,16 +6,15 @@ COMPUTE_TIMING = false;
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
-idxFunction = ismember(unitData.Grade_TErr, [-1,1]);
+idxFunction = ismember(unitData.Grade_TErr, [1]);
 idxKeep = (idxArea & idxMonkey & idxFunction);
-% idxKeep = true(436,1);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
-tPlot = 3500 + (-1300 : 400); %plot time vector
-NUM_SAMP = length(tPlot);
+iPlot = 3500 + (-1300 : 400);
+NUM_SAMP = length(iPlot);
 tPlotRew = 3500 + (-500 : 1200);
 
 %store average SDF
@@ -41,7 +40,9 @@ for uu = 1:NUM_UNIT
   
   RTerr = behavData.Sacc_RTerr{kk}; %RT relative to deadline
   RT_P = behavData.Sacc_RT{kk}; %RT of primary saccade
-  tRew = round(nanmedian(behavData.Task_TimeReward{kk})); %time of reward (fixed)
+  RT_S = behavData.Sacc2_RT{kk}; %RT of second saccade
+  ISI = RT_S - RT_P; %inter-saccade interval
+  tRew = median(behavData.Task_TimeReward{kk}); %time of reward (fixed)
   tRew = RT_P + tRew; %re. array
   
   %compute spike density function and align appropriately
@@ -60,8 +61,8 @@ for uu = 1:NUM_UNIT
 %   idxErr = (behavData.Task_ErrTime{kk} & ~behavData.Task_ErrChoice{kk});
   
   %combine indexing
-  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (RTerr < 0));
-  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (RTerr > 0));
+  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= 600) & (RTerr < 0));
+  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (ISI >= 600) & (RTerr > 0));
   
   %work off of absolute error for Accurate condition
   RTerr = abs(RTerr);
@@ -76,21 +77,21 @@ for uu = 1:NUM_UNIT
   sdfFE{uu} = sdfAE{uu};
   
   %Correct trials - Fast
-  sdfFC{uu}(:,1) = nanmean(sdfA(idxFC, tPlot));
-  sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, tPlot));
+  sdfFC{uu}(:,1) = nanmean(sdfA(idxFC, iPlot));
+  sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, iPlot));
   sdfFC{uu}(:,3) = nanmean(sdfR(idxFC, tPlotRew));
   
   %Correct trials - Accurate
-  sdfAC{uu}(:,1) = nanmean(sdfA(idxAC, tPlot));
-  sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, tPlot));
+  sdfAC{uu}(:,1) = nanmean(sdfA(idxAC, iPlot));
+  sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, iPlot));
   sdfAC{uu}(:,3) = nanmean(sdfR(idxAC, tPlotRew));
   
   %Error trials - Fast
   for bb = 1:NUM_BIN
     idxBin = (RTerr > errLim_Fast(uu,bb)) & (RTerr <= errLim_Fast(uu,bb+1));
     idxFEbb = (idxFE & idxBin);
-    sdfFE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxFEbb, tPlot));
-    sdfFE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxFEbb, tPlot));
+    sdfFE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxFEbb, iPlot));
+    sdfFE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxFEbb, iPlot));
     sdfFE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxFEbb, tPlotRew));
   end
   
@@ -98,8 +99,8 @@ for uu = 1:NUM_UNIT
   for bb = 1:NUM_BIN
     idxBin = (RTerr > errLim_Acc(uu,bb)) & (RTerr <= errLim_Acc(uu,bb+1));
     idxAEbb = (idxAE & idxBin);
-    sdfAE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxAEbb, tPlot));
-    sdfAE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxAEbb, tPlot));
+    sdfAE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxAEbb, iPlot));
+    sdfAE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxAEbb, iPlot));
     sdfAE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxAEbb, tPlotRew));
   end
   
@@ -113,36 +114,37 @@ for uu = 1:NUM_UNIT
   
   %% Plotting
   if (PLOT)
+    tPlot = iPlot - 3500;
     colorPlot = linspace(0.8, 0.5, NUM_BIN);
-    figure('visible', 'off')
+    GREEN = [0 .7 0];
+    figure('visible', 'off');
     SIGDOT_SIZE = 3;
     
     yLim = [0, max([sdfAC{uu} sdfFC{uu} sdfAE{uu}],[],'all')];
     xLimA = [-350 250];
     xLimP = [-250 350];
-    xLimR1 = [-350 250];
-    xLimR2 = [250 850];
+    xLimR = [-350 850];
 
     subplot(2,4,1); hold on %Accurate re. array
     title([unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu}], 'FontSize',9)
-    plot(tPlot-3500, sdfFC{uu}(:,1), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAC{uu}(:,1), 'r', 'LineWidth',1.25)
+    plot(tPlot, sdfFC{uu}(:,1), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlot, sdfAC{uu}(:,1), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlot-3500, sdfAE{uu}(:,3*(bb-1)+1), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
+      plot(tPlot, sdfAE{uu}(:,3*(bb-1)+1), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
     end
     xlim(xLimA); ylim(yLim)
     ylabel('Activity (sp/sec)')
 
     subplot(2,4,2); hold on %Accurate re. primary
-    plot(tPlot-3500, sdfFC{uu}(:,2), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAC{uu}(:,2), 'r', 'LineWidth',1.25)
+    plot(tPlot, sdfFC{uu}(:,2), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlot, sdfAC{uu}(:,2), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlot-3500, sdfAE{uu}(:,3*(bb-1)+2), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
+      plot(tPlot, sdfAE{uu}(:,3*(bb-1)+2), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
     end
     xlim(xLimP); ylim(yLim); set(gca, 'YColor','none')
 
-    subplot(2,4,3); hold on %Accurate re. reward #1
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', [0 .7 0], 'LineWidth',1.25)
+    subplot(2,4,[3 4]); hold on %Accurate re. reward
+    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
     plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
       plot(tPlotRew-3500, sdfAE{uu}(:,3*(bb-1)+3), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
@@ -153,60 +155,37 @@ for uu = 1:NUM_UNIT
     else
       line(ones(2,1)*unitTest.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
     end
-    xlim(xLimR1); ylim(yLim); set(gca, 'YColor','none')
-    
-    subplot(2,4,4); hold on %Accurate re. reward #2
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
-    for bb = 1:NUM_BIN
-      plot(tPlotRew-3500, sdfAE{uu}(:,3*(bb-1)+3), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
-    end
-    if (COMPUTE_TIMING)
-      scatter(vecSig_Acc{uu}, yLim(2)/25, SIGDOT_SIZE, 'k')
-      plot(ones(2,1)*tSig_Acc(uu,:), yLim, 'k:')
-    else
-      line(ones(2,1)*unitTest.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
-    end
-    xlim(xLimR2); ylim(yLim); set(gca, 'YColor','none')
+    xlim(xLimR); ylim(yLim); set(gca, 'YColor','none')
     
     subplot(2,4,5); hold on %Fast re. array
-    plot(tPlot-3500, sdfFC{uu}(:,1), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAC{uu}(:,1), 'r', 'LineWidth',1.25)
+    plot(tPlot, sdfFC{uu}(:,1), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlot, sdfAC{uu}(:,1), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlot-3500, sdfFE{uu}(:,3*(bb-1)+1), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
+      plot(tPlot, sdfFE{uu}(:,3*(bb-1)+1), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
     end
     xlim(xLimA); ylim(yLim)
     xlabel('Time from array (ms)')
     ylabel('Activity (sp/sec)')
 
     subplot(2,4,6); hold on %Fast re. primary
-    plot(tPlot-3500, sdfFC{uu}(:,2), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlot-3500, sdfAC{uu}(:,2), 'r', 'LineWidth',1.25)
+    plot(tPlot, sdfFC{uu}(:,2), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlot, sdfAC{uu}(:,2), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlot-3500, sdfFE{uu}(:,3*(bb-1)+2), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
+      plot(tPlot, sdfFE{uu}(:,3*(bb-1)+2), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
     end
     xlim(xLimP); ylim(yLim); set(gca, 'YColor','none')
     xlabel('Time from response (ms)')
 
-    subplot(2,4,7); hold on %Fast re. reward #1
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', [0 .7 0], 'LineWidth',1.25)
+    subplot(2,4,[7 8]); hold on %Fast re. reward
+    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
     plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
       plot(tPlotRew-3500, sdfFE{uu}(:,3*(bb-1)+3), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
     end
-    xlim(xLimR1); ylim(yLim'); set(gca, 'YColor','none')
+    xlim(xLimR); ylim(yLim'); set(gca, 'YColor','none')
     xlabel('Time from reward (ms)')
     
-    subplot(2,4,8); hold on %Fast re. reward #2
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', [0 .7 0], 'LineWidth',1.25)
-    plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
-    for bb = 1:NUM_BIN
-      plot(tPlotRew-3500, sdfFE{uu}(:,3*(bb-1)+3), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
-    end
-    xlim(xLimR2); ylim(yLim); set(gca, 'YColor','none')
-    xlabel('Time from reward (ms)')
-    
-    ppretty([11,3])
+    ppretty([8,2])
 
     pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff')
     pause(0.1); close(); pause(0.1)
@@ -215,4 +194,4 @@ for uu = 1:NUM_UNIT
   
 end% for : unit (uu)
 
-clearvars -except behavData unitData spikesSAT ROOTDIR_SAT sdfAC sdfAE sdfFC sdfFE tSig_*
+clearvars -except behavData unitData spikesSAT ROOTDIR_SAT sdfAC sdfAE sdfFC sdfFE
