@@ -1,7 +1,10 @@
 %% Fig4.m -- Figure 4 header file
+MONKEY = {'D'};
 
 %% Behavior: RT and hazard rate
 % Fig1D_Behav_X_Trial() %Fig. 4A
+% plot_tSacc2_SAT(behavData , 'monkey',MONKEY)
+plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 
 % % These fits were computed with plot_hazard_RTerr()
 % pFitMean_Da = [1.595e-6, 1.013e-3, .1588];
