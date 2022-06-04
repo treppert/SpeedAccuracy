@@ -19,5 +19,6 @@ pScale = pScale_All(iSession);
 
 % Transforation RT to hazard rate h(t)
 haz = -log2( pScale * ( pQuad(1)*RT.^2 + pQuad(2)*RT + pQuad(3) ) );
+% haz = pScale * ( pQuad(1)*RT.^2 + pQuad(2)*RT + pQuad(3) );
 
 end %fxn : transform_RT2hazard()

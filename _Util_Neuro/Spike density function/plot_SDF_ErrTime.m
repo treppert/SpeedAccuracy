@@ -1,21 +1,22 @@
-%plot_SDF_ErrTime() Summary of this function goes here
+% plot_SDF_ErrTime.m
+% 
 
-PLOT = true;
+PLOT = false;
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 COMPUTE_TIMING = false;
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
-idxFunction = ismember(unitData.Grade_TErr, [1]);
+idxFunction = ismember(unitData.Grade_TErr, [+1,-1]);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
 spikesTest = spikesSAT(idxKeep);
 
-iPlot = 3500 + (-1300 : 400);
+iPlot    = 3500 + (-1300 : 400);
+iPlotRew = 3500 + (-500 : 1200);
 NUM_SAMP = length(iPlot);
-tPlotRew = 3500 + (-500 : 1200);
 
 %store average SDF
 sdfFC = cell(NUM_UNIT,1); %Fast correct
@@ -28,8 +29,8 @@ tSig_Acc = NaN(NUM_UNIT,2); %start|end
 vecSig_Acc = cell(NUM_UNIT,1);
 
 %bin by timing error magnitude
-ERR_LIM = linspace(0, 1, 4);
-% ERR_LIM = [0 1];
+% ERR_LIM = linspace(0, 1, 4);
+ERR_LIM = [.4 1];
 NUM_BIN = length(ERR_LIM) - 1;
 errLim_Acc = NaN(NUM_UNIT,NUM_BIN+1);
 errLim_Fast = errLim_Acc;
@@ -79,12 +80,12 @@ for uu = 1:NUM_UNIT
   %Correct trials - Fast
   sdfFC{uu}(:,1) = nanmean(sdfA(idxFC, iPlot));
   sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, iPlot));
-  sdfFC{uu}(:,3) = nanmean(sdfR(idxFC, tPlotRew));
+  sdfFC{uu}(:,3) = nanmean(sdfR(idxFC, iPlotRew));
   
   %Correct trials - Accurate
   sdfAC{uu}(:,1) = nanmean(sdfA(idxAC, iPlot));
   sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, iPlot));
-  sdfAC{uu}(:,3) = nanmean(sdfR(idxAC, tPlotRew));
+  sdfAC{uu}(:,3) = nanmean(sdfR(idxAC, iPlotRew));
   
   %Error trials - Fast
   for bb = 1:NUM_BIN
@@ -92,7 +93,7 @@ for uu = 1:NUM_UNIT
     idxFEbb = (idxFE & idxBin);
     sdfFE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxFEbb, iPlot));
     sdfFE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxFEbb, iPlot));
-    sdfFE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxFEbb, tPlotRew));
+    sdfFE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxFEbb, iPlotRew));
   end
   
   %Error trials - Accurate
@@ -101,29 +102,30 @@ for uu = 1:NUM_UNIT
     idxAEbb = (idxAE & idxBin);
     sdfAE{uu}(:,3*(bb-1)+1) = nanmean(sdfA(idxAEbb, iPlot));
     sdfAE{uu}(:,3*(bb-1)+2) = nanmean(sdfP(idxAEbb, iPlot));
-    sdfAE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxAEbb, tPlotRew));
+    sdfAE{uu}(:,3*(bb-1)+3) = nanmean(sdfR(idxAEbb, iPlotRew));
   end
   
   %% Compute time of error signaling
   if (COMPUTE_TIMING)
-    [tSig_Acc(uu,:), vecSig_Acc{uu}] = calc_tErrorSignal_SAT(sdfR(idxAC, tPlotRew), sdfR(idxAE, tPlotRew));
-    tSig_Acc(uu,1) = tPlotRew(1) + tSig_Acc(uu,1) - 3500;
-    tSig_Acc(uu,2) = tPlotRew(end) - tSig_Acc(uu,2) - 3500;
-    vecSig_Acc{uu} = tPlotRew(1) + vecSig_Acc{uu} - 3500;
+    [tSig_Acc(uu,:), vecSig_Acc{uu}] = calc_tErrorSignal_SAT(sdfR(idxAC, iPlotRew), sdfR(idxAEbb, iPlotRew), 'minDur',300);
+    tSig_Acc(uu,1) = iPlotRew(1) + tSig_Acc(uu,1) - 3500;
+    tSig_Acc(uu,2) = iPlotRew(end) - tSig_Acc(uu,2) - 3500;
+    vecSig_Acc{uu} = iPlotRew(1) + vecSig_Acc{uu} - 3500;
   end
   
   %% Plotting
   if (PLOT)
     tPlot = iPlot - 3500;
+    tPlotRew = iPlotRew - 3500;
     colorPlot = linspace(0.8, 0.5, NUM_BIN);
     GREEN = [0 .7 0];
-    figure('visible', 'off');
+    figure('visible', 'on');
     SIGDOT_SIZE = 3;
     
     yLim = [0, max([sdfAC{uu} sdfFC{uu} sdfAE{uu}],[],'all')];
-    xLimA = [-350 250];
-    xLimP = [-250 350];
-    xLimR = [-350 850];
+    xLimA = [-400 250];
+    xLimP = [-250 400];
+    xLimR = [-500 1200];
 
     subplot(2,4,1); hold on %Accurate re. array
     title([unitTest.Properties.RowNames{uu},'-',unitTest.Area{uu}], 'FontSize',9)
@@ -144,13 +146,13 @@ for uu = 1:NUM_UNIT
     xlim(xLimP); ylim(yLim); set(gca, 'YColor','none')
 
     subplot(2,4,[3 4]); hold on %Accurate re. reward
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
-    plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
+    plot(tPlotRew, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlotRew, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlotRew-3500, sdfAE{uu}(:,3*(bb-1)+3), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
+      plot(tPlotRew, sdfAE{uu}(:,3*(bb-1)+3), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
     end
     if (COMPUTE_TIMING)
-      scatter(vecSig_Acc{uu}, yLim(2)/25, SIGDOT_SIZE, 'k')
+      scatter(vecSig_Acc{uu}(1:2:end), yLim(2)/25, SIGDOT_SIZE, 'k')
       plot(ones(2,1)*tSig_Acc(uu,:), yLim, 'k:')
     else
       line(ones(2,1)*unitTest.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
@@ -177,10 +179,10 @@ for uu = 1:NUM_UNIT
     xlabel('Time from response (ms)')
 
     subplot(2,4,[7 8]); hold on %Fast re. reward
-    plot(tPlotRew-3500, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
-    plot(tPlotRew-3500, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
+    plot(tPlotRew, sdfFC{uu}(:,3), 'Color', GREEN, 'LineWidth',1.25)
+    plot(tPlotRew, sdfAC{uu}(:,3), 'r', 'LineWidth',1.25)
     for bb = 1:NUM_BIN
-      plot(tPlotRew-3500, sdfFE{uu}(:,3*(bb-1)+3), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
+      plot(tPlotRew, sdfFE{uu}(:,3*(bb-1)+3), ':', 'Color',[0 colorPlot(bb) 0], 'LineWidth',1.25)
     end
     xlim(xLimR); ylim(yLim'); set(gca, 'YColor','none')
     xlabel('Time from reward (ms)')

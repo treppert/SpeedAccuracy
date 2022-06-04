@@ -1,4 +1,4 @@
-function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData , parmFitDa, parmFitEu , varargin )
+function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData ,  varargin )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -21,7 +21,6 @@ sigErr  = NaN(NUM_UNIT,NUM_RTBIN);
 hazard = NaN(NUM_UNIT,NUM_RTBIN);
 
 for uu = 1:NUM_UNIT
-  
   switch (unitData.Monkey{uu})
     case 'D'
       X = -(RTERR_QUANT_Da(:,1:NUM_RTBIN) + diff(RTERR_QUANT_Da,1,2)/2);
@@ -59,7 +58,7 @@ if ~isempty(uuHighlight)
   line(hazard(uuHighlight,:)', sig_Plot(uuHighlight,:)', 'Color','k', 'Marker','.', 'MarkerSize',12, 'LineWidth',1)
 end
 ylabel('Normalized error signal')
-xlabel('Shannon information')
+% xlabel('Shannon information')
 ppretty([5,3])
 
 end

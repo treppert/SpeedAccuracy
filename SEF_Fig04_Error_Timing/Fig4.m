@@ -32,6 +32,9 @@ plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 % Save RT error quantiles in table behavData.
 % 
 
+% Sessions including neurons signaling timing errors
+% kkTE = [3 4 5 6 8 9 12 14 15 16];
+
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D','E'});
 idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
@@ -42,5 +45,6 @@ spikesTest = spikesSAT(idxKeep);
 
 % sigTE = Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4C_ProbActive_ErrorTime( unitData )
+Fig4X_ErrorSignal_X_Hazard(unitTest)
 
 clear idx* MONKEY
