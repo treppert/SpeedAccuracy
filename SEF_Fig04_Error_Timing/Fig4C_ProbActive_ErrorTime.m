@@ -28,7 +28,7 @@ plot(T_VEC, PActiveAcc, 'r-', 'LineWidth',1.5)
 xlim(XLIM); ytickformat('%2.1f')
 xlabel('Time from reward (ms)')
 ylabel('P (active)')
-ppretty([5,2.5])
+ppretty([3,1.5])
 
 end%fxn:Fig4C_ProbActive_ErrorTime()
 

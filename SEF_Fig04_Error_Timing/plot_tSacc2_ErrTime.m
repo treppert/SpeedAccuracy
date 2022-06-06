@@ -1,4 +1,4 @@
-function [  ] = plot_tSacc2_SAT( behavData , varargin )
+function [  ] = plot_tSacc2_ErrTime( behavData , varargin )
 %plot_tSacc2_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -33,7 +33,7 @@ for kk = 1:NUM_SESS
   
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
-  idxTErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  idxTErr = behavData.Task_ErrTimeOnly{kk};
   
   %combine indexing
   idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxTErr);
@@ -53,32 +53,35 @@ cdfFC = cumsum(cdfFC,2);  cdfFE = cumsum(cdfFE,2);
 cdfAC = cumsum(cdfAC,2);  cdfAE = cumsum(cdfAE,2);
 
 %% Plotting - Distribution
+LINEWIDTH = 1.2;
+
 figure()
-GRAY = 0.5*ones(1,3);
 tReward = mean(behavData.Task_TimeReward);
 
 subplot(1,2,1) %Accurate condition
 for kk = 1:NUM_SESS
-  line(isiPlot, cdfAC, 'color','r', 'linewidth',1.0)
-  line(isiPlot, cdfAE, 'color',[.5 0 0], 'linewidth',1.0)
-  line(tReward*ones(1,2), [0 1], 'color','k', 'linestyle',':')
+  line(isiPlot, cdfAC(kk,:), 'color','r', 'linewidth',LINEWIDTH)
+  line(isiPlot, cdfAE(kk,:), 'color',[.4 0 0], 'linewidth',LINEWIDTH)
 end
-line(isiPlot, mean(cdfAC), 'color',GRAY, 'lineWidth',2.0)
-line(isiPlot, mean(cdfAE), 'color','k', 'lineWidth',2.0)
+line(tReward*ones(1,2), [0 1], 'color','k', 'linestyle',':')
+% line(isiPlot, mean(cdfAC), 'color',GRAY, 'lineWidth',2.0)
+% line(isiPlot, mean(cdfAE), 'color','k', 'lineWidth',2.0)
 xlim([500 2200]); ylim([0 1]); ytickformat('%2.1f')
 xlabel('Inter-saccade interval (ms)')
 ylabel('Cumulative probability')
+legend('Corr','Error', 'location','northwest')
 
 subplot(1,2,2) %Fast condition
 for kk = 1:NUM_SESS
-  line(isiPlot, cdfFC, 'color',[0 .7 0], 'linewidth',1.0)
-  line(isiPlot, cdfFE, 'color',[0 .5 0], 'linewidth',1.0)
-  line(tReward*ones(1,2), [0 1], 'color','k', 'linestyle',':')
+  line(isiPlot, cdfFC(kk,:), 'color',[0 .8 0], 'linewidth',LINEWIDTH)
+  line(isiPlot, cdfFE(kk,:), 'color',[0 .4 0], 'linewidth',LINEWIDTH)
 end
-line(isiPlot, mean(cdfFC), 'color',GRAY, 'lineWidth',2.0)
-line(isiPlot, nanmean(cdfFE), 'color','k', 'lineWidth',2.0)
+line(tReward*ones(1,2), [0 1], 'color','k', 'linestyle',':')
+% line(isiPlot, mean(cdfFC), 'color',GRAY, 'lineWidth',2.0)
+% line(isiPlot, nanmean(cdfFE), 'color','k', 'lineWidth',2.0)
 xlim([500 2200]); ylim([0 1]); ytickformat('%2.1f')
 xlabel('Inter-saccade interval (ms)')
+legend('Corr','Error', 'location','northwest')
 
 ppretty([6.4,2])
 

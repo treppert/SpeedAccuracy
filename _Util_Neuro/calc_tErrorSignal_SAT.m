@@ -1,4 +1,4 @@
-function [ tLim , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin )
+function [ tSig , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin )
 %calc_tErrorSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -42,7 +42,7 @@ iiNoEffect = checkEffectSize(sdfCorr ,sdfErr ,MIN_REL_MAGNITUDE);
 pVal(iiNoEffect,1) = 1.0;
 
 %Search for MIN_DUR consecutive time points
-tLim(1) = checkMinDuration(pVal(:,1), args.pvalMW, MIN_DURATION, MAX_SKIP);
+tSig(1) = checkMinDuration(pVal(:,1), args.pvalMW, MIN_DURATION, MAX_SKIP);
 
 %% Compute end time and check effect size
 sdfCorr = fliplr(sdfCorr); %start search from last timepoint
@@ -63,7 +63,7 @@ iiNoEffect = checkEffectSize(sdfCorr ,sdfErr ,MIN_REL_MAGNITUDE);
 pVal(iiNoEffect,2) = 1.0;
 
 %Search for MIN_DUR consecutive time points
-tLim(2) = checkMinDuration(pVal(:,2), args.pvalMW, MIN_DURATION, MAX_SKIP);
+tSig(2) = checkMinDuration(pVal(:,2), args.pvalMW, MIN_DURATION, MAX_SKIP);
 
 %% Save output as time points for plotting
 vecSig = find(pVal(:,1) < args.pvalMW);

@@ -1,30 +1,36 @@
-function [ sdf ] = compute_SDF_ErrTime( unitData , behavData , varargin )
+function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varargin )
 %compute_SDF_ErrTime Summary of this function goes here
 %   
 %   varargin
 %   nBin -- Binning by magnitude of timing error
 %   minISI -- Minumum acceptable latency of the second saccade
 %   
+%   varargout
+%   error signal timing
 
 args = getopt(varargin, {{'nBin=',1}, {'minISI=',600}});
 
 %specify windows for recording SDF
 tRec    = 3500 + (-1300 : 400); %re. array and primary
 tRec_Rew = 3500 + (-500 : 1200); %re. reward
-nSamp = length(tRec);
+NUM_SAMP = length(tRec);
 
 %bin by timing error magnitude
 NBIN_TERR = args.nBin;
 ERR_LIM = linspace(0, 1, NBIN_TERR+1);
 
-%initializations
+%initializations - SDF
 NUM_UNIT = size(unitData,1);
 sdfFC = cell(NUM_UNIT,1); %Fast correct
-[sdfFC{:}] = deal(NaN(nSamp,3)); %re. array | primary | reward
+[sdfFC{:}] = deal(NaN(NUM_SAMP,3)); %re. array | primary | reward
 sdfFE = cell(NUM_UNIT,NBIN_TERR); %Fast error
-[sdfFE{:,:}] = deal(NaN(nSamp,3)); %re. array | primary | reward
+[sdfFE{:,:}] = deal(NaN(NUM_SAMP,3)); %re. array | primary | reward
 sdfAC = sdfFC; %Accurate correct
 sdfAE = sdfFE; %Accurate error
+
+%initializations - signal timing
+[tSig{1:NUM_UNIT,1}] = deal(NaN(1,2)); %start|finish
+vecSig = cell(NUM_UNIT,1); %vector of significance for plotting
 
 for uu = 1:NUM_UNIT
   fprintf('%s \n', unitData.Properties.RowNames{uu})
@@ -88,11 +94,25 @@ for uu = 1:NUM_UNIT
     sdfAE{uu,bb}(:,3) = nanmean(sdfR(idxAEbb, tRec_Rew));
   end
   
+  %estimate signal timing
+  if (nargout > 1)
+    [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,tRec_Rew), sdfR(idxAE,tRec_Rew), 'minDur',200);
+    %zero times on time of reward
+    vecSig{uu} = b + tRec_Rew(1) - 3500;
+    tSig{uu}(1) = a(1) + tRec_Rew(1) - 3500;
+    tSig{uu}(2) = tRec_Rew(end) - a(2) - 3500;
+  end
+  
 end% for : unit (uu)
 
 sdfCorr = struct('Fast',sdfFC, 'Acc',sdfAC);
 sdfErr  = struct('Fast',sdfFE, 'Acc',sdfAE);
-sdf = struct('Corr',sdfCorr, 'Err',sdfErr);
+vecTime = transpose([tRec ; tRec ; tRec_Rew]); %save time vector
+sdf = struct('Corr',sdfCorr, 'Err',sdfErr, 'Time',vecTime);
+
+if (nargout > 1)
+  varargout{1} = struct('lim',tSig, 'vec',vecSig);
+end
 
 end % fxn : compute_SDF_ErrTime()
 

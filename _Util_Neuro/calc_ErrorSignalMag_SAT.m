@@ -2,7 +2,7 @@ function [ A_Err ] = calc_ErrorSignalMag_SAT( sdfCorr , sdfErr , varargin )
 %calc_ErrorSignalMag_SAT Summary of this function goes here
 %   We calculate the magnitude of the choice error-related signal as the
 %   integral of the difference between SDFs on error and correct trials.
-%   This integral is computed for the first 150 ms of error signaling.
+% 
 
 args = getopt(varargin, {{'idxTest=',[]}, 'abs'});
 

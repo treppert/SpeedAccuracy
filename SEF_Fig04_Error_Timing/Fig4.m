@@ -9,19 +9,23 @@ idxMonkey = ismember(unitData.Monkey, MONKEY);
 idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
 unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
 
-sdfTE = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
+% Fig4A_ErrRate_X_Trial(behavData, 'monkey',MONKEY)
+% plot_tSacc2_ErrTime(behavData , 'monkey',MONKEY)
+% plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
+% plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
+
+% [sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
 plot_SDF_ErrTime(sdfTE, unitTest)
 
-% Fig4A_ErrRate_X_Trial(behavData, 'monkey',MONKEY)
-Fig4C_ProbActive_ErrorTime(unitTest)
+%TODO - Does signal timing change with TE magnitude
+%TODO - Does signal magnitude change with TE magnitude
+%TODO - Does signal magnitude change with dRT (control for TE magnitude)
 
-% sigTE = Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
+% Fig4C_ProbActive_ErrorTime(unitTest)
+% Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4X_ErrorSignal_X_Hazard(unitTest, sdfAC, sdfAE)
 
 %% RT and hazard rate
-% plot_tSacc2_SAT(behavData , 'monkey',MONKEY)
-% plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
-% plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
 % % These fits were computed with plot_hazard_RTerr()
 % pFitMean_Da = [1.595e-6, 1.013e-3, .1588];

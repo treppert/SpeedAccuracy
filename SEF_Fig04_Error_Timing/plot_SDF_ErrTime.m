@@ -49,7 +49,7 @@ for uu = 1:NUM_UNIT
   for bb = 1:NBIN_TERR
     plot(tRec_Rew, sdfTE.Err(uu,bb).Acc(:,3), ':', 'Color',[SHADE_PLOT(bb) 0 0], 'LineWidth',1.25)
   end
-%   scatter(vecSig_Acc{uu}(1:2:end), yLim(2)/25, SIGDOT_SIZE, 'k')
+  scatter(unitData.SignalTE_TimeVec{uu}, yLim(2)/25, 4, 'k')
   line(ones(2,1)*unitData.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
   xlim(tLimR); ylim(yLim); set(gca, 'YColor','none')
 
