@@ -33,11 +33,11 @@ idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 unitTest = unitData(idxKeep,:);
 
-sdfTE = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
+% sdfTE = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
 plot_SDF_ErrTime(sdfTE, unitTest)
 
 % sigTE = Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4C_ProbActive_ErrorTime( unitData )
-% Fig4X_ErrorSignal_X_Hazard(unitTest, sdfAC, sdfAE)
+Fig4X_ErrorSignal_X_Hazard(unitTest, sdfAC, sdfAE)
 
 clear idx* MONKEY

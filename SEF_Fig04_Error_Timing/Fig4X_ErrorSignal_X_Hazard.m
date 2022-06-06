@@ -1,18 +1,13 @@
-function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData ,  sdfCorr , sdfErr )
+function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData ,  sdfTE )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 NUM_UNIT = size(unitData,1);
 OFFSET_TIME = 501; %number of samples prior to reward (plot_SDF_ErrTime.m)
 
-NBIN_dRT = 2;
-NBIN_TERR = 2;
-
-%bin by change in RT
+NBIN_TERR = size(sdfTE.Err,2); %bin by timing error magnitude
+NBIN_dRT = 2; %bin by RT adjustment
 BINLIM_dRT = linspace(0, 1, NBIN_dRT+1);
-
-%bin by timing error magnitude quantile
-BINLIM_TERR = linspace(0, 1, NBIN_TERR+1);
 
 %initializations
 sigCorr = NaN(NUM_UNIT,1);
@@ -34,8 +29,6 @@ for uu = 1:NUM_UNIT
   %combine indexing
   idxAE = (idxAcc & idxTErr & ~idxSwitch);
   
-  %get quantiles of RT error magnitude for binning
-  binlim_RTerr  = quantile(RTerr_kk(idxAE), BINLIM_TERR);
   %get quantiles of dRT for binning
   binlim_dRT = quantile(dRT_kk(idxAE), BINLIM_dRT);
   
