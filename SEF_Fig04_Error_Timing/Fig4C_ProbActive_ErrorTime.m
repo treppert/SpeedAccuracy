@@ -3,26 +3,31 @@ function [ ] = Fig4C_ProbActive_ErrorTime( unitData )
 %   Detailed explanation goes here
 
 NUM_UNIT = size(unitData,1);
-T_VEC = (-300 : 800);  OFFSET = 301;
 
-PActiveAcc = false(NUM_UNIT,length(T_VEC));
+OFFSET = 500;  T_VEC = (-OFFSET : 1500);
+N_SAMP = length(T_VEC);
+
+%initialization
+PActiveAcc = false(NUM_UNIT,N_SAMP);
+
 for uu = 1:NUM_UNIT
-  tErrStart_Acc = unitData.RewardSignal_Time(uu,3);
-  tErrEnd_Acc = unitData.RewardSignal_Time(uu,4);
-  PActiveAcc(uu,(tErrStart_Acc : tErrEnd_Acc) + OFFSET) = true;
+  tSignalStart  = unitData.SignalTE_Time(uu,1);
+  tSignalEnd    = unitData.SignalTE_Time(uu,2);
+  
+  PActiveAcc(uu,(tSignalStart : tSignalEnd) + OFFSET) = true;
 end % for : unit(uu)
 
 PActiveAcc = sum(PActiveAcc,1) / NUM_UNIT;
 
 %% Plotting
-tCDFAcc = unitData.RewardSignal_Time(:,3);
+XLIM = [-300 900];
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
 plot(T_VEC, PActiveAcc, 'r-', 'LineWidth',1.5)
+xlim(XLIM); ytickformat('%2.1f')
 xlabel('Time from reward (ms)')
 ylabel('P (active)')
-ytickformat('%2.1f')
 ppretty([5,2.5])
 
 end%fxn:Fig4C_ProbActive_ErrorTime()

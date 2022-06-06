@@ -3,7 +3,7 @@ function [ ] = Fig4X_ErrorSignal_X_Hazard( unitData ,  sdfTE )
 %   Detailed explanation goes here
 
 NUM_UNIT = size(unitData,1);
-OFFSET_TIME = 501; %number of samples prior to reward (plot_SDF_ErrTime.m)
+OFFSET_TIME = 501; %number of samples prior to reward (compute_SDF_ErrTime.m)
 
 NBIN_TERR = size(sdfTE.Err,2); %bin by timing error magnitude
 NBIN_dRT = 2; %bin by RT adjustment

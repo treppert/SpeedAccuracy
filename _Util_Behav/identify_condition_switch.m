@@ -13,11 +13,11 @@ trial_switch = new_struct({'A2F','F2A','A2N','N2F'}, 'dim',[1,NUM_SESSION]);
 
 for kk = 1:NUM_SESSION
   
-  num_trials = length(behavData.Task_SATCondition{kk});
-  condition = double(behavData.Task_SATCondition{kk});
+  nTrial_kk = behavData.Task_NumTrials(kk);
+  condition = single(behavData.Task_SATCondition{kk});
   condition(condition == 0) = NaN;
   
-  %identify all trials with condition switch
+  %identify all trials with task condition change
   tmp_F2A = find(diff(condition) == (FLAG_ACC - FLAG_FAST)) + 1 ;
   tmp_A2F = find(diff(condition) == (FLAG_FAST - FLAG_ACC)) + 1 ;
   
@@ -27,8 +27,8 @@ for kk = 1:NUM_SESSION
   end
   
   %remove those trials closest to session end
-  tmp_F2A(tmp_F2A > (num_trials-4)) = [];
-  tmp_A2F(tmp_A2F > (num_trials-4)) = [];
+  tmp_F2A(tmp_F2A > (nTrial_kk-4)) = [];
+  tmp_A2F(tmp_A2F > (nTrial_kk-4)) = [];
   
   if (DEBUG)
     figure(); hold on
@@ -39,8 +39,8 @@ for kk = 1:NUM_SESSION
   trial_switch(kk).A2F = tmp_A2F;
   
   if ismember(behavData.Task_Session{kk}(1), {'Q','S'})
-    tmp_N2F(tmp_N2F > (num_trials-9)) = [];
-    tmp_A2N(tmp_A2N > (num_trials-9)) = [];
+    tmp_N2F(tmp_N2F > (nTrial_kk-9)) = [];
+    tmp_A2N(tmp_A2N > (nTrial_kk-9)) = [];
     trial_switch(kk).A2N = tmp_A2N;
     trial_switch(kk).N2F = tmp_N2F;
   end
