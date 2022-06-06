@@ -20,36 +20,30 @@ dRT_Fast = dRT_Acc;
 %% Collect dRT across sessions
 for kk = 1:NUM_SESS
   RTkk = transpose(behavData.Sacc_RT{kk});
+  dRT_kk = [diff(behavData.Sacc_RT{kk}); Inf]';
+  
+  %index by condition
+  idxAcc = (behavData.Task_SATCondition{kk} == 1);
+  idxFast = (behavData.Task_SATCondition{kk} == 3);
   
   %index by trial outcome
   idxCorr = (behavData.Task_Correct{kk});
   idxErrChc  = behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   idxErrTime = behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
   
-  %index by condition
-  idxAcc = (behavData.Task_SATCondition{kk} == 1);
-  idxFast = (behavData.Task_SATCondition{kk} == 3);
-  
   %exclude trials at task condition switch
   idxSwitch = false(behavData.Task_NumTrials(kk),1);
   idxSwitch(sort([trialSwitch.A2F{kk}; trialSwitch.F2A{kk}])) = true;
   
-  trialAC = find(idxAcc & idxCorr & ~idxSwitch); trialAC(end) = [];
-  trialFC = find(idxFast & idxCorr & ~idxSwitch); trialFC(end) = [];
-  trialAEC = find(idxAcc & idxErrChc & ~idxSwitch); trialAEC(end) = [];
-  trialFEC = find(idxFast & idxErrChc & ~idxSwitch); trialFEC(end) = [];
-  trialAET = find(idxAcc & idxErrTime & ~idxSwitch); trialAET(end) = [];
-  trialFET = find(idxFast & idxErrTime & ~idxSwitch); trialFET(end) = [];
+  %combine indexing and group
+  drtAcc{kk,1} = dRT_kk(idxAcc & idxCorr & ~idxSwitch); %correct
+  drtAcc{kk,2} = dRT_kk(idxAcc & idxErrChc & ~idxSwitch); %choice error
+  drtAcc{kk,3} = dRT_kk(idxAcc & idxErrTime & ~idxSwitch); %timing error
+  drtFast{kk,1} = dRT_kk(idxFast & idxCorr & ~idxSwitch); %correct
+  drtFast{kk,2} = dRT_kk(idxFast & idxErrChc & ~idxSwitch); %choice error
+  drtFast{kk,3} = dRT_kk(idxFast & idxErrTime & ~idxSwitch); %timing error
   
-  %compute change in RT from Trial {n-1} to {n} re. outcome of Trial {n-1}
-  drtAcc{kk,1} = RTkk(trialAC+1)-RTkk(trialAC); %correct
-  drtAcc{kk,2} = RTkk(trialAEC+1)-RTkk(trialAEC); %choice error
-  drtAcc{kk,3} = RTkk(trialAET+1)-RTkk(trialAET); %timing error
-  drtFast{kk,1} = RTkk(trialFC+1)-RTkk(trialFC); %correct
-  drtFast{kk,2} = RTkk(trialFEC+1)-RTkk(trialFEC); %choice error
-  drtFast{kk,3} = RTkk(trialFET+1)-RTkk(trialFET); %timing error
-  
-  %save mean values
+  %save median values
   dRT_Acc(kk,1) = nanmedian(drtAcc{kk,1});
   dRT_Acc(kk,2) = nanmedian(drtAcc{kk,2});
   dRT_Acc(kk,3) = nanmedian(drtAcc{kk,3});

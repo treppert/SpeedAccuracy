@@ -1,10 +1,11 @@
 %% Fig4.m -- Figure 4 header file
-MONKEY = {'D'};
+MONKEY = {'D','E'};
 
 %% Behavior: RT and hazard rate
 % Fig1D_Behav_X_Trial() %Fig. 4A
 % plot_tSacc2_SAT(behavData , 'monkey',MONKEY)
-plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
+% plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
+% plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
 % % These fits were computed with plot_hazard_RTerr()
 % pFitMean_Da = [1.595e-6, 1.013e-3, .1588];
@@ -23,28 +24,20 @@ plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 % % plotHazardRate(behavData(1:16,:)) *TODO - Debug
 
 %% Physiology
-% Notes
-% Run plot_SDF_ErrTime.m to compute spike density functions for all neurons
-% signaling timing errors.
-% Save SDF (sdfAC, sdfAE, sdfFC, sdfFE) in table unitData.
-% 
-% Run compute_RTerr_Quantiles.m to compute quantiles of RT error.
-% Save RT error quantiles in table behavData.
-% 
-
 % Sessions including neurons signaling timing errors
 % kkTE = [3 4 5 6 8 9 12 14 15 16];
 
 idxArea = ismember(unitData.Area, {'SEF'});
-idxMonkey = ismember(unitData.Monkey, {'D','E'});
+idxMonkey = ismember(unitData.Monkey, MONKEY);
 idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
 idxKeep = (idxArea & idxMonkey & idxFunction);
-
 unitTest = unitData(idxKeep,:);
-spikesTest = spikesSAT(idxKeep);
+
+sdfTE = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
+plot_SDF_ErrTime(sdfTE, unitTest)
 
 % sigTE = Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4C_ProbActive_ErrorTime( unitData )
-Fig4X_ErrorSignal_X_Hazard(unitTest)
+% Fig4X_ErrorSignal_X_Hazard(unitTest, sdfAC, sdfAE)
 
 clear idx* MONKEY
