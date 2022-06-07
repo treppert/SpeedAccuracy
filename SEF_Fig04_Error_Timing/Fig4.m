@@ -15,10 +15,10 @@ unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
 % plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
 % [sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
-plot_SDF_ErrTime(sdfTE, unitTest)
+% plot_SDF_ErrTime(sdfTE, unitTest, 'hide', 'print')
 
-%TODO - Does signal timing change with TE magnitude
-%TODO - Does signal magnitude change with TE magnitude
+estimate_TESignal_Magnitude(sdfTE, unitTest)
+
 %TODO - Does signal magnitude change with dRT (control for TE magnitude)
 
 % Fig4C_ProbActive_ErrorTime(unitTest)

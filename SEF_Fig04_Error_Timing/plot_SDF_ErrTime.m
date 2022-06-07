@@ -2,11 +2,12 @@ function [  ] = plot_SDF_ErrTime( sdfTE , unitData , varargin )
 %plot_SDF_ErrTime Summary of this function goes here
 %   
 %   varargin
-%   'hide' (y/n)
-%   'print' (y/n)
+%   'hide' (y/n) - Don't show figures
+%   'print' (y/n) - Print to directory PRINTDIR
+%   'significant' (y/n) - show timepoints of significant difference
 % 
 
-args = getopt(varargin, {'hide','print'});
+args = getopt(varargin, {'hide','print','significant'});
 
 NUM_UNIT = length(sdfTE.Corr);
 tRec     = (-1300 : 400);
@@ -49,7 +50,9 @@ for uu = 1:NUM_UNIT
   for bb = 1:NBIN_TERR
     plot(tRec_Rew, sdfTE.Err(uu,bb).Acc(:,3), ':', 'Color',[SHADE_PLOT(bb) 0 0], 'LineWidth',1.25)
   end
-  scatter(unitData.SignalTE_TimeVec{uu}, yLim(2)/25, 4, 'k')
+  if (args.significant)
+    scatter(unitData.SignalTE_TimeVec{uu}, yLim(2)/25, 4, 'k')
+  end
   line(ones(2,1)*unitData.SignalTE_Time(uu,:), yLim, 'color','k', 'linestyle',':')
   xlim(tLimR); ylim(yLim); set(gca, 'YColor','none')
 

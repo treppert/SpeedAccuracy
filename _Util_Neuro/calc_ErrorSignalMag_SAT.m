@@ -4,13 +4,13 @@ function [ A_Err ] = calc_ErrorSignalMag_SAT( sdfCorr , sdfErr , varargin )
 %   integral of the difference between SDFs on error and correct trials.
 % 
 
-args = getopt(varargin, {{'idxTest=',[]}, 'abs'});
+args = getopt(varargin, {{'limTest=',[]}, 'abs'});
 
 %parse inputs
-if isempty(args.idxTest)
+if isempty(args.limTest)
   idxTest = (1 : length(sdfCorr));
 else
-  idxTest = args.idxTest;
+  idxTest = (args.limTest(1) : args.limTest(2));
 end
 
 %compute integral of difference between correct and error activation
