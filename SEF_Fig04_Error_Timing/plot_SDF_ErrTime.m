@@ -14,8 +14,8 @@ tRec     = (-1300 : 400);
 tRec_Rew = (-500 : 1200);
 
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
-NBIN_TERR = size(sdfTE.Err,2);
-SHADE_PLOT = linspace(0.8, 0.5, NBIN_TERR);
+NBIN_TERR = 3;%size(sdfTE.Err,2);
+SHADE_PLOT = linspace(0.8, 0.3, NBIN_TERR);
 GREEN = [0 .7 0];
 
 tLimA = [-400 250]; %re. array

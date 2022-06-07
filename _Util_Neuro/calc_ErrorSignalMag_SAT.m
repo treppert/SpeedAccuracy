@@ -14,8 +14,13 @@ else
 end
 
 %compute integral of difference between correct and error activation
-A_Err = sum(sdfErr(idxTest) - sdfCorr(idxTest)); %sp/sec
-A_Err = A_Err / (idxTest(end)-idxTest(1)) * 1000; %spikes
+% A_Err = sum(sdfErr(idxTest) - sdfCorr(idxTest)); %sp/sec
+% A_Err = A_Err / (idxTest(end)-idxTest(1)) * 1000; %spikes
+
+%compute contrast ratio
+muCorr = mean(sdfCorr(idxTest));
+muErr  = mean(sdfErr(idxTest));
+A_Err = (muErr - muCorr) / (muErr + muCorr);
 
 if (args.abs)
   A_Err = abs(A_Err);

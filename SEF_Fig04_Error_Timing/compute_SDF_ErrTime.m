@@ -4,33 +4,39 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 %   varargin
 %   nBin -- Binning by magnitude of timing error
 %   minISI -- Minumum acceptable latency of the second saccade
+%   estTime -- Flag to estimate signal timing
 %   
 %   varargout
 %   error signal timing
+% 
 
-args = getopt(varargin, {{'nBin=',1}, {'minISI=',600}});
+args = getopt(varargin, {{'nBin=',1}, {'minISI=',600}, 'estTime'});
 
 %specify windows for recording SDF
 tRec    = 3500 + (-1300 : 400); %re. array and primary
 tRec_Rew = 3500 + (-500 : 1200); %re. reward
 NUM_SAMP = length(tRec);
 
-%bin by timing error magnitude
-NBIN_TERR = args.nBin;
-ERR_LIM = linspace(0, 1, NBIN_TERR+1);
+NBIN_TERR = args.nBin; %bin by timing error magnitude
+BINLIM_TERR = linspace(0, 1, NBIN_TERR+1);
+
+NBIN_dRT = 1; %bin by RT adjustment
+BINLIM_dRT = linspace(0, 1, NBIN_dRT+1);
 
 %initializations - SDF
 NUM_UNIT = size(unitData,1);
 sdfFC = cell(NUM_UNIT,1); %Fast correct
 [sdfFC{:}] = deal(NaN(NUM_SAMP,3)); %re. array | primary | reward
-sdfFE = cell(NUM_UNIT,NBIN_TERR); %Fast error
+sdfFE = cell(NUM_UNIT,NBIN_TERR*NBIN_dRT); %Fast error
 [sdfFE{:,:}] = deal(NaN(NUM_SAMP,3)); %re. array | primary | reward
 sdfAC = sdfFC; %Accurate correct
 sdfAE = sdfFE; %Accurate error
 
 %initializations - signal timing
-[tSig{1:NUM_UNIT,1}] = deal(NaN(1,2)); %start|finish
-vecSig = cell(NUM_UNIT,1); %vector of significance for plotting
+if (args.estTime)
+  [tSig{1:NUM_UNIT,1}] = deal(NaN(1,2)); %start|finish
+  vecSig = cell(NUM_UNIT,1); %vector of significance for plotting
+end
 
 for uu = 1:NUM_UNIT
   fprintf('%s \n', unitData.Properties.RowNames{uu})
@@ -42,6 +48,8 @@ for uu = 1:NUM_UNIT
   ISI = RT_S - RT_P; %inter-saccade interval
   tRew = behavData.Task_TimeReward(kk); %time of reward (fixed)
   tRew = RT_P + tRew; %re. array
+  
+  dRT_kk = [diff(behavData.Sacc_RT{kk}); Inf];
   
   %compute spike density function and align appropriately
   spikes = load_spikes_SAT(unitData.Index(uu));
@@ -56,7 +64,7 @@ for uu = 1:NUM_UNIT
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
-  idxErr = (behavData.Task_ErrTime{kk} & ~(behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  idxErr = behavData.Task_ErrTimeOnly{kk};
   
   %combine indexing
   idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= args.minISI) & (RTerr < 0));
@@ -65,8 +73,11 @@ for uu = 1:NUM_UNIT
   %work off of absolute error for Accurate condition
   RTerr = abs(RTerr);
   %compute RT error quantiles for binning based on distribution of error
-  errLim_Acc  = quantile(RTerr(idxAE), ERR_LIM);
-  errLim_Fast = quantile(RTerr(idxFE), ERR_LIM);
+  binLim_RTerr_Acc  = quantile(RTerr(idxAE), BINLIM_TERR);
+  binLim_RTerr_Fast = quantile(RTerr(idxFE), BINLIM_TERR);
+  
+  %get quantiles of dRT for binning
+  binLim_dRT = quantile(dRT_kk(idxAE), BINLIM_dRT);
   
   %% Compute mean SDF
   %Correct trials - Fast
@@ -80,22 +91,26 @@ for uu = 1:NUM_UNIT
   
   %Error trials - Fast
   for bb = 1:NBIN_TERR
-    idxFEbb = (idxFE & (RTerr > errLim_Fast(bb)) & (RTerr <= errLim_Fast(bb+1)));
+    idxFEbb = (idxFE & (RTerr > binLim_RTerr_Fast(bb)) & (RTerr <= binLim_RTerr_Fast(bb+1)));
     sdfFE{uu,bb}(:,1) =    mean(sdfA(idxFEbb, tRec));
     sdfFE{uu,bb}(:,2) = nanmean(sdfP(idxFEbb, tRec));
     sdfFE{uu,bb}(:,3) = nanmean(sdfR(idxFEbb, tRec_Rew));
   end
   
   %Error trials - Accurate
+  %TODO - Fix indexing
   for bb = 1:NBIN_TERR
-    idxAEbb = (idxAE & (RTerr > errLim_Acc(bb)) & (RTerr <= errLim_Acc(bb+1)));
-    sdfAE{uu,bb}(:,1) =    mean(sdfA(idxAEbb, tRec));
-    sdfAE{uu,bb}(:,2) = nanmean(sdfP(idxAEbb, tRec));
-    sdfAE{uu,bb}(:,3) = nanmean(sdfR(idxAEbb, tRec_Rew));
+    idxAEbb = (idxAE & (RTerr > binLim_RTerr_Acc(bb)) & (RTerr <= binLim_RTerr_Acc(bb+1)));
+    for ii = 1:NBIN_dRT
+      idxAEbb_ii = (idxAEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
+      sdfAE{uu,3*(bb-1)+ii}(:,1) =    mean(sdfA(idxAEbb_ii, tRec));
+      sdfAE{uu,3*(bb-1)+ii}(:,2) = nanmean(sdfP(idxAEbb_ii, tRec));
+      sdfAE{uu,3*(bb-1)+ii}(:,3) = nanmean(sdfR(idxAEbb_ii, tRec_Rew));
+    end
   end
   
   %estimate signal timing
-  if (nargout > 1)
+  if (args.estTime)
     [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,tRec_Rew), sdfR(idxAE,tRec_Rew), 'minDur',200);
     %zero times on time of reward
     vecSig{uu} = b + tRec_Rew(1) - 3500;
@@ -110,8 +125,10 @@ sdfErr  = struct('Fast',sdfFE, 'Acc',sdfAE);
 vecTime = transpose([tRec ; tRec ; tRec_Rew]); %save time vector
 sdf = struct('Corr',sdfCorr, 'Err',sdfErr, 'Time',vecTime);
 
-if (nargout > 1)
+if (args.estTime)
   varargout{1} = struct('lim',tSig, 'vec',vecSig);
+else
+  varargout{1} = [];
 end
 
 end % fxn : compute_SDF_ErrTime()

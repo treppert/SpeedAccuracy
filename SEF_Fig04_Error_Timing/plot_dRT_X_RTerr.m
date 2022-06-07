@@ -40,11 +40,11 @@ for kk = 1:NUM_SESS
   idxAE = (idxAcc & idxTErr & ~idxSwitch);
   
   %get quantiles of RT error magnitude for binning
-  binlim_RTerr  = quantile(RTerr_kk(idxAE), BINLIM_TERR);
+  binLim_RTerr  = quantile(RTerr_kk(idxAE), BINLIM_TERR);
   
   %loop over timing error magnitude bins
   for mm = 1:NUM_BIN_TERR
-    idx_AEmm = (idxAE & (RTerr_kk > binlim_RTerr(mm)) & (RTerr_kk <= binlim_RTerr(mm+1)));
+    idx_AEmm = (idxAE & (RTerr_kk > binLim_RTerr(mm)) & (RTerr_kk <= binLim_RTerr(mm+1)));
     
     for ii = 1:NUM_BIN_dRT
       idx_ii = (dRT_kk > BINLIM_dRT(ii)) & (dRT_kk <= BINLIM_dRT(ii+1));
