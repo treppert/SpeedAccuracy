@@ -2,7 +2,8 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 %compute_SDF_ErrTime Summary of this function goes here
 %   
 %   varargin
-%   nBin -- Binning by magnitude of timing error
+%   nBin_TE -- Binning by magnitude of timing error
+%   nBin_dRT -- Binning by adjustment in RT on trial {n+1}
 %   minISI -- Minumum acceptable latency of the second saccade
 %   estTime -- Flag to estimate signal timing
 %   
@@ -10,17 +11,17 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 %   error signal timing
 % 
 
-args = getopt(varargin, {{'nBin=',1}, {'minISI=',600}, 'estTime'});
+args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',1}, {'minISI=',600}, 'estTime'});
 
 %specify windows for recording SDF
 tRec    = 3500 + (-1300 : 400); %re. array and primary
 tRec_Rew = 3500 + (-500 : 1200); %re. reward
 NUM_SAMP = length(tRec);
 
-NBIN_TERR = args.nBin; %bin by timing error magnitude
+NBIN_TERR = args.nBin_TE; %bin by timing error magnitude
 BINLIM_TERR = linspace(0, 1, NBIN_TERR+1);
 
-NBIN_dRT = 1; %bin by RT adjustment
+NBIN_dRT = args.nBin_dRT; %bin by RT adjustment
 BINLIM_dRT = linspace(0, 1, NBIN_dRT+1);
 
 %initializations - SDF
@@ -92,13 +93,15 @@ for uu = 1:NUM_UNIT
   %Error trials - Fast
   for bb = 1:NBIN_TERR
     idxFEbb = (idxFE & (RTerr > binLim_RTerr_Fast(bb)) & (RTerr <= binLim_RTerr_Fast(bb+1)));
-    sdfFE{uu,bb}(:,1) =    mean(sdfA(idxFEbb, tRec));
-    sdfFE{uu,bb}(:,2) = nanmean(sdfP(idxFEbb, tRec));
-    sdfFE{uu,bb}(:,3) = nanmean(sdfR(idxFEbb, tRec_Rew));
+    for ii = 1:NBIN_dRT
+      idxFEbb_ii = (idxFEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
+      sdfFE{uu,3*(bb-1)+ii}(:,1) =    mean(sdfA(idxFEbb_ii, tRec));
+      sdfFE{uu,3*(bb-1)+ii}(:,2) = nanmean(sdfP(idxFEbb_ii, tRec));
+      sdfFE{uu,3*(bb-1)+ii}(:,3) = nanmean(sdfR(idxFEbb_ii, tRec_Rew));
+    end
   end
   
   %Error trials - Accurate
-  %TODO - Fix indexing
   for bb = 1:NBIN_TERR
     idxAEbb = (idxAE & (RTerr > binLim_RTerr_Acc(bb)) & (RTerr <= binLim_RTerr_Acc(bb+1)));
     for ii = 1:NBIN_dRT
@@ -122,7 +125,7 @@ end% for : unit (uu)
 
 sdfCorr = struct('Fast',sdfFC, 'Acc',sdfAC);
 sdfErr  = struct('Fast',sdfFE, 'Acc',sdfAE);
-vecTime = transpose([tRec ; tRec ; tRec_Rew]); %save time vector
+vecTime = transpose([tRec ; tRec ; tRec_Rew] - 3500); %save time vector
 sdf = struct('Corr',sdfCorr, 'Err',sdfErr, 'Time',vecTime);
 
 if (args.estTime)

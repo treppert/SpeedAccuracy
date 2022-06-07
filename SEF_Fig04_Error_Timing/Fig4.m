@@ -14,10 +14,11 @@ unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
 % plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 % plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
-% [sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, 'nBin',2, 'minISI',600);
-% plot_SDF_ErrTime(sdfTE, unitTest, 'hide', 'print')
+[sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, ...
+  'nBin_TE',2, 'nBin_dRT',3, 'minISI',600);
+% plot_SDF_ErrTime(sdfTE, unitTest, 'hide','print')
 
-estimate_TESignal_Magnitude(sdfTE, unitTest)
+sigTE = estimate_TESignal_Magnitude(sdfTE, unitTest);
 
 %TODO - Does signal magnitude change with dRT (control for TE magnitude)
 
