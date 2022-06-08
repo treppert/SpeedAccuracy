@@ -14,14 +14,14 @@ unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
 % plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 % plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
-NBIN_TE = 2;
-NBIN_dRT = 1;
+NBIN_TE = 1;
+NBIN_dRT = 2;
 [sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, ...
-  'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, 'minISI',600, 'estTime');
-plot_SDF_ErrTime(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, ...
-  'tSig_TE',tSigTE, 'hide', 'print', 'significant')
+  'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, 'minISI',600);
+% plot_SDF_ErrTime(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, ...
+%   'tSig_TE',tSigTE, 'hide', 'print', 'significant')
 
-% sigTE = estimate_TESignal_Magnitude(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT);
+sigTE = compute_TESignal_X_dRT(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, 'plot_cdf');
 
 % Fig4C_ProbActive_ErrorTime(unitTest)
 % Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
