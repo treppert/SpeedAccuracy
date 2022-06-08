@@ -14,9 +14,9 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',1}, {'minISI=',600}, 'estTime'});
 
 %specify windows for recording SDF
-tRec    = 3500 + (-1300 : 400); %re. array and primary
-tRec_Rew = 3500 + (-500 : 1200); %re. reward
-NUM_SAMP = length(tRec);
+iRec    = 3500 + (-1200 : 800);  tRec = iRec - 3500; %re. array and primary
+iRec_Rew = 3500 + (-800 : 1200); tRec_Rew = iRec_Rew - 3500; %re. reward
+NUM_SAMP = length(iRec);
 
 NBIN_TERR = args.nBin_TE; %bin by timing error magnitude
 BINLIM_TERR = linspace(0, 1, NBIN_TERR+1);
@@ -33,7 +33,7 @@ sdfFE = cell(NUM_UNIT,NBIN_TERR*NBIN_dRT); %Fast error
 sdfAC = sdfFC; %Accurate correct
 sdfAE = sdfFE; %Accurate error
 
-%initializations - signal timing
+%initializations - signal timing re. reward
 if (args.estTime)
   [tSig{1:NUM_UNIT,1}] = deal(NaN(1,2)); %start|finish
   vecSig = cell(NUM_UNIT,1); %vector of significance for plotting
@@ -82,22 +82,22 @@ for uu = 1:NUM_UNIT
   
   %% Compute mean SDF
   %Correct trials - Fast
-  sdfFC{uu}(:,1) =    mean(sdfA(idxFC, tRec));
-  sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, tRec));
-  sdfFC{uu}(:,3) = nanmean(sdfR(idxFC, tRec_Rew));
+  sdfFC{uu}(:,1) =    mean(sdfA(idxFC, iRec));
+  sdfFC{uu}(:,2) = nanmean(sdfP(idxFC, iRec));
+  sdfFC{uu}(:,3) = nanmean(sdfR(idxFC, iRec_Rew));
   %Correct trials - Accurate
-  sdfAC{uu}(:,1) =    mean(sdfA(idxAC, tRec));
-  sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, tRec));
-  sdfAC{uu}(:,3) = nanmean(sdfR(idxAC, tRec_Rew));
+  sdfAC{uu}(:,1) =    mean(sdfA(idxAC, iRec));
+  sdfAC{uu}(:,2) = nanmean(sdfP(idxAC, iRec));
+  sdfAC{uu}(:,3) = nanmean(sdfR(idxAC, iRec_Rew));
   
   %Error trials - Fast
   for bb = 1:NBIN_TERR
     idxFEbb = (idxFE & (RTerr > binLim_RTerr_Fast(bb)) & (RTerr <= binLim_RTerr_Fast(bb+1)));
     for ii = 1:NBIN_dRT
       idxFEbb_ii = (idxFEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
-      sdfFE{uu,3*(bb-1)+ii}(:,1) =    mean(sdfA(idxFEbb_ii, tRec));
-      sdfFE{uu,3*(bb-1)+ii}(:,2) = nanmean(sdfP(idxFEbb_ii, tRec));
-      sdfFE{uu,3*(bb-1)+ii}(:,3) = nanmean(sdfR(idxFEbb_ii, tRec_Rew));
+      sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,1) =    mean(sdfA(idxFEbb_ii, iRec));
+      sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,2) = nanmean(sdfP(idxFEbb_ii, iRec));
+      sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,3) = nanmean(sdfR(idxFEbb_ii, iRec_Rew));
     end
   end
   
@@ -106,26 +106,24 @@ for uu = 1:NUM_UNIT
     idxAEbb = (idxAE & (RTerr > binLim_RTerr_Acc(bb)) & (RTerr <= binLim_RTerr_Acc(bb+1)));
     for ii = 1:NBIN_dRT
       idxAEbb_ii = (idxAEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
-      sdfAE{uu,3*(bb-1)+ii}(:,1) =    mean(sdfA(idxAEbb_ii, tRec));
-      sdfAE{uu,3*(bb-1)+ii}(:,2) = nanmean(sdfP(idxAEbb_ii, tRec));
-      sdfAE{uu,3*(bb-1)+ii}(:,3) = nanmean(sdfR(idxAEbb_ii, tRec_Rew));
+      sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,1) =    mean(sdfA(idxAEbb_ii, iRec));
+      sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,2) = nanmean(sdfP(idxAEbb_ii, iRec));
+      sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,3) = nanmean(sdfR(idxAEbb_ii, iRec_Rew));
     end
   end
   
-  %estimate signal timing
-  if (args.estTime)
-    [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,tRec_Rew), sdfR(idxAE,tRec_Rew), 'minDur',200);
-    %zero times on time of reward
-    vecSig{uu} = b + tRec_Rew(1) - 3500;
-    tSig{uu}(1) = a(1) + tRec_Rew(1) - 3500;
-    tSig{uu}(2) = tRec_Rew(end) - a(2) - 3500;
+  if (args.estTime) %estimate signal timing re. reward
+    [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,iRec_Rew), sdfR(idxAEbb_ii,iRec_Rew), 'minDur',200);
+    vecSig{uu} = b + tRec_Rew(1); %zero times on reward
+    tSig{uu}(1) = a(1) + tRec_Rew(1);
+    tSig{uu}(2) = tRec_Rew(end) - a(2);
   end
   
 end% for : unit (uu)
 
 sdfCorr = struct('Fast',sdfFC, 'Acc',sdfAC);
 sdfErr  = struct('Fast',sdfFE, 'Acc',sdfAE);
-vecTime = transpose([tRec ; tRec ; tRec_Rew] - 3500); %save time vector
+vecTime = transpose([iRec ; iRec ; iRec_Rew] - 3500); %save time vector
 sdf = struct('Corr',sdfCorr, 'Err',sdfErr, 'Time',vecTime);
 
 if (args.estTime)
