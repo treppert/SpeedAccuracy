@@ -43,22 +43,23 @@ end
 
 %% Plotting
 
-CPLOT = linspace(.8, .2, NBIN_dRT);
-figure(); hold on
-for bb = 1:NBIN_TERR
-  for ii = 1:NBIN_dRT
-    shaded_error_bar(sdfTE.Time(:,3), mean(A_TE_vec{bb,ii}), std(A_TE_vec{bb,ii})/sqrt(NUM_UNIT), ...
-      {'color',[CPLOT(ii) 0 0]})
-  end
-end
-xlim([-500 1000])
-xlabel('Time from reward (ms)')
-ylabel('Error signal magnitude')
-ppretty([2.4,1.4])
-
+% CPLOT = linspace(.8, .2, NBIN_dRT);
 % figure(); hold on
-% errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'k', 'CapSize',0)
-% ppretty([1.4,2])
+% for bb = 1:NBIN_TERR
+%   for ii = 1:NBIN_dRT
+%     shaded_error_bar(sdfTE.Time(:,3), mean(A_TE_vec{bb,ii}), std(A_TE_vec{bb,ii})/sqrt(NUM_UNIT), ...
+%       {'color',[CPLOT(ii) 0 0]})
+%   end
+% end
+% xlim([-500 1000])
+% xlabel('Time from reward (ms)')
+% ylabel('Error signal magnitude')
+% ppretty([2.4,1.4])
+
+figure(); hold on
+% plot(A_TE', 'k-')
+errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'k', 'CapSize',0)
+ppretty([1.4,2])
 
 if (args.plot_cdf)
   YPLOT = (1 : NUM_UNIT);

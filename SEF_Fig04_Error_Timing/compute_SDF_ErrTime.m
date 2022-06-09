@@ -13,6 +13,9 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 
 args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',1}, {'minISI=',600}, 'estTime'});
 
+LIM_dRT = [-200, +400];
+% LIM_dRT = [-Inf, +Inf];
+
 %specify windows for recording SDF
 iRec    = 3500 + (-1200 : 800);  tRec = iRec - 3500; %re. array and primary
 iRec_Rew = 3500 + (-800 : 1200); tRec_Rew = iRec_Rew - 3500; %re. reward
@@ -23,6 +26,8 @@ BINLIM_TERR = linspace(0, 1, NBIN_TERR+1);
 
 NBIN_dRT = args.nBin_dRT; %bin by RT adjustment
 BINLIM_dRT = linspace(0, 1, NBIN_dRT+1);
+
+trialSwitch = identify_condition_switch( behavData );
 
 %initializations - SDF
 NUM_UNIT = size(unitData,1);
@@ -46,11 +51,13 @@ for uu = 1:NUM_UNIT
   RTerr = behavData.Sacc_RTerr{kk}; %RT relative to deadline
   RT_P = behavData.Sacc_RT{kk}; %RT of primary saccade
   RT_S = behavData.Sacc2_RT{kk}; %RT of second saccade
+  RT_S(RT_S==0) = Inf;
   ISI = RT_S - RT_P; %inter-saccade interval
   tRew = behavData.Task_TimeReward(kk); %time of reward (fixed)
   tRew = RT_P + tRew; %re. array
   
-  dRT_kk = [diff(behavData.Sacc_RT{kk}); Inf];
+  dRT = [diff(behavData.Sacc_RT{kk}); Inf];
+  idx_dRT = ((dRT < LIM_dRT(1)) | (dRT > LIM_dRT(2)));
   
   %compute spike density function and align appropriately
   spikes = load_spikes_SAT(unitData.Index(uu));
@@ -58,18 +65,22 @@ for uu = 1:NUM_UNIT
   sdfP = align_signal_on_response(sdfA, RT_P); %sdf from Primary
   sdfR = align_signal_on_response(sdfA, tRew); %sdf from Reward
   
+  %exclude trials at task condition switch
+  idxSwitch = false(behavData.Task_NumTrials(kk),1);
+  idxSwitch(sort([trialSwitch.A2F{kk}; trialSwitch.F2A{kk}]-1)) = true;
+  
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
-  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
+  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso & ~idxSwitch);
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso & ~idxSwitch);
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
   idxErr = behavData.Task_ErrTimeOnly{kk};
   
   %combine indexing
-  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= args.minISI) & (RTerr < 0));
-  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (ISI >= args.minISI) & (RTerr > 0));
+  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= args.minISI) & (RTerr < 0) & ~idx_dRT);
+  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (ISI >= args.minISI) & (RTerr > 0) & ~idx_dRT);
   
   %work off of absolute error for Accurate condition
   RTerr = abs(RTerr);
@@ -78,7 +89,7 @@ for uu = 1:NUM_UNIT
   binLim_RTerr_Fast = quantile(RTerr(idxFE), BINLIM_TERR);
   
   %get quantiles of dRT for binning
-  binLim_dRT = quantile(dRT_kk(idxAE), BINLIM_dRT);
+  binLim_dRT = quantile(dRT(idxAE), BINLIM_dRT);
   
   %% Compute mean SDF
   %Correct trials - Fast
@@ -94,7 +105,7 @@ for uu = 1:NUM_UNIT
   for bb = 1:NBIN_TERR
     idxFEbb = (idxFE & (RTerr > binLim_RTerr_Fast(bb)) & (RTerr <= binLim_RTerr_Fast(bb+1)));
     for ii = 1:NBIN_dRT
-      idxFEbb_ii = (idxFEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
+      idxFEbb_ii = (idxFEbb & (dRT > binLim_dRT(ii)) & (dRT <= binLim_dRT(ii+1)));
       sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,1) =    mean(sdfA(idxFEbb_ii, iRec));
       sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,2) = nanmean(sdfP(idxFEbb_ii, iRec));
       sdfFE{uu,NBIN_dRT*(bb-1)+ii}(:,3) = nanmean(sdfR(idxFEbb_ii, iRec_Rew));
@@ -105,7 +116,7 @@ for uu = 1:NUM_UNIT
   for bb = 1:NBIN_TERR
     idxAEbb = (idxAE & (RTerr > binLim_RTerr_Acc(bb)) & (RTerr <= binLim_RTerr_Acc(bb+1)));
     for ii = 1:NBIN_dRT
-      idxAEbb_ii = (idxAEbb & (dRT_kk > binLim_dRT(ii)) & (dRT_kk <= binLim_dRT(ii+1)));
+      idxAEbb_ii = (idxAEbb & (dRT > binLim_dRT(ii)) & (dRT <= binLim_dRT(ii+1)));
       sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,1) =    mean(sdfA(idxAEbb_ii, iRec));
       sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,2) = nanmean(sdfP(idxAEbb_ii, iRec));
       sdfAE{uu,NBIN_dRT*(bb-1)+ii}(:,3) = nanmean(sdfR(idxAEbb_ii, iRec_Rew));
@@ -113,11 +124,21 @@ for uu = 1:NUM_UNIT
   end
   
   if (args.estTime) %estimate signal timing re. reward
-    [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,iRec_Rew), sdfR(idxAEbb_ii,iRec_Rew), 'minDur',200);
+    [a,b] = calc_tErrorSignal_SAT(sdfR(idxAC,iRec_Rew), sdfR(idxAEbb_ii,iRec_Rew), ...
+      'minDur',200, 'minSize',0.1);
     vecSig{uu} = b + tRec_Rew(1); %zero times on reward
     tSig{uu}(1) = a(1) + tRec_Rew(1);
     tSig{uu}(2) = tRec_Rew(end) - a(2);
   end
+  
+  %single-neuron test for relationship between dRT and spike count
+%   tLim = 3500 + tRew + int16(unitData.SignalTE_Time(uu,:)); %error signal time limits
+%   trialAE = find(idxAE); nAE = sum(idxAE);
+%   spkCt = NaN(nAE,1);
+%   for jj = 1:nAE
+%     spkCt(jj) = cellfun(@(x) sum((x > tLim(trialAE(jj),1)) & (x < tLim(trialAE(jj),2))), spikes(trialAE(jj))); %compute spike count
+%   end
+%   matTest = [spkCt RTerr(idxAE) dRT(idxAE)];
   
 end% for : unit (uu)
 

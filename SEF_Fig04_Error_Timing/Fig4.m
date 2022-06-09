@@ -10,20 +10,24 @@ idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
 unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
 
 % Fig4A_ErrRate_X_Trial(behavData, 'monkey',MONKEY)
-% plot_tSacc2_ErrTime(behavData , 'monkey',MONKEY)
 % plot_tSacc2_X_RTerr(behavData , 'monkey',MONKEY)
 % plot_dRT_X_RTerr(behavData, 'monkey',MONKEY)
 
 NBIN_TE = 1;
-NBIN_dRT = 2;
+NBIN_dRT = 5;
+
 [sdfTE,tSigTE] = compute_SDF_ErrTime(unitTest, behavData, ...
   'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, 'minISI',600);
+
 % plot_SDF_ErrTime(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, ...
-%   'tSig_TE',tSigTE, 'hide', 'print', 'significant')
+%   'tSig_TE',tSigTE, 'significant')
+% Fig4B_Raster_ErrTime(unitTest, behavData, 'minISI',1000)
 
-sigTE = compute_TESignal_X_dRT(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT, 'plot_cdf');
+% Fig4C_ProbActive_ErrorTime( unitTest )
+% plot_tSacc2_ErrTime(behavData , 'monkey',MONKEY)
 
-% Fig4C_ProbActive_ErrorTime(unitTest)
+sigTE = compute_TESignal_X_dRT(sdfTE, unitTest, 'nBin_TE',NBIN_TE, 'nBin_dRT',NBIN_dRT);
+
 % Fig4X_Barplot_TESignalMag(unitTest, sdfAC, sdfAE);
 % Fig4X_ErrorSignal_X_Hazard(unitTest, sdfAC, sdfAE)
 

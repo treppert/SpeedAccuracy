@@ -33,7 +33,7 @@ for kk = 1:NUM_SESS
   
   %exclude trials at task condition switch
   idxSwitch = false(behavData.Task_NumTrials(kk),1);
-  idxSwitch(sort([trialSwitch.A2F{kk}; trialSwitch.F2A{kk}])) = true;
+  idxSwitch(sort([trialSwitch.A2F{kk}; trialSwitch.F2A{kk}]-1)) = true;
   
   %combine indexing and group
   drtAcc{kk,1} = dRT_kk(idxAcc & idxCorr & ~idxSwitch); %correct

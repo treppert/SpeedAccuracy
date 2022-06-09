@@ -60,7 +60,7 @@ errorbar(TRIAL_PLOT+NUM_TRIAL, mean(ER_Time_A2F), std(ER_Time_A2F)/sqrt(NUM_SESS
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); 
 ylabel('Timing error rate'); ytickformat('%3.2f')
 
-ppretty([3,2])
+ppretty([2.4,1.0])
 set(gca, 'XMinorTick','off')
 
 end % function : Fig4A_ErrRate_X_Trial()

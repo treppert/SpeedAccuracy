@@ -2,7 +2,7 @@ function [ tSig , vecSig ] = calc_tErrorSignal_SAT( sdfCorr , sdfErr , varargin 
 %calc_tErrorSignal_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'minDur=',200}, {'pvalMW=',.05}, {'tailMW=','both'}});
+args = getopt(varargin, {{'minDur=',200}, {'pvalMW=',.05}, {'tailMW=','both'}, {'minSize=',0.2}});
 
 %make sure SDF is organized with samples along horizontal dimension and
 %trials along vertical dimension
@@ -15,7 +15,7 @@ end
 
 MIN_DURATION = args.minDur; %min duration (ms) of error signal
 MAX_SKIP = 20; %max skip (ms) within error signal window
-MIN_REL_MAGNITUDE = 0.2; %minimum effect size relative to max firing rate
+MIN_REL_MAGNITUDE = args.minSize; %minimum effect size relative to max firing rate
 
 FILT_HALFWIN = 2; %half-width of averaging window to smooth SDF
 FILT_STEPSIZE = 1; %step size between MW tests

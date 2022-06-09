@@ -2,8 +2,8 @@ function [ ] = FigS3A_ProbActive_ErrorChoice( unitData )
 %FigS3A_ProbActive_ErrorChoice Summary of this function goes here
 %   Detailed explanation goes here
 
-idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
+idxArea = ismember(unitData.Area, {'SEF'});
+idxMonkey = ismember(unitData.Monkey, {'D','E'});
 
 idxErrUnit = ismember(unitData.Grade_Err, [1,-1]);
 idxKeep = (idxArea & idxMonkey & idxErrUnit);
