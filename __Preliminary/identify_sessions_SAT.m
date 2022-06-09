@@ -36,7 +36,8 @@ end
 if ismember(monkey, {'Quincy','Seymour'})
   kkRemove = (num_trials.SAT < MIN_TOTAL_TRIALS_PER_SESSION);
 else %Darwin or Euler
-  kkRemove = 1;
+%   kkRemove = 1;
+  kkRemove = [];
 end
 
 sessions.SAT(kkRemove) = [];

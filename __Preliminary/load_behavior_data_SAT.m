@@ -6,7 +6,7 @@ global NUM_SAMPLES REMOVE_CLIPPED_DATA
 
 REMOVE_CLIPPED_DATA = false;
 
-ROOT_DIR = ['T:\data\', monkey, '\SAT\Matlab\'];
+ROOT_DIR = ['C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\Data\_', monkey, '\Matlab\'];
 % ROOT_DIR = ['/data/search/SAT/', monkey, '/'];
 NUM_SAMPLES = 6001;
 
@@ -43,6 +43,7 @@ behavData = struct('MG',behavData, 'SAT',behavData);
 gaze = struct('MG',gaze, 'SAT',gaze);
 
 for kk = 1:NUM_SESSIONS
+  fprintf('Session %i\n', kk)
   gaze.MG(kk)  = populate_struct(gaze.MG(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.MG(kk))));
   gaze.MG(kk).clipped = false(NUM_SAMPLES,num_trials.MG(kk)); %include field to ID gaze clipping in Eyelink
   gaze.SAT(kk) = populate_struct(gaze.SAT(kk), FIELDS_GAZE, single(NaN*ones(NUM_SAMPLES,num_trials.SAT(kk))));
@@ -150,7 +151,7 @@ elseif strcmp(type, 'SEARCH')
   TASK = 'SAT';
 end
 
-NUM_SESSIONS = length(sessions.(TASK));
+NUM_SESSIONS = length(data);
 
 for kk = 1:NUM_SESSIONS
   session_file = [sessions.(TASK)(kk).folder,'/',sessions.(TASK)(kk).name(1:16),type,'.mat'];
@@ -190,11 +191,11 @@ for kk = 1:NUM_SESSIONS
   end
   
   %if monkey S, remove trials with missing data during decision interval
-  if ismember(behavData.Task_Session{kk}(1), {'S'})
+  if ismember(behavData(kk).session(1), {'S'})
     bad_trials = identify_bad_trials_SAT(EyeX_, EyeY_);
     for ff = 1:length(fields_gaze)
       data(kk).(fields_gaze{ff})(:,bad_trials) = NaN;
-      behavData.Sacc_RT{kk}(bad_trials) = 0;
+      behavData(kk).Sacc_RT(bad_trials) = 0;
       behavData(kk).octant(bad_trials) = 0;
     end
   end

@@ -9,17 +9,17 @@ MAX_DLINE_FAST = 600; %enforce a hard deadline on the Fast condition
 for kk = 1:NUM_SESSION
   
 %   ierr_dir = info(kk).Task_ErrChoice;
-  deadline = behavData.Task_Deadline{kk};
+  deadline = behavData(kk).deadline;
   
-  idx_acc = (behavData.Task_SATCondition{kk} == 1);
-  idx_fast = (behavData.Task_SATCondition{kk} == 3);
+  idx_acc = (behavData(kk).condition == 1);
+  idx_fast = (behavData(kk).condition == 3);
   
-  resptime = behavData.Sacc_RT{kk};
+  resptime = behavData(kk).resptime;
   
   ierr_time_Fast = (idx_fast & ((resptime > deadline) | (resptime > MAX_DLINE_FAST)));
   ierr_time_Acc = (idx_acc & (resptime < deadline));
   
-  behavData.Task_ErrTime{kk}(ierr_time_Fast | ierr_time_Acc) = true;
+  behavData(kk).Task_ErrTime(ierr_time_Fast | ierr_time_Acc) = true;
   
 end%for:session(kk)
 

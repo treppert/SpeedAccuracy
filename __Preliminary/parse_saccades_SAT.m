@@ -43,10 +43,10 @@ FIELDS_ALL = [FIELDS_LOGICAL, FIELDS_UINT16, FIELDS_SINGLE, FIELDS_VECTOR];
 moves = new_struct(FIELDS_ALL, 'dim',[1,NUM_SESSION]);
 
 for kk = 1:NUM_SESSION
-  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,behavData.Task_NumTrials{kk}));
-  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,behavData.Task_NumTrials{kk})));
-  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,behavData.Task_NumTrials{kk})));
-  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,behavData.Task_NumTrials{kk})));
+  moves(kk) = populate_struct(moves(kk), FIELDS_LOGICAL, false(1,behavData(kk).num_trials));
+  moves(kk) = populate_struct(moves(kk), FIELDS_UINT16, uint16(zeros(1,behavData(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_SINGLE, single(NaN(1,behavData(kk).num_trials)));
+  moves(kk) = populate_struct(moves(kk), FIELDS_VECTOR, single(NaN(ALLOT,behavData(kk).num_trials)));
 end%for:sessions(kk)
 
 moves = orderfields(moves);
@@ -55,22 +55,22 @@ movesAll = moves; %struct array for all movements, regardless of task relevance
 %% **** Movement identification ****
 
 for kk = 1:NUM_SESSION
-  fprintf('***Session %d -- %s (%d trials)\n', kk, behavData.Task_Session{kk}, behavData.Task_NumTrials{kk})
+  fprintf('***Session %d -- %s (%d trials)\n', kk, behavData(kk).session, behavData(kk).num_trials)
   
-  ALLOC_ALL = behavData.Task_NumTrials{kk};
+  ALLOC_ALL = behavData(kk).num_trials;
   idx_all = 1; %index for saving all saccades (task-rel. and irrel.)
   
   %start with estimate of response time and octant from TEMPO
-  moves(kk).resptime(:) = uint16(behavData.Sacc_RT{kk});
+  moves(kk).resptime(:) = uint16(behavData(kk).resptime);
   moves(kk).octant(:) = uint16(behavData(kk).octant);
   
   %keep track of trials w/o candidates and/or responses
-  idx_sin_cand = false(1,behavData.Task_NumTrials{kk});
-  idx_sin_sacc = false(1,behavData.Task_NumTrials{kk});
-  idx_sin_resp = false(1,behavData.Task_NumTrials{kk});
+  idx_sin_cand = false(1,behavData(kk).num_trials);
+  idx_sin_sacc = false(1,behavData(kk).num_trials);
+  idx_sin_resp = false(1,behavData(kk).num_trials);
 
-  for jj = 1:behavData.Task_NumTrials{kk}
-
+  for jj = 1:behavData(kk).num_trials
+    
     %% Initialize trial-specific saccade kinematics
     kin_jj = initialize_saccade_kinematics(gaze(kk), jj);
 
@@ -93,7 +93,7 @@ for kk = 1:NUM_SESSION
   end%for:trials(jj)
 
   fprintf('num_trials_wo_[cand,sacc,taskrel] = [%d, %d, %d] / %d\n', sum(idx_sin_cand), ...
-    sum(idx_sin_sacc), sum(idx_sin_resp), behavData.Task_NumTrials{kk})
+    sum(idx_sin_sacc), sum(idx_sin_resp), behavData(kk).num_trials)
 
   %remove extra memory from struct with all saccades
   for ff = 1:length(FIELDS_LOGICAL)
@@ -246,6 +246,7 @@ idx_cut_pv = ([cands.peakvel] < LIM_PEAKVEL(1)) | ([cands.peakvel] > LIM_PEAKVEL
 idx_cut_skew = ([cands.skew] > MAX_SKEW);
 
 icut_saccade = (idx_cut_nan | idx_cut_disp | idx_cut_dur | idx_cut_pv | idx_cut_skew);
+% icut_saccade = (idx_cut_nan);
 
 idx_saccade = find(~icut_saccade);
 num_saccade  = length(idx_saccade);

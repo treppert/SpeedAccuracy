@@ -15,19 +15,19 @@ for kk = 1:NUM_SESSION
   %initialize output struct for this session
   for ff = 1:NUM_FIELDS
     if isa(movesAll(kk).(fields_{ff})(1), 'single')
-      movesPP(kk).(fields_{ff}) = single(NaN(1,behavData.Task_NumTrials{kk}));
+      movesPP(kk).(fields_{ff}) = single(NaN(1,behavData(kk).num_trials));
     elseif isa(movesAll(kk).(fields_{ff})(1), 'uint16')
-      movesPP(kk).(fields_{ff}) = uint16(zeros(1,behavData.Task_NumTrials{kk}));
+      movesPP(kk).(fields_{ff}) = uint16(zeros(1,behavData(kk).num_trials));
     elseif isa(movesAll(kk).(fields_{ff})(1), 'logical')
-      movesPP(kk).(fields_{ff}) = false(1,behavData.Task_NumTrials{kk});
+      movesPP(kk).(fields_{ff}) = false(1,behavData(kk).num_trials);
     else
       error('Data type of field %s not recognized', fields_{ff});
     end
   end
-  movesPP(kk).endpt = uint16(zeros(1,behavData.Task_NumTrials{kk}));
+  movesPP(kk).endpt = uint16(zeros(1,behavData(kk).num_trials));
   
   num_noPP = 0; %keep track of number of trials with no post-primary
-  for jj = 1:behavData.Task_NumTrials{kk}
+  for jj = 1:behavData(kk).num_trials
     
     %isolate saccade from trial jj with index INDEX
     idxPPjj = ( (movesAll(kk).trial == jj) & (movesAll(kk).index == INDEX) );
@@ -46,11 +46,7 @@ for kk = 1:NUM_SESSION
   end%for:trials(jj)
   
   %split PP saccades by endpoint (1=Target, 2=Distractor, 3=Fixation)
-  movesPP(kk) = classify_endpt_PPsacc(behavData(kk,:), movesPP(kk), moves(kk));
-  
-  idx_errdir = (behavData.Task_ErrChoice{kk} & ~behavData.Task_ErrTime{kk});
-  fprintf('**** Sess %d -- %d/%d trials (%d/%d err-dir) no post-primary\n', ...
-    kk, num_noPP, behavData.Task_NumTrials{kk}, sum(isnan(movesPP(kk).amplitude(idx_errdir))), sum(idx_errdir))
+  movesPP(kk) = classify_endpt_PPsacc(behavData(kk), movesPP(kk), moves(kk));
   
 end%for:sessions(kk)
 
