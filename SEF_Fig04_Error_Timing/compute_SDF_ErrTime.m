@@ -14,7 +14,6 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',1}, {'minISI=',600}, 'estTime'});
 
 LIM_dRT = [-200, +400];
-% LIM_dRT = [-Inf, +Inf];
 
 %specify windows for recording SDF
 iRec    = 3500 + (-1200 : 800);  tRec = iRec - 3500; %re. array and primary
@@ -66,8 +65,11 @@ for uu = 1:NUM_UNIT
   sdfR = align_signal_on_response(sdfA, tRew); %sdf from Reward
   
   %exclude trials at task condition switch
+  jjA2F = trialSwitch.A2F{kk};
+  jjF2A = trialSwitch.F2A{kk};
+  jjSwitch = [jjA2F; jjF2A];
   idxSwitch = false(behavData.Task_NumTrials(kk),1);
-  idxSwitch(sort([trialSwitch.A2F{kk}; trialSwitch.F2A{kk}]-1)) = true;
+  idxSwitch([jjSwitch; jjSwitch+1]) = true;
   
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
@@ -76,6 +78,7 @@ for uu = 1:NUM_UNIT
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso & ~idxSwitch);
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
+%   idxCorrNext = [idxCorr(2:end); false];
   idxErr = behavData.Task_ErrTimeOnly{kk};
   
   %combine indexing
