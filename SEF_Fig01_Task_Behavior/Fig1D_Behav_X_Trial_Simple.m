@@ -33,14 +33,14 @@ for kk = 1:NUM_SESS
   jjA2F = trialSwitch.A2F{kk};  numA2F = length(jjA2F);
   jjF2A = trialSwitch.F2A{kk};  numF2A = length(jjF2A);
   
-  RT_A2F(kk,:) = nanmedian(RTkk(jjA2F+TRIAL_PLOT));
-  RT_F2A(kk,:) = nanmedian(RTkk(jjF2A+TRIAL_PLOT));
+  RT_A2F(kk,:) = median(RTkk(jjA2F+TRIAL_PLOT));
+  RT_F2A(kk,:) = median(RTkk(jjF2A+TRIAL_PLOT));
   
   %get RT relative to SAT deadlines
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
   idxFast = (behavData.Task_SATCondition{kk} == 3);
-  dlineAcc = nanmedian(behavData.Task_Deadline{kk}(idxAcc));
-  dlineFast = nanmedian(behavData.Task_Deadline{kk}(idxFast));
+  dlineAcc = median(double(behavData.Task_Deadline{kk}(idxAcc)));
+  dlineFast = median(double(behavData.Task_Deadline{kk}(idxFast)));
   RTerr_A2F(kk,:) = RT_A2F(kk,:) - [repmat(dlineAcc,1,4), repmat(dlineFast,1,4)];
   RTerr_F2A(kk,:) = RT_F2A(kk,:) - [repmat(dlineFast,1,4), repmat(dlineAcc,1,4)];
   
@@ -57,34 +57,42 @@ end % for : sessions(kk)
 
 %% Plotting
 
+XLABEL = {'','-3','','-1','+1','','+3','','','','-3','','-1','+1','','+3',''};
+XLIM = [-4,11];
+BLUE = [0 0 1];
+
 figure()
 
 subplot(4,1,1); hold on %Response time
 errorbar(TRIAL_PLOT, mean(RT_F2A), std(RT_F2A)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 errorbar(TRIAL_PLOT+NUM_TRIAL, mean(RT_A2F), std(RT_A2F)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
-xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); set(gca, 'xminortick','off')
+xlim(XLIM); xticks(-5:12); xticklabels(XLABEL)
 ylabel('Response time (ms)')
 
 subplot(4,1,2); hold on %Response time re. deadline
 errorbar(TRIAL_PLOT, mean(RTerr_F2A), std(RTerr_F2A)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 errorbar(TRIAL_PLOT+NUM_TRIAL, mean(RTerr_A2F), std(RTerr_A2F)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
-xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); set(gca, 'xminortick','off')
-ylabel('Response time re. deadline (ms)')
+xlim([-4 11]); xticks(-5:12); xticklabels(XLABEL)
+ylabel('RT re. deadline (ms)')
 
 subplot(4,1,3); hold on %Choice error rate
 errorbar(TRIAL_PLOT, mean(ER_Chc_F2A), std(ER_Chc_F2A)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 errorbar(TRIAL_PLOT+NUM_TRIAL, mean(ER_Chc_A2F), std(ER_Chc_A2F)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
-xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); set(gca, 'xminortick','off')
+xlim([-4 11]); xticks(-5:12); xticklabels(XLABEL)
 ylabel('Choice error rate'); ytickformat('%3.2f')
 
 subplot(4,1,4); hold on %Timing error rate
 errorbar(TRIAL_PLOT, mean(ER_Time_F2A), std(ER_Time_F2A)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 errorbar(TRIAL_PLOT+NUM_TRIAL, mean(ER_Time_A2F), std(ER_Time_A2F)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
-xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); set(gca, 'xminortick','off')
+xlim([-4 11]); xticks(-5:12); xticklabels(XLABEL)
 ylabel('Timing error rate'); ytickformat('%3.2f')
+xlabel('Trial from switch')
 
-ppretty([3,10])
-set(gca, 'XMinorTick','off')
+ppretty([1.75,7])
+subplot(4,1,1); set(gca, 'XMinorTick','off', 'XTickLabelRotation',45, 'YColor',BLUE)
+subplot(4,1,2); set(gca, 'XMinorTick','off', 'XTickLabelRotation',45, 'YColor',BLUE)
+subplot(4,1,3); set(gca, 'XMinorTick','off', 'XTickLabelRotation',45, 'YColor',BLUE)
+subplot(4,1,4); set(gca, 'XMinorTick','off', 'XTickLabelRotation',45, 'YColor',BLUE)
 
 end % function : Fig1D_Behav_X_Trial_Simple()
 
