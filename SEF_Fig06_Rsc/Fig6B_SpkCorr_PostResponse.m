@@ -1,13 +1,11 @@
 function [ outSpkCorr ] = Fig6B_SpkCorr_PostResponse()
-%Fig6B_SpkCorr_PostResponse
-%  
-% see also: CREATESPIKECORRWITHSUBSAMPLING,
+%Fig6B_SpkCorr_PostResponse() Summary goes here.
 
-%% cretae datafile -- already done by running. Takes time
+%% Create datafile -- already done by running. Takes time
 % CREATESPIKECORRWITHSUBSAMPLING
 % [spkCorr] = createSpikeCorrWithSubSampling();
 % creates the datafile.
-% datafile : 
+
 %% Load spkCorr data created in the above step
 RootDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr\';
 spkCorr = load([RootDir, 'rscSubSampl1K_PostSaccade_0_TrialsThresh.mat']);
@@ -50,6 +48,7 @@ rscTable.isSefUnitVis = spkCorr.X_visGrade > 1 & spkCorr.X_moveGrade == 0;
 rscTable.isSefUnitMove = spkCorr.X_visGrade == 0 & spkCorr.X_moveGrade > 1;
 rscTable.isSefUnitVisMove = spkCorr.X_visGrade > 1 & spkCorr.X_moveGrade > 1;
 rscTable.isSefUnitOther = spkCorr.X_visGrade <= 1 | spkCorr.X_moveGrade <= 1;
+
 warning('off')
 %%
 outSpkCorr = table();

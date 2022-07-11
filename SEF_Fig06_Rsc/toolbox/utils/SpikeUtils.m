@@ -161,18 +161,21 @@ classdef SpikeUtils
         end
                 
         function outArg = rasters(cellSpikeTimes,timeWin)
-            %RASTERS Construct an instance of this class
-            %   outArg is a logical array.  Bins are *delays* 1 ms apart,
-            %   and rasters will contain *at most* 1 spike per bin
-            minTrialIsi = cell2mat(arrayfun(@(x) min([diff(x{1}) Inf]),cellSpikeTimes,'UniformOutput',false));
-            if sum(minTrialIsi<1) > 0 % No of trials where spikes occur closer than 1 millisecond
-                warning('Some spikes occur within 1 millisec in [%d] trials. ...Multiple spikes occuring within 1 millisec are treated as 1.', ...
-                    sum(minTrialIsi<1));
-            end
-            binCenters = min(timeWin) : max(timeWin);
-            outArg.rasters = cell2mat(cellfun(@(x) logical(hist(x,binCenters)),...
-                cellSpikeTimes,'UniformOutput',false));
-            outArg.rasterBins = min(timeWin):max(timeWin);
+          %RASTERS Construct an instance of this class
+          %   outArg is a logical array.  Bins are *delays* 1 ms apart,
+          %   and rasters will contain *at most* 1 spike per bin
+
+          minTrialIsi = cell2mat(arrayfun(@(x) min([diff(x{1}) Inf]), cellSpikeTimes,'UniformOutput',false));
+
+          %warning -- spike times within 1 msec
+%           if any(minTrialIsi < 1)
+%               warning('Spikes occur within 1 millisec in [%d] trials. Spikes treated as 1.', sum(minTrialIsi<1));
+%           end
+
+          binCenters = min(timeWin) : max(timeWin);
+          outArg.rasters = cell2mat(cellfun(@(x) logical(hist(x,binCenters)),...
+              cellSpikeTimes,'UniformOutput',false));
+          outArg.rasterBins = min(timeWin):max(timeWin);
         end
         
         function outArg = isiCvFromRasters(rasterMat)
