@@ -20,7 +20,7 @@ end % for : unit(uu)
 PActiveAcc = sum(PActiveAcc,1) / NUM_UNIT;
 
 %% Plotting
-XLIM = [-300 900];
+XLIM = [-400 1000];
 
 figure(); hold on
 plot([0 0], [0 1], 'k:', 'LineWidth',1.25)
@@ -28,7 +28,7 @@ plot(T_VEC, PActiveAcc, 'r-', 'LineWidth',1.5)
 xlim(XLIM); ytickformat('%2.1f')
 xlabel('Time from reward (ms)')
 ylabel('P (active)')
-ppretty([3,1.5])
+ppretty([2,1])
 
 end%fxn:Fig4C_ProbActive_ErrorTime()
 

@@ -13,7 +13,7 @@ function [ sdf , varargout ] = compute_SDF_ErrTime( unitData , behavData , varar
 
 args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',1}, {'minISI=',600}, 'estTime'});
 
-LIM_dRT = [-200, +400];
+MIN_ISI = args.minISI;
 
 %specify windows for recording SDF
 iRec    = 3500 + (-1200 : 800);  tRec = iRec - 3500; %re. array and primary
@@ -55,9 +55,6 @@ for uu = 1:NUM_UNIT
   tRew = behavData.Task_TimeReward(kk); %time of reward (fixed)
   tRew = RT_P + tRew; %re. array
   
-  dRT = [diff(behavData.Sacc_RT{kk}); Inf];
-  idx_dRT = ((dRT < LIM_dRT(1)) | (dRT > LIM_dRT(2)));
-  
   %compute spike density function and align appropriately
   spikes = load_spikes_SAT(unitData.Index(uu));
   sdfA = compute_spike_density_fxn(spikes);    %sdf from Array
@@ -65,25 +62,23 @@ for uu = 1:NUM_UNIT
   sdfR = align_signal_on_response(sdfA, tRew); %sdf from Reward
   
   %exclude trials at task condition switch
-  jjA2F = trialSwitch.A2F{kk};
-  jjF2A = trialSwitch.F2A{kk};
-  jjSwitch = [jjA2F; jjF2A];
   idxSwitch = false(behavData.Task_NumTrials(kk),1);
-  idxSwitch([jjSwitch; jjSwitch+1]) = true;
+  jjSwitch = [trialSwitch.A2F{kk}; trialSwitch.F2A{kk}];
+%   idxSwitch([jjSwitch; jjSwitch+1]) = true;
+  idxSwitch(jjSwitch) = true;
   
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso & ~idxSwitch);
-  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso & ~idxSwitch);
+  idxAcc  = ((behavData.Task_SATCondition{kk} == 1) & ~(idxIso | idxSwitch));
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~(idxIso | idxSwitch));
   %index by trial outcome
   idxCorr = behavData.Task_Correct{kk};
-%   idxCorrNext = [idxCorr(2:end); false];
   idxErr = behavData.Task_ErrTimeOnly{kk};
   
   %combine indexing
-  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= args.minISI) & (RTerr < 0) & ~idx_dRT);
-  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (ISI >= args.minISI) & (RTerr > 0) & ~idx_dRT);
+  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr & (ISI >= MIN_ISI) & (RTerr < 0));
+  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr & (ISI >= MIN_ISI) & (RTerr > 0));
   
   %work off of absolute error for Accurate condition
   RTerr = abs(RTerr);
@@ -92,6 +87,7 @@ for uu = 1:NUM_UNIT
   binLim_RTerr_Fast = quantile(RTerr(idxFE), BINLIM_TERR);
   
   %get quantiles of dRT for binning
+  dRT = [diff(behavData.Sacc_RT{kk}); Inf];
   binLim_dRT = quantile(dRT(idxAE), BINLIM_dRT);
   
   %% Compute mean SDF

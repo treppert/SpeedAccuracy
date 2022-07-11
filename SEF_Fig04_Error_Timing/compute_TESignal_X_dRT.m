@@ -41,45 +41,29 @@ for bb = 1:NBIN_TERR
   end
 end
 
-%% Plotting
 
-% CPLOT = linspace(.8, .2, NBIN_dRT);
-% figure(); hold on
-% for bb = 1:NBIN_TERR
-%   for ii = 1:NBIN_dRT
-%     shaded_error_bar(sdfTE.Time(:,3), mean(A_TE_vec{bb,ii}), std(A_TE_vec{bb,ii})/sqrt(NUM_UNIT), ...
-%       {'color',[CPLOT(ii) 0 0]})
-%   end
-% end
-% xlim([-500 1000])
-% xlabel('Time from reward (ms)')
-% ylabel('Error signal magnitude')
-% ppretty([2.4,1.4])
+%% Plotting
+XLIM = [0.5 , NBIN_dRT+0.5];
+QUARTILE = (1:4);
+
+%fit line to average trend
+fLin = fit(QUARTILE', mean(A_TE)', 'poly1');
 
 figure(); hold on
-% plot(A_TE', 'k-')
-errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'k', 'CapSize',0)
-ppretty([1.4,2])
+errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'r', 'CapSize',0, 'LineWidth',1.25)
+plot(QUARTILE, fLin(QUARTILE), 'k-')
+xlim(XLIM); ytickformat('%3.2f')
+ppretty([1.3,1.8]); set(gca, 'xminortick','off')
 
-if (args.plot_cdf)
-  YPLOT = (1 : NUM_UNIT);
-  CPLOT = linspace(.8, .2, NBIN_dRT);
+figure(); hold on
+plot(A_TE')
+xlim(XLIM); ytickformat('%3.2f')
+ppretty([1.3,1.8]); set(gca, 'xminortick','off')
 
-  for bb = 1:NBIN_TERR
 
-    figure(); hold on
-    for ii = 1:NBIN_dRT %bins of dRT
-      idx_ii = NBIN_dRT*(bb-1) + ii;
-      plot(sort(A_TE(:,idx_ii)), YPLOT, 'color',[CPLOT(ii) 0 0])
-    end
-    ylim([1 NUM_UNIT])
-
-  end % for : TE bin (bb)
-end % if : plot CDF
-
+%% Output
 if (nargout > 0)
   varargout{1} = A_TE;
 end
 
 end % fxn : compute_TESignal_X_dRT()
-

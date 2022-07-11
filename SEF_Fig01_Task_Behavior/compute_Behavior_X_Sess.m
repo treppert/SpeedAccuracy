@@ -2,7 +2,7 @@
 %   Detailed explanation goes here
 
 %isolate sessions from MONKEY
-kkKeep = ismember(behavData.Monkey, MONKEY);
+kkKeep = ismember(behavData.Monkey, {'E'}) & behavData.Task_RecordedSEF;
 behavTest = behavData(kkKeep, :);
 NUM_SESS = sum(kkKeep);
 

@@ -43,7 +43,6 @@ for kk = 1:NUM_SESS
     %save the proportion of errors
     ER_Time_A2F(kk,ii) = sum(idxErrA2F_ii);
     ER_Time_F2A(kk,ii) = sum(idxErrF2A_ii);
-    
   end
   
   ER_Time_A2F(kk,:) = ER_Time_A2F(kk,:) / nA2F;
@@ -54,7 +53,6 @@ end % for : sessions(kk)
 %% Plotting
 
 figure(); hold on
-
 errorbar(TRIAL_PLOT, mean(ER_Time_F2A), std(ER_Time_F2A)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 errorbar(TRIAL_PLOT+NUM_TRIAL, mean(ER_Time_A2F), std(ER_Time_A2F)/sqrt(NUM_SESS), 'Color','k', 'CapSize',0)
 xlim([-5 12]); xticks(-5:12); xticklabels(cell(1,12)); 
@@ -62,6 +60,10 @@ ylabel('Timing error rate'); ytickformat('%3.2f')
 
 ppretty([2.4,1.0])
 set(gca, 'XMinorTick','off')
+
+%% Statistics
+
+
 
 end % function : Fig4A_ErrRate_X_Trial()
 
