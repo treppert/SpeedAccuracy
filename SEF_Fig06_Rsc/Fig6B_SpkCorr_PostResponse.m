@@ -9,7 +9,7 @@ function [ outSpkCorr ] = Fig6B_SpkCorr_PostResponse()
 % creates the datafile.
 % datafile : 
 %% Load spkCorr data created in the above step
-RootDir = 'C:\Users\Tom\Documents\MATLAB\local-dataProcessed\';
+RootDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr\';
 spkCorr = load([RootDir, 'rscSubSampl1K_PostSaccade_0_TrialsThresh.mat']);
 spkCorr = spkCorr.spkCorr;
 
@@ -80,12 +80,6 @@ outSpkCorr = sortrows(outSpkCorr,{'unitArea1','unitArea2','outcome','satConditio
 oExcelFile = 'fig08_data.xlsx';
 writetable(outSpkCorr,oExcelFile,'UseExcel',true,'Sheet','Rsc_PostSaccade');
 
-%% 04/29/2020
-% JS ? We must have a look at signed Rsc values.
-% All signed Rsc values for monkeys combined and separate, for error, and non-error neurons
-% Only Rsc values > 0 for monkeys combined and separate, for error, and non-error neurons
-% Only Rsc values < 0 for monkeys combined and separate, for error, and non-error neurons
-% 
 %% [Absolute|Signed|Positive|Negative] Rsc bar plots for error/non-error by monks
 % useMonkeys = {'Da_Eu','Da','Eu'};
 % useErrorTypes = {{'ALL_NEURONS','ERROR_NEURONS','OTHER_NEURONS'}};
@@ -100,82 +94,44 @@ writetable(outSpkCorr,oExcelFile,'UseExcel',true,'Sheet','Rsc_PostSaccade');
 
 %% [Absolute|Signed|Positive|Negative] Rsc bar plots for FEF/SC pairs by monks
 useMonkeys = {'Da_Eu'};%,'Da','Eu'};
-useAreaTypes = {{'ALL_NEURONS','FEF','SC'}};
+useAreaTypes = {{'ALL_NEURONS'}};%,'FEF','SC'}};
 rhoTypes = {'Positive','Negative'};
 for rt = 1:numel(rhoTypes)
     rhoType = rhoTypes{rt};
-    evalin('base','addCiBox = false;')
-    doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useAreaTypes)
-%     evalin('base','addCiBox = true;')
-%     doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useAreaTypes)
+    evalin('base','addCiBox = true;')
+    doBarplotAndAnovaFor(rscTable, rhoType, useMonkeys, useAreaTypes)
 end
 
-%% [Absolute|Signed|Positive|Negative] Rsc bar plots for Vis/Mov/VisMove/Other by monks
-% useMonkeys = {'Da_Eu','Da','Eu'};
-% useFuncTypes = {{'ALL_NEURONS','VIS','MOV','VISMOV','OTHER'}};
-% rhoTypes = {'Absolute','Signed','Positive','Negative'};
-% for rt = 1:numel(rhoTypes)
-%     rhoType = rhoTypes{rt};
-%     evalin('base','addCiBox = false;')
-%     doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useFuncTypes)
-%     evalin('base','addCiBox = true;')
-%     doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useFuncTypes)
-% end
-
-end
-% 
-%                 Da-SEF-FEF, Da-SEF-SC, Eu-SEF-SC, Da_Eu-SEF-SC
-%                Da-SEF-FEF-Error, Da-SEF-FEF-Other
-%                Da-SEF-SC-Error, Da-SEF-SC-Other
-%                Eu-SEF-SC-Error, Eu-SEF-SC-Other
-%                Da_Eu-SEF-SC-Error, Da_Eu-SEF-SC-Other
+end % fxn : Fig6B_SpkCorr_PostResponse()
 
 
-%%
-%    doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useAreaTypes)
-
-function [] = doBarplotAndAnovaFor(rscTable,rhoType,useMonkeys,useUnitTypes)
-% rhoType: [Absolute|Signed|Positive|Negative] 
-if sum(contains(useUnitTypes{:},'ERROR')) > 0 
-    midfix = 'ErrNoErr_'; 
-elseif sum(strcmpi(useUnitTypes{:},'FEF')) > 0 || sum(strcmpi(useUnitTypes{:},'SC')) > 0
-    midfix = 'FefSc_';
-elseif sum(strcmpi(useUnitTypes{:},'VIS')) > 0 || sum(strcmpi(useUnitTypes{:},'MOV')) > 0
-    midfix = 'VisMov_';
-end
-
+function [] = doBarplotAndAnovaFor( rscTable , rhoType , useMonkeys , useUnitTypes )
 switch rhoType
     case 'Absolute'
-        rscTable.rho = abs(rscTable.rho);
-        rscTable.rhoEst40 = abs(rscTable.rhoEst40);
-        rscTable.rhoEst80 = abs(rscTable.rhoEst80);
-        basePdfFile = ['absoluteRsc_' midfix];
-        titlePrefix = 'Absolute Rsc - ';
+      rscTable.rho = abs(rscTable.rho);
+      rscTable.rhoEst40 = abs(rscTable.rhoEst40);
+      rscTable.rhoEst80 = abs(rscTable.rhoEst80);
+
     case 'Signed'
-        % No changes use Rho values as is
-        basePdfFile = ['signedRsc_' midfix];
-        titlePrefix = 'Signed Rsc - ';
+      ;
+
     case 'Positive'
-        rscTable = rscTable(rscTable.rho > 0,:);
-        basePdfFile = ['positiveRsc_' midfix];
-        titlePrefix = 'Positive Rsc - ';
+      rscTable = rscTable(rscTable.rho > 0,:);
+
     case 'Negative'        
-        rscTable = rscTable(rscTable.rho < 0,:);
-        basePdfFile = ['negativeRsc_' midfix];
-        titlePrefix = 'Negative Rsc - ';
+      rscTable = rscTable(rscTable.rho < 0,:);
+      
 end
 
 for m = 1:numel(useMonkeys)
     monkeys = useMonkeys(m);
     unitTypes = useUnitTypes;
-    pdfFilename = [basePdfFile monkeys{1} '.pdf'];
-    fig08RscMonkUnitType(rscTable,monkeys,unitTypes,pdfFilename,[titlePrefix monkeys{1}]);
-    close all
+    fig08RscMonkUnitType(rscTable, monkeys, unitTypes);
 end
 
-end
+end % fxn : doBarplotAndAnovaFor()
 
-%%
+
 function [colNames] = getColNamesToUse()
 colNames = {
     'Pair_UID'

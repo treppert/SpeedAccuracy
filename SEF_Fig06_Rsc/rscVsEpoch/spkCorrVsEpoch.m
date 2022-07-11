@@ -21,27 +21,27 @@
 %    iv. Visually-responsive neurons --> visually responsive SEF neurons paired with any FEF/SC neurons
 %     v. All cross area pairs (VSS figure)
 
-%%
 % Spike count correlation data for different pairs by pair-areas in file:
 % spkCorrFile = [rootDir, 'summary/spkCorrAllPairsStaticNew.mat'];
-rootDir = 'C:\Users\Tom\Dropbox\Speed Accuracy\Data\SpkCorr\';
+rootDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr\';
 spkCorrFile = [rootDir, 'summary/SAT_SEF_StaticRscAllPairs_New.mat'];
 
 %% Figure parameters
 pairAreas = {'SEF-FEF', 'SEF-SC'};
-neuronTypes = {'AllN','ErrorChoiceN','ErrorTimingN','ErrorChoiceAndTimingN','VisualN'};
-% neuronTypes = {'AllN'};
+neuronTypes = {'AllN','ErrorChoiceN','ErrorTimingN'};
+nTypes = numel(neuronTypes);
 
-% outcomes = {'Correct','ErrorChoice','ErrorTiming'};
-outcomes = {'Correct'};
-mainConditions = {'Fast','Accurate'};
-epochs = {'Baseline','Visual','PostSaccade','PostReward'};
+outcomes = {'Correct','ErrorChoice','ErrorTiming'};
 % column name of static spike count correlation
 %   rhoRaw_150ms ==> trial-by-trial spike count correlation for a given
 %   pair in 150 ms window after aligning the trials on event corresponding
 %   to the epoch. The data for spike corr are in the variabels in the file:
 %   dataProcessed/analysis/spkCorr/summary/spkCorrAllPairsStaticNew.mat 
 rscColName = 'rhoRaw_150ms';
+
+LINESTYLE = {'-','--',':'};
+% YLIMPLOT = round([.00 .20]+0.005, 2);
+YLIMPLOT = [0.0 0.2];
 
 %% Load spike corr data and merge cross areas
 useCols = {
@@ -75,77 +75,64 @@ for pa = 1:numel(pairAreas)
     temp = load(spkCorrFile,paVariable);
     spkCorr = [spkCorr;temp.(paVariable)(:,useCols)]; %#ok<AGROW>
 end
+
 clearvars pa* useCols temp spkCorrFile
+
 % ensure the X_area is always SEF
 uniqXarea = unique(spkCorr.X_area);
 assert(numel(uniqXarea)==1 || sum(strcmp(uniqXarea,'SEF'))==1,'unique(X_Area) of spike corr table MUST be only SEF');
+
 % Add fields to table to aid filtering for neuron types:
-% neuronTypes = {'AllN','ErrorChoiceN','ErrorTimingN','ErrorChoiceAndTimingN','VisualN'};
 spkCorr.AllN = ones(size(spkCorr,1),1);
 spkCorr.ErrorChoiceN = spkCorr.X_isErrGrade & ~spkCorr.X_isRewGrade;
 spkCorr.ErrorTimingN = ~spkCorr.X_isErrGrade & spkCorr.X_isRewGrade;
 spkCorr.ErrorChoiceAndTimingN = spkCorr.X_isErrGrade & spkCorr.X_isRewGrade;
+
 % pool suppressed and enhanced visual responses; range is [-4,-3,-2,0,2,3,4]
-spkCorr.VisualN = abs(spkCorr.X_visGrade) >= 2; 
+% spkCorr.VisualN = abs(spkCorr.X_visGrade) >= 2;
+
 % outcomes = {'Correct','ErrorChoice','ErrorTiming'};
 spkCorr.outcome = regexprep(spkCorr.condition,'(Accurate)|(Fast)','');
+
 % mainConditions = {'Fast','Accurate'};
 spkCorr.mainCondition = regexprep(spkCorr.condition,'(Correct)|(Error.*)','');
+
 % epochs = {'Baseline','Visual','PostSaccade','PostReward'} => alignedName
 spkCorr.epoch = spkCorr.alignedName;
+
 % use absolute spkcorr
 spkCorr.rsc = double(abs(spkCorr.(rscColName)));
 
 %% Compute stats mean, std, se for rsc
 warning('off')    
-usePairAreas = {
-%     {'SEF-FEF'}
-%     {'SEF-SC'}
-    {'SEF-FEF' 'SEF-SC'}
-    };
+% usePairAreas = { {'SEF-FEF'} , {'SEF-SC'} , {'SEF-FEF' 'SEF-SC'} };
+usePairAreas = { {'SEF-FEF' 'SEF-SC'} };
 
 for pa = 1:numel(usePairAreas)
     
     currPairArea = usePairAreas{pa};
     currSpkCorr = spkCorr(ismember(spkCorr.pairAreas,currPairArea),:);
     currPairAreaStr = char(join(currPairArea,' & '));
+
     pdfFile = ['spkCorrByEpoch_AllPairsFor_' char(join(currPairArea,'_')) '.pdf'];
-    yLim1 = 1;
-    yLim2 = -1;
     grpVars = {'condition' 'epoch' 'mainCondition' 'outcome'};
     whichStats = {'mean' 'std' };
-    for nt = 1:numel(neuronTypes)
+    for nt = 1:nTypes
         neuronType = neuronTypes{nt};
         temp = grpstats(currSpkCorr(currSpkCorr.(neuronType)==1,:),grpVars,whichStats,'DataVars','rsc' );
         temp.se_rsc = temp.std_rsc./sqrt(temp.GroupCount);
         statsTbl.(neuronType) = temp;
-        yLim1 = min([yLim1,min(temp.mean_rsc)-max(temp.se_rsc)]);
-        yLim2 = max([yLim2,max(temp.mean_rsc)+max(temp.se_rsc)]);
-        clearvars temp
-    end   
-    %%
-    figure('Name',currPairAreaStr)
-    p = 0;
-    nRos = numel(neuronTypes);
-    for ro = 1:nRos
-      p = p + 1;
-      H_ax(p) = subplot(nRos,1,p);
-    end
-    lineStyle = {'-','--',':'};
-    yLimPlot = round([.02 .14]+0.005,2);
+    end % for : neuronType (nt)
     
-    for ro = 1:numel(neuronTypes)
-      subplot(nRos,1,ro); hold on
+    figure('Name',currPairAreaStr)
+
+    for nt = 1:nTypes
+      subplot(nTypes,1,nt); hold on
       set(gca, 'YGrid','on')
-      set(gca, 'YMinorGrid','on')
-      title(neuronTypes{ro},'FontSize',9);
+      title(neuronTypes{nt},'FontSize',9);
       
-      neuronType = neuronTypes{ro};
+      neuronType = neuronTypes{nt};
       currData = statsTbl.(neuronType);
-      doXlabel = 0;
-      if ro==numel(neuronTypes)
-          doXlabel = 1;
-      end
 
       for jj = 1:numel(outcomes)
         idxOutcome = strcmp(currData.outcome,outcomes{jj});
@@ -155,23 +142,27 @@ for pa = 1:numel(usePairAreas)
         fast = currData(idxFastOutcome,{'mean_rsc','se_rsc','epoch'});
 
         % Accurate
-        plot(1:4,acc.mean_rsc,'Color','r', 'LineStyle',lineStyle{jj});
-        errorbar((1:4), acc.mean_rsc, acc.se_rsc, 'CapSize',0, 'Color','r', 'LineStyle',lineStyle{jj},'HandleVisibility','off')
+        plot(1:4,acc.mean_rsc,'Color','r', 'LineStyle',LINESTYLE{jj});
+        errorbar((1:4), acc.mean_rsc, acc.se_rsc, 'CapSize',0, 'Color','r', ...
+          'LineStyle',LINESTYLE{jj}, 'HandleVisibility','off')
 
         % Fast
-        plot(1:4,fast.mean_rsc,'Color',[0 .7 0], 'LineStyle',lineStyle{jj});
-        errorbar((1:4), fast.mean_rsc, fast.se_rsc, 'CapSize',0, 'Color',[0 .7 0], 'LineStyle',lineStyle{jj},'HandleVisibility','off')
+        plot(1:4,fast.mean_rsc,'Color',[0 .7 0], 'LineStyle',LINESTYLE{jj});
+        errorbar((1:4), fast.mean_rsc, fast.se_rsc, 'CapSize',0, 'Color',[0 .7 0], ...
+          'LineStyle',LINESTYLE{jj},'HandleVisibility','off')
 
-        ylabel('rsc'); ylim(yLimPlot); ytickformat('%3.2f') %yticks([])
+        ylabel('rsc'); ylim(YLIMPLOT); ytickformat('%3.2f') %yticks([])
         xticks(1:4); xticklabels([]); xlim([.8 4.2])
-        if doXlabel
-            set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
+        if (nt == nTypes)
+          set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
         end
 
       end
-      drawnow;        
-    end
-%     print(pdfFile,'-dpdf','-fillpage')
-    %%
-end
 
+      drawnow
+
+    end % for : neuron type (ro)
+
+end % for : pair(pa)
+
+ppretty([3,6])
