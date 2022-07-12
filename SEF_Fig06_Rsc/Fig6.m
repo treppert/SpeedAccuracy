@@ -1,13 +1,18 @@
 %% Fig6.m -- Figure 6 header file
 
 MONKEY = {'D','E'};
-AREA = {'SEF'};
+AREA = {'SEF','FEF','SC'};
+RHO_TYPE = {'Positive','Negative'};
+
 idxArea = ismember(unitData.Area, AREA);
 idxMonkey = ismember(unitData.Monkey, MONKEY);
-idxFunction = ismember(unitData.Grade_TErr, [-1,+1]);
-unitTest = unitData(idxArea & idxMonkey & idxFunction,:);
+idxSession = ismember(unitData.SessionIndex, [1,10]);
+unitTest = unitData(idxArea & idxMonkey & ~idxSession,:);
 
-Fig4A_ErrRate_X_Trial(behavData, 'monkey',MONKEY)
-% plot_RT_X_TrialOutcome(behavData, 'monkey',MONKEY)
+% [pairInfoDB, pairSummary] = createSatSefCellPairsInfoDB( unitTest );
+% spkCorr = createSpikeCorrWithSubSampling();
 
-clear idx*
+spkCorr__ = Fig6B_SpkCorr_PostResponse( spkCorr , MONKEY , RHO_TYPE );
+% spkCorrVsEpoch
+
+clearvars -except MONKEY AREA pairInfoDB pairSummary spkCorr* unitData behavData *InfoDB *Summary

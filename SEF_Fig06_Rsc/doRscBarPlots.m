@@ -1,28 +1,18 @@
-function [anovaResultTbl] = doRscBarPlots( rscData , monkey , useNeuronType )
-
-anovaResultTbl = struct();
+function [ ] = doRscBarPlots( rscData , sefType , yArea )
 
 groupCols = {'condition','satCondition','outcome'};
 rhocols = {'rho','rhoEst40','rhoEst80'};
 allOutcomes = {'Correct','ErrorChoice','ErrorTiming'};
 
-%useNeuronType = useNeuronTypes{un};
-if strcmp(useNeuronType,'ALL_NEURONS')
-    idxRos = true(size(rscData,1),1);
-    titleStr = 'All neurons';
-elseif strcmp(useNeuronType,'ERROR_NEURONS')
-    idxRos = rscData.isSefErrorUnit == 1;
-    titleStr = 'Error neurons';
-elseif strcmp(useNeuronType,'OTHER_NEURONS')
-    idxRos = rscData.isSefErrorUnit == 0;
-    titleStr = 'Other neurons';
-elseif strcmp(useNeuronType,'FEF')
-    idxRos = ismember(rscData.Y_area, useNeuronType);
-    titleStr = 'SEF-FEF';
-elseif strcmp(useNeuronType,'SC')
-    idxRos = ismember(rscData.Y_area, useNeuronType);
-    titleStr = 'SEF-SC';
+if strcmp(sefType,'ERROR')
+    idxRos = (rscData.isSefErrorUnit);
+elseif strcmp(sefType,'VISUAL')
+    idxRos = (rscData.isSefUnitVis & ~rscData.isSefErrorUnit);
+elseif strcmp(sefType,'ALL')
+    idxRos = (rscData.isSefUnitVis | rscData.isSefErrorUnit);
 end
+
+idxRos = idxRos & ismember(rscData.Y_Area, yArea);
 
 if (sum(idxRos) == 0); return; end
 
@@ -87,7 +77,7 @@ allStats.hiCI_80(idx) = ci(2);
 % Accurate_Correct percentile 10/90 for 80 subsamples
 idx = ismember(rscData.condition,'AccurateCorrect');
 ci40 = getCi((rscData.rhoEst40(idx)));
-overplotBox(0.85,ci40,'k','-');
+overplotBox(0.80,ci40,'k','-');
 ci80 = getCi((rscData.rhoEst80(idx)));
 overplotBox(0.85,ci80,'k',':');
 idx = ismember(allStats.condition,'AccurateCorrect');
@@ -99,7 +89,7 @@ allStats.hiCI_80(idx) = ci80(2);
 % Fast_Correct percentile 10/90 for 80 subsamples
 idx = ismember(rscData.condition,'FastCorrect');
 ci40 = getCi((rscData.rhoEst40(idx)));
-overplotBox(1.1,ci40,'k','-');
+overplotBox(1.05,ci40,'k','-');
 ci80 = getCi((rscData.rhoEst80(idx)));
 overplotBox(1.1,ci80,'k',':');
 idx = ismember(allStats.condition,'FastCorrect');
@@ -108,7 +98,6 @@ allStats.hiCI_40(idx) = ci40(2);
 allStats.loCI_80(idx) = ci80(1);
 allStats.hiCI_80(idx) = ci80(2);
 
-title([monkey '--' titleStr],'FontWeight','bold','Interpreter','none');
 drawnow
 
 end % fxn : doRscBarPlots()

@@ -41,7 +41,7 @@ rscColName = 'rhoRaw_150ms';
 
 LINESTYLE = {'-','--',':'};
 % YLIMPLOT = round([.00 .20]+0.005, 2);
-YLIMPLOT = [0.0 0.2];
+YLIMPLOT = [0.00 0.25];
 
 %% Load spike corr data and merge cross areas
 useCols = {

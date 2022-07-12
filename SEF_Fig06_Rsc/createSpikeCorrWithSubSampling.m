@@ -57,7 +57,7 @@ function [spkCorr] = createSpikeCorrWithSubSampling()
 datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr\dataset';
 
 % specify files with data to compute Rsc
-pairsFile = fullfile(datasetDir,'SAT_SEF_PAIR_CellInfoDB.mat');
+pairsFile = fullfile(datasetDir,'PAIR_CellInfoDB.mat');
 trialTypesFile = fullfile(datasetDir,'SAT_SEF_TrialTypesDB.mat');
 trialEventTimesFile = fullfile(datasetDir,'SAT_SEF_TrialEventTimesDB.mat');
 
@@ -76,7 +76,7 @@ staticWinsAlignTs(1).PostReward = [0 150];
 % minimum number of trials for all conditions, if not, then ignore pair  
 MIN_NTRIAL = 10;
 % nSubSamples = 1000; % number of times to subsample
-N_SUBSAMPLE = 1;
+N_SUBSAMPLE = 100;
 
 %% Prep for parallel processing
 parPool = gcp('nocreate');
@@ -95,7 +95,7 @@ tic
 %     pctRunOnAll warning off;
 parfor (cp = 1:N_PAIRS,nThreads)%nCrossPairs
   crossPair = crossPairs(cp,:);
-  sess = crossPair.X_sess{1};
+  sess = crossPair.X_Session{1};
   trialTypes = sessionTrialTypes(ismember(sessionTrialTypes.session,sess),:);
   trRem = getTrialNosToRemove(crossPair);
   [trialNos4SatConds, nTrials4SatConds] = ...
@@ -106,8 +106,8 @@ parfor (cp = 1:N_PAIRS,nThreads)%nCrossPairs
   if (nTrials4SubSample < MIN_NTRIAL); continue; end
   
   % get spike times
-  xSpkTimes = load_spikes_SAT(crossPair.X_unitNum);
-  ySpkTimes = load_spikes_SAT(crossPair.Y_unitNum);
+  xSpkTimes = load_spikes_SAT(crossPair.X_Index);
+  ySpkTimes = load_spikes_SAT(crossPair.Y_Index);
   evntTimes = sessionEventTimes(ismember(sessionEventTimes.session,sess),:);
   
   tempCorr = struct();
@@ -148,7 +148,7 @@ parfor (cp = 1:N_PAIRS,nThreads)%nCrossPairs
            getEstimatedRhoAndConfInterval(xSpkCounts{1}, ySpkCounts{1}, 40, N_SUBSAMPLE, [10 90]);
       % Mean-trial-count for Accurate-ErrorChoice ~ 80 (79.56)
       [rhoEst80,rhoEstSem80,~,ci95_nTrials_80,subSampleIdxs_80,rhoVecSubSamples_80] = ...
-           getEstimatedRhoAndConfInterval(xSpkCounts{1}, ySpkCounts{1}, 80, N_SUBSAMPLE,[10 90]);
+           getEstimatedRhoAndConfInterval(xSpkCounts{1}, ySpkCounts{1}, 80, N_SUBSAMPLE, [10 90]);
 
       %% Output
       % add crosspair info
@@ -235,14 +235,14 @@ end
 function [cellPairs] = getCrossAreaPairs(pairsFile)
 
 allCellPairs = load(pairsFile);
-allCellPairs = allCellPairs.satSefPairCellInfoDB;
-allCellPairs = allCellPairs(ismember([allCellPairs.X_monkey],{'D','E'}),:);
+allCellPairs = allCellPairs.pairInfoDB;
+allCellPairs = allCellPairs(ismember([allCellPairs.X_Monkey],{'D','E'}),:);
 
-idxCrossAreaSEF = (ismember(allCellPairs.X_area,'SEF') & ismember(allCellPairs.Y_area,{'FEF','SC'}));
+idxCrossAreaSEF = (ismember(allCellPairs.X_Area,'SEF') & ismember(allCellPairs.Y_Area,{'FEF','SC'}));
 idxCrossArea = idxCrossAreaSEF;
 cellPairs = allCellPairs(idxCrossArea,:);
 
-assert(isequal(cellPairs.X_sess, cellPairs.Y_sess), ...
+assert(isequal(cellPairs.X_Session, cellPairs.Y_Session), ...
   'Error: X-Unit sessions and Y-Unit sessions do not match');
 fprintf('Done getCrossAreaPairs()\n')
 
@@ -261,11 +261,11 @@ function [sessionEventTimes] = getSessionEventTimes(trialEventTimesFile)
 end
 
 function [trRem] = getTrialNosToRemove(crossPair)
-    trRem = [crossPair.X_trRemSAT{1};crossPair.Y_trRemSAT{1}];
+    trRem = [crossPair.X_TrialRemoveSAT{1};crossPair.Y_TrialRemoveSAT{1}];
     if ~isempty(trRem)
         temp = [];
         for ii = 1:size(trRem,1)
-            temp = [temp [trRem(ii,1):trRem(ii,2)]]; %#ok<NBRAK,AGROW>
+            temp = [temp [trRem(ii,1):trRem(ii,2)]];
         end
         trRem = unique(temp(:));
     end
@@ -300,29 +300,25 @@ end
 
 function [colNames] = getPairColNmes()
 
-    % cellPairInfo fields to extract
-    colNames = {
-        'Pair_UID'
-        'X_monkey'
-        'X_sessNum'
-        'X_sess'
-        'X_unitNum'
-        'Y_unitNum'
-        'X_unit'
-        'Y_unit'
-        'X_area'
-        'Y_area'
-        'X_visGrade'
-        'Y_visGrade'
-        'X_visField'
-        'Y_visField'
-        'X_errGrade'
-        'Y_errGrade'
-        'X_isErrGrade'
-        'Y_isErrGrade'
-        'X_rewGrade'
-        'Y_rewGrade'
-        'X_isRewGrade'
-        'Y_isRewGrade'
-        };
+colNames = {
+    'Pair_UID'
+    'X_Monkey'
+    'X_SessionIndex'
+    'X_Session'
+    'X_Index'
+    'Y_Index'
+    'X_Area'
+    'Y_Area'
+    'X_Grade_Vis'
+    'Y_Grade_Vis'
+    'X_Grade_Err'
+    'Y_Grade_Err'
+    'X_isErrGrade'
+    'Y_isErrGrade'
+    'X_Grade_TErr'
+    'Y_Grade_TErr'
+    'X_isRewGrade'
+    'Y_isRewGrade'
+    };
+
 end
