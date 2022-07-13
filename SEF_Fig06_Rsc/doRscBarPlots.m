@@ -1,25 +1,29 @@
-function [ ] = doRscBarPlots( rscData , sefType , yArea )
+function [ ] = doRscBarPlots( rscData , sefType )
 
 groupCols = {'condition','satCondition','outcome'};
 rhocols = {'rho','rhoEst40','rhoEst80'};
 allOutcomes = {'Correct','ErrorChoice','ErrorTiming'};
 
-if strcmp(sefType,'ERROR')
-    idxRos = (rscData.isSefErrorUnit);
-elseif strcmp(sefType,'VISUAL')
-    idxRos = (rscData.isSefUnitVis & ~rscData.isSefErrorUnit);
-elseif strcmp(sefType,'ALL')
-    idxRos = (rscData.isSefUnitVis | rscData.isSefErrorUnit);
+idxVis = (abs(rscData.X_Grade_Vis) > 2);
+idxErrChc = (abs(rscData.X_Grade_Err) == 1);
+idxErrTime = (abs(rscData.X_Grade_TErr) == 1);
+
+if strcmp(sefType,'ErrChoiceN')
+    idxTest = idxErrChc;
+elseif strcmp(sefType,'ErrTimeN')
+    idxTest = idxErrTime;
+elseif strcmp(sefType,'VisualN')
+    idxTest = idxVis & ~(idxErrChc | idxErrTime);
+elseif strcmp(sefType,'AllN')
+    idxTest = (idxVis | idxErrChc | idxErrTime);
 end
 
-idxRos = idxRos & ismember(rscData.Y_Area, yArea);
+if (sum(idxTest) == 0); return; end
 
-if (sum(idxRos) == 0); return; end
-
-rscSatConditionStats = grpstats(rscData(idxRos,['satCondition', rhocols]),'satCondition',{'mean','std','sem'});
+rscSatConditionStats = grpstats(rscData(idxTest,['satCondition', rhocols]),'satCondition',{'mean','std','sem'});
 rscSatConditionStats.Properties.RowNames = {};
 
-rscOutcomesStats = grpstats(rscData(idxRos,[groupCols rhocols]),groupCols,{'mean','std','sem'});
+rscOutcomesStats = grpstats(rscData(idxTest,[groupCols rhocols]),groupCols,{'mean','std','sem'});
 rscOutcomesStats = sortrows(rscOutcomesStats,{'outcome','satCondition'});
 rscOutcomesStats.Properties.RowNames = {};
 

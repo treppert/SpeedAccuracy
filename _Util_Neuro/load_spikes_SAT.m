@@ -2,13 +2,15 @@ function [ spikes ] = load_spikes_SAT( uNum , varargin )
 %load_spikes_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'dataDir=',[]}});
+args = getopt(varargin, {{'user=',[]}});
 
-if isempty(args.dataDir)
-  dataDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\spikes\';
+if isempty(args.user)
+  user = 'Thomas Reppert';
 else
-  dataDir = args.dataDir;
+  user = args.user;
 end
+
+dataDir = ['C:\Users\', user, '\Dropbox\Speed Accuracy\Data\spikes\'];
 
 str_uu = num2str(uNum);
 if (uNum < 10)

@@ -1,4 +1,4 @@
-function [ ] = spkCorrVsEpoch( spkCorr , rscColName )
+function [ ] = spkCorrVsEpoch( spkCorr , rscColName , neuronTypes )
 % spkCorrVsEpoch.m
 % Collect absolute static spike count correlation (r_sc) for pairs from
 %         pairAreas (SEF-FEF, SEF-SC) filter by functional
@@ -38,16 +38,6 @@ spkCorr.rsc = double(abs(spkCorr.(rscColName)));
 spkCorr.outcome = regexprep(spkCorr.condition,'(Accurate)|(Fast)',''); %{'Correct','ErrorChoice','ErrorTiming'}
 spkCorr.mainCondition = regexprep(spkCorr.condition,'(Correct)|(Error.*)',''); %{'Fast','Accurate'}
 spkCorr.epoch = spkCorr.alignedName; %{'Baseline','Visual','PostSaccade','PostReward'}
-
-neuronTypes = {'AllN','VisualN','ErrChoiceN','ErrTimeN'}; %{'AllN','VisualN','ErrChoiceN','ErrTimeN'}
-idxVis = (abs(spkCorr.X_Grade_Vis) > 2);
-idxErrChc = (abs(spkCorr.X_Grade_Err) == 1);
-idxErrTime = (abs(spkCorr.X_Grade_TErr) == 1);
-spkCorr.AllN = (idxVis | idxErrChc | idxErrTime);
-% spkCorr.AllN = true(size(spkCorr,1),1);
-spkCorr.VisualN = (idxVis & ~(idxErrChc | idxErrTime));
-spkCorr.ErrChoiceN = idxErrChc;
-spkCorr.ErrTimeN = idxErrTime;
 
 % Factor: Trial outcome
 % outcomesPlot = {'Correct','ErrorChoice','ErrorTiming'};
