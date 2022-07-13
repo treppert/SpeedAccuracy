@@ -54,16 +54,16 @@ function [spkCorr] = createSpikeCorrWithSubSampling()
 %% File refs for data to compute Rsc
 %     warning('off');
 %     datasetDir = 'dataProcessed/satSefPaper/dataset';
-datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr\dataset';
+datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr';
 
 % specify files with data to compute Rsc
 pairsFile = fullfile(datasetDir,'PAIR_CellInfoDB.mat');
 trialTypesFile = fullfile(datasetDir,'SAT_SEF_TrialTypesDB.mat');
 trialEventTimesFile = fullfile(datasetDir,'SAT_SEF_TrialEventTimesDB.mat');
 
-alignNames = {'PostSaccade'}; % {'Baseline','Visual','PostSaccade','PostReward'};
-alignEvents = {'SaccadePrimary'}; % {'CueOn','CueOn','SaccadePrimary','RewardTime'};
-alignTimeWin = {[-100 500]}; % {[-600 100],[-200 400],[-100 500],[-200 700]};
+alignNames = {'Baseline','Visual','PostSaccade','PostReward'};
+alignEvents = {'CueOn','CueOn','SaccadePrimary','RewardTime'};
+alignTimeWin = {[-600 100],[-200 400],[-100 500],[-200 700]};
 
 conditions = {'AccurateCorrect'; 'AccurateErrorChoice'; 'AccurateErrorTiming'; ...
     'FastCorrect'; 'FastErrorChoice'; 'FastErrorTiming'};

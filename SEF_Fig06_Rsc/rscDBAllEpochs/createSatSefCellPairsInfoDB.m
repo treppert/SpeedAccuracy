@@ -14,7 +14,7 @@ function [ pairInfoDB , pairSummary ] = createSatSefCellPairsInfoDB( unitData )
 % see also: CREATESATSEFTRIALTYPESEVENTTIMESDB, PARSESATEXCEL
 %
 
-datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data';
+datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr';
 matAndPlxFiles = fullfile(datasetDir,'SessionFiles_SAT.mat'); %translated and original datafiles
 
 %output files
