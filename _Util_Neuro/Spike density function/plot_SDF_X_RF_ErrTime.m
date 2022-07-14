@@ -3,20 +3,19 @@
 %   Detailed explanation goes here
 
 PLOT = true;
-FIG_VISIBLE = 'off';
+FIG_VISIBLE = 'on';
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 PVAL_MW = .05;
 TAIL_MW = 'left';
 
-idxArea = ismember(unitData.aArea, {'SEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxFunction = (unitData.Grade_Rew == 2);
+idxArea = ismember(unitData.Area, {'SEF'});
+idxMonkey = ismember(unitData.Monkey, {'D','E'});
+idxFunction = (unitData.Grade_TErr == 2);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = sum(idxKeep);
 unitTest = unitData(idxKeep,:);
-spikesTest = spikesSAT(idxKeep);
 
 OFFSET_PRE = 400;
 tPlot = 3500 + (-OFFSET_PRE : 800); %plot time vector
@@ -25,12 +24,13 @@ NUM_SAMP = length(tPlot);
 RT_MAX = 900; %hard ceiling on primary RT
 
 %prepare to bin trials by timing error magnitude
-TERR_LIM = linspace(0, 1, 4); %quantile limits for binning
+TERR_LIM = linspace(0, 1, 2); %quantile limits for binning
 NUM_BIN = length(TERR_LIM) - 1;
 
 for uu = 1:NUM_UNIT
+  if ~ismember(unitTest.Index(uu), 23); continue; end
   fprintf('%s \n', unitTest.Properties.RowNames{uu})
-  kk = ismember(behavData.Task_Session, unitTest.Task_Session(uu));
+  kk = ismember(behavData.Task_Session, unitTest.Session(uu));
   
   RFuu = unitTest.RF{uu}; %response field
   if (length(RFuu) == 8) %if RF is the entire visual field
@@ -44,17 +44,18 @@ for uu = 1:NUM_UNIT
   
   RT_P = behavData.Sacc_RT{kk}; %RT of primary saccade
   RT_P(RT_P > RT_MAX) = NaN; %hard limit on primary RT
-  tRew = round(nanmedian(RT_P + behavData.Task_TimeReward{kk})); %time of reward - fixed
+  tRew = RT_P + behavData.Task_TimeReward(kk); %time of reward - fixed
   
   %compute spike density function and align appropriately
-  sdfA = compute_spike_density_fxn(spikesTest{uu});  %sdf from Array
+  spikes_uu = load_spikes_SAT(unitTest.Index(uu), 'user','thoma');
+  sdfA = compute_spike_density_fxn(spikes_uu);  %sdf from Array
   sdfP = align_signal_on_response(sdfA, RT_P); %sdf from Primary
   sdfR = align_signal_on_response(sdfA, tRew); %sdf from Reward
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by screen clear on Fast trials
-  idxClear = logical(behavData.Task_ClearDisplayFast{kk});
+%   idxClear = logical(behavData.Task_ClearDisplayFast{kk});
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
   idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
@@ -67,8 +68,8 @@ for uu = 1:NUM_UNIT
   idxRFn = (~idxRF & (Octant_Sacc1 ~= 0));
     
   %combine indexing
-  idxAC = (idxAcc & idxCorr);    idxAE = (idxAcc & idxErr);
-  idxFC = (idxFast & idxCorr);   idxFE = (idxFast & idxErr);
+  idxAC = (idxAcc & idxCorr & idxRF);    idxAE = (idxAcc & idxErr & idxRF);
+  idxFC = (idxFast & idxCorr & idxRF);   idxFE = (idxFast & idxErr & idxRF);
     
   %get task deadline
   dlineAcc =  median(behavData.Task_Deadline{kk}(idxAcc));
@@ -82,7 +83,7 @@ for uu = 1:NUM_UNIT
   sdfErr_P = sdfErr_A; %sdf re. primary saccade
   sdfErr_R = sdfErr_A; %sdf re. reward
   
-  idxAC = (idxAcc  & idxCorr & idxRF); %Accurate correct
+  %Accurate correct
   sdfCorr_A = nanmean(sdfA(idxAC, tPlot));
   sdfCorr_P = nanmean(sdfP(idxAC, tPlot));
   sdfCorr_R = nanmean(sdfR(idxAC, tPlot));
@@ -91,18 +92,17 @@ for uu = 1:NUM_UNIT
   
   for bb = 1:NUM_BIN %loop over RT error bins
     idx_bb = (errRT > qtl_errRT(bb)) & (errRT <= qtl_errRT(bb+1));
-    idxAE = (idxAcc  & idxErr & idxRF & idx_bb);  %Accurate timing error
-
-    sdfErr_A(:,bb) = nanmean(sdfA(idxAE, tPlot));
-    sdfErr_P(:,bb) = nanmean(sdfP(idxAE, tPlot));
-    sdfErr_R(:,bb) = nanmean(sdfR(idxAE, tPlot));
+    %Accurate timing error
+    sdfErr_A(:,bb) = nanmean(sdfA(idxAE & idx_bb, tPlot));
+    sdfErr_P(:,bb) = nanmean(sdfP(idxAE & idx_bb, tPlot));
+    sdfErr_R(:,bb) = nanmean(sdfR(idxAE & idx_bb, tPlot));
 %     [tSig, vecSig] = calc_tErrorSignal_SAT(sdfR_kk(idxAC, tPlot), sdfR_kk(idxAE, tPlot), ...
 %       'pvalMW',PVAL_MW, 'tailMW',TAIL_MW);
   end %for: RT error bin (ii)
   
   if (PLOT)
     figure('visible', FIG_VISIBLE)
-    Sig_Time = unitTest.RewardSignal_Time(uu,:);
+    Sig_Time = unitTest.SignalCE_Time_P(uu,:);
     y_Lim = [0, max([sdfCorr_A' sdfErr_A sdfCorr_P' sdfErr_P sdfCorr_R' sdfErr_R],[],'all')];
     colorPlot = linspace(0.0, 0.8, NUM_BIN);
 
@@ -117,8 +117,8 @@ for uu = 1:NUM_UNIT
     ylabel('Activity (sp/sec)')
 
     subplot(1,3,2); hold on %Accurate re. primary
-    title([unitTest.Properties.RowNames{uu}, '-', unitTest.aArea{uu}, '   ', ...
-      'RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RF)))], 'FontSize',9)
+    title([unitTest.Properties.RowNames{uu}, '-', unitTest.Area{uu}, '   ', ...
+      'RF = ', num2str(rad2deg(convert_tgt_octant_to_angle(RFuu)))], 'FontSize',9)
     plot(tPlot-3500, sdfCorr_P, 'r')
     for bb = 1:NUM_BIN
       plot(tPlot-3500, sdfErr_P(:,bb), ':', 'Color',[colorPlot(bb) 0 0], 'LineWidth',1.25)
@@ -142,8 +142,8 @@ for uu = 1:NUM_UNIT
 
     ppretty([10,1.8])
 
-    pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
-    pause(0.1); close(); pause(0.1)
+%     pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+%     pause(0.1); close(); pause(0.1)
   end % if (PLOT)
   
 end% for : unit (uu)

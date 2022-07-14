@@ -2,7 +2,15 @@ function [ varargout ] = compute_TESignal_X_dRT( sdfTE , unitData , varargin )
 %compute_TESignal_X_dRT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'nBin_TE=',2}, {'nBin_dRT=',3}, 'plot_cdf'});
+args = getopt(varargin, {{'nBin_TE=',2}, {'nBin_dRT=',3}, {'monkey=',{'D','E'}}});
+
+PLOT_INDIVIDUAL = true;
+
+%index by monkey
+idxMonk = ismember(unitData.Monkey, args.monkey);
+sdfTE.Corr = sdfTE.Corr(idxMonk,:);
+sdfTE.Err  = sdfTE.Err(idxMonk,:);
+unitData = unitData(idxMonk,:);
 
 NUM_UNIT = size(unitData,1);
 NUM_SAMP = size(sdfTE.Time,1);
@@ -41,25 +49,29 @@ for bb = 1:NBIN_TERR
   end
 end
 
+%z-score signal magnitude individually for each neuron
+% A_TE = zscore(A_TE, 0, 2);
 
 %% Plotting
 XLIM = [0.5 , NBIN_dRT+0.5];
 QUARTILE = (1:4);
 
 %fit line to average trend
-fLin = fit(QUARTILE', mean(A_TE)', 'poly1');
+% fLin = fit(QUARTILE', mean(A_TE)', 'poly1');
 
 figure(); hold on
-errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'r', 'CapSize',0, 'LineWidth',1.25)
-plot(QUARTILE, fLin(QUARTILE), 'k-')
+errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'Color',[.5 0 0], 'CapSize',0, 'LineWidth',1.25)
+% plot(QUARTILE, fLin(QUARTILE), 'k-')
 xlim(XLIM); ytickformat('%3.2f')
 ppretty([1.3,1.8]); set(gca, 'xminortick','off')
 
-figure(); hold on
-plot(A_TE')
-xlim(XLIM); ytickformat('%3.2f')
-ppretty([1.3,1.8]); set(gca, 'xminortick','off')
-
+if (PLOT_INDIVIDUAL)
+  figure(); hold on
+  plot(A_TE')
+  errorbar(mean(A_TE), std(A_TE)/sqrt(NUM_UNIT), 'k', 'CapSize',0, 'LineWidth',1.25)
+  xlim(XLIM); ytickformat('%3.2f')
+  ppretty([1.3,1.8]); set(gca, 'xminortick','off')
+end
 
 %% Output
 if (nargout > 0)
