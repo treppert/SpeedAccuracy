@@ -1,7 +1,7 @@
-function [spkCorr] = createSpikeCorrWithSubSampling()
+function [spkCorr] = computeSpkCorr_SAT_SubSample()
 % see getCrossAreaPairs() sub function
 % 
-% CREATESPIKECORRWITHSUBSAMPLING: Create spike count correlation data set
+% computeSpkCorr_SAT: Create spike count correlation data set
 %   for pairs of units recorded from same session for cross areas.
 % 
 % crossPairs = getAllCrossPairs-no-filtering
@@ -52,8 +52,6 @@ function [spkCorr] = createSpikeCorrWithSubSampling()
 %
 
 %% File refs for data to compute Rsc
-%     warning('off');
-%     datasetDir = 'dataProcessed/satSefPaper/dataset';
 datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr';
 
 % specify files with data to compute Rsc

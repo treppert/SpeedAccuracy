@@ -22,8 +22,8 @@ spkCorr.session = spkCorr.X_Session;
 spkCorr.rho = spkCorr.rhoRaw;
 spkCorr.pval = spkCorr.pvalRaw;
 spkCorr.signif_05 = spkCorr.signifRaw_05;
-spkCorr.rhoEst40 = spkCorr.rhoEstRaw_nTrials_40;
-spkCorr.rhoEst80 = spkCorr.rhoEstRaw_nTrials_80;
+% spkCorr.rhoEst40 = spkCorr.rhoEstRaw_nTrials_40;
+% spkCorr.rhoEst80 = spkCorr.rhoEstRaw_nTrials_80;
 
 %% Optional output
 if (nargout > 0)
@@ -32,8 +32,8 @@ end
 
 %% [Absolute|Signed|Positive|Negative] Rsc bar plots for error/non-error by monks
 for rt = 1:numel(rhoType)
-  figure()
   evalin('base','addCiBox = true;')
+  figure()
   doBarplotAndAnovaFor(spkCorr, rhoType{rt}, monkey, neuronType)
   ppretty([1.2*numel(neuronType) 2.4]); ytickformat('%3.2f')
   drawnow
@@ -42,19 +42,41 @@ end
 end % fxn : Fig6B_SpkCorr_PostResponse()
 
 
-function [] = doBarplotAndAnovaFor( spkCorr , rhoType , useMonkeys , useUnitTypes )
+function [] = doBarplotAndAnovaFor( spkCorr , rhoType , monkeys , unitTypes )
 
-switch rhoType
-    case 'Absolute'
-      spkCorr.rho = abs(spkCorr.rho);
-      spkCorr.rhoEst40 = abs(spkCorr.rhoEst40);
-      spkCorr.rhoEst80 = abs(spkCorr.rhoEst80);
-    case 'Positive'
-      spkCorr = spkCorr(spkCorr.rho > 0,:);
-    case 'Negative'        
-      spkCorr = spkCorr(spkCorr.rho < 0,:);
+nSubplots = numel(unitTypes);
+
+switch (rhoType)
+  case 'Absolute'
+    spkCorr.rho = abs(spkCorr.rho);
+  case 'Positive'
+    spkCorr = spkCorr(spkCorr.rho > 0,:);
+  case 'Negative'        
+    spkCorr = spkCorr(spkCorr.rho < 0,:);
 end
 
-fig08RscMonkUnitType(spkCorr, useMonkeys, useUnitTypes);
+idxMonkey = ismember(spkCorr.monkey, monkeys);
+idxVis = (abs(spkCorr.X_Grade_Vis) > 2);
+idxErrChc = (abs(spkCorr.X_Grade_Err) == 1);
+idxErrTime = (abs(spkCorr.X_Grade_TErr) == 1);
+
+for ut = 1:numel(unitTypes)
+  subplot(1,nSubplots,ut)
+  
+  if strcmp(unitTypes{ut},'ErrChoiceN')
+      idxTest = idxErrChc;
+  elseif strcmp(unitTypes{ut},'ErrTimeN')
+      idxTest = idxErrTime;
+  elseif strcmp(unitTypes{ut},'VisualN')
+      idxTest = idxVis & ~(idxErrChc | idxErrTime);
+  elseif strcmp(unitTypes{ut},'AllN')
+      idxTest = (idxVis | idxErrChc | idxErrTime);
+  end
+  
+  if (sum(idxTest) == 0); return; end
+  
+%   doRscBarPlots_SubSample(spkCorr(idxMonkey,:), unitTypes{ut})
+  doRscBarPlots(spkCorr(idxMonkey & idxTest,:))
+end
 
 end % fxn : doBarplotAndAnovaFor()
