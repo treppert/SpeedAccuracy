@@ -1,5 +1,5 @@
-function [  ] = plot_rtDistr_X_Switch_SAT( behavData )
-%plot_rtDistr_X_Switch_SAT Summary of this function goes here
+function [  ] = plot_CDF_RT_X_Trial_SAT( behavData )
+%plot_CDF_RT_X_Trial_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 PLOT_TYPE = 'cdf'; %'pdf' or 'cdf'

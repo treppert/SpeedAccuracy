@@ -2,7 +2,7 @@ function [ spikes ] = load_spikes_SAT( uNum , varargin )
 %load_spikes_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'user=',[]}});
+args = getopt(varargin, {{'user=','thoma'}});
 
 if isempty(args.user)
   user = 'Thomas Reppert';

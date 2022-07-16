@@ -1,5 +1,5 @@
-function [ varargout ] = plot_errRT_SAT( behavData )
-%plot_errRT_SAT Summary of this function goes here
+function [ varargout ] = plot_PDF_RTerr_SAT( behavData )
+%plot_PDF_RTerr_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 %isolate sessions from monkey of choice

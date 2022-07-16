@@ -1,5 +1,5 @@
-function [  ] = Fig1D_Behav_X_Trial_Simple( behavData , varargin )
-%Fig1D_Behav_X_Trial_Simple Summary of this function goes here
+function [  ] = plot_Behav_X_Trial( behavData , varargin )
+%Fig1D_Behav_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});

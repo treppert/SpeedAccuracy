@@ -1,5 +1,5 @@
-function [ ] = Fig2HJ_Plot_Distr_TST_Simple( unitData , varargin )
-%Fig2HJ_Plot_Distr_TST_SAT Summary of this function goes here
+function [ ] = plot_Distr_TST_SAT( unitData , varargin )
+%plot_Distr_TST_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}, {'area=',{'SEF'}}});

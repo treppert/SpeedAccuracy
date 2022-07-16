@@ -22,7 +22,7 @@ for kk = 1:numSess
   idxFast = (behavData.Task_SATCondition{kk} == 3);
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
   %index by trial outcome
-  idxCorr = ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrChoice{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk});
+  idxCorr = behavData.Task_Correct{kk};
   
   pupil_FastCorr_kk = pupilData{kk}(idxFast & idxCorr, t_Plot);
   pupil_AccCorr_kk =  pupilData{kk}(idxAcc & idxCorr, t_Plot);
@@ -60,7 +60,7 @@ title('Early :: Late')
 xticks([]); ytickformat('%3.2f'); ppretty([4,3])
 
 %run t-test on the late static measure of pupil
-ttestTom( pupLate(:,1) , pupLate(:,2) )
+ttestFull(pupLate(:,1), pupLate(:,2), 'ylabel','Pupil', 'xticklabels',{'Acc','Fast'})
 
 end % function : Fig2C_plotPupilData_SAT()
 

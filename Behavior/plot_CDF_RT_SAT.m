@@ -1,4 +1,4 @@
-function [  ] = plot_rtDistr_SAT( behavData )
+function [  ] = plot_CDF_RT_SAT( behavData )
 %plot_rtDistr_SAT Summary of this function goes here
 %   Detailed explanation goes here
 

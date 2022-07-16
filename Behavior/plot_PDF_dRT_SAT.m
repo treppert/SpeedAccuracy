@@ -1,5 +1,5 @@
-function [  ] = plot_dRT_SAT( behavData )
-%plot_dRT_SAT Summary of this function goes here
+function [  ] = plot_PDF_dRT_SAT( behavData )
+%plot_PDF_dRT_SAT Summary of this function goes here
 %   Detailed explanation goes here
 
 %isolate sessions from monkey of choice
