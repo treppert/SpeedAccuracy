@@ -18,7 +18,7 @@ Ptgt_Fast = NaN(1,NUM_SESS);
 
 for kk = 1:NUM_SESS
   
-  Tgt_Eccen_kk = unique(behavData.Task_TgtEccen{kk});
+  Tgt_Eccen_kk = double(unique(behavData.Task_TgtEccen{kk}));
   
   %index by saccade clipping
   idxClipped = (behavData.Sacc2_Endpoint{kk} == 0);

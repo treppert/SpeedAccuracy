@@ -1,5 +1,5 @@
-function [  ] = plot_tSacc2_X_RTerr( behavData , varargin )
-%plot_tSacc2_X_RTerr Summary of this function goes here
+function [  ] = plot_ISI_X_RTerr( behavData , varargin )
+%plot_ISI_X_RTerr Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'monkey=',{'D','E'}}});
@@ -73,4 +73,4 @@ ylabel('Cumulative probability')
 
 ppretty([2.4,2])
 
-end % fxn : plot_tSacc2_X_RTerr()
+end % fxn : plot_ISI_X_RTerr()

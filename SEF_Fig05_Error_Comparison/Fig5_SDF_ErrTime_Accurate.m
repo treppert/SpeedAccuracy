@@ -1,5 +1,5 @@
-function [ ] = plot_SDF_X_RF_ErrTime_Simple( behavData , unitData , varargin )
-%plot_SDF_X_RF_ErrTime_Simple() Summary of this function goes here
+function [ ] = Fig5_SDF_ErrTime_Accurate( behavData , unitData , varargin )
+%Fig5_SDF_ErrTime_Accurate() Summary of this function goes here
 %   Detailed explanation goes here
 
 args = getopt(varargin, {{'unitID=',[]}});
@@ -14,7 +14,7 @@ TAIL_MW = 'both';
 NUM_UNIT = 1;
 unitTest = unitData(args.unitID,:);
 
-OFFSET_PRE = 400;
+OFFSET_PRE = 200;
 tPlot = 3500 + (-OFFSET_PRE : 800); %plot time vector
 NUM_SAMP = length(tPlot);
 
@@ -89,8 +89,6 @@ for uu = 1:NUM_UNIT
   yLim = [0 max([ylim1 ylim2])];
   ylim(yLim); subplot(1,3,[2 3]); ylim(yLim)
   
-  ppretty([10,1.4])
-  
 end% for : unit (uu)
 
-end % fxn : plot_SDF_X_RF_ErrTime_Simple()
+end % fxn : Fig5_SDF_ErrTime_Accurate()

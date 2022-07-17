@@ -65,6 +65,14 @@ end % for : session(kk)
 cdfFC = cumsum(cdfFC,2);  cdfFE = cumsum(cdfFE,2);
 cdfAC = cumsum(cdfAC,2);  cdfAE = cumsum(cdfAE,2);
 
+%% Plotting -- Data grouped across sessions
+nAll_AE = length(tSSAll_AE);
+y_AE = linspace(1,nAll_AE,nAll_AE) / nAll_AE;
+
+% figure()
+plot(sort(tSSAll_AE), y_AE, 'k:', 'linewidth',1.0)
+ppretty([2,1])
+
 %% Plotting - Distribution
 LINEWIDTH = 1.2;
 
@@ -93,17 +101,5 @@ xlabel('Inter-saccade interval (ms)')
 legend('Corr','Error', 'location','northwest')
 
 ppretty([6.4,2])
-
-%% Plotting -- Data grouped across sessions
-nAll_AE = length(tSSAll_AE);
-y_AE = linspace(1,nAll_AE,nAll_AE) / nAll_AE;
-
-figure()
-plot(sort(tSSAll_AE), y_AE, 'k:', 'linewidth',1.0)
-ppretty([2,1])
-
-% %plot -- average
-% ttestFull(tMedSacc2_Acc, tMedSacc2_Fast, 'barplot', ...
-%   'xticklabels',{'Acc','Fast'}, 'ylabel','Time of second saccade (ms)')
 
 end % fxn : plot_tSacc2_SAT()

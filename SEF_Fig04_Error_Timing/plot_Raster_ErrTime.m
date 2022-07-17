@@ -1,14 +1,14 @@
-function [  ] = Fig4B_Raster_ErrTime( unitData , behavData , varargin )
-%Fig4B_Raster_ErrTime Summary of this function goes here
+function [  ] = plot_Raster_ErrTime( unitData , behavData , varargin )
+%plot_Raster_ErrTime Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'minISI=',600}});
+args = getopt(varargin, {{'minISI=',1000}});
 
-NUM_UNIT = 7;%size(unitData,1);
-iRec = [-500 1200] + 3500;
-tLimR = [-400, 1000];
+NUM_UNIT = size(unitData,1);
+IDX_TEST = [-500 1200] + 3500;
+TLIM_REW = [-400, 1000];
 
-for uu = 7:NUM_UNIT
+for uu = 1:NUM_UNIT
   fprintf('%s \n', unitData.Properties.RowNames{uu})
   kk = ismember(behavData.Task_Session, unitData.Session(uu));
   
@@ -16,6 +16,7 @@ for uu = 7:NUM_UNIT
   RT_P = behavData.Sacc_RT{kk}; %RT of primary saccade
   RT_S = behavData.Sacc2_RT{kk}; %RT of second saccade
   ISI = RT_S - RT_P; %inter-saccade interval
+
   tRew = behavData.Task_TimeReward(kk); %time of reward (fixed)
   tRew = RT_P + tRew; %re. array
   
@@ -38,51 +39,52 @@ for uu = 7:NUM_UNIT
   
   %collect spike times for this unit
   spikes = load_spikes_SAT(unitData.Index(uu));
-  [tSpike_AE, trial_AE, RTS_AE] = collect_SpikeTimes(spikes(trialAE), iRec, ...
+  [tSpike_AE, trial_AE, RTS_AE] = collect_SpikeTimes(spikes(trialAE), IDX_TEST, ...
     tRew(trialAE), RT_S(trialAE));
   
   %limit correct trial counts by number of Accurate errors
   trialAC = datasample(trialAC, nTrialAE, 'Replace',false);
   trialFC = datasample(trialFC, nTrialAE, 'Replace',false);
   
-  [tSpike_AC, trial_AC, RTS_AC] = collect_SpikeTimes(spikes(trialAC), iRec, ...
+  [tSpike_AC, trial_AC, ~] = collect_SpikeTimes(spikes(trialAC), IDX_TEST, ...
     tRew(trialAC), RT_S(trialAC));
-  [tSpike_FE, trial_FE, RTS_FE] = collect_SpikeTimes(spikes(trialFE), iRec, ...
+  [tSpike_FE, trial_FE, RTS_FE] = collect_SpikeTimes(spikes(trialFE), IDX_TEST, ...
     tRew(trialFE), RT_S(trialFE));
-  [tSpike_FC, trial_FC, RTS_FC] = collect_SpikeTimes(spikes(trialFC), iRec, ...
+  [tSpike_FC, trial_FC, ~] = collect_SpikeTimes(spikes(trialFC), IDX_TEST, ...
     tRew(trialFC), RT_S(trialFC));
   
   %% Plotting
+  MARKERSIZE = 3;
+
   figure()
   
-  subplot(2,2,1); hold on %Fast error
-  scatter(tSpike_FE-3500, trial_FE, 3, [.4 .8 .6], 'filled')
-  plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
-  scatter(RTS_FE, (1:nTrialFE), 20, 'k')
-  xlim(tLimR); xticks([])
-  ylabel('Trial')
-  
-  subplot(2,2,2); hold on %Accurate error
-  scatter(tSpike_AE-3500, trial_AE, 3, [1 .6 .6], 'filled')
+  subplot(2,2,1); hold on %Accurate error
+  scatter(tSpike_AE-3500, trial_AE, MARKERSIZE, 'r', 'filled')
   plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
   scatter(RTS_AE, (1:nTrialAE), 20, 'k')
-  xlim(tLimR); xticks([]); yticks([])
-  
-  subplot(2,2,3); hold on %Fast correct
-  scatter(tSpike_FC-3500, trial_FC, 3, [.4 .4 .4], 'filled')
-  plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
-  xlim(tLimR)
-  xlabel('Time from reward (ms)')
+  xlim(TLIM_REW); xticks([])
   ylabel('Trial')
   
-  subplot(2,2,4); hold on %Accurate correct
-  scatter(tSpike_AC-3500, trial_AC, 3, [.4 .4 .4], 'filled')
+  subplot(2,2,2); hold on %Fast error
+  scatter(tSpike_FE-3500, trial_FE, MARKERSIZE, [0 .7 0], 'filled')
   plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
-  xlim(tLimR); yticks([])
+  scatter(RTS_FE, (1:nTrialFE), 20, 'k')
+  xlim(TLIM_REW); xticks([]); yticks([])
+  
+  subplot(2,2,3); hold on %Accurate correct
+  scatter(tSpike_AC-3500, trial_AC, MARKERSIZE, [.4 .4 .4], 'filled')
+  plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
+  xlim(TLIM_REW); xlabel('Time from reward (ms)')
+  ylabel('Trial')
+  
+  subplot(2,2,4); hold on %Fast correct
+  scatter(tSpike_FC-3500, trial_FC, MARKERSIZE, [.4 .4 .4], 'filled')
+  plot([0 0], [0 nTrialAE], 'k:', 'LineWidth',1.2)
+  xlim(TLIM_REW); yticks([])
   xlabel('Time from reward (ms)')
   
   ppretty([6,3])
   
 end % for : unit(uu)
 
-end % fxn : Fig4B_Raster_ErrTime()
+end % fxn : plot_Raster_ErrTime()

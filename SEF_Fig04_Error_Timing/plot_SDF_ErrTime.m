@@ -1,12 +1,9 @@
-function [  ] = plot_SDF_ErrTime( sdfTE , unitData , varargin )
+function [  ] = plot_SDF_ErrTime( sdfTE , tSig_TE , unitData , varargin )
 %plot_SDF_ErrTime Summary of this function goes here
-%   
-%   varargin
 %   'tSig_TE' - struct with vector of times with sig. diff.
 % 
 
-args = getopt(varargin, {{'tSig_TE=',[]}, {'nBin_TE=',1}, {'nBin_dRT=',4}, ...
-  {'area=',{'SEF'}}, {'monkey=',{'D','E'}}, {'uID=',[]}, 'significant'});
+args = getopt(varargin, {{'nBin_TE=',1}, {'nBin_dRT=',4}, {'area=',{'SEF'}}, {'monkey=',{'D','E'}}});
 
 NUM_UNIT = length(sdfTE.Corr);
 TVEC_RESP = sdfTE.Time(:,1);
@@ -52,7 +49,7 @@ for uu = 1:NUM_UNIT
       idx_ii = args.nBin_dRT*(bb-1) + ii;
       plot(TVEC_REW, sdfTE.Err(uu,idx_ii).Acc(:,3), ':', 'Color',[COLORPLOT(ii) 0 0], 'LineWidth',LINEWIDTH)
     end
-    if (bb == args.nBin_TE); scatter(args.tSig_TE(uu).vec, yLim(2)/25, 4, 'k'); end %show timepoint significance
+    if (bb == args.nBin_TE); scatter(tSig_TE(uu).vec, yLim(2)/25, 4, 'k'); end %show timepoint significance
     line(ones(2,1)*unitData.SignalTE_Time(uu,:), yLim/2, 'color','k', 'linestyle',':')
     xlim(tLimR); ylim(yLim); %set(gca, 'YColor','none')
     

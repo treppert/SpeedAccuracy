@@ -10,16 +10,16 @@ sigFast = sigAcc;
 
 for uu = 1:NUM_UNIT
   
-  sdfAC_S = unitData.sdfAC{uu}(:,3); %Accurate correct
-  sdfAE_S = unitData.sdfAE{uu}(:,3); %Accurate choice error
-  sdfFC_S = unitData.sdfFC{uu}(:,3); %Fast correct
-  sdfFE_S = unitData.sdfFE{uu}(:,3); %Fast choice error
+  sdfAC_S = unitData.sdfAC_CE{uu}(:,3); %Accurate correct
+  sdfAE_S = unitData.sdfAE_CE{uu}(:,3); %Accurate choice error
+  sdfFC_S = unitData.sdfFC_CE{uu}(:,3); %Fast correct
+  sdfFE_S = unitData.sdfFE_CE{uu}(:,3); %Fast choice error
   
-  idxTest_Fast = OFFSET_TIME + unitData.SignalCE_Time_S(uu,1:2);
-  idxTest_Acc  = OFFSET_TIME + unitData.SignalCE_Time_S(uu,3:4);
+  limTest_Fast = OFFSET_TIME + unitData.SignalCE_Time_S(uu,1:2);
+  limTest_Acc  = OFFSET_TIME + unitData.SignalCE_Time_S(uu,3:4);
   
-  sigFast(uu) = calc_ErrorSignalMag_SAT(sdfFC_S, sdfFE_S, 'idxTest',idxTest_Fast, 'abs');
-  sigAcc(uu)  = calc_ErrorSignalMag_SAT(sdfAC_S, sdfAE_S, 'idxTest',idxTest_Acc, 'abs');
+  sigFast(uu) = calc_ErrorSignalMag_SAT(sdfFC_S, sdfFE_S, 'limTest',limTest_Fast, 'abs');
+  sigAcc(uu)  = calc_ErrorSignalMag_SAT(sdfAC_S, sdfAE_S, 'limTest',limTest_Acc, 'abs');
   
 end % for : unit(uu)
 

@@ -1,4 +1,4 @@
-function [ ] = Fig4C_ProbActive_ErrorTime( unitData )
+function [ ] = Fig4D_ProbActive_ErrorTime( unitData )
 %Fig4C_ProbActive_ErrorTime Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -30,5 +30,5 @@ xlabel('Time from reward (ms)')
 ylabel('P (active)')
 ppretty([2,1])
 
-end%fxn:Fig4C_ProbActive_ErrorTime()
+end % fxn : Fig4D_ProbActive_ErrorTime()
 

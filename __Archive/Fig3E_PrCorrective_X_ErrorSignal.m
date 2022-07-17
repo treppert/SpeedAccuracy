@@ -25,16 +25,15 @@ for uu = 1:NUM_UNIT
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   %index by task condition
-%   idxCond = (behavData.Task_SATCondition{kk} == 1); %Accurate
-  idxCond = (behavData.Task_SATCondition{kk} == 3); %Fast
+  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso); %Fast
   %index by trial outcome
-  idxErr = (behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  idxErr = (behavData.Task_ErrChoiceOnly{kk});
   
-  trialErr = find(idxErr & idxCond & ~idxIso);
-  num_TrialErr_kk = length(trialErr);
+  trialErr = find(idxErr & idxFast);
+  nErr = length(trialErr);
   
   %second saccade endpoint as binary (Target = TRUE, Other = FALSE)
-  idx_Sacc2Tgt = false(num_TrialErr_kk,1);
+  idx_Sacc2Tgt = false(nErr,1);
   idx_Sacc2Tgt(Sacc2_Endpt_kk(trialErr) == 1) = true;
   
   %% Compute single-trial spike counts
@@ -47,8 +46,8 @@ for uu = 1:NUM_UNIT
   tErr_uu = RT_kk(trialErr) + unitData.SignalCE_Time_S(uu,1) + T_COUNT_ERR; %Fast
 %   tErr_uu = RT_kk(trialErr) + unitData.ErrorSignal_Time(cc,3) + T_COUNT_ERR; %Accurate
   
-  spkCt_Err = NaN(num_TrialErr_kk,1);
-  for jj = 1:num_TrialErr_kk
+  spkCt_Err = NaN(nErr,1);
+  for jj = 1:nErr
     %spike times aligned on primary saccade
     tSpkJJ = spikesSAT{uu}{trialErr(jj)};
     %compute number of spikes during error interval
