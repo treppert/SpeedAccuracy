@@ -28,7 +28,7 @@ assert(numel(uniqXarea)==1 || sum(strcmp(uniqXarea,'SEF'))==1,'unique(X_Area) of
 
 % figure parameters
 LINESTYLE = {'-','--',':'};
-YLIMPLOT = [0.04 0.12];
+YLIMPLOT = [0.04 0.17];
 
 %% Prepare spike corr data
 
@@ -40,8 +40,8 @@ spkCorr.mainCondition = regexprep(spkCorr.condition,'(Correct)|(Error.*)',''); %
 spkCorr.epoch = spkCorr.alignedName; %{'Baseline','Visual','PostSaccade','PostReward'}
 
 % Factor: Trial outcome
-% outcomesPlot = {'Correct','ErrorChoice','ErrorTiming'};
-outcomesPlot = {'Correct'};
+outcomesPlot = {'Correct','ErrorChoice','ErrorTiming'};
+% outcomesPlot = {'Correct'};
 
 %% Compute stats mean, std, se for rsc
 grpVars = {'condition' 'epoch' 'mainCondition' 'outcome'};

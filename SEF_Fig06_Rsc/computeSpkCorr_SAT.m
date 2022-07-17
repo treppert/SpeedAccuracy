@@ -1,4 +1,4 @@
-function [spkCorr] = computeSpkCorr_SAT( )
+function [spkCorr] = computeSpkCorr_SAT( varargin )
 % 
 % computeSpkCorr_SAT: Create spike count correlation data set
 %   for pairs of units recorded from same session for cross areas.
@@ -26,14 +26,16 @@ function [spkCorr] = computeSpkCorr_SAT( )
 %         'dataProcessed/satSefPaper/dataset/SAT_SEF_TrialEventTimesDB.mat'
 %
 
+args = getopt(varargin, {{'direction=','A2F'}});
+
 %% File refs for data to compute Rsc
-datasetDir = 'C:\Users\Thomas Reppert\Dropbox\Speed Accuracy\Data';
+datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data';
 
 % specify files with data to compute Rsc
 pairsFile = fullfile(datasetDir,'SpkCorr\PAIR_CellInfoDB.mat');
 trialEventTimesFile = fullfile(datasetDir,'SpkCorr\SAT_SEF_TrialEventTimesDB.mat');
 
-DIRECTION = 'A2F';
+DIRECTION = args.direction;
 TRIAL_RE_SWITCH = ( -4 : 3 );
 tmp = load([datasetDir, '\behavData.mat']);
 trialSwitch = identify_condition_switch( tmp.behavData );

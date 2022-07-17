@@ -10,7 +10,7 @@
 % end
 
 %Figure S5A - Comparison of error signal magnitude
-MONKEY = {'D'};
+MONKEY = {'D','E'};
 AREA = {'SEF'};
 idxArea = ismember(unitData.Area, AREA);
 idxMonkey = ismember(unitData.Monkey, MONKEY);
@@ -23,27 +23,27 @@ unitTE = unitData(idxArea & idxMonkey & idxTE,:);
 % A_CE = compute_Signal_CE(unitCE);
 % A_TE = compute_Signal_TE(unitTE, behavData);
 
-% figure()
-% subplot(1,2,1); hold on
-% BINWIDTH = 0.05;
-% histogram(A_TE, 'FaceColor','r', 'BinWidth',BINWIDTH, 'Normalization','probability')
-% histogram(A_CE, 'FaceColor',[0 .7 0], 'BinWidth',BINWIDTH, 'Normalization','probability')
-% set(gca, 'YMinorTick','off'); ytickformat('%3.2f')
-% xlabel('Error signal magnitude')
-% ylabel('Probability')
-% subplot(1,2,2); hold on
-% muCE = mean(A_CE);  seCE = std(A_CE)/sqrt(size(unitCE,1));
-% muTE = mean(A_TE);  seTE = std(A_TE)/sqrt(size(unitTE,1));
-% bar(2, muCE, 'FaceColor',[0 .7 0]); errorbar(2, muCE, seCE, 'Color','k', 'Capsize',0, 'LineWidth',1.2)
-% bar(1, muTE, 'FaceColor','r');      errorbar(1, muTE, seTE, 'Color','k', 'CapSize',0, 'LineWidth',1.2)
-% xlim([-2 5]); xticks([1,2]); xticklabels({'TE','CE'}); ytickformat('%3.2f')
-% ylabel('Error signal magnitude')
-% ppretty([5,2]); set(gca, 'XMinorTick','off')
+figure()
+subplot(1,2,1); hold on
+BINWIDTH = 0.05;
+histogram(A_TE, 'FaceColor','r', 'BinWidth',BINWIDTH, 'Normalization','probability')
+histogram(A_CE, 'FaceColor',[0 .7 0], 'BinWidth',BINWIDTH, 'Normalization','probability')
+set(gca, 'YMinorTick','off'); ytickformat('%3.2f')
+xlabel('Error signal magnitude')
+ylabel('Probability')
+subplot(1,2,2); hold on
+muCE = mean(A_CE);  seCE = std(A_CE)/sqrt(size(unitCE,1));
+muTE = mean(A_TE);  seTE = std(A_TE)/sqrt(size(unitTE,1));
+bar(2, muCE, 'FaceColor',[0 .7 0]); errorbar(2, muCE, seCE, 'Color','k', 'Capsize',0, 'LineWidth',1.2)
+bar(1, muTE, 'FaceColor','r');      errorbar(1, muTE, seTE, 'Color','k', 'CapSize',0, 'LineWidth',1.2)
+xlim([-2 5]); xticks([1,2]); xticklabels({'TE','CE'}); ytickformat('%3.2f')
+ylabel('Error signal magnitude')
+ppretty([5,2]); set(gca, 'XMinorTick','off')
 
 %Figure S5B - Distribution of error signaling
-idxBoth  = idxCE &  idxTE;  nBoth = sum(idxBoth);       %signals both types of error
-idxCEOnly = idxCE & ~idxTE; nCEOnly = sum(idxCEOnly);   %signals choice errors only
-idxTEOnly = idxTE & ~idxCE; nTEOnly = sum(idxTEOnly);   %signals timing errors only
+idxBoth   = idxArea & idxMonkey & idxCE &  idxTE; nBoth = sum(idxBoth);       %signals both types of error
+idxCEOnly = idxArea & idxMonkey & idxCE & ~idxTE; nCEOnly = sum(idxCEOnly);   %signals choice errors only
+idxTEOnly = idxArea & idxMonkey & idxTE & ~idxCE; nTEOnly = sum(idxTEOnly);   %signals timing errors only
 nAll = sum([nBoth nCEOnly nTEOnly]);
 
 binLim = cumsum([0, nTEOnly, nCEOnly, nBoth]') / nAll;
