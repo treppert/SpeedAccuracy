@@ -2,8 +2,7 @@ function [ ] = Fig2_plot_SpkCt_X_Trial( behavData , unitData , varargin )
 %Fig2_plot_SpkCt_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
-args = getopt(varargin, {{'interval=',[-600 50]}, {'monkey=',{'D','E'}}, ...
-  {'area=',{'SEF'}}, {'effect=',[]}});
+args = getopt(varargin, {{'interval=',[-600 50]}, {'effect=',[]}});
 
 IDX_TEST = 3500 + args.interval;
 
@@ -118,5 +117,4 @@ diffA2F =  diff(tmp_A2F, 1, 2);
 diffF2A = -diff(tmp_F2A, 1, 2);
 ttestFull(diffA2F, diffF2A, 'ylabel','Single-trial modulation', 'xticklabels',{'A2F','F2A'})
 
-
-end%fxn:plotSpkCount_X_Trial_ReStim_SAT()
+end % fxn : Fig2_plot_SpkCt_X_Trial()
