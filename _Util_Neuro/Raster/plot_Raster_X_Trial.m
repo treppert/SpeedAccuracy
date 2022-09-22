@@ -1,84 +1,69 @@
-function [  ] = plot_RasterXTrial_SAT( unitData , spikes , behavData )
+function [  ] = plot_Raster_X_Trial( unitData , behavData )
 %plot_RasterXTrial_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-AREA = {'FEF'};
-MONKEY = {'Q'};
-
-idxArea = ismember(unitData.aArea, AREA);
-idxMonkey = ismember(unitData.aMonkey, MONKEY);
-idxKeep = [157,252]; %idxArea & idxMonkey;
-
-unitData = unitData(idxKeep, :);
-spikes = spikes(idxKeep);
-
+DIRPRINT = 'C:\Users\thoma\Dropbox\SAT_Figs\Raster_X_Trial\';
 NUM_UNITS = size(unitData, 1);
-TIME_PLOT = (-1000 : 2000); %time from stimulus
+TIME_PLOT = (-1000 : 2000); %time from stimulus (ms)
 
 %% Spike rasters
 
-for uu = 1:NUM_UNITS
-  %unit-specific initialization
-  unitID = [unitData.Properties.RowNames{uu}, '-', unitData.aArea{uu}];
-  numTrials = length(spikes{uu});
-  
+for u = 2:NUM_UNITS
+  k = unitData.SessionIndex(u);
+  nTrial = behavData.Task_NumTrials(k);
+  spikes_u = load_spikes_SAT(unitData.Index(u));
+
   %% Organization of spike times by trial
   %organize spikes as 1-D array for plotting
-  tSpikeCell = spikes{uu};
-  tSpikeMat = cell2mat(tSpikeCell) - 3500;
-  jjSpike = NaN(1,length(tSpikeMat));
+  spikes_u_mat = cell2mat(transpose(spikes_u)) - 3500;
+  jjSpike = NaN(1,length(spikes_u_mat)); %corresponding trial numbers
   
   %get trial numbers corresponding to each spike
-  idxMat = 1; %index used to count through tSpikeMat
-  for jj = 1:numTrials
-    idxStart_jj = idxMat;
-    idxEnd_jj = idxMat + length(tSpikeCell{jj}) - 1;
+  i_mat = 1; %index used to count through spikes_u_mat
+  for jj = 1:nTrial
+    idxStart_jj = i_mat;
+    idxEnd_jj = i_mat + length(spikes_u{jj}) - 1;
     jjSpike(idxStart_jj : idxEnd_jj) = jj;
-    idxMat = idxMat + length(tSpikeCell{jj});
+    i_mat = i_mat + length(spikes_u{jj});
   end % for : trials(jj)
   
   %remove spikes outside of time window of interest
-  idxPlot = ((tSpikeMat >= TIME_PLOT(1)) & (tSpikeMat <= TIME_PLOT(end)));
-  tSpikeMat = tSpikeMat(idxPlot);
+  idxPlot = ((spikes_u_mat >= TIME_PLOT(1)) & (spikes_u_mat <= TIME_PLOT(end)));
+  spikes_u_mat = spikes_u_mat(idxPlot);
   jjSpike = jjSpike(idxPlot);
   
   %parse trials by task condition
-  kk = ismember(behavData.Task_Session, unitData.Task_Session{uu});
-  trialAcc = find(behavData.Task_SATCondition{kk} == 1);
-  trialFast = find(behavData.Task_SATCondition{kk} == 3);
+  trialAcc = find(behavData.Task_SATCondition{k} == 1);
+  trialFast = find(behavData.Task_SATCondition{k} == 3);
+  trialNeut = find(behavData.Task_SATCondition{k} == 4);
   
   %sort spikes by task condition
   idxAcc = ismember(jjSpike, trialAcc);
   idxFast = ismember(jjSpike, trialFast);
-  jjSpikeAcc = jjSpike(idxAcc);     tSpikeMatAcc = tSpikeMat(idxAcc);
-  jjSpikeFast = jjSpike(idxFast);   tSpikeMatFast = tSpikeMat(idxFast);
+  idxNeut = ismember(jjSpike, trialNeut);
+  jjSpikeAcc = jjSpike(idxAcc);     tSpikeMatAcc = spikes_u_mat(idxAcc);
+  jjSpikeFast = jjSpike(idxFast);   tSpikeMatFast = spikes_u_mat(idxFast);
+  jjSpikeNeut = jjSpike(idxNeut);   tSpikeMatNeut = spikes_u_mat(idxNeut);
   
   %% Plotting
   figure(); hold on
 %   plot(tSpikeMat, jjSpike, 'k.', 'MarkerSize',4)
-  plot(tSpikeMatAcc, jjSpikeAcc, 'r.', 'MarkerSize',4)
-  plot(tSpikeMatFast, jjSpikeFast, '.', 'Color',[0 .7 0], 'MarkerSize',4)
-  plot([0 0], [0 numTrials], 'k-', 'LineWidth',2.0)
+  plot(tSpikeMatNeut, jjSpikeNeut, '.', 'Color','k', 'MarkerSize',4)
+  plot(tSpikeMatAcc, jjSpikeAcc, '.', 'Color',[.6 0 0], 'MarkerSize',4)
+  plot(tSpikeMatFast, jjSpikeFast, '.', 'Color',[0 .6 0], 'MarkerSize',4)
+  plot([0 0], [0 nTrial], 'k-', 'LineWidth',2.0)
   
-  ylim([0 numTrials+1])
-%   ylabel('Trial number')
-%   xlabel('Time from array (ms)')
+  ylim([0 nTrial+1])
+  ylabel('Trial')
+  xlabel('Time from array (ms)')
   xlim([-600 1000])
-  title(unitID)
-  ppretty([7,6]); pause(0.5)
+  title(unitData.ID{u})
+  ppretty([8.5,12])
   
-end%for:units(uu)
+  drawnow
+  print([DIRPRINT, unitData.ID{u}, '-', unitData.Area{u}, '.tif'], '-dtiff')
+  close()
 
-end % util :: plot_RasterXTrial_SAT()
+end%for:units(u)
 
-%   if (args.sort_RT) %if desired, sort trials by response time
-%     [RTkk,idx_RT] = sort(RTkk);
-%     
-%     trials_new = NaN(1,length(t_spikes));
-%     for jj = 1:NUM_TRIAL
-%       trials_new(trials == jj) = idx_RT(jj);
-%     end
-%     
-%     trials = trials_new;
-%   end%if:sort-RT
-  
+end % util :: plot_Raster_X_Trial()
