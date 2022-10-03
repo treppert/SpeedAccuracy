@@ -4,11 +4,11 @@ function [  ] = plot_Raster_X_Trial( unitData , behavData )
 
 DIRPRINT = 'C:\Users\thoma\Dropbox\SAT_Figs\Raster_X_Trial\';
 NUM_UNITS = size(unitData, 1);
-TIME_PLOT = (-1000 : 2000); %time from stimulus (ms)
+TIME_PLOT = (-650 : 1050); %time from stimulus (ms)
 
 %% Spike rasters
 
-for u = 2:NUM_UNITS
+for u = 1:NUM_UNITS
   k = unitData.SessionIndex(u);
   nTrial = behavData.Task_NumTrials(k);
   spikes_u = load_spikes_SAT(unitData.Index(u));
@@ -46,11 +46,11 @@ for u = 2:NUM_UNITS
   jjSpikeNeut = jjSpike(idxNeut);   tSpikeMatNeut = spikes_u_mat(idxNeut);
   
   %% Plotting
-  figure(); hold on
+  figure('visible','off'); hold on
 %   plot(tSpikeMat, jjSpike, 'k.', 'MarkerSize',4)
   plot(tSpikeMatNeut, jjSpikeNeut, '.', 'Color','k', 'MarkerSize',4)
-  plot(tSpikeMatAcc, jjSpikeAcc, '.', 'Color',[.6 0 0], 'MarkerSize',4)
-  plot(tSpikeMatFast, jjSpikeFast, '.', 'Color',[0 .6 0], 'MarkerSize',4)
+  plot(tSpikeMatAcc, jjSpikeAcc, '.', 'Color','k', 'MarkerSize',4)
+  plot(tSpikeMatFast, jjSpikeFast, '.', 'Color','k', 'MarkerSize',4)
   plot([0 0], [0 nTrial], 'k-', 'LineWidth',2.0)
   
   ylim([0 nTrial+1])

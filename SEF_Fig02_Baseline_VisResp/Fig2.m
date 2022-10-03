@@ -1,22 +1,18 @@
 %Fig2.m -- Figure 2 header file
-MONKEY = {'D','E'};
+MONKEY = {'Q'};
 AREA = {'FEF'};
 BASELINE = [-600,+50];
 VISRESP  = [+50,+400];
-SIGN_EFFECT = +1; % [+1 = F>A]  [-1 = A>F]
+EFFECT_DIR = 1; % [1 = F>A]  [2 = A>F]
 
 idxArea = ismember(unitData.Area, AREA);
 idxMonkey = ismember(unitData.Monkey, MONKEY);
 idxVisUnit = ismember(unitData.Grade_Vis, [+3,+4]);
-idxEffectBL = ismember(unitData.SAT_Effect(:,1), SIGN_EFFECT); %significant SAT effect on baseline
-idxEffectVR = ismember(unitData.SAT_Effect(:,2), SIGN_EFFECT); %significant SAT effect on visual response
+idxEffectBL = ismember(unitData.SAT_Effect(:,1), EFFECT_DIR); %significant SAT effect on baseline
+idxEffectVR = ismember(unitData.SAT_Effect(:,2), EFFECT_DIR); %significant SAT effect on visual response
 % idxTest = (idxArea & idxMonkey & idxVisUnit & (idxEffectBL | idxEffectVR));
-idxTest = (idxArea & idxMonkey & idxVisUnit);
+idxTest = (idxArea & idxMonkey);% & idxVisUnit);
 unitTest = unitData(idxTest,:);
-
-%Compute SAT effect significance at the single-neuron level
-effectSAT = compute_spkCt_X_Condition(behavData, unitTest);
-unitData.SAT_Effect(idxTest,:) = effectSAT;
 
 % Fig2AD_Plot_SDF_Re_Array(behavData, unitData, 'area',AREA, 'monkey',MONKEY, 'fig','A')
 
@@ -27,6 +23,14 @@ unitData.SAT_Effect(idxTest,:) = effectSAT;
 
 % Fig2C_plotPupilData_SAT(behavData, pupilData)
 
+%% Preliminary analyses
+plot_Raster_X_Trial(unitTest, behavData); return
+
+%Compute SAT effect significance at the single-neuron level
+% effectSAT = compute_spkCt_X_Condition(behavData, unitTest);
+% unitData.SAT_Effect(idxTest,:) = effectSAT;
+
+%% Additional analyses
 % Target discrimination
 % plot_Distr_TST_SAT(unitData, 'area',AREA, 'monkey',MONKEY)
 

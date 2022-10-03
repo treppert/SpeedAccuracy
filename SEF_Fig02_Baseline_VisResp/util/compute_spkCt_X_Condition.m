@@ -1,11 +1,13 @@
-function [ effectSAT ] = compute_spkCt_X_Condition( behavData , unitTest , varargin )
+function [ effectSAT ] = compute_spkCt_X_Condition( behavData , unitData , varargin )
 %compute_spkCt_X_Condition Summary of this function goes here
 %   Detailed explanation goes here
 
 IDX_BASELINE = 3500 + [-600,+50];
 IDX_VISRESP  = 3500 + [+50,+400];
+GREEN = [0 .7 0];
+DEBUG = false;
 
-NUM_UNIT = size(unitTest,1);
+NUM_UNIT = size(unitData,1);
 
 %initialize spike count
 spkCt_Acc = NaN(NUM_UNIT,2); % baseline | visual response
@@ -16,15 +18,15 @@ pvalMW = NaN(NUM_UNIT,2);
 effectSAT = NaN(NUM_UNIT,2);
 
 for uu = 1:NUM_UNIT
-  kk = unitTest.SessionIndex(uu);
+  kk = unitData.SessionIndex(uu);
   
   %compute spike count for all trials
-  spikes_uu = load_spikes_SAT(unitTest.Index(uu));
+  spikes_uu = load_spikes_SAT(unitData.Index(uu));
   spkCt_BL_uu = cellfun(@(x) sum((x > IDX_BASELINE(1)) & (x < IDX_BASELINE(2))), spikes_uu);
   spkCt_VR_uu = cellfun(@(x) sum((x > IDX_VISRESP(1))  & (x < IDX_VISRESP(2))), spikes_uu);
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
@@ -39,31 +41,49 @@ for uu = 1:NUM_UNIT
   pvalMW(uu,1) = ranksum(scAcc_BL_uu, scFast_BL_uu, 'tail','both');
   pvalMW(uu,2) = ranksum(scAcc_VR_uu, scFast_VR_uu, 'tail','both');
 
+  if (DEBUG)
+    figure()
+    subplot(1,2,1); hold on
+    histogram(scAcc_BL_uu, 'FaceColor','r'); histogram(scFast_BL_uu, 'FaceColor',GREEN)
+    xlabel('BL spike count'); ylabel('No. of trials'); title(unitData.ID{uu})
+    subplot(1,2,2); hold on
+    histogram(scAcc_VR_uu, 'FaceColor','r'); histogram(scFast_VR_uu, 'FaceColor',GREEN)
+    xlabel('VR spike count')
+    ppretty([4.8,1.4])
+  end
+
 end % for : unit (uu)
 
 dSpkCt = spkCt_Fast - spkCt_Acc; %differences in spike count
 effectSize = (spkCt_Fast - spkCt_Acc) ./ (spkCt_Fast + spkCt_Acc);
 
-%% Compute significance at level of single neurons
+%% Compute significance and effect size at level of single neurons
+%Note - Currently only marking neurons that meet required significance AND
+%effect size threshold
 P_LEVEL = .05;
-idxBL_FgA = ((pvalMW(:,1) <= P_LEVEL) & (dSpkCt(:,1) > 0)); effectSAT(idxBL_FgA,1) = +1;
-idxBL_AgF = ((pvalMW(:,1) <= P_LEVEL) & (dSpkCt(:,1) < 0)); effectSAT(idxBL_AgF,1) = -1;
-idxVR_FgA = ((pvalMW(:,2) <= P_LEVEL) & (dSpkCt(:,2) > 0)); effectSAT(idxVR_FgA,2) = +1;
-idxVR_AgF = ((pvalMW(:,2) <= P_LEVEL) & (dSpkCt(:,2) < 0)); effectSAT(idxVR_AgF,2) = -1;
+T_EFFECT = .04; %threshold for custom effect size
+idxSig_BL = (pvalMW(:,1) <= P_LEVEL);
+idxSig_VR = (pvalMW(:,2) <= P_LEVEL);
+idxEffSize_BL = (abs(effectSize(:,1)) >= T_EFFECT);
+idxEffSize_VR = (abs(effectSize(:,2)) >= T_EFFECT);
+idxBL_FgA = (idxSig_BL & idxEffSize_BL & (dSpkCt(:,1) > 0)); effectSAT(idxBL_FgA,1) = 1; %1=F>A
+idxBL_AgF = (idxSig_BL & idxEffSize_BL & (dSpkCt(:,1) < 0)); effectSAT(idxBL_AgF,1) = 2; %2=A>F
+idxVR_FgA = (idxSig_VR & idxEffSize_VR & (dSpkCt(:,2) > 0)); effectSAT(idxVR_FgA,2) = 1;
+idxVR_AgF = (idxSig_VR & idxEffSize_VR & (dSpkCt(:,2) < 0)); effectSAT(idxVR_AgF,2) = 2;
 
 %% Plotting
-
-figure() %normalized SAT effect size
-subplot(1,2,1); hold on; title('Baseline')
-histogram(effectSize(:,1), 'FaceColor','b', 'BinEdges',linspace(-.4,+.6, 21))
-subplot(1,2,2); hold on; title('Visual response')
-histogram(effectSize(:,2), 'FaceColor','b', 'BinEdges',linspace(-.4,+.6, 21))
-ppretty([4,1])
+figure(); NUMBIN = 51; %SAT effect size
+subplot(1,2,1); hold on; title('Baseline'); xlabel('Effect size'); ylabel('No. of neurons')
+histogram(effectSize(~idxSig_BL,1), 'FaceColor','k', 'BinEdges',linspace(-.4,+.6, NUMBIN))
+histogram(effectSize( idxSig_BL,1), 'FaceColor','b', 'BinEdges',linspace(-.4,+.6, NUMBIN))
+subplot(1,2,2); hold on; title('Visual response'); xlabel('Effect size')
+histogram(effectSize(~idxSig_VR,2), 'FaceColor','k', 'BinEdges',linspace(-.4,+.6, NUMBIN))
+histogram(effectSize( idxSig_VR,2), 'FaceColor','b', 'BinEdges',linspace(-.4,+.6, NUMBIN))
+ppretty([6,1])
 
 figure() %histograms
 BINEDGES_1 = linspace(0, 50, 10);
 BINEDGES_2 = linspace(-10, 10, 10);
-GREEN = [0 .7 0];
 GRAY = [.5 .5 .5];
 
 subplot(1,4,1); hold on; title('Baseline')
