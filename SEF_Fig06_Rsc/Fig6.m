@@ -9,8 +9,13 @@
 
 %% Compute spike count correlation
 % spkCorr = computeSpkCorr_SAT_SubSample(); %sub-sampling for bar plots
-% spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
-spkCorrA2F = computeSpkCorr_SAT('direction','A2F'); %trial-to-trial analysis
+spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
+
+%parse the structure of spkCorr
+organize_rscTable %save as rsc_Acc and rsc_Fast
+
+%trial-to-trial analysis
+spkCorrA2F = computeSpkCorr_SAT('direction','A2F');
 spkCorrF2A = computeSpkCorr_SAT('direction','F2A');
 
 %% Indexing
