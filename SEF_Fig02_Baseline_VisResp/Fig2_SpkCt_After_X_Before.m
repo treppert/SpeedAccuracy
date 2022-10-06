@@ -29,7 +29,7 @@ for uu = 1:NUM_UNIT
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
   
   %compute z-scored spike count
-%   spkCt_uu(~idxIso) = zscore(spkCt_uu(~idxIso));
+  spkCt_uu(~idxIso) = zscore(spkCt_uu(~idxIso));
   
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
@@ -54,49 +54,34 @@ idxSEF = ismember(unitData.Area, {'SEF'});
 idxFEF = ismember(unitData.Area, {'FEF'});
 idxSC  = ismember(unitData.Area, {'SC'});
 
-LINE_LIM = [0 100];
-GRAY = 0.4*ones(1,3);
-XLABEL = 'Spike count: Trial -1';
-YLABEL = 'Spike count: Trial +1';
+%compute mean
+mu_SEF_A2F = mean(spkCt_A2F(idxSEF,:));   se_SEF_A2F = std(spkCt_A2F(idxSEF,:))/sqrt(sum(idxSEF));
+mu_FEF_A2F = mean(spkCt_A2F(idxFEF,:));   se_FEF_A2F = std(spkCt_A2F(idxFEF,:))/sqrt(sum(idxFEF));
+mu_SC_A2F = mean(spkCt_A2F(idxSC,:));     se_SC_A2F = std(spkCt_A2F(idxSC,:))/sqrt(sum(idxSC));
+%compute standard error
+mu_SEF_F2A = mean(spkCt_F2A(idxSEF,:));   se_SEF_F2A = std(spkCt_F2A(idxSEF,:))/sqrt(sum(idxSEF));
+mu_FEF_F2A = mean(spkCt_F2A(idxFEF,:));   se_FEF_F2A = std(spkCt_F2A(idxFEF,:))/sqrt(sum(idxFEF));
+mu_SC_F2A = mean(spkCt_F2A(idxSC,:));     se_SC_F2A = std(spkCt_F2A(idxSC,:))/sqrt(sum(idxSC));
 
-
-figure() %Scatterplot -- Before vs after
-
-subplot(1,2,1); title('Accurate to Fast'); hold on
-scatter(spkCt_A2F(idxSEF,1), spkCt_A2F(idxSEF,2), 10, 'k', 'filled', 'd')
-scatter(spkCt_A2F(idxFEF,1), spkCt_A2F(idxFEF,2), 10, 'b', 'filled', 'd')
-scatter(spkCt_A2F(idxSC,1), spkCt_A2F(idxSC,2), 10, 'm', 'filled', 'd')
-line(LINE_LIM, LINE_LIM, 'LineStyle','--', 'Color',GRAY)
-xlabel(XLABEL); ylabel(YLABEL)
-
-subplot(1,2,2); title('Fast to Accurate'); hold on %F2A
-scatter(spkCt_F2A(idxSEF,1), spkCt_F2A(idxSEF,2), 10, 'k', 'filled', 'd')
-scatter(spkCt_F2A(idxFEF,1), spkCt_F2A(idxFEF,2), 10, 'b', 'filled', 'd')
-scatter(spkCt_F2A(idxSC,1), spkCt_F2A(idxSC,2), 10, 'm', 'filled', 'd')
-line(LINE_LIM, LINE_LIM, 'LineStyle','--', 'Color',GRAY)
-xlabel(XLABEL)
-
-ppretty([4,1.2])
-
-
-figure() %Histogram -- Difference
-BIN_EDGES_A2F = linspace(-10, 20, 7);
-BIN_EDGES_F2A = linspace(-20, 10, 7);
+figure()
 
 subplot(1,2,1); title('Accurate to Fast'); hold on
-histogram(diff(spkCt_A2F(idxSEF,:),1,2), 'normalization','count', 'FaceColor','k', 'BinEdges',BIN_EDGES_A2F)
-histogram(diff(spkCt_A2F(idxFEF,:),1,2), 'normalization','count', 'FaceColor','b', 'BinEdges',BIN_EDGES_A2F)
-histogram(diff(spkCt_A2F(idxSC,:),1,2), 'normalization','count', 'FaceColor','m', 'BinEdges',BIN_EDGES_A2F)
-xlabel('Spike count change')
-ylabel('Number of neurons')
+% plot(spkCt_A2F(idxSEF,:)', 'k-')
+% plot(spkCt_A2F(idxFEF,:)', 'b-')
+% plot(spkCt_A2F(idxSC,:)', 'm-')
+errorbar(mu_SEF_A2F, se_SEF_A2F, 'k', 'CapSize',0)
+errorbar(mu_FEF_A2F, se_FEF_A2F, 'b', 'CapSize',0)
+errorbar(mu_SC_A2F, se_SC_A2F, 'm', 'CapSize',0)
+ylabel('Spike count (z)')
 
 subplot(1,2,2); title('Fast to Accurate'); hold on
-histogram(diff(spkCt_F2A(idxSEF,:),1,2), 'normalization','count', 'FaceColor','k', 'BinEdges',BIN_EDGES_F2A)
-histogram(diff(spkCt_F2A(idxFEF,:),1,2), 'normalization','count', 'FaceColor','b', 'BinEdges',BIN_EDGES_F2A)
-histogram(diff(spkCt_F2A(idxSC,:),1,2), 'normalization','count', 'FaceColor','m', 'BinEdges',BIN_EDGES_F2A)
-xlabel('Spike count change')
+% plot(spkCt_F2A(idxSEF,:)', 'k-')
+% plot(spkCt_F2A(idxFEF,:)', 'b-')
+% plot(spkCt_F2A(idxSC,:)', 'm-')
+errorbar(mu_SEF_F2A, se_SEF_F2A, 'k', 'CapSize',0)
+errorbar(mu_FEF_F2A, se_FEF_F2A, 'b', 'CapSize',0)
+errorbar(mu_SC_F2A, se_SC_F2A, 'm', 'CapSize',0)
 
 ppretty([4,1.2])
 
 end % fxn : Fig2_SpkCt_After_X_Before()
-
