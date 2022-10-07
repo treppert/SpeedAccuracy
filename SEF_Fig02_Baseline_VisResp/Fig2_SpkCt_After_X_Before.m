@@ -72,7 +72,7 @@ subplot(1,2,1); title('Accurate to Fast'); hold on
 errorbar(mu_SEF_A2F, se_SEF_A2F, 'k', 'CapSize',0)
 errorbar(mu_FEF_A2F, se_FEF_A2F, 'b', 'CapSize',0)
 errorbar(mu_SC_A2F, se_SC_A2F, 'm', 'CapSize',0)
-ylabel('Spike count (z)')
+ylabel('Post-array spike count (z)'); ytickformat('%2.1f'); xticks([])
 
 subplot(1,2,2); title('Fast to Accurate'); hold on
 % plot(spkCt_F2A(idxSEF,:)', 'k-')
@@ -81,7 +81,8 @@ subplot(1,2,2); title('Fast to Accurate'); hold on
 errorbar(mu_SEF_F2A, se_SEF_F2A, 'k', 'CapSize',0)
 errorbar(mu_FEF_F2A, se_FEF_F2A, 'b', 'CapSize',0)
 errorbar(mu_SC_F2A, se_SC_F2A, 'm', 'CapSize',0)
+ytickformat('%2.1f'); xticks([])
 
-ppretty([4,1.2])
+ppretty([3,1.2])
 
 end % fxn : Fig2_SpkCt_After_X_Before()

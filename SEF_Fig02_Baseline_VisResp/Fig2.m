@@ -11,7 +11,7 @@ idxVisUnit = ismember(unitData.Grade_Vis, [+3,+4]);
 idxEffectBL = ismember(unitData.SAT_Effect(:,1), EFFECT_DIR); %significant SAT effect on baseline
 idxEffectVR = ismember(unitData.SAT_Effect(:,2), EFFECT_DIR); %significant SAT effect on visual response
 % idxTest = (idxArea & idxMonkey & idxVisUnit & (idxEffectBL | idxEffectVR));
-idxTest = (idxArea & idxMonkey & idxEffectVR);
+idxTest = (idxArea & idxMonkey & idxVisUnit & idxEffectVR);
 unitTest = unitData(idxTest,:);
 
 % Fig2AD_Plot_SDF_Re_Array(behavData, unitData, 'area',AREA, 'monkey',MONKEY, 'fig','A')
