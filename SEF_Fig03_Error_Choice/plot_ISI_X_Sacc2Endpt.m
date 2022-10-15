@@ -3,7 +3,7 @@ function [ ] = plot_ISI_X_Sacc2Endpt( behavData )
 %   Detailed explanation goes here
 
 %isolate appropriate recording sessions
-kkKeep = (ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF);
+kkKeep = ismember(behavData.Monkey, {'D','E'}) & behavData.Task_RecordedSEF;
 NUM_SESS = sum(kkKeep);   behavData = behavData(kkKeep, :);
 
 %initializations
@@ -17,7 +17,7 @@ for kk = 1:NUM_SESS
   idxAcc = (behavData.Task_SATCondition{kk} == 1);
   idxFast = (behavData.Task_SATCondition{kk} == 3);
   %index by trial outcome
-  idxErr = (behavData.Task_ErrChoice{kk} & ~(behavData.Task_ErrTime{kk} | behavData.Task_ErrHold{kk} | behavData.Task_ErrNoSacc{kk}));
+  idxErr = behavData.Task_ErrChoiceOnly{kk};
   
   %index by second saccade endpoint
   idxTgt = (behavData.Sacc2_Endpoint{kk} == 1);
@@ -37,6 +37,7 @@ end %for : session (kk)
 
 muPlot = [mean(ISI_Sacc2T) , mean(ISI_Sacc2D)];
 sePlot = [std(ISI_Sacc2T) , std(ISI_Sacc2D)] / sqrt(NUM_SESS);
+
 figure(); hold on
 bar(muPlot, 'FaceColor','w')
 errorbar(muPlot, sePlot, 'Color','k', 'CapSize',0)

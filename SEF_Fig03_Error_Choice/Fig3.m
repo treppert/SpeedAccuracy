@@ -27,5 +27,5 @@ clear idx*
 % S3E. This script also plots individual neuron data (Figs. S3F-H).
 
 %Response to reviews
-% plot_ISI_X_Sacc2Endpt(behavData)
+plot_ISI_X_Sacc2Endpt(behavData)
 % plot_SpkCt_X_Sacc2Endpt(behavData, unitTest)
