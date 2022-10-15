@@ -52,13 +52,17 @@ alignNames = {'Baseline','Visual','PostSaccade','PostReward'};
 alignEvents = {'CueOn','CueOn','SaccadePrimary','RewardTime'};
 alignTimeWin = {[-600 100],[-200 400],[-100 500],[-200 700]};
 
-conditions = {'AccurateCorrect'; 'AccurateErrorChoice'; 'AccurateErrorTiming'; ...
+trialType = {'AccurateCorrect'; 'AccurateErrorChoice'; 'AccurateErrorTiming'; ...
     'FastCorrect'; 'FastErrorChoice'; 'FastErrorTiming'};
 
-staticWinsAlignTs(1).Baseline = [-150 0];
-staticWinsAlignTs(1).Visual = [0 150];
-staticWinsAlignTs(1).PostSaccade = [0 150];
-staticWinsAlignTs(1).PostReward = [0 150];
+% staticWinsAlignTs(1).Baseline = [-150 0];
+% staticWinsAlignTs(1).Visual = [0 150];
+% staticWinsAlignTs(1).PostSaccade = [0 150];
+% staticWinsAlignTs(1).PostReward = [0 150];
+staticWinsAlignTs(1).Baseline = [-800 -400];
+staticWinsAlignTs(1).Visual = [-400 0];
+staticWinsAlignTs(1).PostSaccade = [0 400];
+staticWinsAlignTs(1).PostReward = [0 400];
 
 % minimum number of trials for all conditions, if not, then ignore pair  
 MIN_NTRIAL = 10;
@@ -76,15 +80,13 @@ N_PAIRS = size(crossPairs,1);
 fprintf('Computing Rsc for %i pairs\n', N_PAIRS)
 spkCorr = table();
 
-tic
-%     pctRunOnAll warning off;
-parfor (cp = 1:N_PAIRS,nThreads)%nCrossPairs
+parfor (cp = 1:N_PAIRS,nThreads) %pairs SEF-FEF/SC
   crossPair = crossPairs(cp,:);
   sess = crossPair.X_Session{1};
   trialTypes = sessionTrialTypes(ismember(sessionTrialTypes.session,sess),:);
   trRem = getTrialNosToRemove(crossPair);
   [trialNos4SatConds, nTrials4SatConds] = ...
-      getTrialNosForAllSatConds(trialTypes,trRem,conditions);
+      getTrialNosForAllSatConds(trialTypes,trRem,trialType);
   
   %check no. of trials
   nTrials4SubSample = min(struct2array(nTrials4SatConds));
@@ -95,80 +97,86 @@ parfor (cp = 1:N_PAIRS,nThreads)%nCrossPairs
   ySpkTimes = load_spikes_SAT(crossPair.Y_Index, 'user','thoma');
   evntTimes = sessionEventTimes(ismember(sessionEventTimes.session,sess),:);
   
-  tempCorr = struct();
-  for sc = 1:numel(conditions)
-    condition = conditions{sc};
-    selTrials = trialNos4SatConds.(condition);
-    selTrialsSorted = selTrials; % no sorting
-    for evId = 1:numel(alignEvents)
-      alignedName = alignNames{evId};
-      alignedEvent = alignEvents{evId};
-      alignedTimeWin = alignTimeWin{evId};
+  tmp_rsc = struct();
+  for tt = 1:numel(trialType) %trial condition/outcome combination
+    jj = trialNos4SatConds.(trialType{tt}); %jj == trial numbers for this trial type
+
+    for ep = 1:numel(alignEvents) %trial epoch
+
+      alignedEvent = alignEvents{ep};
+      alignedTimeWin = alignTimeWin{ep};
+
       alignTime = evntTimes.CueOn{1};
       if ~strcmp(alignedEvent,'CueOn')
           alignTime = alignTime + double(evntTimes.(alignedEvent){1}(:));
-      end  
-      alignTime = alignTime(selTrialsSorted);
-      XAligned = SpikeUtils.alignSpikeTimes(xSpkTimes(selTrialsSorted),alignTime, alignedTimeWin);
-      YAligned = SpikeUtils.alignSpikeTimes(ySpkTimes(selTrialsSorted),alignTime, alignedTimeWin);
-      tempRast = SpikeUtils.rasters(XAligned,alignedTimeWin);
+      end
+
+      X_Aligned = SpikeUtils.alignSpikeTimes(xSpkTimes(jj), alignTime(jj), alignedTimeWin);
+      Y_Aligned = SpikeUtils.alignSpikeTimes(ySpkTimes(jj), alignTime(jj), alignedTimeWin);
+
+      tempRast = SpikeUtils.rasters(X_Aligned,alignedTimeWin);
       XRasters = tempRast.rasters;
-      tempRast = SpikeUtils.rasters(YAligned,alignedTimeWin);
+
+      tempRast = SpikeUtils.rasters(Y_Aligned,alignedTimeWin);
       YRasters = tempRast.rasters;
+
       rasterBins = tempRast.rasterBins;                               
       
-      staticWin = staticWinsAlignTs(1).(alignedName);
-      fieldSuffix = num2str(range(staticWin),'_%dms'); 
+      %compute spike counts for SEF(X) and FEF/SC(Y) for this trial epoch
+      staticWin = staticWinsAlignTs(1).(alignNames{ep});
       xSpkCounts = cellfun(@(r,x,w) sum(x(:,r>=w(1) & r<=w(2)),2),...
           {rasterBins},{XRasters},{staticWin},'UniformOutput',false);
-      xMeanFrWin = mean(xSpkCounts{1})*1000/range(staticWin);
       ySpkCounts = cellfun(@(r,x,w) sum(x(:,r>=w(1) & r<=w(2)),2),...
           {rasterBins},{YRasters},{staticWin},'UniformOutput',false);
-      yMeanFrWin = mean(ySpkCounts{1})*1000/range(staticWin);
+
+      %compute spike count correlation from spike counts
       [rho_pval] = getSpikeCountCorr(xSpkCounts{1},ySpkCounts{1},'Pearson');
 
-      %% Output
+      %% Save data for output
       % add crosspair info
       cN = getPairColNmes();
       cpTemp = table2struct(crossPair,'ToScalar',true);
       for c = 1:numel(cN)
-          tempCorr(evId,sc).(cN{c}) = cpTemp.(cN{c});
+          tmp_rsc(ep,tt).(cN{c}) = cpTemp.(cN{c});
       end
 
-      tempCorr(evId,sc).condition = condition;
-      tempCorr(evId,sc).alignedName = alignedName;
-      tempCorr(evId,sc).alignedEvent = alignedEvent;
-      tempCorr(evId,sc).alignedTimeWin = {alignedTimeWin};
-      tempCorr(evId,sc).alignTime = alignTime;
-      tempCorr(evId,sc).trialNosByCondition = selTrialsSorted;
-      tempCorr(evId,sc).nTrials = numel(selTrialsSorted);
+      tmp_rsc(ep,tt).condition = trialType{tt};
+      tmp_rsc(ep,tt).alignedName = alignNames{ep};
+      tmp_rsc(ep,tt).alignedEvent = alignedEvent;
+      tmp_rsc(ep,tt).alignedTimeWin = {alignedTimeWin};
+      tmp_rsc(ep,tt).alignTime = alignTime(jj);
+      tmp_rsc(ep,tt).trialNosByCondition = jj;
+      tmp_rsc(ep,tt).nTrials = numel(jj);
 
-      tempCorr(evId,sc).(['xSpkCount_win' fieldSuffix]) = xSpkCounts;
-      tempCorr(evId,sc).(['ySpkCount_win' fieldSuffix]) = ySpkCounts;
-      tempCorr(evId,sc).(['xMeanFr_spkPerSec_win' fieldSuffix]) = xMeanFrWin;
-      tempCorr(evId,sc).(['yMeanFr_spkPerSec_win' fieldSuffix]) = yMeanFrWin;
+      fieldSuffix = num2str(range(staticWin),'_%dms'); 
+      tmp_rsc(ep,tt).(['xSpkCount_win' fieldSuffix]) = xSpkCounts;
+      tmp_rsc(ep,tt).(['ySpkCount_win' fieldSuffix]) = ySpkCounts;
 
-      tempCorr(evId,sc).rho_pval_win = {staticWin};                    
-      tempCorr(evId,sc).rhoRaw = rho_pval(1);
-      tempCorr(evId,sc).pvalRaw = rho_pval(2);
-      tempCorr(evId,sc).signifRaw_05 = rho_pval(2) < 0.05;  
+      xMeanFrWin = mean(xSpkCounts{1})*1000/range(staticWin);
+      tmp_rsc(ep,tt).(['xMeanFr_spkPerSec_win' fieldSuffix]) = xMeanFrWin;
 
-    end % for : align event (evId)
+      yMeanFrWin = mean(ySpkCounts{1})*1000/range(staticWin);
+      tmp_rsc(ep,tt).(['yMeanFr_spkPerSec_win' fieldSuffix]) = yMeanFrWin;
+
+      tmp_rsc(ep,tt).rho_pval_win = {staticWin};                    
+      tmp_rsc(ep,tt).rhoRaw = rho_pval(1);
+      tmp_rsc(ep,tt).pvalRaw = rho_pval(2);
+      tmp_rsc(ep,tt).signifRaw_05 = rho_pval(2) < 0.05;  
+
+    end % for : trial epoch (ep)
 
   end % for : task condition (sc)
 
   try
-  tempCorr = tempCorr(:);
-  for jj=1:numel(tempCorr)
-    spkCorr = [spkCorr; struct2table(tempCorr(jj),'AsArray',true)]; 
+  tmp_rsc = tmp_rsc(:);
+  for ii=1:numel(tmp_rsc)
+    spkCorr = [spkCorr; struct2table(tmp_rsc(ii),'AsArray',true)]; 
   end
   catch me
     me
   end
 
 end
-
-toc
 
 end % fxn : createSpkCorrWithSubSampling()
 

@@ -1,102 +1,140 @@
-function [ ] = spkCorrVsEpoch( spkCorr , rscColName , neuronTypes )
+function [ ] = spkCorrVsEpoch( rsc_Acc , rsc_Fast )
 % spkCorrVsEpoch.m
 % Collect absolute static spike count correlation (r_sc) for pairs from
 %         pairAreas (SEF-FEF, SEF-SC) filter by functional
-%         neuronTypes (ErrorChoiceNeurons, ErrorTimingNeurons,
-%                    ErrorChoiceAndTimingNeurons,SefVisualNeurons, and All)
+%         neuronTypes
 % For different 
 %         outcomes (Correct, ErrorChoice, ErrorTiming) by
 %         mainConditions (Fast, Accurate) by
 %         epochs (Baseline, Visual, PostSaccade, PostReward)
 % 
-% Comput ANOVA withs factors of EPOCH (4 levels) and CONDITION (2 levels)
-% for the different functional neuron types
+% Compute ANOVA withs factors EPOCH (4 levels) and CONDITION (2 levels)
 %
-% Mean unsigned r_sc of pooled SEF-FEF & SEF-SC pairs as a function of
-% task-condition (Accurate, Fast) and trial epoch (abscissa)
-% VSS Figure of r_sc plot:
-% Split by SEF neuron function --> Only use unsigned-cross-area r_sc.
-%     i. Choice error neurons -->  isErrGrade & ~isRewGrade
-%    ii. Timing error neurons --> ~isErrGrade & isRewGrade
-%   iii. Choice and Timing error neurons -->  isErrGrade & isRewGrade
-%    iv. Visually-responsive neurons --> visually responsive SEF neurons paired with any FEF/SC neurons
-%     v. All cross area pairs (VSS figure)
 
-% ensure the X_Area is always SEF
-uniqXarea = unique(spkCorr.X_Area);
-assert(numel(uniqXarea)==1 || sum(strcmp(uniqXarea,'SEF'))==1,'unique(X_Area) of spike corr table must be SEF only');
+%index by SEF neuron functional class
+idxVis = (abs(rsc_Acc.X_Grade_Vis) > 2);
+idxCErr = (abs(rsc_Acc.X_Grade_CErr) == 1);
+idxTErr = (abs(rsc_Acc.X_Grade_TErr) == 1);
+idxAll = (idxVis | idxCErr | idxTErr);
 
-% figure parameters
-LINESTYLE = {'-','--',':'};
-YLIMPLOT = [0.04 0.17];
+%prepare signed and absolute value spike count correlation
+r_AccCorr = rsc_Acc.rhoCorr;          rabs_AccCorr = abs(r_AccCorr);
+r_AccErrChc = rsc_Acc.rhoErrChc;      rabs_AccErrChc = abs(r_AccErrChc);
+r_AccErrTime = rsc_Acc.rhoErrTime;    rabs_AccErrTime = abs(r_AccErrTime);
+r_FastCorr = rsc_Fast.rhoCorr;        rabs_FastCorr = abs(r_FastCorr);
+r_FastErrChc = rsc_Fast.rhoErrChc;    rabs_FastErrChc = abs(r_FastErrChc);
+%r_FastErrTime = rsc_Fast.rhoErrTime;  rabs_FastErrTime = abs(r_FastErrTime);
 
-%% Prepare spike corr data
+%compute mean across pairs
+rmu_Vis_Acc =  [ mean(rabs_AccCorr(idxVis,:));  mean(rabs_AccErrChc(idxVis,:));  mean(rabs_AccErrTime(idxVis,:)) ];
+rmu_Vis_Fast = [ mean(rabs_FastCorr(idxVis,:)); mean(rabs_FastErrChc(idxVis,:)) ];
+rmu_CErr_Acc =  [ mean(rabs_AccCorr(idxCErr,:));  mean(rabs_AccErrChc(idxCErr,:));  mean(rabs_AccErrTime(idxCErr,:)) ];
+rmu_CErr_Fast = [ mean(rabs_FastCorr(idxCErr,:)); mean(rabs_FastErrChc(idxCErr,:)) ];
+rmu_TErr_Acc =  [ mean(rabs_AccCorr(idxTErr,:));  mean(rabs_AccErrChc(idxTErr,:));  mean(rabs_AccErrTime(idxTErr,:)) ];
+rmu_TErr_Fast = [ mean(rabs_FastCorr(idxTErr,:)); mean(rabs_FastErrChc(idxTErr,:)) ];
+rmu_All_Acc =  [ mean(rabs_AccCorr(idxAll,:));  mean(rabs_AccErrChc(idxAll,:));  mean(rabs_AccErrTime(idxAll,:)) ];
+rmu_All_Fast = [ mean(rabs_FastCorr(idxAll,:)); mean(rabs_FastErrChc(idxAll,:)) ];
+%compute sem across pairs
+rse_Vis_Acc =  [ std(rabs_AccCorr(idxVis,:));  std(rabs_AccErrChc(idxVis,:));  std(rabs_AccErrTime(idxVis,:)) ] / sqrt(sum(idxVis));
+rse_Vis_Fast = [ std(rabs_FastCorr(idxVis,:)); std(rabs_FastErrChc(idxVis,:)) ] / sqrt(sum(idxVis));
+rse_CErr_Acc =  [ std(rabs_AccCorr(idxCErr,:));  std(rabs_AccErrChc(idxCErr,:));  std(rabs_AccErrTime(idxCErr,:)) ] / sqrt(sum(idxCErr));
+rse_CErr_Fast = [ std(rabs_FastCorr(idxCErr,:)); std(rabs_FastErrChc(idxCErr,:)) ] / sqrt(sum(idxCErr));
+rse_TErr_Acc =  [ std(rabs_AccCorr(idxTErr,:));  std(rabs_AccErrChc(idxTErr,:));  std(rabs_AccErrTime(idxTErr,:)) ] / sqrt(sum(idxTErr));
+rse_TErr_Fast = [ std(rabs_FastCorr(idxTErr,:)); std(rabs_FastErrChc(idxTErr,:)) ] / sqrt(sum(idxTErr));
+rse_All_Acc =  [ std(rabs_AccCorr(idxAll,:));  std(rabs_AccErrChc(idxAll,:));  std(rabs_AccErrTime(idxAll,:)) ] / sqrt(sum(idxAll));
+rse_All_Fast = [ std(rabs_FastCorr(idxAll,:)); std(rabs_FastErrChc(idxAll,:)) ] / sqrt(sum(idxAll));
 
-% *** Use absolute spkcorr
-spkCorr.rsc = double(abs(spkCorr.(rscColName)));
+%report number of positive and negative correlations
+npos_Vis_Acc =  [sum(r_AccCorr(idxVis,:) > 0);  sum(r_AccErrChc(idxVis,:) > 0); sum(r_AccErrTime(idxVis,:) > 0)] / sum(idxVis);
+npos_Vis_Fast = [sum(r_FastCorr(idxVis,:) > 0); sum(r_FastErrChc(idxVis,:) > 0)] / sum(idxVis);
+npos_CErr_Acc =  [sum(r_AccCorr(idxCErr,:) > 0);  sum(r_AccErrChc(idxCErr,:) > 0); sum(r_AccErrTime(idxCErr,:) > 0)] / sum(idxCErr);
+npos_CErr_Fast = [sum(r_FastCorr(idxCErr,:) > 0); sum(r_FastErrChc(idxCErr,:) > 0)] / sum(idxCErr);
+npos_TErr_Acc =  [sum(r_AccCorr(idxTErr,:) > 0);  sum(r_AccErrChc(idxTErr,:) > 0); sum(r_AccErrTime(idxTErr,:) > 0)] / sum(idxTErr);
+npos_TErr_Fast = [sum(r_FastCorr(idxTErr,:) > 0); sum(r_FastErrChc(idxTErr,:) > 0)] / sum(idxTErr);
+npos_All_Acc =  [sum(r_AccCorr(idxAll,:) > 0);  sum(r_AccErrChc(idxAll,:) > 0); sum(r_AccErrTime(idxAll,:) > 0)] / sum(idxAll);
+npos_All_Fast = [sum(r_FastCorr(idxAll,:) > 0); sum(r_FastErrChc(idxAll,:) > 0)] / sum(idxAll);
 
-spkCorr.outcome = regexprep(spkCorr.condition,'(Accurate)|(Fast)',''); %{'Correct','ErrorChoice','ErrorTiming'}
-spkCorr.mainCondition = regexprep(spkCorr.condition,'(Correct)|(Error.*)',''); %{'Fast','Accurate'}
-spkCorr.epoch = spkCorr.alignedName; %{'Baseline','Visual','PostSaccade','PostReward'}
+%% Plotting
+GREEN = [0 .7 0];
+BARWIDTH = 0.3;
 
-% Factor: Trial outcome
-outcomesPlot = {'Correct','ErrorChoice','ErrorTiming'};
-% outcomesPlot = {'Correct'};
+figure() %fraction of positive/negative correlations
 
-%% Compute stats mean, std, se for rsc
-grpVars = {'condition' 'epoch' 'mainCondition' 'outcome'};
-whichStats = {'mean' 'std' };
+subplot(4,2,1); hold on %vis neurons
+plot(npos_Vis_Acc', 'd-')
+legend({'Correct','Choice error','Timing error'})
 
-for nt = 1:numel(neuronTypes)
-    neuronType = neuronTypes{nt};
-    temp = grpstats(spkCorr(spkCorr.(neuronType)==1,:),grpVars,whichStats,'DataVars','rsc' );
-    temp.se_rsc = temp.std_rsc./sqrt(temp.GroupCount);
-    statsTbl.(neuronType) = temp;
-end % for : neuronType (nt)
+subplot(4,2,2); hold on
+plot(npos_Vis_Fast', 'd-')
 
-figure()
+subplot(4,2,3); hold on %choice error neurons
+plot(npos_CErr_Acc', 'd-')
 
-for nt = 1:numel(neuronTypes)
-  subplot(numel(neuronTypes),1,nt); hold on
-  set(gca, 'YGrid','on')
-  title(neuronTypes{nt},'FontSize',9);
-  
-  neuronType = neuronTypes{nt};
-  currData = statsTbl.(neuronType);
+subplot(4,2,4); hold on
+plot(npos_CErr_Fast', 'd-')
 
-  for jj = 1:numel(outcomesPlot)
-    idxOutcome = strcmp(currData.outcome,outcomesPlot{jj});
-    idxAccOutcome = strcmp(currData.mainCondition,'Accurate') & idxOutcome;
-    idxFastOutcome = strcmp(currData.mainCondition,'Fast') & idxOutcome;
-    acc = currData(idxAccOutcome,{'mean_rsc','se_rsc','epoch'});
-    fast = currData(idxFastOutcome,{'mean_rsc','se_rsc','epoch'});
+subplot(4,2,5); hold on %timing error neurons
+plot(npos_TErr_Acc', 'd-')
 
-    % Accurate
-    plot(1:4,acc.mean_rsc,'Color','r', 'LineStyle',LINESTYLE{jj});
-    errorbar((1:4), acc.mean_rsc, acc.se_rsc, 'CapSize',0, 'Color','r', ...
-      'LineStyle',LINESTYLE{jj}, 'HandleVisibility','off')
+subplot(4,2,6); hold on
+plot(npos_TErr_Fast', 'd-')
 
-    % Fast
-%     if (jj == numel(outcomesPlot)); continue; end %leave out Fast 
-    plot(1:4,fast.mean_rsc,'Color',[0 .7 0], 'LineStyle',LINESTYLE{jj});
-    errorbar((1:4), fast.mean_rsc, fast.se_rsc, 'CapSize',0, 'Color',[0 .7 0], ...
-      'LineStyle',LINESTYLE{jj},'HandleVisibility','off')
+subplot(4,2,7); hold on %all neurons
+plot(npos_All_Acc', 'd-')
 
-    ylabel('rsc'); ytickformat('%3.2f'); ylim(YLIMPLOT) %yticks([]); 
-    xticks(1:4); xticklabels([]); xlim([.8 4.2])
-  end
+subplot(4,2,8); hold on
+plot(npos_All_Fast', 'd-')
 
-  if (nt == numel(neuronTypes))
-    set(gca,'XTickLabel',acc.epoch,'XTickLabelRotation',30)
-    set(gca, 'XMinorTick','off')
-  else
-    xticks([])
-  end
 
-  drawnow
+for jj = 1:8
+  subplot(4,2,jj); ylim([.3 .6]); xticks([])
+end
 
-end % for : neuron type (ro)
+drawnow
+ppretty([4.8,4])
 
-ppretty([3,6])
+
+figure() % strength of absolute correlations
+
+subplot(4,2,1); hold on %vis neurons
+errorbar(rmu_Vis_Acc', rse_Vis_Acc', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_Vis_Acc(1,:), 'FaceColor','r', 'BarWidth',BARWIDTH)
+legend({'Correct','Choice error','Timing error'})
+
+subplot(4,2,2); hold on
+errorbar(rmu_Vis_Fast', rse_Vis_Fast', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_Vis_Fast(1,:), 'FaceColor',GREEN, 'BarWidth',BARWIDTH)
+
+subplot(4,2,3); hold on %choice error neurons
+errorbar(rmu_CErr_Acc', rse_CErr_Acc', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_CErr_Acc(1,:), 'FaceColor','r', 'BarWidth',BARWIDTH)
+
+subplot(4,2,4); hold on
+errorbar(rmu_CErr_Fast', rse_CErr_Fast', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_CErr_Fast(1,:), 'FaceColor',GREEN, 'BarWidth',BARWIDTH)
+
+subplot(4,2,5); hold on %timing error neurons
+errorbar(rmu_TErr_Acc', rse_TErr_Acc', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_TErr_Acc(1,:), 'FaceColor','r', 'BarWidth',BARWIDTH)
+
+subplot(4,2,6); hold on
+errorbar(rmu_TErr_Fast', rse_TErr_Fast', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_TErr_Fast(1,:), 'FaceColor',GREEN, 'BarWidth',BARWIDTH)
+
+subplot(4,2,7); hold on %all neurons
+errorbar(rmu_All_Acc', rse_All_Acc', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_All_Acc(1,:), 'FaceColor','r', 'BarWidth',BARWIDTH)
+
+subplot(4,2,8); hold on
+errorbar(rmu_All_Fast', rse_All_Fast', 'vertical', 'LineStyle','-', 'CapSize',0)
+bar(rmu_All_Fast(1,:), 'FaceColor',GREEN, 'BarWidth',BARWIDTH)
+
+for jj = 1:8
+  subplot(4,2,jj); xticks([]); ytickformat('%3.2f')
+end
+
+drawnow
+ppretty([4.8,4])
+
 
 end % fxn : spkCorrVsEpoch()
