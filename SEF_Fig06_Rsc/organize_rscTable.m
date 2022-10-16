@@ -1,3 +1,4 @@
+function [ spkCorr_ ] = organize_rscTable( spkCorr )
 %organize_rscTable.m
 % Includes code for reorganization of Rsc table from prior formatting
 % **Note: Get spike counts from xSpkCount_win, ySpkCount_win
@@ -88,7 +89,10 @@ rsc_Acc.Monkey = spkCorr.X_Monkey(idxAcc & idxCorr & idxT1);
 rsc_Acc.Session = spkCorr.X_Session(idxAcc & idxCorr & idxT1);
 rsc_Acc.X_Area = spkCorr.X_Area(idxAcc & idxCorr & idxT1);
 rsc_Acc.Y_Area = spkCorr.Y_Area(idxAcc & idxCorr & idxT1);
+rsc_Acc.X_Index = spkCorr.X_Index(idxAcc & idxCorr & idxT1);
+rsc_Acc.Y_Index = spkCorr.Y_Index(idxAcc & idxCorr & idxT1);
 rsc_Acc.X_Grade_Vis = spkCorr.X_Grade_Vis(idxAcc & idxCorr & idxT1);
+rsc_Acc.Y_Grade_Vis = spkCorr.Y_Grade_Vis(idxAcc & idxCorr & idxT1);
 rsc_Acc.X_Grade_CErr = spkCorr.X_Grade_Err(idxAcc & idxCorr & idxT1);
 rsc_Acc.X_Grade_TErr = spkCorr.X_Grade_TErr(idxAcc & idxCorr & idxT1);
 rsc_Acc.rhoCorr = rhoAcc.Corr;
@@ -101,14 +105,6 @@ rsc_Acc.pvalErrTime = pvalAcc.ErrTime;
 % rsc_Acc.X_sc = {scAcc.Corr, scAcc.ErrChc, scAcc.ErrTime};
 
 %populate new Fast-specific rsc table
-rsc_Fast.PairID = spkCorr.Pair_UID(idxFast & idxCorr & idxT1);
-rsc_Fast.Monkey = spkCorr.X_Monkey(idxFast & idxCorr & idxT1);
-rsc_Fast.Session = spkCorr.X_Session(idxFast & idxCorr & idxT1);
-rsc_Fast.X_Area = spkCorr.X_Area(idxFast & idxCorr & idxT1);
-rsc_Fast.Y_Area = spkCorr.Y_Area(idxFast & idxCorr & idxT1);
-rsc_Fast.X_Grade_Vis = spkCorr.X_Grade_Vis(idxFast & idxCorr & idxT1);
-rsc_Fast.X_Grade_CErr = spkCorr.X_Grade_Err(idxFast & idxCorr & idxT1);
-rsc_Fast.X_Grade_TErr = spkCorr.X_Grade_TErr(idxFast & idxCorr & idxT1);
 rsc_Fast.rhoCorr = rhoFast.Corr;
 rsc_Fast.rhoErrChc = rhoFast.ErrChc;
 rsc_Fast.rhoErrTime = rhoFast.ErrTime;
@@ -116,7 +112,9 @@ rsc_Fast.pvalCorr = pvalFast.Corr;
 rsc_Fast.pvalErrChc = pvalFast.ErrChc;
 rsc_Fast.pvalErrTime = pvalFast.ErrTime;
 
-writetable(rsc_Acc,  'spkCorr.xlsx', 'Sheet','Accurate')
-writetable(rsc_Fast, 'spkCorr.xlsx', 'Sheet','Fast')
+spkCorr_ = struct('Acc',rsc_Acc, 'Fast',rsc_Fast);
 
-clear idx* pval* rho* fr* sc* field*
+% writetable(rsc_Acc,  'spkCorr.xlsx', 'Sheet','Accurate')
+% writetable(rsc_Fast, 'spkCorr.xlsx', 'Sheet','Fast')
+
+end % fxn : organize_rscTable()

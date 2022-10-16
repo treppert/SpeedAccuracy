@@ -10,12 +10,12 @@
 
 %% Compute spike count correlation
 % spkCorr = computeSpkCorr_SAT_SubSample(); %sub-sampling for bar plots
-spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
+% spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
 %**Note - It seems that trial type indexes may be incorrect (!)
   %**Need to check trial type indexes in getTrialNosForAllSatConds()
 
 %parse the structure of spkCorr
-organize_rscTable %save as rsc_Acc and rsc_Fast
+spkCorr_ = organize_rscTable(spkCorr);
 
 %trial-to-trial analysis
 % spkCorrA2F = computeSpkCorr_SAT('direction','A2F');
@@ -32,6 +32,6 @@ organize_rscTable %save as rsc_Acc and rsc_Fast
 
 % Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A)
 % Fig6B_SpkCorr_PostResponse(rscTest, MONKEY, RHO_TYPE, NEURON_TYPE)
-spkCorrVsEpoch(rsc_Acc, rsc_Fast)
+% spkCorrVsEpoch(rsc_Acc, rsc_Fast)
 
 clear idx*

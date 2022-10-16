@@ -2,8 +2,7 @@ function [ ] = Fig2_SpkCt_After_X_Before( behavData , unitData )
 %Fig2_SpkCt_After_X_Before Summary of this function goes here
 %   Detailed explanation goes here
 
-TLIM_BL = [-600 50] + 3500;
-TLIM_VR = [50 400] + 3500;
+TLIM_VR = [+50,+400] + 3500;
 
 tmp = identify_condition_switch(behavData);
 jjA2F = tmp.A2F; %trials with switch Acc to Fast
@@ -18,18 +17,8 @@ spkCt_F2A = spkCt_A2F;
 for uu = 1:NUM_UNIT
   kk = ismember(behavData.Task_Session, unitData.Session(uu));
   
-  %compute spike count for all trials
-  spikes_uu = load_spikes_SAT(unitData.Index(uu));
-  tmpBL = cellfun(@(x) sum((x > TLIM_BL(1)) & (x < TLIM_BL(2))), spikes_uu);
-  tmpVR = cellfun(@(x) sum((x > TLIM_VR(1)) & (x < TLIM_VR(2))), spikes_uu);
-%   spkCt_uu = tmpBL + tmpVR;
-  spkCt_uu = tmpVR;
-
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
-  
-  %compute z-scored spike count
-  spkCt_uu(~idxIso) = zscore(spkCt_uu(~idxIso));
   
   %index by condition
   idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
@@ -43,6 +32,13 @@ for uu = 1:NUM_UNIT
   jjF2A_pre  = intersect(trialFast, jjF2A{kk} - 1);
   jjF2A_post = intersect(trialAcc,  jjF2A{kk} + 0);
 
+  %compute spike count for all trials
+  spikes_uu = load_spikes_SAT(unitData.Index(uu));
+  spkCt_uu = cellfun(@(x) sum((x > TLIM_VR(1)) & (x < TLIM_VR(2))), spikes_uu);
+
+  %compute z-scored spike count
+  spkCt_uu(~idxIso) = zscore(spkCt_uu(~idxIso));
+  
   spkCt_A2F(uu,:) = [mean(spkCt_uu(jjA2F_pre)) , mean(spkCt_uu(jjA2F_post))];
   spkCt_F2A(uu,:) = [mean(spkCt_uu(jjF2A_pre)) , mean(spkCt_uu(jjF2A_post))];
 

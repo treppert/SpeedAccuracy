@@ -20,6 +20,8 @@ unitTest = unitData(idxTest,:);
 % Fig2BE_SpkCt_X_Trial(behavData, unitTest, 'interval',VISRESP)  %Fig. 2E
 
 Fig2_SpkCt_After_X_Before(behavData, unitTest)
+Fig2X_SingleTrialChange_Simultaneous( behavData , unitData , spkCorr_ )
+%Note: Get spkCorr_ from Fig6.m (pairs SEF-SC and SEF-FEF)
 
 
 %% Analysis of pupil diameter

@@ -83,10 +83,8 @@ ppretty([2.4,1.0]);
 drawnow
 
 %% Stats - Single-trial modulation at cued condition switch
-tmp_A2F = [mean(sc_A2F(:,[3,4]),2) , mean(sc_A2F(:,[5,6]),2)];
-tmp_F2A = [mean(sc_F2A(:,[3,4]),2) , mean(sc_F2A(:,[5,6]),2)];
-diffA2F =  diff(tmp_A2F, 1, 2);
-diffF2A = -diff(tmp_F2A, 1, 2);
+diffA2F =  diff(sc_A2F(:,[4,5]), 1, 2);
+diffF2A = -diff(sc_F2A(:,[4,5]), 1, 2);
 ttestFull(diffA2F, diffF2A, 'ylabel','Single-trial modulation', 'xticklabels',{'A2F','F2A'})
 
 end % fxn : Fig2BE_SpkCt_X_Trial()
