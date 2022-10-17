@@ -11,7 +11,7 @@ idxVisUnit = ismember(unitData.Grade_Vis, [+3,+4]);
 idxEffectBL = ismember(unitData.SAT_Effect(:,1), EFFECT_DIR); %significant SAT effect on baseline
 idxEffectVR = ismember(unitData.SAT_Effect(:,2), EFFECT_DIR); %significant SAT effect on visual response
 % idxTest = (idxArea & idxMonkey & idxVisUnit & (idxEffectBL | idxEffectVR));
-idxTest = (idxArea & idxMonkey & idxVisUnit & idxEffectVR);
+idxTest = (idxArea & idxMonkey & idxVisUnit & idxEffectBL);
 unitTest = unitData(idxTest,:);
 
 % Fig2AD_Plot_SDF_Re_Array(behavData, unitData, 'area',AREA, 'monkey',MONKEY, 'fig','A')
@@ -19,7 +19,7 @@ unitTest = unitData(idxTest,:);
 % Fig2BE_SpkCt_X_Trial(behavData, unitTest, 'interval',BASELINE) %Fig. 2B
 % Fig2BE_SpkCt_X_Trial(behavData, unitTest, 'interval',VISRESP)  %Fig. 2E
 
-Fig2_SpkCt_After_X_Before(behavData, unitTest)
+% Fig2_SpkCt_After_X_Before(behavData, unitTest)
 Fig2X_SingleTrialChange_Simultaneous( behavData , unitData , spkCorr_ )
 %Note: Get spkCorr_ from Fig6.m (pairs SEF-SC and SEF-FEF)
 

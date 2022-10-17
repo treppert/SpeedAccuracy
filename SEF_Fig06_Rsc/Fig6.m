@@ -10,7 +10,7 @@
 
 %% Compute spike count correlation
 % spkCorr = computeSpkCorr_SAT_SubSample(); %sub-sampling for bar plots
-% spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
+spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
 %**Note - It seems that trial type indexes may be incorrect (!)
   %**Need to check trial type indexes in getTrialNosForAllSatConds()
 

@@ -257,16 +257,6 @@ colNames = {
     'Y_Index'
     'X_Area'
     'Y_Area'
-    'X_Grade_Vis'
-    'Y_Grade_Vis'
-    'X_Grade_Err'
-    'Y_Grade_Err'
-    'X_isErrGrade'
-    'Y_isErrGrade'
-    'X_Grade_TErr'
-    'Y_Grade_TErr'
-    'X_isRewGrade'
-    'Y_isRewGrade'
     };
 
 end
