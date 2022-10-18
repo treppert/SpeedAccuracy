@@ -2,9 +2,9 @@
 %Fig2X_SingleTrialChange_Simultaneous Summary of this function goes here
 %   Detailed explanation goes here
 
-DEBUG = true;
-% TLIM_COUNT = [+50,+400] + 3500;
-TLIM_COUNT = [-600,+50] + 3500;
+DEBUG = false;
+TLIM_COUNT = [+50,+400] + 3500;
+% TLIM_COUNT = [-600,+50] + 3500;
 tableSwitch = identify_condition_switch(behavData);
 rscAcc = spkCorr_.Acc;
 
@@ -16,8 +16,8 @@ i_Monkey = ismember(rscAcc.Monkey, {'D','E'}); %{'D','E'}
 i_yArea = ismember(rscAcc.Y_Area, {'FEF','SC'}); %{'SC','FEF'}
 i_xGradeVis = ismember(unitX.Grade_Vis, [+3,+4]);
 i_yGradeVis = ismember(unitY.Grade_Vis, [+3,+4]);
-i_xSATeffect = ismember(unitX.SAT_Effect(:,1), +1);
-i_ySATeffect = ismember(unitY.SAT_Effect(:,1), +1);
+i_xSATeffect = ismember(unitX.SAT_Effect(:,2), +1);
+i_ySATeffect = ismember(unitY.SAT_Effect(:,2), +1);
 idxPairKeep = (i_Monkey & i_yArea & i_xGradeVis & i_yGradeVis & ...
   i_xSATeffect & i_ySATeffect);
 
@@ -75,20 +75,6 @@ for p = 1:nPair
   dA_Y_p_F2A = spkCt_Y(jjF2A_post) - spkCt_Y(jjF2A_pre);
   nA2F = numel(dA_X_p_A2F);
 
-  %compute z-scored change in spike count
-%   dA_X_p = zscore([ dA_X_p_A2F ; dA_X_p_F2A ]);
-%   dA_X_p_A2F = dA_X_p(1:nA2F);
-%   dA_X_p_F2A = dA_X_p(nA2F+1:end);
-%   dA_Y_p = zscore([ dA_Y_p_A2F ; dA_Y_p_F2A ]);
-%   dA_Y_p_A2F = dA_Y_p(1:nA2F);
-%   dA_Y_p_F2A = dA_Y_p(nA2F+1:end);
-
-  if (DEBUG)
-%     figure(); hold on
-%     histogram([dA_X_p_A2F;dA_X_p_F2A], 20, 'FaceColor','k')
-%     histogram([dA_Y_p_A2F;dA_Y_p_F2A], 20, 'FaceColor','b')
-  end
-
   if (DEBUG)
     pairID = [rscAcc.PairID{p}(1:4),' ',rscAcc.PairID{p}(6:9)];
     figure(); hold on; title(pairID)
@@ -107,12 +93,11 @@ for p = 1:nPair
 
 end % for : pair(p)
 
-
-figure()
+%% Plotting
 GREEN = [0 .7 0];
-XLIM = [-1.2,+1.2];
+XLIM = [-1.5,+1.5];
 
-subplot(1,3,1); hold on %scatterplot (FEF/SC vs SEF)
+figure(); hold on %scatterplot (FEF/SC vs SEF)
 scatter(dA_X(:,1), dA_Y(:,1), 10, GREEN, 'filled', 'o') %A2F
 scatter(dA_X(:,2), dA_Y(:,2), 10, 'r', 'filled', 'o') %F2A
 plot([-1 +1],[0 0], 'k--'); plot([0 0],[-1 +1], 'k--')
@@ -120,17 +105,7 @@ xlabel('SEF single-trial change (z)')
 ylabel('FEF/SC single-trial change (z)')
 xlim(XLIM); ylim(XLIM)
 
-subplot(1,3,2); hold on %histogram (SEF)
-histogram(dA_X(:,1), 'BinEdges',linspace(XLIM(1), XLIM(2), 21), 'FaceColor','black', 'EdgeColor',GREEN) %A2F
-histogram(dA_X(:,2), 'BinEdges',linspace(XLIM(1), XLIM(2), 21), 'FaceColor','black', 'EdgeColor','r') %F2A
-xlabel('SEF single-trial change (z)')
-
-subplot(1,3,3); hold on %histogram (FEF/SC)
-histogram(dA_Y(:,1), 'BinEdges',linspace(XLIM(1), XLIM(2), 21), 'FaceColor','black', 'EdgeColor',GREEN)
-histogram(dA_Y(:,2), 'BinEdges',linspace(XLIM(1), XLIM(2), 21), 'FaceColor','black', 'EdgeColor','r')
-xlabel('FEF/SC single-trial change (z)')
-
-ppretty([8,1.6])
+ppretty([2,1.6])
 
 clear i_* idx* dA_* spkCt_* spkes_* jj* k p nPair
 % end % fxn : Fig2X_SingleTrialChange_Simultaneous()
