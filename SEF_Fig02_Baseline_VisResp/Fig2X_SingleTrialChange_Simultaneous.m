@@ -2,7 +2,7 @@
 %Fig2X_SingleTrialChange_Simultaneous Summary of this function goes here
 %   Detailed explanation goes here
 
-DEBUG = true;
+DEBUG = false;
 TLIM_COUNT = [+50,+400] + 3500;
 % TLIM_COUNT = [-600,+50] + 3500;
 tableSwitch = identify_condition_switch(behavData);
@@ -16,7 +16,7 @@ i_Monkey = ismember(rscAcc.Monkey, {'D','E'}); %{'D','E'}
 i_yArea = ismember(rscAcc.Y_Area, {'FEF','SC'}); %{'SC','FEF'}
 i_xGradeVis = ismember(unitX.Grade_Vis, [+3,+4]);
 i_yGradeVis = ismember(unitY.Grade_Vis, [+3,+4]);
-i_xSATeffect = ismember(unitX.SAT_Effect(:,2), +2);
+i_xSATeffect = ismember(unitX.SAT_Effect(:,2), +1);
 i_ySATeffect = ismember(unitY.SAT_Effect(:,2), +1);
 idxPairKeep = (i_Monkey & i_yArea & i_xGradeVis & i_yGradeVis & ...
   i_xSATeffect & i_ySATeffect);
@@ -37,21 +37,14 @@ for p = 1:nPair
   k = unitData.SessionIndex(uX); %Session no.
   RTk = double(behavData.Sacc_RT{k}); %response time
 
-  %index by isolation quality
-  idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uX}, behavData.Task_NumTrials(k));
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{k} == 1) & ~idxIso);   trialAcc = find(idxAcc);
-  idxFast = ((behavData.Task_SATCondition{k} == 3) & ~idxIso);  trialFast = find(idxFast);
+  idxAcc = (behavData.Task_SATCondition{k} == 1);   trialAcc = find(idxAcc);
+  idxFast = (behavData.Task_SATCondition{k} == 3);  trialFast = find(idxFast);
   %index by trial number
   jjA2F = tableSwitch.A2F; %trials with switch Acc to Fast
   jjF2A = tableSwitch.F2A; %trials with switch Fast to Acc
-  jjA2F_pre  = intersect(trialAcc,  jjA2F{k} - 1); %Acc->Fast pre-change
-  jjA2F_post = intersect(trialFast, jjA2F{k} + 0); %Acc->Fast post-change
-  jjF2A_pre  = intersect(trialFast, jjF2A{k} - 1);
-  jjF2A_post = intersect(trialAcc,  jjF2A{k} + 0);
-  if (numel(jjF2A_pre) ~= numel(jjF2A_post))
-    jjF2A_post(1) = []; %"stitch" fix for a single session (k=7)
-  end
+  jjA2F_pre = jjA2F{k} - 1;  jjA2F_post = jjA2F{k};
+  jjF2A_pre = jjF2A{k} - 1;  jjF2A_post = jjF2A{k};
 
   %compute dRT at condition switch
   dRT_A2F_p = RTk(jjA2F_post) - RTk(jjA2F_pre);
