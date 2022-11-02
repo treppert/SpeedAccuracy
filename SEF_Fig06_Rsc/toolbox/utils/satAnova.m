@@ -1,4 +1,3 @@
-%function [anovaResults] = satAnova(valsGroupsTbl,anovaModelName,doMultCompareFlag,alpha)
 function [anovaResults] = satAnova(valsGroupsTbl,varargin)
 %SATANOVA Do a multiway anova for the given table of inputs
 %   Column1 = Y-Values numeric
@@ -8,17 +7,12 @@ function [anovaResults] = satAnova(valsGroupsTbl,varargin)
 % see also ANOVAN, MULTCOMPARE
 
 argsParser = inputParser();
-argsParser.addParameter('model','full'); %linear|interaction|full
-%argsParser.addParameter('display','off');%off|on --> for anova tbl
+argsParser.addParameter('model','interaction'); %linear|interaction|full
+argsParser.addParameter('display','on');%off|on --> for anova tbl
 argsParser.addParameter('alpha',0.05);
 argsParser.addParameter('sstype',3);%1|2|3|'h' default = 3
 argsParser.addParameter('doMultiCompare',true);
-% ctype: The type of critical value to use.  Choices are
-%       'tukey-kramer' (default), 'dunn-sidak', 'bonferroni', 'scheffe'.
-%       Enter two or more choices separated by spaces, to use the minimum
-%       of those critical values. see MULTCOMPARE
-argsParser.addParameter('ctype','tukey-kramer');
-argsParser.addParameter('multiCompareDisplay','off');%off|on --> for multiple comparisons show graph
+argsParser.addParameter('multiCompareDisplay','on');%off|on --> for multiple comparisons
 
 argsParser.parse(varargin{:});
 args = argsParser.Results;
@@ -39,7 +33,7 @@ end
 anovaResults = struct();
 anovaTblVarNames = {'Source', 'SumSq' 'df' 'IsSingular' 'MeanSq' 'F'  'ProbGtF'};
 
-[~,temp,anovaStats] = anovan(yVals,groups,'model',args.model,'varnames',groupNames, 'display','off');
+[~,temp,anovaStats] = anovan(yVals,groups,'model',args.model,'varnames',groupNames, 'display','on');
 anovaTbl = cell2table(temp(2:end,:),'VariableNames',anovaTblVarNames);
 % add '*' p(F >= .05) and '**' p(F >=  .01)
 idx = find(~ismember(anovaTbl.Source,{'Error','Total'}));
@@ -58,7 +52,7 @@ anovaResults.anovaTbl = anovaTbl;
 % for bonferroni use 'CType', ... see doc multcompare
 if (args.doMultiCompare)
     for gr = 1:numel(groupNames)
-        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',gr,'Alpha',args.alpha,'CType',args.ctype,'display',args.multiCompareDisplay);
+        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',gr,'Alpha',args.alpha,'display',args.multiCompareDisplay);
         anovaResults.(groupNames{gr}) = annotateMultcompareResults(temp,grpNames);
     end
     
@@ -69,13 +63,13 @@ if (args.doMultiCompare)
     for jj = 1:size(n2GrpComparisions,1)
         idx = n2GrpComparisions(jj,:);
         fn = char(join(groupNames(idx),'_'));
-        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',idx,'Alpha',args.alpha,'CType',args.ctype,'display',args.multiCompareDisplay);
+        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',idx,'Alpha',args.alpha,'display',args.multiCompareDisplay);
         anovaResults.(fn) = annotateMultcompareResults(temp,grpNames);
     end
 end
 
 %% If there are 3 groups also do a 3 way comparision
-if numel(groupNames) > 2
+if ((numel(groupNames) == 3) && args.doMultiCompare)
     nWays = 3;
     n3GrpComparisions = combnk(1:numel(groupNames),nWays);
 

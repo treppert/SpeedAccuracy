@@ -27,7 +27,7 @@
 % RHO_TYPE = {'Positive','Negative'};
 % Fig6B_SpkCorr_PostResponse(rscTest, MONKEY, RHO_TYPE, NEURON_TYPE)
 
-spkCorrVsEpoch(rsc_Acc, rsc_Fast)
+plot_rsc_X_Epoch( spkCorr )
 
 clear idx*
 
