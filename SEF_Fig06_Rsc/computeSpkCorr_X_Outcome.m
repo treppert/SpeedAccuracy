@@ -45,7 +45,7 @@ datasetDir = 'C:\Users\thoma\Dropbox\Speed Accuracy\Data\SpkCorr';
 
 % specify files with data to compute Rsc
 pairsFile = fullfile(datasetDir,'PAIR_CellInfoDB.mat');
-trialTypesFile = fullfile(datasetDir,'SAT_SEF_TrialTypesDB.mat');
+trialTypesFile = fullfile(datasetDir,'SAT_SEF_TrialTypesDB.mat'); %computeTrialTypesDB.m
 trialEventTimesFile = fullfile(datasetDir,'SAT_SEF_TrialEventTimesDB.mat');
 
 alignNames = {'Baseline','Visual','PostSaccade','PostReward'};
@@ -53,19 +53,12 @@ alignEvents = {'CueOn','CueOn','SaccadePrimary','RewardTime'};
 alignTimeWin = {[-600 100],[-200 400],[-100 500],[-200 700]};
 
 trialType = {'AccurateCorrect'; 'AccurateErrorChoice'; 'AccurateErrorTiming'; ...
-    'FastCorrect'; 'FastErrorChoice'; 'FastErrorTiming'};
+             'FastCorrect'; 'FastErrorChoice'; 'FastErrorTiming'};
 
-% staticWinsAlignTs(1).Baseline = [-150 0];
-% staticWinsAlignTs(1).Visual = [0 150];
-% staticWinsAlignTs(1).PostSaccade = [0 150];
-% staticWinsAlignTs(1).PostReward = [0 150];
-staticWinsAlignTs(1).Baseline = [-800 -400];
-staticWinsAlignTs(1).Visual = [-400 0];
-staticWinsAlignTs(1).PostSaccade = [0 400];
-staticWinsAlignTs(1).PostReward = [0 400];
-
-% minimum number of trials for all conditions, if not, then ignore pair  
-MIN_NTRIAL = 10;
+staticWinsAlignTs(1).Baseline = [-300 -100]; %[-150 0];
+staticWinsAlignTs(1).Visual = [50 250]; %[0 150];
+staticWinsAlignTs(1).PostSaccade = [0 200]; %[0 150];
+staticWinsAlignTs(1).PostReward = [0 200]; %[0 150];
 
 %% Prep for parallel processing
 parPool = gcp('nocreate');
@@ -84,13 +77,7 @@ parfor (cp = 1:N_PAIRS,nThreads) %pairs SEF-FEF/SC
   crossPair = crossPairs(cp,:);
   sess = crossPair.X_Session{1};
   trialTypes = sessionTrialTypes(ismember(sessionTrialTypes.session,sess),:);
-  trRem = getTrialNosToRemove(crossPair);
-  [trialNos4SatConds, nTrials4SatConds] = ...
-      getTrialNosForAllSatConds(trialTypes,trRem,trialType);
-  
-  %check no. of trials
-  nTrials4SubSample = min(struct2array(nTrials4SatConds));
-  if (nTrials4SubSample < MIN_NTRIAL); continue; end
+  trialNos4SatConds = getTrialNosForSatConds(trialTypes,trialType);
   
   % get spike times
   xSpkTimes = load_spikes_SAT(crossPair.X_Index, 'user','thoma');
@@ -181,70 +168,30 @@ end
 end % fxn : createSpkCorrWithSubSampling()
 
 function [cellPairs] = getCrossAreaPairs(pairsFile)
-
 allCellPairs = load(pairsFile);
 allCellPairs = allCellPairs.pairInfoDB;
-allCellPairs = allCellPairs(ismember([allCellPairs.X_Monkey],{'D','E'}),:);
-
-idxCrossAreaSEF = (ismember(allCellPairs.X_Area,'SEF') & ismember(allCellPairs.Y_Area,{'FEF','SC'}));
-idxCrossArea = idxCrossAreaSEF;
-cellPairs = allCellPairs(idxCrossArea,:);
-
-assert(isequal(cellPairs.X_Session, cellPairs.Y_Session), ...
-  'Error: X-Unit sessions and Y-Unit sessions do not match');
-fprintf('Done getCrossAreaPairs()\n')
-
+cellPairs = allCellPairs(ismember([allCellPairs.X_Monkey],{'D','E'}),:);
 end % util : getCrossAreaPairs()
 
 function [sessionTrialTypes] = getSessionTrialTypes(trialTypesFile)
-    sessionTrialTypes = load(trialTypesFile);
-    sessionTrialTypes = sessionTrialTypes.TrialTypesDB;
-    fprintf('Done getSessionTrialTypes()\n')
-end
+sessionTrialTypes = load(trialTypesFile);
+sessionTrialTypes = sessionTrialTypes.TrialTypesDB;
+fprintf('Done getSessionTrialTypes()\n')
+end % util : getSessionTrialTypes()
 
 function [sessionEventTimes] = getSessionEventTimes(trialEventTimesFile)
-    sessionEventTimes = load(trialEventTimesFile);
-    sessionEventTimes = sessionEventTimes.TrialEventTimesDB;
-    fprintf('Done getSessionEventTimes()\n')
-end
+sessionEventTimes = load(trialEventTimesFile);
+sessionEventTimes = sessionEventTimes.TrialEventTimesDB;
+fprintf('Done getSessionEventTimes()\n')
+end % util : getSessionEventTimes()
 
-function [trRem] = getTrialNosToRemove(crossPair)
-    trRem = [crossPair.X_TrialRemoveSAT{1};crossPair.Y_TrialRemoveSAT{1}];
-    if ~isempty(trRem)
-        temp = [];
-        for ii = 1:size(trRem,1)
-            temp = [temp [trRem(ii,1):trRem(ii,2)]];
-        end
-        trRem = unique(temp(:));
-    end
-    %fprintf('Done getTrialNosToRemove()\n')
-end
-
-function [trialNos4SatConds,nTrials4SatConds] = getTrialNosForAllSatConds(trialTypes,trRem,conditions)
-   trialNos4SatConds = struct();
-   nTrials4SatConds = struct();
-   for c = 1:numel(conditions)
-       condition = conditions{c};
-       temp = trialTypes.(condition){1};
-       temp(trRem) = 0;
-       temp = find(temp);       
-       trialNos4SatConds.(condition) = temp;
-   end
-   % remove trials common to *ErrorChoice and *ErrorTiming
-   % May not need this since they already seem to be mutually exclusive
-   commonTrialNos = intersect(trialNos4SatConds.AccurateErrorChoice,trialNos4SatConds.AccurateErrorTiming);
-   trialNos4SatConds.AccurateErrorChoice = setdiff(trialNos4SatConds.AccurateErrorChoice,commonTrialNos);
-   trialNos4SatConds.AccurateErrorTiming = setdiff(trialNos4SatConds.AccurateErrorTiming,commonTrialNos);
-   commonTrialNos = intersect(trialNos4SatConds.FastErrorChoice,trialNos4SatConds.FastErrorTiming);
-   trialNos4SatConds.FastErrorChoice = setdiff(trialNos4SatConds.FastErrorChoice,commonTrialNos);
-   trialNos4SatConds.FastErrorTiming = setdiff(trialNos4SatConds.FastErrorTiming,commonTrialNos);
-   % nTrialsFor sat conds
-   for c = 1:numel(conditions)
-       condition = conditions{c};
-       nTrials4SatConds.(condition) = numel(trialNos4SatConds.(condition));
-   end   
-   %fprintf('Done getTrialNosForAllSatConds()\n')   
-end
+function [trialNos4SatConds] = getTrialNosForSatConds(trialTypes, conditions)
+ trialNos4SatConds = struct();
+ for c = 1:numel(conditions)
+     temp = find(trialTypes.(conditions{c}){1});
+     trialNos4SatConds.(conditions{c}) = temp;
+ end
+end % util : getTrialNosForSatConds()
 
 function [colNames] = getPairColNmes()
 
@@ -257,6 +204,12 @@ colNames = {
     'Y_Index'
     'X_Area'
     'Y_Area'
+    'X_Grade_Vis'
+    'Y_Grade_Vis'
+    'X_RF'
+    'Y_RF'
+    'X_Grade_Err'
+    'X_Grade_TErr'
     };
 
 end
