@@ -1,12 +1,12 @@
 %plot_SDF_X_Dir_SAT() Summary of this function goes here
 %   Detailed explanation goes here
 
-uPlot = [93,98];
+uPlot = [89,93];
 GREEN = [0 .7 0];
 
-iStim = 3500 + (-300 : +300); tStim = iStim - 3500;
-iResp = 3500 + (-300 : +300); tResp = iResp - 3500;
-iRew  = 3500 + (-300 : +300); tRew = iRew - 3500;
+iStim = 3500 + (-200 : +300); tStim = iStim - 3500;
+iResp = 3500 + (-200 : +300); tResp = iResp - 3500;
+iRew  = 3500 + (-200 : +300); tRew = iRew - 3500;
 
 for u = 1:numel(uPlot)
   up = uPlot(u);
@@ -48,7 +48,7 @@ for u = 1:numel(uPlot)
   
   %% Plotting
   yLim = [0, max([sdfAC_A sdfAC_P sdfFC_A sdfFC_P sdfFC_R],[],'all')];
-  xLim = [-300,+300];
+  xLim = [-200,+300];
   
   figure()
   subplot(1,3,1); hold on %re. array

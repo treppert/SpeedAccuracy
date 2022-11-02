@@ -18,7 +18,7 @@ nGroup = numel(grp);
 dA_A2F = NaN(nGroup,3); %X|Y|Z neurons
 dA_F2A = dA_A2F;
 
- for g = 1:nGroup
+ for g = 3:3%1:nGroup
   uX = grp{g}(1);   areaX = unitData.Area{uX}; %unit numbers and areas
   uY = grp{g}(2);   areaY = unitData.Area{uY};
   uZ = grp{g}(3);   areaZ = unitData.Area{uZ};
@@ -118,6 +118,8 @@ dA_F2A = dA_A2F;
 
 end % for : pair(p)
 
+[rho,pval] = corrcoef([dA_X_p_A2F;dA_X_p_F2A] , [dA_Y_p_A2F;dA_Y_p_F2A]);
+clearvars -except ROOTDIR_SAT behavData unitData spkCorr_
 return
 
 %% Plotting
@@ -133,5 +135,5 @@ xlim(AXLIM); ylim(AXLIM)
 
 ppretty([2,1.6])
 
-clearvars -except ROOTDIR_SAT behavData unitData spkCorr_
+
 % end % fxn : Fig2X_SingleTrialChange_NDim()

@@ -7,10 +7,10 @@ TLIM_COUNT = [+50,+400] + 3500;
 tableSwitch = identify_condition_switch(behavData);
 
 % pair = {[2 11], [77 85], [89 98]}; % X = FEF, Y = SC
-% pair = {[27 29], [93 98], [94 98], [106 111], [114 119], [117 119]}; % X = SEF, Y = SC
+pair = {[27 29], [93 98], [94 98], [106 111], [114 119], [117 119]}; % X = SEF, Y = SC
 % pair = {[39 31], [40 35], [40 31], [39 35], [47 45], [93 89], [94 89]}; % X = SEF, Y = FEF
-pair = {[39 40], [93 94], [100 102], [100 103], [102 103], [114 117], [121 123], ...
-  [128 130], [133 134], [133 139], [134 139]}; % X = SEF, Y = SEF
+% pair = {[39 40], [93 94], [100 102], [100 103], [102 103], [114 117], [121 123], ...
+%   [128 130], [133 134], [133 139], [134 139]}; % X = SEF, Y = SEF
 % pair = {[31 35]}; % X = FEF, Y = FEF
 nPair = numel(pair);
 
@@ -23,8 +23,7 @@ DA_Y = DA_X;
 Quad_A2F = NaN(nPair,4);
 Quad_F2A = Quad_A2F;
 
-Chi2 = NaN(nPair,2);
-pval = Chi2;
+pval_rtest = NaN(nPair,2); % A2F|F2A
 
 for p = 1:nPair
   uX = unitData.Index(pair{p}(1)); %X unit no.
@@ -66,13 +65,6 @@ for p = 1:nPair
   dA_X_p_F2A = spkCt_X(jjF2A_post) - spkCt_X(jjF2A_pre); nF2A = numel(jjF2A_pre);
   dA_Y_p_F2A = spkCt_Y(jjF2A_post) - spkCt_Y(jjF2A_pre);
   
-  %Pearson chi-square test
-  %TODO - Fix this issue (trials with no change in spike count)
-  dA_X_p_A2F(dA_X_p_A2F == 0) = .01;  dA_X_p_F2A(dA_X_p_F2A == 0) = .01;
-  dA_Y_p_A2F(dA_Y_p_A2F == 0) = .01;  dA_Y_p_F2A(dA_Y_p_F2A == 0) = .01;
-  [~,Chi2(p,1),pval(p,1)] = crosstab(sign(dA_X_p_A2F) , sign(dA_Y_p_A2F));
-  [~,Chi2(p,2),pval(p,2)] = crosstab(sign(dA_X_p_F2A) , sign(dA_Y_p_F2A));
-
   %COUNTS PER QUADRANT
   quadA2F = false(nA2F,4);
   jjQ1 = (dA_X_p_A2F > 0) & (dA_Y_p_A2F > 0); quadA2F(jjQ1,1) = true;
@@ -117,7 +109,12 @@ for p = 1:nPair
   dA_X(p,:) = [mean(dA_X_p_A2F) , mean(dA_X_p_F2A)]; %A2F|F2A
   dA_Y(p,:) = [mean(dA_Y_p_A2F) , mean(dA_Y_p_F2A)];
   
-  
+  %compute vector angles for Rayleigh (circular) test
+  theta_A2F_p = atan2(dA_Y_p_A2F,dA_X_p_A2F);
+  theta_F2A_p = atan2(dA_Y_p_F2A,dA_X_p_F2A);
+  pval_rtest(p,1) = circ_rtest(theta_A2F_p);
+  pval_rtest(p,2) = circ_rtest(theta_F2A_p);
+
 end % for : pair(p)
 
 %normalize counts for each pair by total trial counts
@@ -130,6 +127,9 @@ DA_X_F2A = cell2mat(DA_X(:,2));
 DA_Y_A2F = cell2mat(DA_Y(:,1));
 DA_Y_F2A = cell2mat(DA_Y(:,2));
 
+%% Stats - chi-square categorical test
+[chi2_X,chi2_p] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A)
+
 %% Plotting - Scatterplot
 GREEN = [0 .7 0];
 
@@ -137,11 +137,11 @@ figure()
 
 subplot(1,3,1); hold on %scatterplot of means (FEF/SC vs SEF)
 AXLIM = [-1.5,+1.5];
-scatter(dA_X(:,1), dA_Y(:,1), 20, GREEN, 'filled', 'o') %A2F
-scatter(dA_X(:,2), dA_Y(:,2), 20, 'r', 'filled', 'o') %F2A
+scatter(dA_X(:,1), dA_Y(:,1), 30, GREEN, 'd') %A2F
+scatter(dA_X(:,2), dA_Y(:,2), 30, 'r', 'd') %F2A
 plot(AXLIM,[0 0], 'k--'); plot([0 0],AXLIM, 'k--')
 xlabel('SEF single-trial change (z)')
-ylabel('SC single-trial change (z)')
+ylabel('FEF single-trial change (z)')
 xlim(AXLIM); ylim(AXLIM); ytickformat('%2.1f'); xtickformat('%2.1f')
 
 subplot(1,3,2); hold on %scatterplot of single-trial data - A2F
@@ -172,5 +172,40 @@ ppretty([3,2]); drawnow
 set(gca, 'xminortick','off')
 
 
-clearvars -except behavData unitData spkCorr_ ROOTDIR_DATA_SAT Chi2 pval
+clearvars -except behavData unitData spkCorr_ ROOTDIR_DATA_SAT Chi2 pval_rtest chi2_*
 % end % fxn : Fig2X_SingleTrialChange_Counts()
+
+
+function [ chi2_X , chi2_p ] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A)
+chi2_X = NaN(2,1); % A2F ; F2A
+chi2_p = chi2_X;
+
+nA2F = numel(DA_X_A2F);
+nF2A = numel(DA_X_F2A);
+
+quadA2F = false(nA2F,4); % Accurate to Fast
+jjQ1 = (DA_X_A2F > 0) & (DA_Y_A2F > 0); quadA2F(jjQ1,1) = true;
+jjQ2 = (DA_X_A2F < 0) & (DA_Y_A2F > 0); quadA2F(jjQ2,2) = true;
+jjQ3 = (DA_X_A2F < 0) & (DA_Y_A2F < 0); quadA2F(jjQ3,3) = true;
+jjQ4 = (DA_X_A2F > 0) & (DA_Y_A2F < 0); quadA2F(jjQ4,4) = true;
+quadA2F = sum(quadA2F);
+
+% chi-square stat -- A2F
+quadNull = round([nA2F nA2F nA2F nA2F] / 4);
+chi2_X(1) = sum((quadA2F-quadNull).^2 ./ quadNull);
+
+quadF2A = false(nF2A,4); % Fast to Accurate
+jjQ1 = (DA_X_F2A > 0) & (DA_Y_F2A > 0); quadF2A(jjQ1,1) = true;
+jjQ2 = (DA_X_F2A < 0) & (DA_Y_F2A > 0); quadF2A(jjQ2,2) = true;
+jjQ3 = (DA_X_F2A < 0) & (DA_Y_F2A < 0); quadF2A(jjQ3,3) = true;
+jjQ4 = (DA_X_F2A > 0) & (DA_Y_F2A < 0); quadF2A(jjQ4,4) = true;
+quadF2A = sum(quadF2A);
+
+% chi-square stat -- F2A
+quadNull = round([nF2A nF2A nF2A nF2A] / 4);
+chi2_X(2) = sum((quadF2A-quadNull).^2 ./ quadNull);
+
+% p-values
+chi2_p = 1 - chi2cdf(chi2_X,1);
+
+end % util : chi2_test_SAT()
