@@ -1,4 +1,4 @@
-function [ ] = plot_rsc_X_Epoch( spkCorr )
+% function [ ] = plot_rsc_X_Epoch( spkCorr )
 
 CLASS = {'All','Visual','ChoiceErr','TimingErr'}; %SEF functional class
 
@@ -65,29 +65,31 @@ for c = 1:4 %loop over functional class
   %compute fraction of (+) and (-) correlations
   fPos_Acc{c}  = [ sum(r_AC > 0) ; sum(r_AEC > 0) ; sum(r_AET > 0) ] / nClass;
   fPos_Fast{c} = [ sum(r_FC > 0) ; sum(r_FEC > 0) ; sum(r_FET > 0) ] / nClass;
-  
+  %average across epochs
+  fPos_Acc{c}   = mean(fPos_Acc{c},2);
+  fPos_Fast{c}  = mean(fPos_Fast{c},2);
+
 end % for : class (c)
+
+
+%% Stats - P(r > 0)
+%TODO - Format data for 3x2 chi-square analysis ***
+% X_A2F = (DA_X_A2F > 0); %was modulation (+) or (-)?
+% Y_A2F = (DA_Y_A2F > 0);
+% %chi-square test
+% [tbl,chi2stat,pval] = crosstab(X_A2F,Y_A2F);
+% chi2_A2F = struct('tbl',tbl, 'chi2stat',chi2stat, 'pval',pval);
 
 
 %% Stats - 3-way ANOVA - |r| - All pairs
 %Three-way ANOVA with factors Condition, Outcome, and Epoch
-spkCorr.Outcome = regexprep(spkCorr.condition,{'Fast','Accurate'},{'',''});
-spkCorr.SATCondition = regexprep(spkCorr.condition,{'Correct','Error.*'},{'',''});
-spkCorr.Epoch = spkCorr.alignedName;
-anovaTbl = spkCorr(:,{'rhoRaw','SATCondition','Epoch'});
-anovaTbl.rhoRaw = abs(anovaTbl.rhoRaw);
-anovaTbl.rhoRaw = log( anovaTbl.rhoRaw ./ (1-anovaTbl.rhoRaw) );
+anovaTbl.rhoRaw = abs(spkCorr.rhoRaw);
+% anovaTbl.rhoRaw = log( anovaTbl.rhoRaw ./ (1-anovaTbl.rhoRaw) );
+anovaTbl.Outcome = regexprep(spkCorr.condition,{'Fast','Accurate'},{'',''});
+anovaTbl.SATCondition = regexprep(spkCorr.condition,{'Correct','Error.*'},{'',''});
+anovaTbl.Epoch = spkCorr.alignedName;
 
-statsAnova3 = satAnova(anovaTbl);
-
-%% Stats - 4-way ANOVA - |r|
-NeuronType = cell(size(spkCorr,1),1);
-NeuronType(idxClass{2}) = CLASS(2);
-NeuronType(idxClass{3}) = CLASS(3);
-NeuronType(idxClass{4}) = CLASS(4);
-anovaTbl.NeuronType = NeuronType;
-
-% statsAnova4 = satAnova(anovaTbl);
+% statsAnova3 = satAnova(anovaTbl);
 
 %% Plotting - Fraction of positive correlations
 GREEN = [0 .7 0];
@@ -103,15 +105,15 @@ for c = 1:4
   subplot(4,2,iAcc); hold on
   plot([1 4], [0.5 0.5], 'k--')
   plot(fPos_Acc{c}(1,:), 'rd-', 'MarkerSize',MARKERSIZE)
-%   plot(fPos_Acc{c}(2,:), 'rd--', 'MarkerSize',MARKERSIZE)
-%   plot(fPos_Acc{c}(3,:), 'rd:', 'MarkerSize',MARKERSIZE)
+  plot(fPos_Acc{c}(2,:), 'rd--', 'MarkerSize',MARKERSIZE)
+  plot(fPos_Acc{c}(3,:), 'rd:', 'MarkerSize',MARKERSIZE)
   ylim(YLIM); xlim(XLIM); xticks([])
   
   subplot(4,2,iFast); hold on
   plot([1 4], [0.5 0.5], 'k--')
   plot(fPos_Fast{c}(1,:), 'd-', 'Color',GREEN, 'MarkerSize',MARKERSIZE)
-%   plot(fPos_Fast{c}(2,:), 'd--', 'Color',GREEN, 'MarkerSize',MARKERSIZE)
-%   plot(fPos_Fast{c}(3,:), 'd:', 'Color',GREEN, 'MarkerSize',MARKERSIZE)
+  plot(fPos_Fast{c}(2,:), 'd--', 'Color',GREEN, 'MarkerSize',MARKERSIZE)
+  plot(fPos_Fast{c}(3,:), 'd:', 'Color',GREEN, 'MarkerSize',MARKERSIZE)
   ylim(YLIM); xlim(XLIM); xticks([]); yticks([])
 end
 
@@ -121,6 +123,7 @@ subplot(4,2,8); xticks(1:4); xticklabels({'BL','VR','PS','PR'})
 drawnow
 ppretty([4.8,5])
 
+return
 %% Plotting - Strength of absolute correlations
 BARWIDTH = 0.25;
 YLIM = [0.00 0.15];
@@ -151,4 +154,4 @@ subplot(4,2,8); xticks(1:4); xticklabels({'BL','VR','PS','PR'})
 drawnow
 ppretty([4.8,5])
 
-end % fxn : plot_rsc_X_Epoch()
+% end % fxn : plot_rsc_X_Epoch()

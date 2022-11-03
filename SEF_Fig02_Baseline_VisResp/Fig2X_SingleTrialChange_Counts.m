@@ -35,8 +35,8 @@ for p = 1:nPair
   
   %index by isolation quality
   %index by condition
-  idxAcc = (behavData.Task_SATCondition{k} == 1);
-  idxFast = (behavData.Task_SATCondition{k} == 3);
+  idxAcc = (behavData.Condition{k} == 1);
+  idxFast = (behavData.Condition{k} == 3);
   %index by trial number
   jjA2F = tableSwitch.A2F; %trials with switch Acc to Fast
   jjF2A = tableSwitch.F2A; %trials with switch Fast to Acc
@@ -128,7 +128,7 @@ DA_Y_A2F = cell2mat(DA_Y(:,1));
 DA_Y_F2A = cell2mat(DA_Y(:,2));
 
 %% Stats - chi-square categorical test
-[chi2_X,chi2_p] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A)
+[chi2_A2F,chi2_F2A] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A);
 
 %% Plotting - Scatterplot
 GREEN = [0 .7 0];
@@ -172,40 +172,28 @@ ppretty([3,2]); drawnow
 set(gca, 'xminortick','off')
 
 
-clearvars -except behavData unitData spkCorr_ ROOTDIR_DATA_SAT Chi2 pval_rtest chi2_*
+clearvars -except behavData unitData spkCorr ROOTDIR_DATA_SAT chi2_*
 % end % fxn : Fig2X_SingleTrialChange_Counts()
 
 
-function [ chi2_X , chi2_p ] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A)
-chi2_X = NaN(2,1); % A2F ; F2A
-chi2_p = chi2_X;
+function [ chi2_A2F , chi2_F2A ] = chi2_test(DA_X_A2F, DA_X_F2A, DA_Y_A2F, DA_Y_F2A)
 
-nA2F = numel(DA_X_A2F);
-nF2A = numel(DA_X_F2A);
+%% Accurate to Fast
+X_A2F = (DA_X_A2F > 0); %was modulation (+) or (-)?
+Y_A2F = (DA_Y_A2F > 0);
 
-quadA2F = false(nA2F,4); % Accurate to Fast
-jjQ1 = (DA_X_A2F > 0) & (DA_Y_A2F > 0); quadA2F(jjQ1,1) = true;
-jjQ2 = (DA_X_A2F < 0) & (DA_Y_A2F > 0); quadA2F(jjQ2,2) = true;
-jjQ3 = (DA_X_A2F < 0) & (DA_Y_A2F < 0); quadA2F(jjQ3,3) = true;
-jjQ4 = (DA_X_A2F > 0) & (DA_Y_A2F < 0); quadA2F(jjQ4,4) = true;
-quadA2F = sum(quadA2F);
+%chi-square test
+[tbl,chi2stat,pval] = crosstab(X_A2F,Y_A2F);
+chi2_A2F = struct('tbl',tbl, 'chi2stat',chi2stat, 'pval',pval);
 
-% chi-square stat -- A2F
-quadNull = round([nA2F nA2F nA2F nA2F] / 4);
-chi2_X(1) = sum((quadA2F-quadNull).^2 ./ quadNull);
 
-quadF2A = false(nF2A,4); % Fast to Accurate
-jjQ1 = (DA_X_F2A > 0) & (DA_Y_F2A > 0); quadF2A(jjQ1,1) = true;
-jjQ2 = (DA_X_F2A < 0) & (DA_Y_F2A > 0); quadF2A(jjQ2,2) = true;
-jjQ3 = (DA_X_F2A < 0) & (DA_Y_F2A < 0); quadF2A(jjQ3,3) = true;
-jjQ4 = (DA_X_F2A > 0) & (DA_Y_F2A < 0); quadF2A(jjQ4,4) = true;
-quadF2A = sum(quadF2A);
+%% Fast to Accurate
+X_F2A = (DA_X_F2A > 0); %was modulation (+) or (-)?
+Y_F2A = (DA_Y_F2A > 0);
 
-% chi-square stat -- F2A
-quadNull = round([nF2A nF2A nF2A nF2A] / 4);
-chi2_X(2) = sum((quadF2A-quadNull).^2 ./ quadNull);
+%chi-square test
+[tbl,chi2stat,pval] = crosstab(X_F2A,Y_F2A);
+chi2_F2A = struct('tbl',tbl, 'chi2stat',chi2stat, 'pval',pval);
 
-% p-values
-chi2_p = 1 - chi2cdf(chi2_X,1);
 
 end % util : chi2_test_SAT()
