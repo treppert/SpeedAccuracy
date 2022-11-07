@@ -14,18 +14,20 @@ argsParser.addParameter('sstype',3);%1|2|3|'h' default = 3
 argsParser.addParameter('doMultiCompare',true);
 argsParser.addParameter('multiCompareDisplay','on');%off|on --> for multiple comparisons
 
+argsParser.addParameter('displayMeans',false);%show group means?
+
 argsParser.parse(varargin{:});
 args = argsParser.Results;
 
 yVals = valsGroupsTbl{:,1};
 assert(isnumeric(yVals),'Y-Values must be numeric');
 
-groupNames = valsGroupsTbl.Properties.VariableNames;
-groupNames = groupNames(2:end);
+factorNames = valsGroupsTbl.Properties.VariableNames;
+factorNames = factorNames(2:end);
 
-groups = cell(1,numel(groupNames));
-for ii = 1:numel(groupNames)
-    groups{ii} = valsGroupsTbl.(groupNames{ii});
+groups = cell(1,numel(factorNames));
+for ii = 1:numel(factorNames)
+    groups{ii} = valsGroupsTbl.(factorNames{ii});
 end
 
 % anovaTbl header:
@@ -33,7 +35,7 @@ end
 anovaResults = struct();
 anovaTblVarNames = {'Source', 'SumSq' 'df' 'IsSingular' 'MeanSq' 'F'  'ProbGtF'};
 
-[~,temp,anovaStats] = anovan(yVals,groups,'model',args.model,'varnames',groupNames, 'display','on');
+[~,temp,anovaStats] = anovan(yVals,groups,'model',args.model,'varnames',factorNames, 'display','on');
 anovaTbl = cell2table(temp(2:end,:),'VariableNames',anovaTblVarNames);
 % add '*' p(F >= .05) and '**' p(F >=  .01)
 idx = find(~ismember(anovaTbl.Source,{'Error','Total'}));
@@ -51,34 +53,23 @@ anovaResults.anovaTbl = anovaTbl;
 % Compare results for different LEVELS *WITHIN* each group/Factor independently 
 % for bonferroni use 'CType', ... see doc multcompare
 if (args.doMultiCompare)
-    for gr = 1:numel(groupNames)
-        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',gr,'Alpha',args.alpha,'display',args.multiCompareDisplay);
-        anovaResults.(groupNames{gr}) = annotateMultcompareResults(temp,grpNames);
-    end
-    
-    % Compare results for different LEVEL combinations *ACROSS* each group/Factor independently
-    nWays = 2;
-    n2GrpComparisions = combnk(1:numel(groupNames),nWays);
-    
-    for jj = 1:size(n2GrpComparisions,1)
-        idx = n2GrpComparisions(jj,:);
-        fn = char(join(groupNames(idx),'_'));
-        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',idx,'Alpha',args.alpha,'display',args.multiCompareDisplay);
-        anovaResults.(fn) = annotateMultcompareResults(temp,grpNames);
-    end
-end
-
-%% If there are 3 groups also do a 3 way comparision
-if ((numel(groupNames) == 3) && args.doMultiCompare)
-    nWays = 3;
-    n3GrpComparisions = combnk(1:numel(groupNames),nWays);
-
-    for jj = 1:size(n3GrpComparisions,1)
-        idx = n3GrpComparisions(jj,:);
-        fn = char(join(groupNames(idx),'_'));
-        [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',idx,'Alpha',args.alpha);
-        anovaResults.(fn) = annotateMultcompareResults(temp,grpNames);
-    end
+  %MAIN EFFECTS
+  for gr = 1:numel(factorNames)
+      [temp,means,~,grpNames] = multcompare(anovaStats,'Dimension',gr,'Alpha',args.alpha,'display',args.multiCompareDisplay);
+      if (args.displayMeans); display(means); end
+      anovaResults.(factorNames{gr}) = annotateMultcompareResults(temp,grpNames);
+  end
+  
+  %INTERACTION EFFECTS
+  nWays = 2;
+  n2GrpComparisions = combnk(1:numel(factorNames),nWays);
+  
+  for jj = 1:size(n2GrpComparisions,1)
+      idx = n2GrpComparisions(jj,:);
+      fn = char(join(factorNames(idx),'_'));
+      [temp,~,~,grpNames] = multcompare(anovaStats,'Dimension',idx,'Alpha',args.alpha,'display',args.multiCompareDisplay);
+      anovaResults.(fn) = annotateMultcompareResults(temp,grpNames);
+  end
 end
 
 end % fxn : satAnova()
@@ -94,11 +85,6 @@ resultsAsTbl = table();
 resultsAsTbl.levelName1 = arrayfun(@(x) levelNamesNew{x},results(:,1),'UniformOutput',false);
 resultsAsTbl.levelName2 = arrayfun(@(x) levelNamesNew{x},results(:,2),'UniformOutput',false);
 resultsAsTbl = [resultsAsTbl array2table(results(:,3:end),'VariableNames',{'loCI95','meanDiff','hiCI95','pval_H0'})];
-resultsAsTbl.isSignif05 = results(:,end)<=0.05;
-resultsAsTbl.isSignif01 = results(:,end)<=0.01;
-resultsAsTbl.signifStr = repmat({'N.S.'},size(resultsAsTbl,1),1);
-resultsAsTbl.signifStr(resultsAsTbl.isSignif05) = repmat({'*'},sum(resultsAsTbl.isSignif05),1);
-resultsAsTbl.signifStr(resultsAsTbl.isSignif01) = repmat({'**'},sum(resultsAsTbl.isSignif01),1);
 resultsAsTbl.group1 = results(:,1);
 resultsAsTbl.group2 = results(:,2);
 

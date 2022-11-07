@@ -28,6 +28,7 @@
 % Fig6B_SpkCorr_PostResponse(rscTest, MONKEY, RHO_TYPE, NEURON_TYPE)
 
 plot_rsc_X_Epoch( spkCorr )
+plot_rsc_X_FR( spkCorr )
 
 clear idx*
 
