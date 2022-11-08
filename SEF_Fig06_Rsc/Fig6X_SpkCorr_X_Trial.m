@@ -1,48 +1,47 @@
-function [ ] = Fig6X_SpkCorr_X_Trial( spkCorrA2F , spkCorrF2A )
+function [ ] = Fig6X_SpkCorr_X_Trial( spkCorrA2F , spkCorrF2A , unitData )
 %Fig6X_SpkCorr_X_Trial Summary of this function goes here
 %   Detailed explanation goes here
 
-TRIAL_PLOT = ( -4 : 3 );
-NUM_TRIAL = length(TRIAL_PLOT);
+%sub-sample pairs with SEF neurons with SAT effect
+% uSEF_SATeffect = unitData.Index(ismember(unitData.Area,{'SEF'})  & ismember(unitData.SAT_Effect(:,2),+1));
+% idxu_A2F = ismember(spkCorrA2F.X_Index, uSEF_SATeffect);  spkCorrA2F = spkCorrA2F(idxu_A2F,:);
+% idxu_F2A = ismember(spkCorrF2A.X_Index, uSEF_SATeffect);  spkCorrF2A = spkCorrF2A(idxu_F2A,:);
 
-idxVis = (abs(spkCorrA2F.X_Grade_Vis) > 2);   nVis = sum(idxVis);
-idxCE  = (abs(spkCorrA2F.X_Grade_Err) == 1);  nCE  = sum(idxCE);
-idxTE  = (abs(spkCorrA2F.X_Grade_TErr) == 1); nTE  = sum(idxTE);
+trialIndex = ( -4 : 3 );
+nTrial = length(trialIndex);
 
-% idxPairFEF = strcmp(spkCorr.Y_Area, 'FEF');
-% idxPairSC  = strcmp(spkCorr.Y_Area, 'SC');
+nPair = size(spkCorrA2F,1) / nTrial;
 
-rhoA2F = abs(transpose(cell2mat(transpose(spkCorrA2F.rhoRaw))));
-rhoF2A = abs(transpose(cell2mat(transpose(spkCorrF2A.rhoRaw))));
+rhoA2F = NaN(nPair,nTrial);
+rhoF2A = rhoA2F;
 
+for tt = 1:nTrial
 
-XLABEL = {'','-3','','-1','+1','','+3','','','','-3','','-1','+1','','+3',''};
-XLIM = [-4,11];
+  idxttA2F = (spkCorrA2F.trialIndex == trialIndex(tt));
+  idxttF2A = (spkCorrF2A.trialIndex == trialIndex(tt));
 
-figure()
+  rhoA2F(:,tt) = transpose(spkCorrA2F.rhoRaw(idxttA2F));
+  rhoF2A(:,tt) = transpose(spkCorrF2A.rhoRaw(idxttF2A));
 
-subplot(3,1,1); hold on %Visual response
-title('Neurons - Visual response', 'FontSize',7)
-errorbar(TRIAL_PLOT           , mean(rhoA2F(idxVis,:)), std(rhoA2F(idxVis,:))/sqrt(nVis), 'Color','k', 'CapSize',0)
-errorbar(TRIAL_PLOT+NUM_TRIAL , mean(rhoF2A(idxVis,:)), std(rhoF2A(idxVis,:))/sqrt(nVis), 'Color','k', 'CapSize',0)
-xlim(XLIM); xticks([])
-ylabel('Spike count corr.')
+end
 
-subplot(3,1,2); hold on %Choice error signal
-title('Neurons - Choice error', 'FontSize',7)
-errorbar(TRIAL_PLOT           , mean(rhoA2F(idxCE,:)), std(rhoA2F(idxCE,:))/sqrt(nCE), 'Color','k', 'CapSize',0)
-errorbar(TRIAL_PLOT+NUM_TRIAL , mean(rhoF2A(idxCE,:)), std(rhoF2A(idxCE,:))/sqrt(nCE), 'Color','k', 'CapSize',0)
-xlim(XLIM); xticks([])
-ylabel('Spike count corr.')
+%% Plotting
+XLABEL = {'','','-3','','-1','+1','','+3','','','','-3','','-1','+1','','+3',''};
+XLIM = [-5,12];
 
-subplot(3,1,3); hold on %Timing error signal
-title('Neurons - Timing error', 'FontSize',7)
-errorbar(TRIAL_PLOT           , mean(rhoA2F(idxTE,:)), std(rhoA2F(idxTE,:))/sqrt(nTE), 'Color','k', 'CapSize',0)
-errorbar(TRIAL_PLOT+NUM_TRIAL , mean(rhoF2A(idxTE,:)), std(rhoF2A(idxTE,:))/sqrt(nTE), 'Color','k', 'CapSize',0)
+muA2F = mean(rhoA2F,1); %mean
+muF2A = mean(rhoF2A,1);
+seA2F = std(rhoA2F,0,1)/sqrt(nPair); %standard error
+seF2A = std(rhoF2A,0,1)/sqrt(nPair);
+
+figure(); hold on
+
+errorbar(trialIndex, muA2F, seA2F, 'Color','k', 'CapSize',0)
+errorbar(nTrial+trialIndex, muF2A, seF2A, 'Color','k', 'CapSize',0)
 xlim(XLIM); xticks(-5:12); xticklabels(XLABEL)
-ylabel('Spike count corr.')
+ylabel('r')
 
-ppretty([1.6,4.0])
+ppretty([4.0,1.6])
 set(gca, 'XMinorTick','off', 'XTickLabelRotation',45)
 
 end % fxn : Fig6X_SpkCorr_X_Trial()

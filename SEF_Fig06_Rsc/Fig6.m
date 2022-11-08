@@ -11,11 +11,12 @@
 %% Compute spike count correlation
 % spkCorr = computeSpkCorr_SAT_SubSample(); %sub-sampling for bar plots
 % spkCorr = computeSpkCorr_X_Outcome(); %no sub-sampling
+% computeSpkCorr_X_Trial
 
 %trial-to-trial analysis
 % spkCorrA2F = computeSpkCorr_SAT('direction','A2F');
 % spkCorrF2A = computeSpkCorr_SAT('direction','F2A');
-% Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A)
+Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A, unitData)
 
 %% Indexing
 %index by y-area(s) of interest (FEF, SC, or both)
@@ -27,8 +28,8 @@
 % RHO_TYPE = {'Positive','Negative'};
 % Fig6B_SpkCorr_PostResponse(rscTest, MONKEY, RHO_TYPE, NEURON_TYPE)
 
-plot_rsc_X_Epoch( spkCorr )
-plot_rsc_X_FR( spkCorr )
+% plot_rsc_X_Epoch( spkCorr )
+% plot_rsc_X_FR( spkCorr )
 
 clear idx*
 

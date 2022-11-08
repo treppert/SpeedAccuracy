@@ -4,7 +4,6 @@ nPair = size(spkCorr,1) / 24; %24 = 6(conditionXoutcome) * 4(epoch)
 idxAC  = ismember(spkCorr.condition, {'AccurateCorrect'});
 idxFC  = ismember(spkCorr.condition, {'FastCorrect'});
 
-
 %signed value spike count correlation
 r_AC = spkCorr.rhoRaw(idxAC); %Accurate correct
 r_AC = transpose(reshape(r_AC,4,nPair));

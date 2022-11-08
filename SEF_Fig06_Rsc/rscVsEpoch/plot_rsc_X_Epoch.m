@@ -6,7 +6,7 @@ CLASS = {'All','Visual','ChoiceErr','TimingErr'}; %SEF functional class
 idxClass = cell(4,1);
 idxFEF = ismember(spkCorr.Y_Area, {'FEF'});
 idxSC = ismember(spkCorr.Y_Area, {'SC'});
-idxYArea = (idxFEF);
+idxYArea = (idxFEF | idxSC);
 idxClass{2} = (abs(spkCorr.X_Grade_Vis) > 2) & idxYArea;
 idxClass{3} = ismember(spkCorr.X_Grade_Err, [-1,+1,+4]) & idxYArea;
 idxClass{4} = ismember(spkCorr.X_Grade_TErr, [-1,+1,+4]) & idxYArea;
@@ -64,23 +64,21 @@ for c = 1:4 %loop over functional class
   fPos_Acc{c}  = [ sum(r_AC > 0) ; sum(r_AEC > 0) ; sum(r_AET > 0) ] / nClass;
   fPos_Fast{c} = [ sum(r_FC > 0) ; sum(r_FEC > 0) ; sum(r_FET > 0) ] / nClass;
 
-  %record sign of mean correlation across epochs
-  rPos_Acc{c}  = [ sign(mean(r_AC,2)) , sign(mean(r_AEC,2)) , sign(mean(r_AET,2)) ];
-  rPos_Fast{c} = [ sign(mean(r_FC,2)) , sign(mean(r_FEC,2)) , sign(mean(r_FET,2)) ];
+  %record sign of correlation
+  EPOCH = 1;
+  rPos_Acc{c}  = [ sign(r_AC(:,EPOCH)) , sign(r_AEC(:,EPOCH)) , sign(r_AET(:,EPOCH)) ];
+  rPos_Fast{c} = [ sign(r_FC(:,EPOCH)) , sign(r_FEC(:,EPOCH)) , sign(r_FET(:,EPOCH)) ];
 
 end % for : class (c)
 
-%% Stats - P(r > 0) - chi-square test for independence
-cTest = 1;
-nClass = size(rPos_Acc{cTest},1);
-rsc = [ reshape(rPos_Acc{cTest}, 3*nClass,1) ; reshape(rPos_Fast{cTest}, 3*nClass,1) ];
-condition = [ ones(3*nClass,1) ; 2*ones(3*nClass,1) ];
-outcome = repmat([ones(nClass,1) ; 2*ones(nClass,1) ; 3*ones(nClass,1)], 2,1);
 
-%chi-square test
-[tbl,chi2stat,pval] = crosstab(condition, outcome, rsc);
-chi2_A2F = struct('tbl',tbl, 'chi2stat',chi2stat, 'pval',pval);
-% display(chi2_A2F.tbl)
+%% Stats - P(r > 0) - log-linear analysis and partial chi-square tests
+%Note - Performed loglinear analysis and chi-square tests in SPSS
+nPos_Acc  = sum(rPos_Acc{1} == +1,1);
+nNeg_Acc  = sum(rPos_Acc{1} == -1,1);
+nPos_Fast = sum(rPos_Fast{1} == +1,1);
+nNeg_Fast = sum(rPos_Fast{1} == -1,1);
+
 
 %% Stats - 3-way ANOVA - |r| - All pairs
 %Three-way ANOVA with factors ConditionXOutcomeXEpoch - All SEF neurons
@@ -92,7 +90,7 @@ anovaTbl.SATCondition = regexprep(spkCorr.condition(idxStats),{'Correct','Error.
 anovaTbl.Epoch = spkCorr.alignedName(idxStats);
 statsAnova = satAnova(anovaTbl);
 
-return
+
 %% Plotting - Fraction of positive correlations
 GREEN = [0 .7 0];
 MARKERSIZE = 5.0;
