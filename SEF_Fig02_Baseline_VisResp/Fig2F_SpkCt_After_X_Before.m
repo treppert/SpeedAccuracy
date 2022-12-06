@@ -1,5 +1,5 @@
-function [ ] = Fig2_SpkCt_After_X_Before( behavData , unitData )
-%Fig2_SpkCt_After_X_Before Summary of this function goes here
+function [ ] = Fig2F_SpkCt_After_X_Before( behavData , unitData )
+%Fig2F_SpkCt_After_X_Before Summary of this function goes here
 %   Detailed explanation goes here
 
 TLIM_VR = [+50,+400] + 3500;
@@ -15,14 +15,14 @@ spkCt_A2F = NaN(NUM_UNIT,2); %before|after
 spkCt_F2A = spkCt_A2F;
 
 for uu = 1:NUM_UNIT
-  kk = ismember(behavData.Task_Session, unitData.Session(uu));
+  kk = ismember(behavData.Session, unitData.Session(uu));
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{uu}, behavData.NumTrials(kk));
   
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
-  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
+  idxAcc = ((behavData.Condition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Condition{kk} == 3) & ~idxIso);
   trialAcc = find(idxAcc);
   trialFast = find(idxFast);
 
