@@ -3,14 +3,13 @@
 
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'FEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-% idxFunction = (unitTest.Grade_Err == 1);
-idxKeep = (idxArea & idxMonkey);
+idxArea = ismember(unitData.Area, {'SEF'});
+idxMonkey = ismember(unitData.Monkey, {'D'});
+idxFunction = (unitData.Grade_Err == 4);
+idxKeep = (idxArea & idxMonkey & idxFunction);
 
-NUM_UNIT = sum(idxKeep);
-unitTest = unitData(idxKeep,:);
-spikesTest = spikesSAT(idxKeep);
+NUM_UNIT = 1;%sum(idxKeep);
+unitTest = unitData(41,:);
 
 T_STIM_Acc = 3500 + (-300 : 500);
 T_RESP_Acc = 3500 + (-500 : 300);
@@ -23,21 +22,22 @@ IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
 IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
 
 for uu = 1:NUM_UNIT
-  fprintf('%s - %s\n', unitTest.Task_Session{uu}, unitTest.aID{uu})
-  kk = ismember(behavData.Task_Session, unitTest.Task_Session{uu});
+  fprintf('%s - %s\n', unitTest.Session{uu}, unitTest.ID{uu})
+  kk = ismember(behavData.Session, unitTest.Session{uu});
   RT_P = behavData.Sacc_RT{kk}; %Primary saccade RT
   
   %compute spike density function and align on primary response
-  sdfA = compute_spike_density_fxn(spikesTest{uu});
+  spikes_uu = load_spikes_SAT(unitTest.Index(uu));
+  sdfA = compute_spike_density_fxn(spikes_uu);
   sdfP = align_signal_on_response(sdfA, RT_P); 
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavData.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, behavData.NumTrials(kk));
   %index by condition
-  idxAcc = ((behavData.Task_SATCondition{kk} == 1) & ~idxIso);
-  idxFast = ((behavData.Task_SATCondition{kk} == 3) & ~idxIso);
+  idxAcc = ((behavData.Condition{kk} == 1) & ~idxIso);
+  idxFast = ((behavData.Condition{kk} == 3) & ~idxIso);
   %index by trial outcome
-  idxCorr = behavData.Task_Correct{kk};
+  idxCorr = behavData.Correct{kk};
   
   %% Compute mean SDF for each direction
   Octant_Sacc1 = behavData.Sacc_Octant{kk};
@@ -58,7 +58,7 @@ for uu = 1:NUM_UNIT
   end%for:direction(dd)
   
   %% Plotting
-  hFig = figure('visible','off');
+  hFig = figure('visible','on');
   yLim = [0, max([sdfAccA; sdfAccP; sdfFastA; sdfFastP],[],'all')];
   xLimStim = T_STIM_Acc([1,NUM_SAMP_Acc]) - 3500;
   xLimResp = T_RESP_Acc([1,NUM_SAMP_Acc]) - 3500;
@@ -74,11 +74,12 @@ for uu = 1:NUM_UNIT
     xlim(xLimStim)
     
     if (IDX_STIM_PLOT(dd) == 13)
-      ylabel('Activity (sp/sec)');  xticklabels([])
-      xlabel('Time from array (ms)');  yticklabels([])
-      print_session_unit(gca , unitTest(uu,:), behavData(kk,:))
+      ylabel('Activity (sp/sec)')
+      xlabel('Time from array (ms)')
+    else
+      xticklabels([])
+      yticklabels([])
     end
-    
     subplot(3,6,IDX_RESP_PLOT(dd)); hold on %re. response
     plot([0 0], yLim, 'k:')
     plot(-RT_Acc(dd)*ones(1,2), yLim, 'r:')
@@ -89,18 +90,22 @@ for uu = 1:NUM_UNIT
     set(gca, 'YAxisLocation','right')
     
     if (IDX_RESP_PLOT(dd) == 14)
-      xlabel('Time from response (ms)');  yticklabels([])
+      xlabel('Time from response (ms)')
+    else
+      xticklabels([])
+      yticklabels([])
     end
     
     pause(.01)
-    
+      
   end%for:direction(dd)
   
+  subplot(3,6,[9 10]); print_session_unit(gca, unitTest(uu,:), behavData(kk,:), 'horizontal'); axis('off')
   ppretty([12,6])
   
-  pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
-  pause(0.1); close(hFig); pause(0.1)
+%   pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
+%   pause(0.1); close(hFig); pause(0.1)
   
 end % for : unit(uu)
 
-clearvars -except behavData unitData spikesSAT
+clearvars -except behavData unitData spkCorr
