@@ -6,7 +6,7 @@ PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D'});
-idxFunction = (unitData.Grade_Err == 4);
+idxFunction = (unitData.Grade_Vis > 2);
 idxKeep = (idxArea & idxMonkey & idxFunction);
 
 NUM_UNIT = 1;%sum(idxKeep);
@@ -50,17 +50,17 @@ for uu = 1:NUM_UNIT
   IDX_PLOT = [6 3 2 1 4 7 8 9];
   hFig = figure('visible','on');
   yLim = [0, max([sdfAcc; sdfFast],[],'all')];
-  xLim = tWin([1,nSamp]) - 3500;
+  xLim = tWin([1,nSamp]);
   
   for dd = 1:8 %loop over directions and plot
     
     subplot(3,3,IDX_PLOT(dd)); hold on %re. array
     plot([0 0], yLim, 'k:')
-    plot(tWin-3500, sdfAcc(:,dd), 'r-');
-    plot(tWin-3500, sdfFast(:,dd), '-', 'Color',[0 .7 0]);
+    plot(tWin, sdfAcc(:,dd), 'r-');
+    plot(tWin, sdfFast(:,dd), '-', 'Color',[0 .7 0]);
     xlim(xLim)
     
-    if (IDX_PLOT(dd) == 13)
+    if (IDX_PLOT(dd) == 7)
       ylabel('Activity (sp/sec)')
       xlabel('Time from array (ms)')
     else
@@ -71,7 +71,7 @@ for uu = 1:NUM_UNIT
   end%for:direction(dd)
   
   subplot(3,3,5); print_session_unit(gca, unitTest(uu,:), behavData(kk,:), 'horizontal'); axis('off')
-  ppretty([5,5])
+  ppretty([5,4])
   
 %   pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
 %   pause(0.1); close(hFig); pause(0.1)
