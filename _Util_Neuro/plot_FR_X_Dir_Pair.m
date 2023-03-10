@@ -62,6 +62,9 @@ for pp = 1:nPair
   sdfY_Fast(:,nDir+1) = mean(sdfY_A(idxFast & idxCorr, iWin));
 
   %% Plotting
+  nRow = 3;
+  nCol = 7;
+  margin = [0.08,0.03];
   idxPlot_X = [10 3 2 1 8 15 16 17 9];
   idxPlot_Y = [14 7 6 5 12 19 20 21 13];
   hFig = figure('visible','on');
@@ -71,7 +74,7 @@ for pp = 1:nPair
   
   %% Neuron X (SEF)
   for dd = 1:nDir+1 %loop over directions and plot
-    subplot(3,7,idxPlot_X(dd)); hold on %re. array
+    subplot_tight(nRow,nCol,idxPlot_X(dd)+0.2,margin); hold on %re. array
     plot([0 0], yLim_X, 'k:')
     plot(tWin, sdfX_Acc(:,dd), 'r-');
     plot(tWin, sdfX_Fast(:,dd), '-', 'Color',[0 .7 0]);
@@ -80,18 +83,17 @@ for pp = 1:nPair
     if (dd == 6) %bottom left
       ylabel('Activity (sp/sec)')
       xlabel('Time from array (ms)')
+      print_session_unit(gca, unitData.ID{iX}, unitData.Area{iX}, 'horizontal')
     else
       xticklabels([])
       yticklabels([])
+      set(gca, 'YColor','none')
     end
   end%for:direction(dd)
   
-  subplot(3,7,2)
-  print_session_unit(gca, unitData.ID{iX}, 'horizontal')
-
   %% Neuron Y (FEF/SC)
   for dd = 1:nDir+1 %loop over directions and plot
-    subplot(3,7,idxPlot_Y(dd)); hold on %re. array
+    subplot_tight(nRow,nCol,idxPlot_Y(dd)-0.2,margin); hold on %re. array
     plot([0 0], yLim_Y, 'k:')
     plot(tWin, sdfY_Acc(:,dd), 'r-');
     plot(tWin, sdfY_Fast(:,dd), '-', 'Color',[0 .7 0]);
@@ -100,16 +102,16 @@ for pp = 1:nPair
     if (dd == 6) %bottom left
       ylabel('Activity (sp/sec)')
       xlabel('Time from array (ms)')
+      print_session_unit(gca, unitData.ID{iY}, unitData.Area{iY}, 'horizontal')
     else
       xticklabels([])
       yticklabels([])
     end
   end%for:direction(dd)
   
-  subplot(3,7,6)
-  print_session_unit(gca, unitData.ID{iY}, 'horizontal')
-
-  ppretty([15,4])
+  ppretty([14,4], 'YColor','none')
+%   subplot_tight(nRow,nCol,15,margin); set(gca, 'YColor','b')
+%   subplot_tight(nRow,nCol,19,margin); set(gca, 'YColor','b')
   
 end % for : pair(pp)
 
