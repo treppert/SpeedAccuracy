@@ -2,21 +2,20 @@
 %   Detailed explanation goes here
 
 %polarplot(theta,rho)
-% PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
+PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
 idx_YArea = ismember(pairData.Y_Area, {'SC'});
-idx_YFxn  = ismember(pairData.Y_FxnType, {'V'});
-idx_XFxn  = ismember(pairData.X_FxnType, {'V'});
+idx_XFxn  = ismember(pairData.X_FxnType, {'V','VC','VT','VCT'});
+idx_YFxn  = ismember(pairData.Y_FxnType, {'M'});
 
 pairTest = pairData(idx_YArea & idx_YFxn & idx_XFxn , : );
-nPair = 1;%size(pairTest,1);
+nPair = size(pairTest,1);
 
-unitTest = unitData(41,:);
-
-tWin = (-100 : 300);
-iWin = 3500 + tWin;
-nSamp = length(tWin);
-nDir = 8;
+tWin.VR = (-100 : 300);
+tWin.PS = (-100 : 300);
+iWin.VR = 3500 + tWin.VR;
+iWin.PS = 3500 + tWin.PS;
+nSamp = length(tWin.VR);
 
 for pp = 1:nPair
   iX = pairTest.X_Index(pp); %get index for unitData
@@ -26,14 +25,6 @@ for pp = 1:nPair
   nTrial = behavData.NumTrials(kk);
   RT_P = behavData.Sacc_RT{kk}; %primary saccade RT
 
-  %compute spike density function and align on primary response
-  spikes_X = load_spikes_SAT(iX);
-  spikes_Y = load_spikes_SAT(iY);
-  sdfX_A = compute_spike_density_fxn(spikes_X);
-  sdfY_A = compute_spike_density_fxn(spikes_Y);
-  sdfX_P = align_signal_on_response(sdfX_A, RT_P); 
-  sdfY_P = align_signal_on_response(sdfY_A, RT_P); 
-  
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitData.TrialRemoveSAT{iX}, nTrial);
   idxIso = idxIso | removeTrials_Isolation(unitData.TrialRemoveSAT{iY}, nTrial);
@@ -43,76 +34,107 @@ for pp = 1:nPair
   %index by trial outcome
   idxCorr = behavData.Correct{kk};
   
+  %% Compute spike density function and align to epochs of interest
+  spikes_X = load_spikes_SAT(iX);
+  spikes_Y = load_spikes_SAT(iY);
+  sdfX.VR = compute_spike_density_fxn(spikes_X);
+  sdfY.VR = compute_spike_density_fxn(spikes_Y);
+  sdfX.PS = align_signal_on_response(sdfX.VR, RT_P); 
+  sdfY.PS = align_signal_on_response(sdfY.VR, RT_P); 
+  
   %% Compute mean FR by direction
-  sdfX_Acc  = NaN(nSamp,nDir+1);
+  nDir = 8;
+  sdfX_Acc  = struct('VR',NaN(nSamp,nDir+1), 'PS',NaN(nSamp,nDir+1));
+  epoch = fieldnames(sdfX_Acc);
   sdfX_Fast = sdfX_Acc;
   sdfY_Acc  = sdfX_Acc;
   sdfY_Fast = sdfX_Acc;
-  for dd = 1:nDir
-    idxDir = (behavData.Sacc_Octant{kk} == dd);
-    sdfX_Acc(:,dd)  = mean(sdfX_A(idxAcc  & idxCorr & idxDir, iWin));
-    sdfX_Fast(:,dd) = mean(sdfX_A(idxFast & idxCorr & idxDir, iWin));
-    sdfY_Acc(:,dd)  = mean(sdfY_A(idxAcc  & idxCorr & idxDir, iWin));
-    sdfY_Fast(:,dd) = mean(sdfY_A(idxFast & idxCorr & idxDir, iWin));
-  end % for : direction (dd)
+  for ep = 1:2 %epoch
+    for dd = 1:nDir %direction
+      idxDir = (behavData.Sacc_Octant{kk} == dd);
+      sdfX_Acc.(epoch{ep})(:,dd)  = nanmean(sdfX.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})));
+      sdfX_Fast.(epoch{ep})(:,dd) = nanmean(sdfX.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})));
+      sdfY_Acc.(epoch{ep})(:,dd)  = nanmean(sdfY.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})));
+      sdfY_Fast.(epoch{ep})(:,dd) = nanmean(sdfY.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})));
+    end % for : direction (dd)
+    
+    %mean across all directions
+    sdfX_Acc.(epoch{ep})(:,nDir+1)  = nanmean(sdfX.(epoch{ep})(idxAcc & idxCorr, iWin.(epoch{ep})));
+    sdfX_Fast.(epoch{ep})(:,nDir+1) = nanmean(sdfX.(epoch{ep})(idxFast & idxCorr, iWin.(epoch{ep})));
+    sdfY_Acc.(epoch{ep})(:,nDir+1)  = nanmean(sdfY.(epoch{ep})(idxAcc & idxCorr, iWin.(epoch{ep})));
+    sdfY_Fast.(epoch{ep})(:,nDir+1) = nanmean(sdfY.(epoch{ep})(idxFast & idxCorr, iWin.(epoch{ep})));
+  end % for : epoch (ep)
   
-  sdfX_Acc(:,nDir+1)  = mean(sdfX_A(idxAcc & idxCorr, iWin)); %mean across all directions
-  sdfX_Fast(:,nDir+1) = mean(sdfX_A(idxFast & idxCorr, iWin));
-  sdfY_Acc(:,nDir+1)  = mean(sdfY_A(idxAcc & idxCorr, iWin));
-  sdfY_Fast(:,nDir+1) = mean(sdfY_A(idxFast & idxCorr, iWin));
 
   %% Plotting
   nRow = 3;
-  nCol = 7;
-  margin = [0.08,0.03];
-  idxPlot_X = [10 3 2 1 8 15 16 17 9];
-  idxPlot_Y = [14 7 6 5 12 19 20 21 13];
-  hFig = figure('visible','on');
-  yLim_X = [0, max([sdfX_Acc; sdfX_Fast],[],'all')];
-  yLim_Y = [0, max([sdfY_Acc; sdfY_Fast],[],'all')];
-  xLim = tWin([1,nSamp]);
+  nCol = 13;
+  margin = [0.08,0.015]; %margins between subplots
+  idxPlot_X.VR = [18 5 3 1 14 27 29 31 16];
+  idxPlot_X.PS = [19 6 4 2 15 28 30 32 17];
+  idxPlot_Y.VR = [25 12 10 8 21 34 36 38 23];
+  idxPlot_Y.PS = [26 13 11 9 22 35 37 39 24];
+  hFig = figure('visible','off');
+  yLim_X = [0, max([sdfX_Acc.VR; sdfX_Fast.VR; sdfX_Acc.PS; sdfX_Fast.PS],[],'all')];
+  yLim_Y = [0, max([sdfY_Acc.VR; sdfY_Fast.VR; sdfY_Acc.PS; sdfY_Fast.PS],[],'all')];
+  xLim = tWin.VR([1,nSamp]);
   
   %% Neuron X (SEF)
-  for dd = 1:nDir+1 %loop over directions and plot
-    subplot_tight(nRow,nCol,idxPlot_X(dd)+0.2,margin); hold on %re. array
-    plot([0 0], yLim_X, 'k:')
-    plot(tWin, sdfX_Acc(:,dd), 'r-');
-    plot(tWin, sdfX_Fast(:,dd), '-', 'Color',[0 .7 0]);
-    xlim(xLim)
-    
-    if (dd == 6) %bottom left
-      ylabel('Activity (sp/sec)')
-      xlabel('Time from array (ms)')
-      print_session_unit(gca, unitData.ID{iX}, unitData.Area{iX}, 'horizontal')
-    else
-      xticklabels([])
-      yticklabels([])
-      set(gca, 'YColor','none')
-    end
-  end%for:direction(dd)
+  h_ax_X = cell(nDir+1,2);
+  for ep = 1:2 %epoch
+    for dd = 1:nDir+1 %direction
+      h_ax_X{dd,ep} = subplot_tight(nRow,nCol, idxPlot_X.(epoch{ep})(dd)+0.2, margin);
+      plot([0 0], yLim_X, 'k:'); hold on
+      plot(tWin.(epoch{ep}), sdfX_Acc.(epoch{ep})(:,dd), 'r-');
+      plot(tWin.(epoch{ep}), sdfX_Fast.(epoch{ep})(:,dd), '-', 'Color',[0 .7 0]);
+      xlim(xLim)
+
+      if (dd == 6) %bottom left
+        if (ep == 1)
+          ylabel('Activity (sp/sec)')
+          xlabel('Time from array (ms)')
+          print_session_unit(gca, unitData.ID{iX}, unitData.Area{iX}, 'horizontal')
+        elseif (ep == 2)
+          xlabel('Time from saccade (ms)')
+        end
+      else
+        xticklabels([])
+        yticklabels([])
+      end
+    end % for : direction (dd)
+  end % for : epoch (ep)
   
   %% Neuron Y (FEF/SC)
-  for dd = 1:nDir+1 %loop over directions and plot
-    subplot_tight(nRow,nCol,idxPlot_Y(dd)-0.2,margin); hold on %re. array
-    plot([0 0], yLim_Y, 'k:')
-    plot(tWin, sdfY_Acc(:,dd), 'r-');
-    plot(tWin, sdfY_Fast(:,dd), '-', 'Color',[0 .7 0]);
-    xlim(xLim)
-    
-    if (dd == 6) %bottom left
-      ylabel('Activity (sp/sec)')
-      xlabel('Time from array (ms)')
-      print_session_unit(gca, unitData.ID{iY}, unitData.Area{iY}, 'horizontal')
-    else
-      xticklabels([])
-      yticklabels([])
-    end
-  end%for:direction(dd)
+  h_ax_Y = cell(nDir+1,2);
+  for ep = 1:2 %epoch
+    for dd = 1:nDir+1 %loop over directions and plot
+      h_ax_Y{dd,ep} = subplot_tight(nRow,nCol, idxPlot_Y.(epoch{ep})(dd)-0.2, margin);
+      plot([0 0], yLim_Y, 'k:'); hold on
+      plot(tWin.(epoch{ep}), sdfY_Acc.(epoch{ep})(:,dd), 'r-');
+      plot(tWin.(epoch{ep}), sdfY_Fast.(epoch{ep})(:,dd), '-', 'Color',[0 .7 0]);
+      xlim(xLim)
+
+      if (dd == 6) %bottom left
+        if (ep == 1)
+          ylabel('Activity (sp/sec)')
+          xlabel('Time from array (ms)')
+          print_session_unit(gca, unitData.ID{iY}, unitData.Area{iY}, 'horizontal')
+        elseif (ep == 2)
+          xlabel('Time from saccade (ms)')
+        end
+      else
+        xticklabels([])
+        yticklabels([])
+      end
+    end % for : direction (dd)
+  end % for : epoch (ep)
   
-  ppretty([14,4], 'YColor','none')
-%   subplot_tight(nRow,nCol,15,margin); set(gca, 'YColor','b')
-%   subplot_tight(nRow,nCol,19,margin); set(gca, 'YColor','b')
+  ppretty([18,4], 'YColor','none')
+  set(h_ax_X{6,1}, 'YColor','k')
+  set(h_ax_Y{6,1}, 'YColor','k')
   
+  fname = [pairTest.Pair_UID{pp},'-',pairTest.Session{pp},'-',pairTest.X_Area{pp},'-',pairTest.Y_Area{pp}];
+  print([PRINTDIR,fname,'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
 end % for : pair(pp)
 
 clearvars -except behavData unitData pairData ROOTDIR*
