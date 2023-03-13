@@ -2,7 +2,7 @@
 %   Detailed explanation goes here
 
 %polarplot(theta,rho)
-PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
+% PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
 idxArea = ismember(unitData.Area, {'SEF'});
 idxMonkey = ismember(unitData.Monkey, {'D'});
@@ -78,4 +78,4 @@ for uu = 1:NUM_UNIT
   
 end % for : unit(uu)
 
-clearvars -except behavData unitData spkCorr
+clearvars -except behavData unitData pairData ROOTDIR*

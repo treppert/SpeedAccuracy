@@ -1,6 +1,12 @@
 %plot_FR_X_Dir_Pair() Summary of this function goes here
 %   Detailed explanation goes here
 
+% ROOTDIR_SAT = 'C:\Users\thoma\Dropbox\SAT-Local\';
+% load([ROOTDIR_SAT, 'behavData.mat'])
+% load([ROOTDIR_SAT, 'unitData.mat'])
+% load([ROOTDIR_SAT, 'pairData.mat'])
+% load([ROOTDIR_SAT, 'spkCorr.mat'])
+
 %polarplot(theta,rho)
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
@@ -9,7 +15,7 @@ idx_XFxn  = ismember(pairData.X_FxnType, {'V','VC','VT','VCT'});
 idx_YFxn  = ismember(pairData.Y_FxnType, {'M'});
 
 pairTest = pairData(idx_YArea & idx_YFxn & idx_XFxn , : );
-nPair = size(pairTest,1);
+nPair = 1;%size(pairTest,1);
 
 tWin.VR = (-100 : 300);
 tWin.PS = (-100 : 300);
@@ -44,7 +50,7 @@ for pp = 1:nPair
   
   %% Compute mean FR by direction
   nDir = 8;
-  sdfX_Acc  = struct('VR',NaN(nSamp,nDir+1), 'PS',NaN(nSamp,nDir+1));
+  sdfX_Acc  = struct('VR',NaN(nSamp,nDir), 'PS',NaN(nSamp,nDir));
   epoch = fieldnames(sdfX_Acc);
   sdfX_Fast = sdfX_Acc;
   sdfY_Acc  = sdfX_Acc;
@@ -52,19 +58,16 @@ for pp = 1:nPair
   for ep = 1:2 %epoch
     for dd = 1:nDir %direction
       idxDir = (behavData.Sacc_Octant{kk} == dd);
-      sdfX_Acc.(epoch{ep})(:,dd)  = nanmean(sdfX.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})));
-      sdfX_Fast.(epoch{ep})(:,dd) = nanmean(sdfX.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})));
-      sdfY_Acc.(epoch{ep})(:,dd)  = nanmean(sdfY.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})));
-      sdfY_Fast.(epoch{ep})(:,dd) = nanmean(sdfY.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})));
+      sdfX_Acc.(epoch{ep})(:,dd)  = mean(sdfX.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})),'omitnan');
+      sdfX_Fast.(epoch{ep})(:,dd) = mean(sdfX.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})),'omitnan');
+      sdfY_Acc.(epoch{ep})(:,dd)  = mean(sdfY.(epoch{ep})(idxAcc  & idxCorr & idxDir, iWin.(epoch{ep})),'omitnan');
+      sdfY_Fast.(epoch{ep})(:,dd) = mean(sdfY.(epoch{ep})(idxFast & idxCorr & idxDir, iWin.(epoch{ep})),'omitnan');
     end % for : direction (dd)
-    
-    %mean across all directions
-    sdfX_Acc.(epoch{ep})(:,nDir+1)  = nanmean(sdfX.(epoch{ep})(idxAcc & idxCorr, iWin.(epoch{ep})));
-    sdfX_Fast.(epoch{ep})(:,nDir+1) = nanmean(sdfX.(epoch{ep})(idxFast & idxCorr, iWin.(epoch{ep})));
-    sdfY_Acc.(epoch{ep})(:,nDir+1)  = nanmean(sdfY.(epoch{ep})(idxAcc & idxCorr, iWin.(epoch{ep})));
-    sdfY_Fast.(epoch{ep})(:,nDir+1) = nanmean(sdfY.(epoch{ep})(idxFast & idxCorr, iWin.(epoch{ep})));
   end % for : epoch (ep)
   
+  %% Compute spike counts
+  sc_X = computeSpikeCount_SAT(unitData(iX,:), behavData(kk,:));
+  sc_Y = computeSpikeCount_SAT(unitData(iY,:), behavData(kk,:));
 
   %% Plotting
   nRow = 3;
@@ -74,7 +77,7 @@ for pp = 1:nPair
   idxPlot_X.PS = [19 6 4 2 15 28 30 32 17];
   idxPlot_Y.VR = [25 12 10 8 21 34 36 38 23];
   idxPlot_Y.PS = [26 13 11 9 22 35 37 39 24];
-  hFig = figure('visible','off');
+  hFig = figure('visible','on');
   yLim_X = [0, max([sdfX_Acc.VR; sdfX_Fast.VR; sdfX_Acc.PS; sdfX_Fast.PS],[],'all')];
   yLim_Y = [0, max([sdfY_Acc.VR; sdfY_Fast.VR; sdfY_Acc.PS; sdfY_Fast.PS],[],'all')];
   xLim = tWin.VR([1,nSamp]);
@@ -82,7 +85,7 @@ for pp = 1:nPair
   %% Neuron X (SEF)
   h_ax_X = cell(nDir+1,2);
   for ep = 1:2 %epoch
-    for dd = 1:nDir+1 %direction
+    for dd = 1:nDir %direction
       h_ax_X{dd,ep} = subplot_tight(nRow,nCol, idxPlot_X.(epoch{ep})(dd)+0.2, margin);
       plot([0 0], yLim_X, 'k:'); hold on
       plot(tWin.(epoch{ep}), sdfX_Acc.(epoch{ep})(:,dd), 'r-');
@@ -107,7 +110,7 @@ for pp = 1:nPair
   %% Neuron Y (FEF/SC)
   h_ax_Y = cell(nDir+1,2);
   for ep = 1:2 %epoch
-    for dd = 1:nDir+1 %loop over directions and plot
+    for dd = 1:nDir %loop over directions and plot
       h_ax_Y{dd,ep} = subplot_tight(nRow,nCol, idxPlot_Y.(epoch{ep})(dd)-0.2, margin);
       plot([0 0], yLim_Y, 'k:'); hold on
       plot(tWin.(epoch{ep}), sdfY_Acc.(epoch{ep})(:,dd), 'r-');
@@ -133,8 +136,8 @@ for pp = 1:nPair
   set(h_ax_X{6,1}, 'YColor','k')
   set(h_ax_Y{6,1}, 'YColor','k')
   
-  fname = [pairTest.Pair_UID{pp},'-',pairTest.Session{pp},'-',pairTest.X_Area{pp},'-',pairTest.Y_Area{pp}];
-  print([PRINTDIR,fname,'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
+%   fname = [pairTest.Pair_UID{pp},'-',pairTest.Session{pp},'-',pairTest.X_Area{pp},'-',pairTest.Y_Area{pp}];
+%   print([PRINTDIR,fname,'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
 end % for : pair(pp)
 
-clearvars -except behavData unitData pairData ROOTDIR*
+clearvars -except behavData unitData pairData spkCorr ROOTDIR*
