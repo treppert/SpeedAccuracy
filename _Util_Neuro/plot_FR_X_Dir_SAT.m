@@ -61,6 +61,9 @@ for uu = 1:nUnit
   end % for : epoch (ep)
   
   %% Plotting
+  colorArea = colororder; %colors for shaded areas of interest
+  colorArea = colorArea(2:4,:);
+  xArea = { [+50 +250] , [0 +200] , [0 +200] };
   MARGIN = [0.08,0.02]; %margin between subplots
   idxPlot = [16 7 4 1 10 19 22 25 13]; %indexes for visual response epoch
   yLim = [0, max([sdfAcc.VR sdfFast.VR sdfAcc.PS sdfFast.PS sdfAcc.PR sdfFast.PR],[],'all')];
@@ -73,6 +76,7 @@ for uu = 1:nUnit
       plot([0 0], yLim, 'k:'); hold on
       plot(tWin.(EPOCH{ep}), sdfAcc.(EPOCH{ep})(:,dd), 'r-');
       plot(tWin.(EPOCH{ep}), sdfFast.(EPOCH{ep})(:,dd), '-', 'Color',[0 .7 0]);
+      area(xArea{ep}, [yLim(2) yLim(2)], 'EdgeColor','none', 'FaceColor',colorArea(ep,:), 'FaceAlpha',0.2)
       xlim(tWin.(EPOCH{ep})([1,end]))
 
       if (dd == 6) %bottom left
@@ -95,7 +99,7 @@ for uu = 1:nUnit
   ppretty([12,4], 'YColor','none')
   set(h_ax{6,1}, 'YColor','k')
   
-  print([PRINTDIR, unitTest.ID{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
+  print([PRINTDIR, 'SDF-',unitTest.ID{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
 end % for : unit(uu)
 
 clearvars -except behavData unitData pairData spkCorr ROOTDIR*

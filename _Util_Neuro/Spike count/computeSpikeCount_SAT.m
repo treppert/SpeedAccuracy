@@ -2,9 +2,12 @@ function [ spikeCount ] = computeSpikeCount_SAT( unitData_ , behavData_ )
 %computeSpikeCount_SAT This function computes trial-by-trial spike counts
 %for the SAT data set, separately for Fast and Accurate conditions.
 % 
-%   Inputs
+%   Input
 %   unitData_ -- Physiology data for a single unit
 %   behavData_ -- Behavioral data for single session
+% 
+%   Output
+%   spikeCount -- Spike counts for epochs [BL,VR,PS,PR]
 % 
 
 spikeCount = NaN(behavData_.NumTrials,4); %[BL,VR,PS,PR]

@@ -64,10 +64,6 @@ for pp = 1:nPair
     end % for : direction (dd)
   end % for : epoch (ep)
   
-  %% Compute spike counts
-  sc_X = computeSpikeCount_SAT(unitData(iX,:), behavData(kk,:));
-  sc_Y = computeSpikeCount_SAT(unitData(iY,:), behavData(kk,:));
-
   %% Plotting
   nRow = 3;
   nCol = 13;
