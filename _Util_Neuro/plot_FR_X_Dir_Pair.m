@@ -7,14 +7,13 @@
 % load([ROOTDIR_SAT, 'pairData.mat'])
 % load([ROOTDIR_SAT, 'spkCorr.mat'])
 
-%polarplot(theta,rho)
 PRINTDIR = 'C:\Users\Thomas Reppert\Documents\Figs - SAT\';
 
 idx_YArea = ismember(pairData.Y_Area, {'SC'});
 idx_XFxn  = ismember(pairData.X_FxnType, {'V','VC','VT','VCT'});
 idx_YFxn  = ismember(pairData.Y_FxnType, {'M'});
 
-pairTest = pairData(idx_YArea & idx_YFxn & idx_XFxn , : );
+pairTest = pairData( idx_YArea & idx_YFxn & idx_XFxn , : );
 nPair = 1;%size(pairTest,1);
 
 tWin.VR = (-100 : 300);
@@ -43,8 +42,8 @@ for pp = 1:nPair
   %% Compute spike density function and align to epochs of interest
   spikes_X = load_spikes_SAT(iX);
   spikes_Y = load_spikes_SAT(iY);
-  sdfX.VR = compute_spike_density_fxn(spikes_X);
-  sdfY.VR = compute_spike_density_fxn(spikes_Y);
+  sdfX.VR = compute_SDF_SAT(spikes_X);
+  sdfY.VR = compute_SDF_SAT(spikes_Y);
   sdfX.PS = align_signal_on_response(sdfX.VR, RT_P); 
   sdfY.PS = align_signal_on_response(sdfY.VR, RT_P); 
   
