@@ -16,13 +16,7 @@
 %trial-to-trial analysis
 % spkCorrA2F = computeSpkCorr_SAT('direction','A2F');
 % spkCorrF2A = computeSpkCorr_SAT('direction','F2A');
-Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A, unitData)
-
-%% Indexing
-%index by y-area(s) of interest (FEF, SC, or both)
-% idxYArea = ismember(spkCorr.Y_Area, {'FEF','SC'});
-%index by monkey
-% idxMonkey = ismember(spkCorr.X_Monkey, {'D','E'});
+% Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A, unitData)
 
 %% Post-hoc analysis
 % RHO_TYPE = {'Positive','Negative'};
@@ -31,6 +25,10 @@ Fig6X_SpkCorr_X_Trial(spkCorrA2F, spkCorrF2A, unitData)
 % plot_rsc_X_Epoch( spkCorr )
 % plot_rsc_X_FR( spkCorr )
 
-clear idx*
-
 % % spkCorr = organize_rscTable(spkCorr);
+
+%% Signal correlation
+plot_SignalCorr_SAT
+
+%% Cleanup
+clear idx*
