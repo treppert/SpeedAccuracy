@@ -26,23 +26,23 @@ for pp = 1:nPair
   [pplotY,axY] = plotSpkCt_X_Epoch(unitData(iY,:), behavData); drawnow
   
   %% Figure - Polar plots
-%   hFig = figure();
-%   axtmp = subplot(2,2,1, polaraxes);
-%   axXFast = copyobj(axX{1}, hFig);
-%   set(axXFast,'Position', get(axtmp,'Position')); delete(axtmp)
-% 
-%   axtmp = subplot(2,2,2, polaraxes);
-%   axXAcc = copyobj(axX{2}, hFig);
-%   set(axXAcc,'Position', get(axtmp,'Position')); delete(axtmp)
-% 
-%   axtmp = subplot(2,2,3, polaraxes);
-%   axYFast = copyobj(axY{1}, hFig);
-%   set(axYFast,'Position', get(axtmp,'Position')); delete(axtmp)
-%   
-%   axtmp = subplot(2,2,4, polaraxes);
-%   axYAcc = copyobj(axY{2}, hFig);
-%   set(axYAcc,'Position', get(axtmp,'Position')); delete(axtmp)
-%   ppretty([7,6])
+  hFig = figure();
+  axtmp = subplot(2,2,1, polaraxes);
+  axXFast = copyobj(axX{1}, hFig);
+  set(axXFast,'Position', get(axtmp,'Position')); delete(axtmp)
+
+  axtmp = subplot(2,2,2, polaraxes);
+  axXAcc = copyobj(axX{2}, hFig);
+  set(axXAcc,'Position', get(axtmp,'Position')); delete(axtmp)
+
+  axtmp = subplot(2,2,3, polaraxes);
+  axYFast = copyobj(axY{1}, hFig);
+  set(axYFast,'Position', get(axtmp,'Position')); delete(axtmp)
+  
+  axtmp = subplot(2,2,4, polaraxes);
+  axYAcc = copyobj(axY{2}, hFig);
+  set(axYAcc,'Position', get(axtmp,'Position')); delete(axtmp)
+  ppretty([7,6]); drawnow
 
   %% Figure - Cartesian plots
   GREEN = [0 0.7 0];
