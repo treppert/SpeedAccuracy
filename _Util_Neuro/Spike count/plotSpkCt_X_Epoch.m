@@ -53,7 +53,7 @@ for uu = 1:nUnit
   ax{uu,1} = subplot(1,2,1, polaraxes);
   pplot{uu,1} = polarplot(vecDir,scFast, 'LineWidth',2.0);
   legend({'BL' 'VR' 'PS' 'PR'}, 'Location','southwest')
-  title({[unitTest.ID{uu} '-' unitTest.Area{uu}] 'Fast'})
+  title({unitTest.ID(uu) 'Fast'})
   thetaticks([])
   rlim([0 rLim])
 
@@ -64,7 +64,7 @@ for uu = 1:nUnit
   rlim([0 rLim])
   
   ppretty([6,2]); pause(0.1)
-%   print([PRINTDIR, 'Polar-',unitTest.ID{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff'); pause(0.1); close(hFig)
+%   print([PRINTDIR, 'Polar-',unitTest.ID(uu),'.tif'], '-dtiff'); pause(0.1); close(hFig)
 end % for : unit (uu)
 
 if (nargout > 0) %if desired, return plot objects
