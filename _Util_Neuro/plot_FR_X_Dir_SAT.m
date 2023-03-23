@@ -13,7 +13,7 @@ PRINTDIR = 'C:\Users\thoma\Documents\Figs - SAT\';
 
 idx_Monk = ismember(unitData.Monkey, {'D','E'});
 idx_Area = ismember(unitData.Area, {'SEF'});
-idx_Fxn = cellfun(@(x) strcmp(x,"V"), unitData.FxnType);
+idx_Fxn = unitData.isVis;
 
 unitTest = unitData( idx_Monk & idx_Area & idx_Fxn , : );
 nUnit = size(unitTest,1);
@@ -83,7 +83,7 @@ for uu = 1:nUnit
         if (ep == 1)
           ylabel('Activity (sp/sec)')
           xlabel('Time from array (ms)')
-          print_session_unit(gca, unitTest.ID{uu}, unitTest.Area{uu}, 'horizontal')
+          print_session_unit(gca, unitTest.ID(uu), 'horizontal')
         elseif (ep == 2)
           xlabel('Time from saccade (ms)')
         elseif (ep == 3)
@@ -99,7 +99,7 @@ for uu = 1:nUnit
   ppretty([12,4], 'YColor','none')
   set(h_ax{6,1}, 'YColor','k')
   
-  print([PRINTDIR, 'SDF-',unitTest.ID{uu},'-',unitTest.Area{uu},'.tif'], '-dtiff'); pause(0.1); close(hFig); pause(0.1)
+  print([PRINTDIR, 'SDF-',char(unitTest.ID(uu)),'.tif'], '-dtiff'); pause(0.1); close(hFig)
 end % for : unit(uu)
 
 clearvars -except behavData unitData pairData spkCorr ROOTDIR*

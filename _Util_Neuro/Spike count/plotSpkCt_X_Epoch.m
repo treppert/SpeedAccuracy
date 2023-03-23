@@ -63,8 +63,8 @@ for uu = 1:nUnit
   thetaticks([])
   rlim([0 rLim])
   
-  ppretty([6,2]); pause(0.1)
-%   print([PRINTDIR, 'Polar-',unitTest.ID(uu),'.tif'], '-dtiff'); pause(0.1); close(hFig)
+  ppretty([6,2])
+%   print([PRINTDIR, 'Polar-',unitTest.ID(uu),'.tif'], '-dtiff'); pause(0.1)
 end % for : unit (uu)
 
 if (nargout > 0) %if desired, return plot objects
