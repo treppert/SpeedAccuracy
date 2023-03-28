@@ -1,111 +1,106 @@
-%plot_SDF_X_Dir_SAT() Summary of this function goes here
+%plot_SDF_X_Dir_SAT() This script plots activity of single neurons recorded
+%during the SAT visual search task. Activity is plotted as a function of
+%target location (8 octants).
 %   Detailed explanation goes here
 
-PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
+% ROOTDIR_SAT = 'C:\Users\thoma\Dropbox\SAT-Local\';
+% load([ROOTDIR_SAT, 'behavData.mat'])
+% load([ROOTDIR_SAT, 'unitData.mat'])
+% load([ROOTDIR_SAT, 'pairData.mat'])
+% load([ROOTDIR_SAT, 'spkCorr.mat'])
 
-idxArea = ismember(unitData.Area, {'SEF'});
-idxMonkey = ismember(unitData.Monkey, {'D'});
-idxFunction = (unitData.Grade_Err == 4);
-idxKeep = (idxArea & idxMonkey & idxFunction);
+PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - SDF X Dir\';
 
-NUM_UNIT = 1;%sum(idxKeep);
-unitTest = unitData(41,:);
+idx_Sess = (unitData.SessionID == 13);
+idx_Monk = ismember(unitData.Monkey, {'D','E'});
+idx_Area = ismember(unitData.Area, {'SEF','SC'});
+idx_Fxn  = ~(unitData.FxnType == 'None');
 
-T_STIM_Acc = 3500 + (-300 : 500);
-T_RESP_Acc = 3500 + (-500 : 300);
-NUM_SAMP_Acc = length(T_STIM_Acc);
-T_STIM_Fast = 3500 + (-200 : 300);
-T_RESP_Fast = 3500 + (-300 : 200);
-NUM_SAMP_Fast = length(T_STIM_Fast);
+unitTest = unitData( idx_Sess & idx_Monk & idx_Area & idx_Fxn , : );
+nUnit = size(unitTest,1);
 
-IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
-IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
+EPOCH = {'VR' 'PS' 'PR'}; %within-trial time intervals of interest
+nEpoch = 3;
+tWin.VR = (-200 : +300); %MAKE SURE ALL INTERVALS HAVE SAME DURATION
+tWin.PS = (-100 : +400);
+tWin.PR = (-100 : +400);
+nSamp = length(tWin.VR);
+nDir = 8;
 
-for uu = 1:NUM_UNIT
-  fprintf('%s - %s\n', unitTest.Session{uu}, unitTest.ID{uu})
-  kk = ismember(behavData.Session, unitTest.Session{uu});
-  RT_P = behavData.Sacc_RT{kk}; %Primary saccade RT
-  
-  %compute spike density function and align on primary response
-  spikes_uu = load_spikes_SAT(unitTest.Index(uu));
-  sdfA = compute_spike_density_fxn(spikes_uu);
-  sdfP = align_signal_on_response(sdfA, RT_P); 
+for uu = 1:nUnit
+  spikes = load_spikes_SAT(unitTest.Index(uu)); %load spike times
+  kk = unitTest.SessionID(uu); %get session number
+
+  nTrial = behavData.NumTrials(kk); %number of trials
+  tResp = behavData.Sacc_RT{kk}; %primary saccade RT
+  tRew = behavData.RewTime(kk); %time of reward delivery (re saccade)
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, behavData.NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, nTrial);
   %index by condition
   idxAcc = ((behavData.Condition{kk} == 1) & ~idxIso);
   idxFast = ((behavData.Condition{kk} == 3) & ~idxIso);
   %index by trial outcome
   idxCorr = behavData.Correct{kk};
   
-  %% Compute mean SDF for each direction
-  Octant_Sacc1 = behavData.Sacc_Octant{kk};
-  sdfAccA = NaN(NUM_SAMP_Acc,8); %re. array
-  sdfAccP = sdfAccA; %re. primary
-  sdfFastA = NaN(NUM_SAMP_Fast,8);
-  sdfFastP = sdfFastA;
-  RT_Acc = NaN(8,1);
-  RT_Fast = RT_Acc;
-  for dd = 1:8 %loop over response directions
-    idxDir = (Octant_Sacc1 == dd);
-    sdfAccA(:,dd) = nanmean(sdfA(idxAcc & idxCorr & idxDir, T_STIM_Acc));
-    sdfAccP(:,dd) = nanmean(sdfP(idxAcc & idxCorr & idxDir, T_RESP_Acc));
-    sdfFastA(:,dd) = nanmean(sdfA(idxFast & idxCorr & idxDir, T_STIM_Fast));
-    sdfFastP(:,dd) = nanmean(sdfP(idxFast & idxCorr & idxDir, T_RESP_Fast));
-    RT_Acc(dd) = median(RT_P(idxAcc & idxCorr & idxDir));
-    RT_Fast(dd) = median(RT_P(idxFast & idxCorr & idxDir));
-  end%for:direction(dd)
+  %% Compute spike density function and align to epochs of interest
+  sdf.VR = compute_SDF_SAT(spikes);
+  sdf.PS = align_signal_on_response(sdf.VR, tResp);
+  sdf.PR = align_signal_on_response(sdf.VR, tResp+tRew);
+  
+  %% Compute mean FR by direction
+  sdfAcc = struct('VR',NaN(nSamp,nDir+1), 'PS',NaN(nSamp,nDir+1), 'PR',NaN(nSamp,nDir+1));
+  sdfFast = sdfAcc;
+  for ep = 1:nEpoch
+    for dd = 1:nDir
+      idxDir = (behavData.Sacc_Octant{kk} == dd);
+      sdfAcc.(EPOCH{ep})(:,dd)  = mean(sdf.(EPOCH{ep})(idxAcc  & idxCorr & idxDir, 3500+tWin.(EPOCH{ep})),'omitnan');
+      sdfFast.(EPOCH{ep})(:,dd) = mean(sdf.(EPOCH{ep})(idxFast & idxCorr & idxDir, 3500+tWin.(EPOCH{ep})),'omitnan');
+    end % for : direction (dd)
+    sdfAcc.(EPOCH{ep})(:,nDir+1)  = mean(sdf.(EPOCH{ep})(idxAcc  & idxCorr, 3500+tWin.(EPOCH{ep})),'omitnan'); %across all directions
+    sdfFast.(EPOCH{ep})(:,nDir+1) = mean(sdf.(EPOCH{ep})(idxFast  & idxCorr, 3500+tWin.(EPOCH{ep})),'omitnan');
+  end % for : epoch (ep)
   
   %% Plotting
+  colorArea = colororder; %colors for shaded areas of interest
+  colorArea = colorArea(2:4,:);
+  xArea = { [+50 +250] , [0 +200] , [0 +200] };
+  MARGIN = [0.08,0.02]; %margin between subplots
+  idxPlot = [16 7 4 1 10 19 22 25 13]; %indexes for visual response epoch
+  yLim = [0, max([sdfAcc.VR sdfFast.VR sdfAcc.PS sdfFast.PS sdfAcc.PR sdfFast.PR],[],'all')];
   hFig = figure('visible','on');
-  yLim = [0, max([sdfAccA; sdfAccP; sdfFastA; sdfFastP],[],'all')];
-  xLimStim = T_STIM_Acc([1,NUM_SAMP_Acc]) - 3500;
-  xLimResp = T_RESP_Acc([1,NUM_SAMP_Acc]) - 3500;
   
-  for dd = 1:8 %loop over directions and plot
-    
-    subplot(3,6,IDX_STIM_PLOT(dd)); hold on %re. array
-    plot([0 0], yLim, 'k:')
-    plot(RT_Acc(dd)*ones(1,2), yLim, 'r:')
-    plot(RT_Fast(dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
-    plot(T_STIM_Acc-3500, sdfAccA(:,dd), 'r-');
-    plot(T_STIM_Fast-3500, sdfFastA(:,dd), '-', 'Color',[0 .7 0]);
-    xlim(xLimStim)
-    
-    if (IDX_STIM_PLOT(dd) == 13)
-      ylabel('Activity (sp/sec)')
-      xlabel('Time from array (ms)')
-    else
-      xticklabels([])
-      yticklabels([])
-    end
-    subplot(3,6,IDX_RESP_PLOT(dd)); hold on %re. response
-    plot([0 0], yLim, 'k:')
-    plot(-RT_Acc(dd)*ones(1,2), yLim, 'r:')
-    plot(-RT_Fast(dd)*ones(1,2), yLim, ':', 'Color',[0 .7 0])
-    plot(T_RESP_Acc-3500, sdfAccP(:,dd), 'r-');
-    plot(T_RESP_Fast-3500, sdfFastP(:,dd), '-', 'Color',[0 .7 0]);
-    xlim(xLimResp)
-    set(gca, 'YAxisLocation','right')
-    
-    if (IDX_RESP_PLOT(dd) == 14)
-      xlabel('Time from response (ms)')
-    else
-      xticklabels([])
-      yticklabels([])
-    end
-    
-    pause(.01)
-      
-  end%for:direction(dd)
+  h_ax = cell(nDir+1,nEpoch);
+  for ep = 1:nEpoch %epoch
+    for dd = 1:nDir+1 %direction
+      h_ax{dd,ep} = subplot_tight(3,9, idxPlot(dd)+(ep-1), MARGIN);
+      plot([0 0], yLim, 'k:'); hold on
+      plot(tWin.(EPOCH{ep}), sdfAcc.(EPOCH{ep})(:,dd), 'r-');
+      plot(tWin.(EPOCH{ep}), sdfFast.(EPOCH{ep})(:,dd), '-', 'Color',[0 .7 0]);
+      area(xArea{ep}, [yLim(2) yLim(2)], 'EdgeColor','none', 'FaceColor',colorArea(ep,:), 'FaceAlpha',0.2)
+      xlim(tWin.(EPOCH{ep})([1,end]))
+
+      if (dd == 6) %bottom left
+        if (ep == 1)
+          ylabel('Activity (sp/sec)')
+          xlabel('Time from array (ms)')
+        elseif (ep == 2)
+          title(unitTest.ID(uu))
+          xlabel('Time from saccade (ms)')
+        elseif (ep == 3)
+          xlabel('Time from reward (ms)')
+        end
+      else
+        xticklabels([])
+        yticklabels([])
+      end
+    end % for : direction (dd)
+  end % for : epoch (ep)
   
-  subplot(3,6,[9 10]); print_session_unit(gca, unitTest(uu,:), behavData(kk,:), 'horizontal'); axis('off')
-  ppretty([12,6])
+  ppretty([12,4], 'YColor','none'); drawnow
+  set(h_ax{6,1}, 'YColor','k')
   
-%   pause(0.1); print([PRINTDIR,unitTest.Properties.RowNames{uu},'-',unitTest.aArea{uu},'.tif'], '-dtiff')
-%   pause(0.1); close(hFig); pause(0.1)
-  
+  print([PRINTDIR, 'SDF-',char(unitTest.ID(uu)),'.tif'], '-dtiff'); close(hFig)
 end % for : unit(uu)
 
-clearvars -except behavData unitData spkCorr
+clearvars -except behavData unitData pairData spkCorr ROOTDIR*
