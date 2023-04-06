@@ -6,13 +6,13 @@
 %direction.
 %   Detailed explanation goes here
 
-PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Signal Correlation\";
+PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
 
-idx_Sess = ismember(pairData.SessionID, [11,12,13]);
+idx_Sess = ismember(pairData.SessionID, 11);
 idx_Monk = ismember(pairData.Monkey, {'D','E'});
 idx_YArea = ismember(pairData.Y_Area, 'SC');
-idx_XFxn  = ismember(pairData.X_FxnType, {'V','VC','VT','VCT'});
-idx_YFxn  = ismember(pairData.Y_FxnType, {'V','VM','M'});
+idx_XFxn  = ~ismember(pairData.X_FxnType, 'None');
+idx_YFxn  = ~ismember(pairData.Y_FxnType, 'None');
 
 pairTest = pairData( idx_Sess & idx_Monk & idx_YArea & idx_YFxn & idx_XFxn , : );
 nPair = size(pairTest,1);
@@ -22,8 +22,8 @@ for pp = 1:nPair
   iY = pairTest.Y_Index(pp); %(Y=FEF/SC)
   X_Area = string(pairTest.X_Area(pp));
   Y_Area = string(pairTest.Y_Area(pp));
-  pairID = pairTest.Session(pp) +"-"+ iX +"-"+ X_Area +"-"+ iY +"-"+ Y_Area;
-  kk = pairTest.SessionID(pp);
+  pairID = unitData.ID(iY) + "-" + unitData.ID(iX);
+  kk = pairTest.SessionID(pp); %get session number
 
   %% Compute spike counts by trial epoch
   [scAccX,scFastX] = computeSpkCt_X_Epoch(unitData(iX,:), behavData(kk,:));
@@ -51,9 +51,9 @@ for pp = 1:nPair
     text(rangeX(1),0.95*rangeY(2),"r = " + num2str(rFast(ep),3),"Color",GREEN)
     
     if (ep == 1)
-      title(pairID)
-      xlabel("Spike count " + X_Area)
-      ylabel("Spike count " + Y_Area)
+      title('Baseline')
+      xlabel(unitData.ID(iX))
+      ylabel(unitData.ID(iY))
     elseif (ep == 2)
       title('Visual response'); xticks([]); yticks([])
     elseif (ep == 3)
