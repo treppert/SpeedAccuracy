@@ -6,16 +6,17 @@
 %direction.
 %   Detailed explanation goes here
 
-PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
+PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Signal Correlation\";
 
-idx_Sess = ismember(pairData.SessionID, 11);
+idx_Sess = ismember(pairData.SessionID, [2,3,4,8,9]);
 idx_Monk = ismember(pairData.Monkey, {'D','E'});
 idx_YArea = ismember(pairData.Y_Area, 'SC');
 idx_XFxn  = ~ismember(pairData.X_FxnType, 'None');
 idx_YFxn  = ~ismember(pairData.Y_FxnType, 'None');
 
 pairTest = pairData( idx_Sess & idx_Monk & idx_YArea & idx_YFxn & idx_XFxn , : );
-nPair = size(pairTest,1);
+nPair = 1;%size(pairTest,1);
+nDir = 8;
 
 for pp = 1:nPair
   iX = pairTest.X_Index(pp); %(X=SEF)
@@ -28,6 +29,8 @@ for pp = 1:nPair
   %% Compute spike counts by trial epoch
   [scAccX,scFastX] = computeSpkCt_X_Epoch(unitData(iX,:), behavData(kk,:));
   [scAccY,scFastY] = computeSpkCt_X_Epoch(unitData(iY,:), behavData(kk,:));
+  scAccX = scAccX(1:nDir,:);  scFastX = scFastX(1:nDir,:);
+  scAccY = scAccY(1:nDir,:);  scFastY = scFastY(1:nDir,:);
   
   %% Compute signal correlation between X and Y
   [rAcc, pAcc]  = corr(scAccX,  scAccY,  "type","Pearson"); rAcc  = diag(rAcc);

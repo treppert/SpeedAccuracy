@@ -6,8 +6,10 @@
 %   session, for combined viewing.
 % 
 
-idx_Sess = (unitData.SessionID == 11);
-idx_Area = (unitData.Area == "SEF") | (unitData.Area == "SC");
+PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Signal Correlation\";
+
+idx_Sess = ismember(unitData.SessionID, 9);
+idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
 idx_Fxn = ~(unitData.FxnType == "None");
 unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
 nUnit = size(unitTest,1);
@@ -53,6 +55,7 @@ for uu = 1:nUnit
 end % for : unit (uu)
 
 ppretty([6,3*nUnit]); drawnow
+print(PRINTDIR + "Polar-" + unitTest.Session(1) + ".tif", '-dtiff'); close(hFig)
 
 % end % fxn : plotSpkCt_X_Epoch()
 clearvars -except behavData unitData pairData spkCorr ROOTDIR*

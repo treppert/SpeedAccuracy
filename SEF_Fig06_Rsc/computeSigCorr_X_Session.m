@@ -4,8 +4,8 @@
 % correlation matrix using imagesc().
 % 
 
-idx_Sess = ismember(unitData.SessionID, 11);
-idx_Area = (unitData.Area == "SEF") | (unitData.Area == "SC");
+idx_Sess = ismember(unitData.SessionID, 1:9);
+idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
 idx_Fxn = ~(unitData.FxnType == "None");
 
 unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
@@ -20,15 +20,23 @@ scFast = scAcc; %Fast condition
 
 for uu = 1:nUnit
 
+  fprintf(unitTest.ID(uu) + "\n")
   kk = unitTest.SessionID(uu); %get session number
   nTrial = behavData.NumTrials(kk); %number of trials
 
-  %% compute spike counts by condition and direction
+  %% Compute spike counts by condition and direction
   [scAcc_uu,scFast_uu] = computeSpkCt_X_Epoch(unitTest(uu,:) , behavData(kk,:));
-  scAcc.VR(:,uu) = scAcc_uu(:,iVR);
-  scAcc.PS(:,uu) = scAcc_uu(:,iPS);
-  scFast.VR(:,uu) = scFast_uu(:,iVR);
-  scFast.PS(:,uu) = scFast_uu(:,iPS);
+  scAcc.VR(:,uu) = scAcc_uu(1:nDir,iVR);
+  scAcc.PS(:,uu) = scAcc_uu(1:nDir,iPS);
+  scFast.VR(:,uu) = scFast_uu(1:nDir,iVR);
+  scFast.PS(:,uu) = scFast_uu(1:nDir,iPS);
 
 end % for : unit (uu)
 
+%% Compute signal correlation across all units
+rAcc.VR  = corr(scAcc.VR, "type","Pearson");
+rAcc.PS  = corr(scAcc.PS, "type","Pearson");
+rFast.VR = corr(scFast.VR, "type","Pearson");
+rFast.PS = corr(scFast.PS, "type","Pearson");
+
+clearvars -except behavData unitData pairData spkCorr ROOTDIR* *Acc *Fast
