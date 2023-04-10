@@ -1,4 +1,4 @@
-%plot_FR_X_Dir_Pair() Summary of this function goes here
+%plot_SDF_X_Dir_Pair() Summary of this function goes here
 %   Detailed explanation goes here
 
 % ROOTDIR_SAT = 'C:\Users\thoma\Dropbox\SAT-Local\';
@@ -91,7 +91,7 @@ for pp = 1:nPair
         if (ep == 1)
           ylabel('Activity (sp/sec)')
           xlabel('Time from array (ms)')
-          print_session_unit(gca, unitData.ID{iX}, unitData.Area{iX}, 'horizontal')
+          print_session_unit(gca, unitData.ID(iX), unitData.Area(iX), 'horizontal')
         elseif (ep == 2)
           xlabel('Time from saccade (ms)')
         end
@@ -116,7 +116,7 @@ for pp = 1:nPair
         if (ep == 1)
           ylabel('Activity (sp/sec)')
           xlabel('Time from array (ms)')
-          print_session_unit(gca, unitData.ID{iY}, unitData.Area{iY}, 'horizontal')
+          print_session_unit(gca, unitData.ID(iY), unitData.Area(iY), 'horizontal')
         elseif (ep == 2)
           xlabel('Time from saccade (ms)')
         end
