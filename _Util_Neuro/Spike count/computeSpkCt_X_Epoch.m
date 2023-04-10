@@ -1,4 +1,4 @@
-function [ scAcc , scFast , varargout ] = computeSpkCt_X_Epoch( unitTest , behavData )
+function [ scAcc , scFast , varargout ] = computeSpkCt_X_Epoch( unitTest , behavData , varargin )
 %computeSpkCt_X_Epoch This function computes spike counts across the four
 %main within-trial time windows (baseline, visual response, post-saccade,
 %post-reward), separately for Fast and Accurate conditions.
@@ -11,9 +11,14 @@ nTrial = behavData.NumTrials; %number of trials
 %% Compute spike counts by epoch
 sc_uu = computeSpikeCount_SAT(unitTest, behavData);
 
+%% Index by isolation quality
+if (nargin > 2) %if desired, specify trials with poor isolation
+  idxIso = varargin{1};
+else
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{1}, nTrial);
+end
+
 %% Index spike counts by trial condition and outcome
-%index by isolation quality
-idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{1}, nTrial);
 %index by condition
 idxAcc = ((behavData.Condition{1} == 1) & ~idxIso);
 idxFast = ((behavData.Condition{1} == 3) & ~idxIso);
