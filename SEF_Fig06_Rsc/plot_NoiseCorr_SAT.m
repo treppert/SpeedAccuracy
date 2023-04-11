@@ -5,9 +5,9 @@
 %Accurate).
 %   Detailed explanation goes here
 
-PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Noise Correlation\";
+PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
 
-idx_Sess = ismember(pairData.SessionID, 11:13);
+idx_Sess = ismember(pairData.SessionID, [2 3 4 8 9]);
 idx_Monk = ismember(pairData.Monkey, {'D','E'});
 idx_YArea = ismember(pairData.Y_Area, 'SC');
 idx_XFxn  = ~ismember(pairData.X_FxnType, 'None');
@@ -46,10 +46,21 @@ for pp = 1:nPair
   rAcc(pp,:,:)  = rAcc_pp;
   rFast(pp,:,:) = rFast_pp;
 
-  %% Plotting
+  %account for neurons with no baseline activity
+  min_ValidDir = 2;
+  nNaN_Acc = sum(isnan(rAcc_pp),1);
+  nNaN_Fast = sum(isnan(rFast_pp),1);
+  rAcc_pp(:,  nNaN_Acc>min_ValidDir) = NaN;
+  rFast_pp(:, nNaN_Fast>min_ValidDir) = NaN;
+
+  %% Compute mean noise correlation across directions
+  rAcc_mean = mean(rAcc_pp,1, "omitnan");
+  rFast_mean = mean(rFast_pp,1, "omitnan");
+
+  %% Plot noise correlation by direction and epoch
   GREEN = [0 0.7 0];
   hFig = figure('Visible','off');
-  yLim = [-1 +1]; %ceil(max([rFast_pp rAcc_pp],[],'all'));
+  yLim = [-1 +1];
 
   %complete the circle for plotting
   rAcc_pp(nDir+1,:)  = rAcc_pp(1,:);
@@ -74,7 +85,22 @@ for pp = 1:nPair
 
   ppretty([6,1.8]); drawnow
   print(PRINTDIR + "NoiseCorr-" + pairID + ".tif", '-dtiff'); close(hFig)
+  
+  %% Plot mean noise correlation across directions
+  hFig = figure("Visible","off"); hold on
+  yLim = [-.4 +.4];
 
+  yline(0, '--')
+  plot(rFast_mean, '.-', "Color",GREEN, "LineWidth",1.5, "MarkerSize",20)
+  plot(rAcc_mean, '.-', "Color",'r', "LineWidth",1.5, "MarkerSize",20)
+  xticks(1:4); xticklabels({'BL','VR','PS','PR'}); xlim([0.5 4.5])
+  ylim(yLim); ytickformat('%2.1f')
+  ylabel('Noise correlation')
+  title(pairID)
+
+  ppretty([3,1.8]); drawnow
+  print(PRINTDIR + "NoiseCorr-" + pairID + ".tif", '-dtiff'); close(hFig)
+  
 end % for : pair (pp)
 
 % end % fxn : plot_NoiseCorr_SAT()
