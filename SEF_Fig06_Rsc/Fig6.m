@@ -28,7 +28,12 @@
 % % spkCorr = organize_rscTable(spkCorr);
 
 %% Signal correlation
-plot_SignalCorr_SAT
+% plot_SignalCorr_SAT %scatter plot for each epoch
+% computeSigCorr_X_Session %sig corr values for export to Excel
+
+%% Noise correlation
+% plot_NoiseCorr_SAT %plot noise corr vs direction vs epoch
+computeNoiseCorr_X_Session %noise corr values for export to Excel
 
 %% Cleanup
 clear idx*

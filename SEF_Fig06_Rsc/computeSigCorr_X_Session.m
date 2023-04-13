@@ -1,7 +1,6 @@
 % computeSigCorr_X_Session.m
 % This script computes the signal correlation for all pairs of
-% task-relevant neurons for a given session. It plots the corresponding
-% correlation matrix using imagesc().
+% task-relevant neurons for a given session.
 % 
 
 idx_Sess = ismember(unitData.SessionID, 1:9);
