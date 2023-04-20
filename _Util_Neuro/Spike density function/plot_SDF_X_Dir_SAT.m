@@ -9,14 +9,11 @@
 % load([ROOTDIR_SAT, 'pairData.mat'])
 % load([ROOTDIR_SAT, 'spkCorr.mat'])
 
-PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - SDF X Dir\';
+idx_Sess = ismember(unitData.SessionID, [2 3 4 6 8 9]);
+idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
+idx_Fxn = ~(unitData.FxnType == "None");
 
-idx_Sess = (unitData.SessionID == 13);
-idx_Monk = ismember(unitData.Monkey, {'D','E'});
-idx_Area = ismember(unitData.Area, {'SEF','SC'});
-idx_Fxn  = ~(unitData.FxnType == 'None');
-
-unitTest = unitData( idx_Sess & idx_Monk & idx_Area & idx_Fxn , : );
+unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
 nUnit = size(unitTest,1);
 
 EPOCH = {'VR' 'PS' 'PR'}; %within-trial time intervals of interest
@@ -62,13 +59,14 @@ for uu = 1:nUnit
   end % for : epoch (ep)
   
   %% Plotting
+  PRINTDIR = 'C:\Users\thoma\Documents\Figs - SAT\';
   colorArea = colororder; %colors for shaded areas of interest
   colorArea = colorArea(2:4,:);
   xArea = { [+50 +250] , [0 +200] , [0 +200] };
   MARGIN = [0.08,0.02]; %margin between subplots
   idxPlot = [16 7 4 1 10 19 22 25 13]; %indexes for visual response epoch
   yLim = [0, max([sdfAcc.VR sdfFast.VR sdfAcc.PS sdfFast.PS sdfAcc.PR sdfFast.PR],[],'all')];
-  hFig = figure('visible','on');
+  hFig = figure('visible','off');
   
   h_ax = cell(nDir+1,nEpoch);
   for ep = 1:nEpoch %epoch
@@ -100,7 +98,7 @@ for uu = 1:nUnit
   ppretty([12,4], 'YColor','none'); drawnow
   set(h_ax{6,1}, 'YColor','k')
   
-  print([PRINTDIR, 'SDF-',char(unitTest.ID(uu)),'.tif'], '-dtiff'); close(hFig)
+  print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close(hFig)
 end % for : unit(uu)
 
 clearvars -except behavData unitData pairData spkCorr ROOTDIR*
