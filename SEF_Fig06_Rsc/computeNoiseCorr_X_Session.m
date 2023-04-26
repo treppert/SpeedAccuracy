@@ -3,7 +3,8 @@
 % task-relevant neurons for a given session.
 % 
 
-SESSION = 3;
+SESSION = 16;
+PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Noise Correlation\";
 
 %cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
 trialRemove = cell(16,1);
@@ -52,21 +53,39 @@ for uu = 1:nUnit
 
 end % for : unit (uu)
 
-%% Subtract off the direction-specific mean activation (i.e., the signal)
-% scAccMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.VR , "UniformOutput",false ) );
-% scAccMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PS , "UniformOutput",false ) );
-% scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
-% scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
+%% METHOD 1 - Subtract off direction-specific signal first\
+if (true)
+%Subtract off the direction-specific mean activation (i.e., the signal)
+scAccMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.VR , "UniformOutput",false ) );
+scAccMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PS , "UniformOutput",false ) );
+scAccMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PR , "UniformOutput",false ) );
+scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
+scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
+scFastMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PR , "UniformOutput",false ) );
 
-%% Compute noise correlation across all units recorded simultaneously
-% Accurate condition - split on direction, condition, and epoch
+%Compute noise correlation across all units recorded simultaneously
+rmuAcc.VR = corr(scAccMAT(:,:,iVR), "type","Pearson");
+rmuAcc.PS = corr(scAccMAT(:,:,iPS), "type","Pearson");
+rmuAcc.PR = corr(scAccMAT(:,:,iPR), "type","Pearson");
+
+%Plotting
+hFig = figure("Visible","on");
+imagesc(rmuAcc.PS, [-1 +1])
+xticks([]); yticks([])
+end
+
+%% METHOD 2 - Compute noise correlation for each direction separately
+%Compute direction-specific noise correlation across all units recorded simultaneously
+if (false)
+
+%Accurate condition - split on direction, condition, and epoch
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scAcc.VR, "UniformOutput",false) );
 rAcc.VR = reshape(tmp', nUnit,nUnit,nDir);
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scAcc.PS, "UniformOutput",false) );
 rAcc.PS = reshape(tmp', nUnit,nUnit,nDir);
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scAcc.PR, "UniformOutput",false) );
 rAcc.PR = reshape(tmp', nUnit,nUnit,nDir);
-% Fast condition
+%Fast condition
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scFast.VR, "UniformOutput",false) );
 rFast.VR = reshape(tmp', nUnit,nUnit,nDir);
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scFast.PS, "UniformOutput",false) );
@@ -74,11 +93,32 @@ rFast.PS = reshape(tmp', nUnit,nUnit,nDir);
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scFast.PR, "UniformOutput",false) );
 rFast.PR = reshape(tmp', nUnit,nUnit,nDir);
 
-%% Mean noise correlation across all directions
-% rmuAcc.PS  = mean(rAcc.PS,3, "omitnan");
-% rmuFast.PS = mean(rFast.PS,3, "omitnan");
+%Compute mean noise correlation across directions
+rmuAcc.PS  = mean(rAcc.PS,3, "omitnan")
+rmuFast.PS = mean(rFast.PS,3, "omitnan");
+
+%Plotting
+hFig = figure("Visible","on");
+idxDir = [6 3 2 1 4 7 8 9];
+for dd = 1:nDir
+  subplot(3,3,idxDir(dd))
+  imagesc(rAcc.PS(:,:,dd), [-1 +1])
+  xticks([]); yticks([])
+end
+subplot(3,3,5)
+imagesc(rmuAcc.PS, [-1 +1])
+xticks(1:nUnit); xticklabels(unitTest.Area)
+yticks(1:nUnit); yticklabels(unitTest.Area)
+subplot(3,3,2); title(unitTest.Session(1))
+xlabel("Noise correlation")
+
+% print(PRINTDIR + "NoiseCorr-X-Dir-" + unitTest.Session(1) + ".tif", '-dtiff'); close(hFig)
+end
+
+clearvars -except rmu* behavData unitData pairData spkCorr ROOTDIR*
 
 %% Plotting - Individual pairs
+if (false)
 PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
 idx_Sess = (pairData.SessionID == SESSION);
 pairTest = pairData(idx_Sess,:);
@@ -131,28 +171,6 @@ for pp = 1:nPair
   print(PRINTDIR + "NoiseCorr-X-Dir  --  " + unitTest.ID(idxX) + "  --  " + unitTest.ID(idxY) + ".tif", '-dtiff'); close(hFig)
 
 end % for : pair (pp)
+end % if (plot-individual)
 
 
-
-%% Plotting - Across neurons
-if (false)
-PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
-hFig = figure("Visible","on");
-idxDir = [6 3 2 1 4 7 8 9];
-for dd = 1:nDir
-  subplot(3,3,idxDir(dd))
-  imagesc(rAcc.PS(:,:,dd), [-1 +1])
-  xticks([]); yticks([])
-end
-subplot(3,3,5)
-imagesc(rmuAcc.PS, [-1 +1])
-colorbar
-xticks(1:nUnit); xticklabels(unitTest.Area)
-yticks(1:nUnit); yticklabels(unitTest.Area)
-subplot(3,3,2); title(unitTest.Session(1))
-xlabel("Noise correlation")
-
-print(PRINTDIR + "NoiseCorr-X-Dir-" + unitTest.Session(1) + ".tif", '-dtiff'); close(hFig)
-end % if (plot)
-
-clearvars -except behavData unitData pairData spkCorr ROOTDIR* *Acc *Fast 
