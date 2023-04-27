@@ -3,8 +3,7 @@
 % task-relevant neurons for a given session.
 % 
 
-SESSION = 16;
-PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Noise Correlation\";
+SESSION = 9;
 
 %cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
 trialRemove = cell(16,1);
@@ -23,13 +22,15 @@ unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
 nUnit = size(unitTest,1);
 
 nDir = 8;
-iVR = 2; %index of visual response epoch
-iPS = 3; %index of post-saccade epoch
+iBL = 1; %index baseline epoch
+iVR = 2; %index visual response epoch
+iPS = 3; %index post-saccade epoch
 iPR = 4; %post-reward epoch
 
-scAcc.VR = cell(nDir,1); %spike count - Acc - VR epoch
-scAcc.PS = scAcc.VR;     %Acc - PS epoch
-scAcc.PR = scAcc.VR;     %Acc - PR epoch
+scAcc.BL = cell(nDir,1); %spike count - Acc - BL epoch
+scAcc.VR = scAcc.BL;     %Acc - VR epoch
+scAcc.PS = scAcc.BL;     %Acc - PS epoch
+scAcc.PR = scAcc.BL;     %Acc - PR epoch
 scFast = scAcc; %spike count - Fast
 
 for uu = 1:nUnit
@@ -43,9 +44,11 @@ for uu = 1:nUnit
   
   %% Organize spike counts for correlation computation across neurons
   for dd = 1:nDir
+    scAcc.BL{dd} = cat(2,  scAcc.BL{dd},  scst.Acc{dd}(:,iBL));
     scAcc.VR{dd} = cat(2,  scAcc.VR{dd},  scst.Acc{dd}(:,iVR));
     scAcc.PS{dd} = cat(2,  scAcc.PS{dd},  scst.Acc{dd}(:,iPS));
     scAcc.PR{dd} = cat(2,  scAcc.PR{dd},  scst.Acc{dd}(:,iPR));
+    scFast.BL{dd} = cat(2, scFast.BL{dd}, scst.Fast{dd}(:,iBL));
     scFast.VR{dd} = cat(2, scFast.VR{dd}, scst.Fast{dd}(:,iVR));
     scFast.PS{dd} = cat(2, scFast.PS{dd}, scst.Fast{dd}(:,iPS));
     scFast.PR{dd} = cat(2, scFast.PR{dd}, scst.Fast{dd}(:,iPR));
@@ -53,30 +56,42 @@ for uu = 1:nUnit
 
 end % for : unit (uu)
 
-%% METHOD 1 - Subtract off direction-specific signal first\
-if (true)
+% computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
+% computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
+
+%% METHOD 1 - Subtract off direction-specific signal first
 %Subtract off the direction-specific mean activation (i.e., the signal)
+scAccMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.BL , "UniformOutput",false ) );
 scAccMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.VR , "UniformOutput",false ) );
 scAccMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PS , "UniformOutput",false ) );
 scAccMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PR , "UniformOutput",false ) );
+scFastMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.BL , "UniformOutput",false ) );
 scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
 scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
 scFastMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PR , "UniformOutput",false ) );
 
 %Compute noise correlation across all units recorded simultaneously
-rmuAcc.VR = corr(scAccMAT(:,:,iVR), "type","Pearson");
-rmuAcc.PS = corr(scAccMAT(:,:,iPS), "type","Pearson");
-rmuAcc.PR = corr(scAccMAT(:,:,iPR), "type","Pearson");
+rmuAcc.BL  = corr(scAccMAT(:,:,iBL), "type","Pearson");
+rmuAcc.VR  = corr(scAccMAT(:,:,iVR), "type","Pearson");
+rmuAcc.PS  = corr(scAccMAT(:,:,iPS), "type","Pearson");
+rmuAcc.PR  = corr(scAccMAT(:,:,iPR), "type","Pearson");
+rmuFast.BL = corr(scFastMAT(:,:,iBL), "type","Pearson");
+rmuFast.VR = corr(scFastMAT(:,:,iVR), "type","Pearson");
+rmuFast.PS = corr(scFastMAT(:,:,iPS), "type","Pearson");
+rmuFast.PR = corr(scFastMAT(:,:,iPR), "type","Pearson");
 
 %Plotting
-hFig = figure("Visible","on");
-imagesc(rmuAcc.PS, [-1 +1])
-xticks([]); yticks([])
-end
+% hFig = figure("Visible","on");
+% imagesc(rmuAcc.PS, [-1 +1])
+% xticks([]); yticks([])
+
+clearvars -except rmu* behavData unitData pairData spkCorr ROOTDIR*
 
 %% METHOD 2 - Compute noise correlation for each direction separately
 %Compute direction-specific noise correlation across all units recorded simultaneously
-if (false)
+function [] = computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
+
+PRINTDIR = "C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Noise Correlation\";
 
 %Accurate condition - split on direction, condition, and epoch
 tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scAcc.VR, "UniformOutput",false) );
@@ -94,11 +109,11 @@ tmp = cell2mat( cellfun(@(x) corr(x, "type","Pearson"), scFast.PR, "UniformOutpu
 rFast.PR = reshape(tmp', nUnit,nUnit,nDir);
 
 %Compute mean noise correlation across directions
-rmuAcc.PS  = mean(rAcc.PS,3, "omitnan")
+rmuAcc.PS  = mean(rAcc.PS,3, "omitnan");
 rmuFast.PS = mean(rFast.PS,3, "omitnan");
 
 %Plotting
-hFig = figure("Visible","on");
+figure("Visible","on");
 idxDir = [6 3 2 1 4 7 8 9];
 for dd = 1:nDir
   subplot(3,3,idxDir(dd))
@@ -113,12 +128,11 @@ subplot(3,3,2); title(unitTest.Session(1))
 xlabel("Noise correlation")
 
 % print(PRINTDIR + "NoiseCorr-X-Dir-" + unitTest.Session(1) + ".tif", '-dtiff'); close(hFig)
-end
-
-clearvars -except rmu* behavData unitData pairData spkCorr ROOTDIR*
+end % fxn : computeNoiseCorr_X_Direction()
 
 %% Plotting - Individual pairs
-if (false)
+function [ ] = computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
+
 PRINTDIR = "C:\Users\thoma\Documents\Figs - SAT\";
 idx_Sess = (pairData.SessionID == SESSION);
 pairTest = pairData(idx_Sess,:);
@@ -171,6 +185,7 @@ for pp = 1:nPair
   print(PRINTDIR + "NoiseCorr-X-Dir  --  " + unitTest.ID(idxX) + "  --  " + unitTest.ID(idxY) + ".tif", '-dtiff'); close(hFig)
 
 end % for : pair (pp)
-end % if (plot-individual)
+
+end % fxn : plotNoiseCorr_IndividualPairs()
 
 
