@@ -5,18 +5,21 @@
 rAccMat = [];
 rFastMat = [];
 
-for kk = 11:16
+for kk = 1:16
   Area    = string(rNoise.Acc(kk).Area);
   FxnType = string(rNoise.Acc(kk).FxnType);
   RF      = rNoise.Acc(kk).RF;
   
-  iVM = find(ismember(Area, ["SC","FEF"]));   nVM  = length(iVM);
+  iVM = find(ismember(Area, "SC"));   nVM  = length(iVM);
   iSEF = find(ismember(Area, "SEF")); nSEF = length(iSEF);
   
   rAcc_kk = NaN(nVM*nSEF,4);
   rFast_kk = rAcc_kk;
   for ii = 1:nVM
+    rfVM = RF{iVM(ii)}; %response field FEF/SC
     for jj = 1:nSEF
+      rfSEF = RF{iSEF(jj)}; %response field SEF
+      % if isempty(intersect(rfVM,rfSEF)); continue; end %check for RF overlap
       rAcc_kk(nSEF*(ii-1)+jj,:) = [ rNoise.Acc(kk).BL(iVM(ii),iSEF(jj)) rNoise.Acc(kk).VR(iVM(ii),iSEF(jj)) ...
         rNoise.Acc(kk).PS(iVM(ii),iSEF(jj)) rNoise.Acc(kk).PR(iVM(ii),iSEF(jj)) ]; %Accurate
       rFast_kk(nSEF*(ii-1)+jj,:) = [ rNoise.Fast(kk).BL(iVM(ii),iSEF(jj)) rNoise.Fast(kk).VR(iVM(ii),iSEF(jj)) ...
@@ -29,8 +32,8 @@ for kk = 11:16
 
 end % for : session (kk)
 
-rAcc.Mean = mean(rAccMat,1);      rAcc.SD   = std(rAccMat,0,1);
-rFast.Mean = mean(rFastMat,1);    rFast.SD   = std(rFastMat,0,1);
+rAcc.Mean = mean(rAccMat,1, "omitnan");      rAcc.SD   = std(rAccMat,0,1, "omitnan");
+rFast.Mean = mean(rFastMat,1, "omitnan");    rFast.SD   = std(rFastMat,0,1, "omitnan");
 
 %% Plotting
 GREEN = [0 .7 0];
