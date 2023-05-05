@@ -3,7 +3,7 @@
 % task-relevant neurons for a given session.
 % 
 
-SESSION = 9;
+nSession = 16; %all sessions for Da (9) and Eu (7)
 
 %cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
 trialRemove = cell(16,1);
@@ -14,7 +14,13 @@ trialRemove{12} = [525 625];
 trialRemove{13} = [1776 1849];
 trialRemove{16} = [1 100];
 
-idx_Sess = ismember(unitData.SessionID, SESSION);
+%initialize noise correlation output
+rNoise.Acc = new_struct({'BL','VR','PS','PR'}, 'dim',[1,nSession]);
+rNoise.Fast = rNoise.Acc;
+
+for kk = 1:nSession
+
+idx_Sess = ismember(unitData.SessionID, kk);
 idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
 idx_Fxn = ~(unitData.FxnType == "None");
 
@@ -34,8 +40,7 @@ scAcc.PR = scAcc.BL;     %Acc - PR epoch
 scFast = scAcc; %spike count - Fast
 
 for uu = 1:nUnit
-  fprintf(unitTest.ID(uu) + "\n")
-  kk = unitTest.SessionID(uu); %get session number
+  % fprintf(unitTest.ID(uu) + "\n")
   nTrial_kk = behavData.NumTrials(kk);
   iIso_kk = removeTrials_Isolation(trialRemove{kk}, nTrial_kk); %poor isolation
   
@@ -56,9 +61,6 @@ for uu = 1:nUnit
 
 end % for : unit (uu)
 
-% computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
-% computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
-
 %% METHOD 1 - Subtract off direction-specific signal first
 %Subtract off the direction-specific mean activation (i.e., the signal)
 scAccMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.BL , "UniformOutput",false ) );
@@ -69,23 +71,45 @@ scFastMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.BL , "Unifor
 scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
 scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
 scFastMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PR , "UniformOutput",false ) );
+% scAccMAT(:,:,iBL) = cell2mat(scAcc.BL);
+% scAccMAT(:,:,iVR) = cell2mat(scAcc.VR);
+% scAccMAT(:,:,iPS) = cell2mat(scAcc.PS);
+% scAccMAT(:,:,iPR) = cell2mat(scAcc.PR);
+% scFastMAT(:,:,iBL) = cell2mat(scFast.BL);
+% scFastMAT(:,:,iVR) = cell2mat(scFast.VR);
+% scFastMAT(:,:,iPS) = cell2mat(scFast.PS);
+% scFastMAT(:,:,iPR) = cell2mat(scFast.PR);
 
 %Compute noise correlation across all units recorded simultaneously
-rmuAcc.BL  = corr(scAccMAT(:,:,iBL), "type","Pearson");
-rmuAcc.VR  = corr(scAccMAT(:,:,iVR), "type","Pearson");
-rmuAcc.PS  = corr(scAccMAT(:,:,iPS), "type","Pearson");
-rmuAcc.PR  = corr(scAccMAT(:,:,iPR), "type","Pearson");
-rmuFast.BL = corr(scFastMAT(:,:,iBL), "type","Pearson");
-rmuFast.VR = corr(scFastMAT(:,:,iVR), "type","Pearson");
-rmuFast.PS = corr(scFastMAT(:,:,iPS), "type","Pearson");
-rmuFast.PR = corr(scFastMAT(:,:,iPR), "type","Pearson");
+rNoise.Acc(kk).BL  = corr(scAccMAT(:,:,iBL), "type","Pearson");
+rNoise.Acc(kk).VR  = corr(scAccMAT(:,:,iVR), "type","Pearson");
+rNoise.Acc(kk).PS  = corr(scAccMAT(:,:,iPS), "type","Pearson");
+rNoise.Acc(kk).PR  = corr(scAccMAT(:,:,iPR), "type","Pearson");
+rNoise.Fast(kk).BL = corr(scFastMAT(:,:,iBL), "type","Pearson");
+rNoise.Fast(kk).VR = corr(scFastMAT(:,:,iVR), "type","Pearson");
+rNoise.Fast(kk).PS = corr(scFastMAT(:,:,iPS), "type","Pearson");
+rNoise.Fast(kk).PR = corr(scFastMAT(:,:,iPR), "type","Pearson");
+
+clear scAccMAT scFastMAT
+
+%Save indexing information on session and units
+rNoise.Acc(kk).Session = kk;
+rNoise.Acc(kk).Unit = unitTest.Index;
+rNoise.Acc(kk).Area = unitTest.Area;
+rNoise.Acc(kk).FxnType = unitTest.FxnType;
+rNoise.Acc(kk).RF = unitTest.RF;
 
 %Plotting
 % hFig = figure("Visible","on");
 % imagesc(rmuAcc.PS, [-1 +1])
 % xticks([]); yticks([])
 
-clearvars -except rmu* behavData unitData pairData spkCorr ROOTDIR*
+end % for : session (kk)
+
+% computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
+% computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
+
+clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise
 
 %% METHOD 2 - Compute noise correlation for each direction separately
 %Compute direction-specific noise correlation across all units recorded simultaneously
