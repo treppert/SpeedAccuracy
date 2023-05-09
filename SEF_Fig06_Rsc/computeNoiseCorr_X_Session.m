@@ -114,7 +114,7 @@ end % for : session (kk)
 % computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
 % computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
 
-clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise*
+clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise* rSignal*
 
 %% METHOD 2 - Compute noise correlation for each direction separately
 %Compute direction-specific noise correlation across all units recorded simultaneously

@@ -117,20 +117,21 @@ GREEN = [0 .7 0];
 xTicksNoise = 1:4;
 xTicksSignal = [1 2];
 
+rAccPlot = rAccFEF;
+rFastPlot = rFastFEF;
+
 hFig = figure("Visible","on");
 subplot(1,3,[1 2]); hold on %Noise correlation
-errorbar(xTicksNoise-.02, rAccSC.Noise.Mean,rAccSC.Noise.SD, 'Color','r', 'CapSize',0)
-errorbar(xTicksNoise+.02, rFastSC.Noise.Mean,rFastSC.Noise.SD, 'Color',GREEN, 'CapSize',0)
-% plot(rAccFEF.Noise.Mean, 'Color','r', 'LineStyle','-', 'LineWidth',1)
-% plot(rFastFEF.Noise.Mean, 'Color',GREEN, 'LineStyle','-', 'LineWidth',1)
-text(4.1,rAccSC.Noise.Mean(4),  num2str(nPairSC));  text(4.1,rFastSC.Noise.Mean(4),  num2str(nPairSC))
+errorbar(xTicksNoise-.02, rAccPlot.Noise.Mean,rAccPlot.Noise.SD, 'Color','r', 'CapSize',0)
+errorbar(xTicksNoise+.02, rFastPlot.Noise.Mean,rFastPlot.Noise.SD, 'Color',GREEN, 'CapSize',0)
+% text(4.1,rAccSC.Noise.Mean(4),  num2str(nPairSC));  text(4.1,rFastSC.Noise.Mean(4),  num2str(nPairSC))
 % text(4.1,rAccFEF.Noise.Mean(4), num2str(nPairFEF)); text(4.1,rFastFEF.Noise.Mean(4), num2str(nPairFEF))
 yline(0); ytickformat('%3.2f'); ylabel('Noise correlation')
 xlim([0.8 4.20001]); xticks(xTicksNoise); xticklabels({'BL','VR','PS','PR'})
 
 subplot(1,3,3); hold on %Signal correlation
-errorbar(xTicksSignal-.02, rAccSC.Signal.Mean,rAccSC.Signal.SD, 'Color','r', 'CapSize',0)
-errorbar(xTicksSignal+.02, rFastSC.Signal.Mean,rFastSC.Signal.SD, 'Color',GREEN, 'CapSize',0)
+errorbar(xTicksSignal-.02, rAccPlot.Signal.Mean,rAccPlot.Signal.SD, 'Color','r', 'CapSize',0)
+errorbar(xTicksSignal+.02, rFastPlot.Signal.Mean,rFastPlot.Signal.SD, 'Color',GREEN, 'CapSize',0)
 yline(0); ytickformat('%3.2f'); ylabel('Signal correlation')
 xlim([0.8 2.20001]); xticks(xTicksSignal); xticklabels({'VR','PS'})
 

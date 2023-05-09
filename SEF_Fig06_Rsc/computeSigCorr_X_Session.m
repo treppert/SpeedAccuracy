@@ -23,9 +23,6 @@ for kk = 1:nSess
   scFast_kk = scAcc_kk; %Fast condition
   
   for uu = 1:nUnit
-    fprintf(unitTest.ID(uu) + "\n")
-    nTrial = behavData.NumTrials(kk); %number of trials
-  
     %% Compute spike counts by condition and direction
     [scAcc_uu,scFast_uu] = computeSpkCt_X_Epoch(unitTest(uu,:), behavData(kk,:), 'Correct');
     scAcc_kk.VR(:,uu) = scAcc_uu(1:nDir,iVR);
@@ -43,4 +40,4 @@ for kk = 1:nSess
 
 end % for : session (kk)
 
-clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise* r*Mat* rSignal*
+clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise* rSignal*
