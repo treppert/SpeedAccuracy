@@ -3,6 +3,7 @@
 % task-relevant neurons for a given session.
 % 
 
+SUBTRACT_SIGNAL = true;
 nSession = 16; %all sessions for Da (9) and Eu (7)
 
 %cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
@@ -45,7 +46,7 @@ for uu = 1:nUnit
   iIso_kk = removeTrials_Isolation(trialRemove{kk}, nTrial_kk); %poor isolation
   
   %% Compute single-trial spike counts by condition, direction, and epoch
-  [~,~,scst] = computeSpkCt_X_Epoch(unitTest(uu,:), behavData(kk,:), iIso_kk);
+  [~,~,scst] = computeSpkCt_X_Epoch(unitTest(uu,:), behavData(kk,:), 'Correct', iIso_kk);
   
   %% Organize spike counts for correlation computation across neurons
   for dd = 1:nDir
@@ -62,23 +63,27 @@ for uu = 1:nUnit
 end % for : unit (uu)
 
 %% METHOD 1 - Subtract off direction-specific signal first
-%Subtract off the direction-specific mean activation (i.e., the signal)
-scAccMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.BL , "UniformOutput",false ) );
-scAccMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.VR , "UniformOutput",false ) );
-scAccMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PS , "UniformOutput",false ) );
-scAccMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PR , "UniformOutput",false ) );
-scFastMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.BL , "UniformOutput",false ) );
-scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
-scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
-scFastMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PR , "UniformOutput",false ) );
-% scAccMAT(:,:,iBL) = cell2mat(scAcc.BL);
-% scAccMAT(:,:,iVR) = cell2mat(scAcc.VR);
-% scAccMAT(:,:,iPS) = cell2mat(scAcc.PS);
-% scAccMAT(:,:,iPR) = cell2mat(scAcc.PR);
-% scFastMAT(:,:,iBL) = cell2mat(scFast.BL);
-% scFastMAT(:,:,iVR) = cell2mat(scFast.VR);
-% scFastMAT(:,:,iPS) = cell2mat(scFast.PS);
-% scFastMAT(:,:,iPR) = cell2mat(scFast.PR);
+if (SUBTRACT_SIGNAL)
+  %Subtract off the direction-specific mean activation (i.e., the signal)
+  scAccMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.BL , "UniformOutput",false ) );
+  scAccMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.VR , "UniformOutput",false ) );
+  scAccMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PS , "UniformOutput",false ) );
+  scAccMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.PR , "UniformOutput",false ) );
+  scFastMAT(:,:,iBL) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.BL , "UniformOutput",false ) );
+  scFastMAT(:,:,iVR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.VR , "UniformOutput",false ) );
+  scFastMAT(:,:,iPS) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PS , "UniformOutput",false ) );
+  scFastMAT(:,:,iPR) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.PR , "UniformOutput",false ) );
+else
+  %Do not subtract off direction-specific signal
+  scAccMAT(:,:,iBL) = cell2mat(scAcc.BL);
+  scAccMAT(:,:,iVR) = cell2mat(scAcc.VR);
+  scAccMAT(:,:,iPS) = cell2mat(scAcc.PS);
+  scAccMAT(:,:,iPR) = cell2mat(scAcc.PR);
+  scFastMAT(:,:,iBL) = cell2mat(scFast.BL);
+  scFastMAT(:,:,iVR) = cell2mat(scFast.VR);
+  scFastMAT(:,:,iPS) = cell2mat(scFast.PS);
+  scFastMAT(:,:,iPR) = cell2mat(scFast.PR);
+end % if (subtract signal)
 
 %Compute noise correlation across all units recorded simultaneously
 rNoise.Acc(kk).BL  = corr(scAccMAT(:,:,iBL), "type","Pearson");
@@ -109,7 +114,7 @@ end % for : session (kk)
 % computeNoiseCorr_X_Direction(unitTest, scAcc, scFast)
 % computeNoiseCorr_IndividualPairs(unitTest, pairData, scAcc, scFast)
 
-clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise
+clearvars -except behavData unitData pairData spkCorr ROOTDIR* rNoise*
 
 %% METHOD 2 - Compute noise correlation for each direction separately
 %Compute direction-specific noise correlation across all units recorded simultaneously
