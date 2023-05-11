@@ -27,13 +27,24 @@
 
 % % spkCorr = organize_rscTable(spkCorr);
 
+%% Specify trials with poor isolation from each recording session
+%cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
+trialRemove = cell(16,1);
+trialRemove{5} = [495 800];
+trialRemove{7} = [1 330];
+trialRemove{11} = [150 275];
+trialRemove{12} = [525 625];
+trialRemove{13} = [1776 1849];
+trialRemove{16} = [1 100];
+
 %% Signal correlation
 % plot_SignalCorr_SAT %scatter plots for individual pairs of neurons
-computeSigCorr_X_Session %sig corr values for export to Excel
+% computeSigCorr_X_Session %sig corr values for export to Excel
 
 %% Noise correlation
 % plot_NoiseCorr_SAT %plot noise corr vs direction vs epoch
-computeNoiseCorr_X_Session %noise corr values for export to Excel
+% computeNoiseCorr_X_Session %noise corr values for export to Excel
 
 %% Correlation
 plot_Correlation_X_Epoch
+% plot_Correlation_SAT

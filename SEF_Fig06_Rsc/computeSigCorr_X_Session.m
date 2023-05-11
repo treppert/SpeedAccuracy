@@ -18,13 +18,16 @@ for kk = 1:nSess
   unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
   nUnit = size(unitTest,1);
   
+  nTrial_kk = behavData.NumTrials(kk);
+  iIso_kk = removeTrials_Isolation(trialRemove{kk}, nTrial_kk); %poor isolation
+  
   scAcc_kk.VR = NaN(nDir,nUnit); %Acc condition - VR epoch
   scAcc_kk.PS = scAcc_kk.VR; %Acc condition - PS epoch
   scFast_kk = scAcc_kk; %Fast condition
   
   for uu = 1:nUnit
     %% Compute spike counts by condition and direction
-    [scAcc_uu,scFast_uu] = computeSpkCt_X_Epoch(unitTest(uu,:), behavData(kk,:), 'Correct');
+    [scAcc_uu,scFast_uu] = computeSpkCt_X_Epoch(unitTest(uu,:), behavData(kk,:), 'Correct', iIso_kk);
     scAcc_kk.VR(:,uu) = scAcc_uu(1:nDir,iVR);
     scAcc_kk.PS(:,uu) = scAcc_uu(1:nDir,iPS);
     scFast_kk.VR(:,uu) = scFast_uu(1:nDir,iVR);

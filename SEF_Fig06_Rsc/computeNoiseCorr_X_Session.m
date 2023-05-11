@@ -6,15 +6,6 @@
 SUBTRACT_SIGNAL = true;
 nSession = 16; %all sessions for Da (9) and Eu (7)
 
-%cell array -- trial with poor isolation quality (Unit-Data-SAT.xlsx)
-trialRemove = cell(16,1);
-trialRemove{5} = [495 800];
-trialRemove{7} = [1 330];
-trialRemove{11} = [150 275];
-trialRemove{12} = [525 625];
-trialRemove{13} = [1776 1849];
-trialRemove{16} = [1 100];
-
 %initialize noise correlation output
 rNoise.Acc = new_struct({'BL','VR','PS','PR'}, 'dim',[1,nSession]);
 rNoise.Fast = rNoise.Acc;
