@@ -5,7 +5,6 @@ ABSOLUTE = false; %compute |r| instead of r
 %% Post-processing of correlations
 rNoiseMat.Acc.SC = [];    rNoiseMat.Acc.FEF = [];
 rNoiseMat.Fast.SC = [];   rNoiseMat.Fast.FEF = [];
-
 rSignalMat.Acc.SC = [];    rSignalMat.Acc.FEF = [];
 rSignalMat.Fast.SC = [];   rSignalMat.Fast.FEF = [];
 
@@ -25,7 +24,10 @@ for kk = 1:16
   iVis = find(ismember(FxnType, "V"));
   iVM = find(ismember(FxnType, "VM"));
   iMov = find(ismember(FxnType, "M"));
+
   iFxnVM = iMov; %FEF/SC fxn to include
+  LINESTYLE = ':'; %corresponding line style
+  OFFSET = 0.00; %corresponding line offset
 
   %Functional classification - SEF
   iErr = cell2mat( cellfun(@(x) sum(ismember(x,'CT')), FxnType, 'UniformOutput', false) );
@@ -121,40 +123,80 @@ rFastSC.Signal.Mean = mean(rSignalMat.Fast.SC,1, "omitnan");    rFastSC.Signal.S
 rAccFEF.Signal.Mean = mean(rSignalMat.Acc.FEF,1, "omitnan");      rAccFEF.Signal.SD = std(rSignalMat.Acc.FEF,0,1, "omitnan");
 rFastFEF.Signal.Mean = mean(rSignalMat.Fast.FEF,1, "omitnan");    rFastFEF.Signal.SD = std(rSignalMat.Fast.FEF,0,1, "omitnan");
 
-%% Plotting
+%% Compute fraction positive correlations
+frPosSC.Acc.Noise  = sum(rNoiseMat.Acc.SC > 0, 1)  / nPairSC;
+frPosSC.Fast.Noise = sum(rNoiseMat.Fast.SC > 0, 1) / nPairSC;
+frPosFEF.Acc.Noise  = sum(rNoiseMat.Acc.FEF > 0, 1)  / nPairFEF;
+frPosFEF.Fast.Noise = sum(rNoiseMat.Fast.FEF > 0, 1) / nPairFEF;
+frPosSC.Acc.Signal  = sum(rSignalMat.Acc.SC > 0, 1)  / nPairSC;
+frPosSC.Fast.Signal = sum(rSignalMat.Fast.SC > 0, 1) / nPairSC;
+frPosFEF.Acc.Signal  = sum(rSignalMat.Acc.FEF > 0, 1)  / nPairFEF;
+frPosFEF.Fast.Signal = sum(rSignalMat.Fast.FEF > 0, 1) / nPairFEF;
+
+%% Plotting - Correlation strength
 GREEN = [0 .7 0];
-LINESTYLE = ':';
-OFFSET = 0.04;
+TXTFORMAT = "%3.2f";
 xTicksNoise = 1:4;
 xTicksSignal = [1 2];
 
+if (false)
 hFig = figure("Visible","on");
 subplot(2,3,[1 2]); title("SEF-SC"); hold on %SC - Noise correlation
 errorbar(xTicksNoise-OFFSET, rAccSC.Noise.Mean,rAccSC.Noise.SD, 'Linestyle',LINESTYLE, 'Color','r', 'CapSize',0)
 errorbar(xTicksNoise+OFFSET, rFastSC.Noise.Mean,rFastSC.Noise.SD, 'Linestyle',LINESTYLE, 'Color',GREEN, 'CapSize',0)
 text(4.1,rAccSC.Noise.Mean(4),  num2str(nPairSC));
-ytickformat('%3.2f'); ylabel('Noise correlation')
+ytickformat(TXTFORMAT); ylabel('Noise correlation')
 xlim([0.8 4.20001]); xticks(xTicksNoise); xticklabels({'BL','VR','PS','PR'})
 
 subplot(2,3,3); title("SEF-SC"); hold on %SC - Signal correlation
 errorbar(xTicksSignal-OFFSET, rAccSC.Signal.Mean,rAccSC.Signal.SD, 'Linestyle',LINESTYLE, 'Color','r', 'CapSize',0)
 errorbar(xTicksSignal+OFFSET, rFastSC.Signal.Mean,rFastSC.Signal.SD, 'Linestyle',LINESTYLE, 'Color',GREEN, 'CapSize',0)
-yline(0); ytickformat('%3.2f'); ylabel('Signal correlation')
+yline(0); ytickformat(TXTFORMAT); ylabel('Signal correlation')
 xlim([0.8 2.20001]); xticks(xTicksSignal); xticklabels({'VR','PS'})
 
 subplot(2,3,[4 5]); title("SEF-FEF"); hold on %FEF - Noise correlation
 errorbar(xTicksNoise-OFFSET, rAccFEF.Noise.Mean,rAccFEF.Noise.SD, 'Linestyle',LINESTYLE, 'Color','r', 'CapSize',0)
 errorbar(xTicksNoise+OFFSET, rFastFEF.Noise.Mean,rFastFEF.Noise.SD, 'Linestyle',LINESTYLE, 'Color',GREEN, 'CapSize',0)
 text(4.1,rAccFEF.Noise.Mean(4), num2str(nPairFEF));
-ytickformat('%3.2f'); ylabel('Noise correlation')
+ytickformat(TXTFORMAT); ylabel('Noise correlation')
 xlim([0.8 4.20001]); xticks(xTicksNoise); xticklabels({'BL','VR','PS','PR'})
 
 subplot(2,3,6); title("SEF-FEF"); hold on %FEF - Signal correlation
 errorbar(xTicksSignal-OFFSET, rAccFEF.Signal.Mean,rAccFEF.Signal.SD, 'Linestyle',LINESTYLE, 'Color','r', 'CapSize',0)
 errorbar(xTicksSignal+OFFSET, rFastFEF.Signal.Mean,rFastFEF.Signal.SD, 'Linestyle',LINESTYLE, 'Color',GREEN, 'CapSize',0)
-yline(0); ytickformat('%3.2f'); ylabel('Signal correlation')
+yline(0); ytickformat(TXTFORMAT); ylabel('Signal correlation')
 xlim([0.8 2.20001]); xticks(xTicksSignal); xticklabels({'VR','PS'})
 ppretty([5.2,3]); drawnow
+end
+
+%% Plotting - Fraction positive
+if (true)
+hFig = figure("Visible","on");
+subplot(2,3,[1 2]); title("SEF-SC"); hold on %SC - Noise correlation
+plot(xTicksNoise-OFFSET, frPosSC.Acc.Noise,  'Linestyle',LINESTYLE, 'Color','r')
+plot(xTicksNoise+OFFSET, frPosSC.Fast.Noise, 'Linestyle',LINESTYLE, 'Color',GREEN)
+yline(0.5); ytickformat(TXTFORMAT); ylabel('Pr. rNoise > 0')
+xlim([0.8 4.20001]); xticks(xTicksNoise); xticklabels({'BL','VR','PS','PR'})
+
+subplot(2,3,3); title("SEF-SC"); hold on %SC - Signal correlation
+plot(xTicksSignal-OFFSET, frPosSC.Acc.Signal,  'Linestyle',LINESTYLE, 'Color','r')
+plot(xTicksSignal+OFFSET, frPosSC.Fast.Signal, 'Linestyle',LINESTYLE, 'Color',GREEN)
+yline(0.5); ytickformat(TXTFORMAT); ylabel('Pr. rSig > 0')
+xlim([0.8 2.20001]); xticks(xTicksSignal); xticklabels({'VR','PS'})
+
+subplot(2,3,[4 5]); title("SEF-FEF"); hold on %FEF - Noise correlation
+plot(xTicksNoise-OFFSET, frPosFEF.Acc.Noise,  'Linestyle',LINESTYLE, 'Color','r')
+plot(xTicksNoise+OFFSET, frPosFEF.Fast.Noise, 'Linestyle',LINESTYLE, 'Color',GREEN)
+yline(0.5); ytickformat(TXTFORMAT); ylabel('Pr. rNoise > 0')
+xlim([0.8 4.20001]); xticks(xTicksNoise); xticklabels({'BL','VR','PS','PR'})
+
+subplot(2,3,6); title("SEF-FEF"); hold on %FEF - Signal correlation
+plot(xTicksSignal-OFFSET, frPosFEF.Acc.Signal,  'Linestyle',LINESTYLE, 'Color','r')
+plot(xTicksSignal+OFFSET, frPosFEF.Fast.Signal, 'Linestyle',LINESTYLE, 'Color',GREEN)
+yline(0.5); ytickformat(TXTFORMAT); ylabel('Pr. rSig > 0')
+xlim([0.8 2.20001]); xticks(xTicksSignal); xticklabels({'VR','PS'})
+ppretty([5.2,3]); drawnow
+end
 
 % end % fxn : plot_NoiseCorr_X_Epoch()
 
