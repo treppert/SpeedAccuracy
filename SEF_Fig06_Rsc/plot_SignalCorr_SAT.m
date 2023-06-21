@@ -27,8 +27,8 @@ for pp = 1:nPair
   kk = pairTest.SessionID(pp); %get session number
 
   %% Compute spike counts by trial epoch
-  [scAccX,scFastX] = computeSpkCt_X_Epoch(unitData(iX,:), behavData(kk,:));
-  [scAccY,scFastY] = computeSpkCt_X_Epoch(unitData(iY,:), behavData(kk,:));
+  [scAccX,scFastX] = computeSpkCt_X_Epoch(unitData(iX,:), behavData(kk,:), 'Correct');
+  [scAccY,scFastY] = computeSpkCt_X_Epoch(unitData(iY,:), behavData(kk,:), 'Correct');
   scAccX = scAccX(1:nDir,:);  scFastX = scFastX(1:nDir,:);
   scAccY = scAccY(1:nDir,:);  scFastY = scFastY(1:nDir,:);
   
@@ -42,7 +42,7 @@ for pp = 1:nPair
 
   %% Figure - Scatter plots (signal correlation)
   GREEN = [0 0.7 0];
-  hFig = figure('Visible','off');
+  hFig = figure('Visible','on');
 
   for ep = 1:4
     hplotCorr = subplot(1,4,ep); hold on
@@ -67,7 +67,7 @@ for pp = 1:nPair
   end % for : epoch (ep)
   
   ppretty([10,1.8]); drawnow
-  print(PRINTDIR + "SignalCorr-" + pairID + ".tif", '-dtiff'); close(hFig)
+  % print(PRINTDIR + "SignalCorr-" + pairID + ".tif", '-dtiff'); close(hFig)
 
 end % for : pair (pp)
 
