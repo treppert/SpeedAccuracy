@@ -1,5 +1,61 @@
-function [ spikeCount ] = computeSpikeCount_SAT( unitData_ , behavData_ )
-%computeSpikeCount_SAT This function computes trial-by-trial spike counts
+function [ scAcc , scFast , varargout ] = computeSpikeCount_SAT( unitTest , behavData , outcome , varargin )
+%computeSpikeCount_SAT This function computes spike counts across the four
+%main within-trial time windows (baseline, visual response, post-saccade,
+%post-reward), separately for Fast and Accurate conditions.
+%   Input
+%   outcome - 'Correct' 'ErrChoice' 'ErrTime' 'ErrChoiceOnly' 'ErrTimeOnly'
+% 
+%   Output
+%   scAcc(8x4)  - single neuron spike count (direction X epoch) - Accurate
+%   scFast(8x4) - single neuron spike count (direction X epoch) - Fast
+%   stsc - *single-trial* spike count (condition X direction X epoch)
+% 
+
+nDir = 8;
+nEpoch = 4; % Baseline | Visual response | Post-saccade | Post-reward
+nTrial = behavData.NumTrials;
+
+%% Compute spike counts by epoch
+sc_uu = computeSpikeCount(unitTest, behavData);
+
+%% Index by isolation quality
+if (nargin > 3) %if desired, specify trials with poor isolation
+  idxIso = varargin{1};
+else
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{1}, nTrial);
+end
+
+%% Index spike counts by trial condition and outcome
+%index by condition
+idxAcc = ((behavData.Condition{1} == 1) & ~idxIso);
+idxFast = ((behavData.Condition{1} == 3) & ~idxIso);
+%index by trial outcome
+idxOutcome = behavData.(outcome){1};
+
+%% Sort spike counts by condition and direction
+scAcc = NaN(nDir+1,nEpoch); %mean spike counts
+scFast = scAcc;
+stsc.Acc = cell(nDir,1); %single-trial spike counts
+stsc.Fast = stsc.Acc;
+for dd = 1:nDir
+  idxDir = (behavData.Sacc_Octant{1} == dd);
+  stsc.Acc{dd} = sc_uu(idxAcc & idxOutcome & idxDir,:); %single-trial counts
+  stsc.Fast{dd} = sc_uu(idxFast & idxOutcome & idxDir,:);
+  scAcc(dd,:)  = mean(sc_uu(idxAcc & idxOutcome & idxDir,:)); %mean counts
+  scFast(dd,:) = mean(sc_uu(idxFast & idxOutcome & idxDir,:));
+end % for : direction (dd)
+scAcc(nDir+1,:)  = scAcc(1,:); %close the circle for plotting
+scFast(nDir+1,:) = scFast(1,:);
+
+if (nargout > 2) %if desired, return single-trial counts
+  varargout{1} = stsc;
+end
+
+end % fxn : computeSpikeCount_SAT()
+
+
+function [ spikeCount ] = computeSpikeCount( unitData_ , behavData_ )
+%computeSpikeCount This function computes trial-by-trial spike counts
 %for the SAT data set, separately for Fast and Accurate conditions.
 % 
 %   Input
@@ -42,4 +98,4 @@ spikeTimes = cellfun(@(x) x-tRew, spikeTimes, 'UniformOutput',false);
 %compute post-reward spike counts
 spikeCount(:,4) = cellfun(@(x) sum((x > tWin_PR(1)) & (x < tWin_PR(2))), spikeTimes);
 
-end % fxn : computeSpikeCount_SAT()
+end % fxn : computeSpikeCount()
