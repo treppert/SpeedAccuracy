@@ -21,25 +21,35 @@ for kk = 1:nSess
   nTrial_kk = behavData.NumTrials(kk);
   iIso_kk = removeTrials_Isolation(trialRemove{kk}, nTrial_kk); %poor isolation
   
-  scAcc_kk.VR = NaN(nDir,nUnit); %spike count - Acc condition - VR epoch
-  scAcc_kk.PS = scAcc_kk.VR; %spike count - Acc condition - PS epoch
-  scFast_kk = scAcc_kk; %spike count - Fast condition
+  sc_Acc = NaN(nDir,nUnit); %spike count - Acc condition
+  sc_Fast = sc_Acc; %spike count - Fast condition
   
   for uu = 1:nUnit
     %% Compute spike counts by condition and direction
     [scAcc_uu,scFast_uu] = computeSpikeCount_SAT(unitTest(uu,:), behavData(kk,:), 'Correct', iIso_kk);
-    scAcc_kk.VR(:,uu) = scAcc_uu(1:nDir,iVR);
-    scAcc_kk.PS(:,uu) = scAcc_uu(1:nDir,iPS);
-    scFast_kk.VR(:,uu) = scFast_uu(1:nDir,iVR);
-    scFast_kk.PS(:,uu) = scFast_uu(1:nDir,iPS);
+
+    %use appropriate time epoch(s) to estimate signal correlation
+    if (unitTest.Area(uu) == "SEF")
+      iEpoch = [iVR,iPS];
+    else %FEF/SC
+      switch unitTest.FxnType(uu)
+        case "V"
+          iEpoch = iVR;
+        case "VM"
+          iEpoch = [iVR,iPS];
+        case "M"
+          iEpoch = iPS;
+      end % switch (unit fxn type)
+    end %switch (unit area)
+
+    sc_Acc(:,uu)  = mean(scAcc_uu(1:nDir,iEpoch), 2);
+    sc_Fast(:,uu) = mean(scFast_uu(1:nDir,iEpoch), 2);
   
   end % for : unit (uu)
   
   %% Compute signal correlation across units for this session
-  rSignal(kk).Acc.VR  = corr(scAcc_kk.VR, "type","Pearson");
-  rSignal(kk).Acc.PS  = corr(scAcc_kk.PS, "type","Pearson");
-  rSignal(kk).Fast.VR = corr(scFast_kk.VR, "type","Pearson");
-  rSignal(kk).Fast.PS = corr(scFast_kk.PS, "type","Pearson");
+  rSignal(kk).Acc  = corr(sc_Acc,  "type","Pearson");
+  rSignal(kk).Fast = corr(sc_Fast, "type","Pearson");
 
 end % for : session (kk)
 
