@@ -1,58 +1,59 @@
-%plot_SDF_X_Dir_MG() Summary of this function goes here
-%   Detailed explanation goes here
+%plot_SDF_X_Dir_MG() This script plots activity of single neurons recorded
+%during the memory-guided saccade task. Activity is plotted as a function of
+%target location (8 octants).
 
 PRINTDIR = 'C:\Users\Tom\Documents\Figs - SAT\';
 
-idxArea = ismember(unitData.aArea, {'FEF'});
-idxMonkey = ismember(unitData.aMonkey, {'D','E'});
-idxKeep = (idxArea & idxMonkey);
+idx_Sess = ismember(unitData.SessionID, [2 3 4 6 8 9]);
+idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
+idx_Fxn = ~(unitData.FxnType == "None");
 
-NUM_UNIT = sum(idxKeep);
-unitTest = unitData(idxKeep,:);
-spikesTest = spikesMG(idxKeep);
+unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
+nUnit = size(unitTest,1);
 
-T_STIM = 3500 + (-300 : 500);
-T_RESP = 3500 + (-500 : 300);
-NUM_SAMP = length(T_STIM);
+tWin.VR = 3500 + (-300 : 500);
+tWin.PS = 3500 + (-500 : 300);
+tWin.PR = 3500 + (-300 : 500);
+nSamp = length(tWin.VR);
 
-IDX_STIM_PLOT = [11, 5, 3, 1, 7, 13, 15, 17];
-IDX_RESP_PLOT = IDX_STIM_PLOT + 1;
+for uu = 1:nUnit
+  spikes = load_spikes_SAT(unitTest.Index(uu)); %load spike times
+  kk = unitTest.SessionID(uu); %get session number
 
-for uu = 1:NUM_UNIT
-  fprintf('%s - %s\n', unitTest.Task_Session{uu}, unitTest.aID{uu})
-  kk = ismember(behavDataMG.Task_Session, unitTest.Task_Session{uu});
-  RT_P = behavDataMG.Sacc_RT{kk};
-  
-  %compute spike density function and align on primary response
-  sdfMG_A = compute_spike_density_fxn(spikesTest{uu});
-  sdfMG_P = align_signal_on_response(sdfMG_A, RT_P); 
+  nTrial = behavDataMG.NumTrials(kk); %number of trials
+  tResp = behavDataMG.Sacc_RT{kk}; %primary saccade RT
+  tRew = behavDataMG.RewTime(kk); %time of reward delivery (re saccade)
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.Task_TrialRemoveSAT{uu}, behavDataMG.Task_NumTrials(kk));
+  idxIso = removeTrials_Isolation(unitTest.TrialRemoveMG{uu}, behavDataMG.NumTrials(kk));
   %index by trial outcome
   idxCorr = ~(behavDataMG.Task_ErrChoice{kk} | behavDataMG.Task_ErrHold{kk} | behavDataMG.Task_ErrNoSacc{kk});
   
+  %compute spike density function and align on primary response
+  sdfMG_A = compute_spike_density_fxn(spikesTest{uu});
+  sdfMG_P = align_signal_on_response(sdfMG_A, tResp); 
+  
   %initializations
   Octant_Sacc1 = behavDataMG.Sacc_Octant{kk};
-  sdfA = NaN(NUM_SAMP,8);
+  sdfA = NaN(nSamp,8);
   sdfP = sdfA;
   for dd = 1:8 %loop over response directions
     idxDir = (Octant_Sacc1 == dd);
-    sdfA(:,dd) = nanmean(sdfMG_A(idxCorr & idxDir, T_STIM));
-    sdfP(:,dd) = nanmean(sdfMG_P(idxCorr & idxDir, T_RESP));
+    sdfA(:,dd) = nanmean(sdfMG_A(idxCorr & idxDir, tWin.VR));
+    sdfP(:,dd) = nanmean(sdfMG_P(idxCorr & idxDir, tWin.PS));
   end%for:direction(dd)
   
   %% Plotting
   hFig = figure('visible','off');
   yLim = [0, max([sdfA sdfP],[],'all')];
-  xLimStim = T_STIM([1,NUM_SAMP]) - 3500;
-  xLimResp = T_RESP([1,NUM_SAMP]) - 3500;
+  xLimStim = tWin.VR([1,nSamp]) - 3500;
+  xLimResp = tWin.PS([1,nSamp]) - 3500;
   
   for dd = 1:8 %loop over directions and plot
     
     subplot(3,6,IDX_STIM_PLOT(dd)); hold on %re. array
     plot([0 0], yLim, 'k:')
-    plot(T_STIM-3500, sdfA(:,dd), 'k-');
+    plot(tWin.VR-3500, sdfA(:,dd), 'k-');
     xlim(xLimStim)
     
     if (IDX_STIM_PLOT(dd) == 13)
@@ -63,7 +64,7 @@ for uu = 1:NUM_UNIT
     
     subplot(3,6,IDX_RESP_PLOT(dd)); hold on %re. response
     plot([0 0], yLim, 'k:')
-    plot(T_RESP-3500, sdfP(:,dd), 'k-');
+    plot(tWin.PS-3500, sdfP(:,dd), 'k-');
     xlim(xLimResp)
     set(gca, 'YAxisLocation','right')
     
@@ -84,4 +85,4 @@ for uu = 1:NUM_UNIT
   
 end % for : unit(uu)
 
-clearvars -except behavData behavDataMG unitData spikesSAT spikesMG
+clearvars -except behavData* unitData pairData spkCorr ROOTDIR*
