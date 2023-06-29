@@ -1,12 +1,12 @@
 %plot_RasterXTrial_MG.m
 
-idx_Sess = ismember(unitData.SessionID, 1:16);
-idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
+idx_Sess = ismember(unitData.SessionID, 34:49);
+idx_Area = ismember(unitData.Area, {'FEF'});
 
 unitTest = unitData( idx_Sess & idx_Area , : );
 nUnit = size(unitTest,1);
 
-tPlot = (-650 : 1050); %time from stimulus (ms)
+tPlot = (-600 : 1200); %time from stimulus (ms)
 
 for uu = 1:nUnit
   fprintf('%s \n', unitTest.ID{uu})
@@ -36,10 +36,10 @@ for uu = 1:nUnit
   jjSpike = jjSpike(idxPlot);
   
   %% Plotting
-  PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Raster-X-Trial - MG\';
+  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figs - Raster-X-Trial - MG\FEF\';
   figure('visible','off'); hold on
 
-  scatter(spikesMat, jjSpike, 4, 'k', 'filled', 'MarkerFaceAlpha',0.5)
+  scatter(spikesMat, jjSpike, 4, 'k', 'filled', 'MarkerFaceAlpha',0.3)
   plot([0 0], [0 nTrial], 'k-', 'LineWidth',1.1)
   
   ylim([0 nTrial+1])
@@ -47,7 +47,7 @@ for uu = 1:nUnit
   xlabel('Time from array (ms)')
   xlim([tPlot(1) tPlot(end)])
   title(unitTest.ID{uu})
-  ppretty([8.5,12]); drawnow
+  ppretty([10,12]); drawnow
 
   print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close()
 

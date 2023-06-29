@@ -1,12 +1,12 @@
 %plot_Raster_X_Trial_SAT.m
 
-idx_Sess = ismember(unitData.SessionID, 1:16);
-idx_Area = ismember(unitData.Area, {'SEF'});
+idx_Sess = ismember(unitData.SessionID, 43:49);
+idx_Area = ismember(unitData.Area, {'FEF'});
 
-unitTest = unitData( idx_Sess & idx_Area , : );
+unitTest = unitData( idx_Sess , : );
 nUnit = size(unitTest,1);
 
-tPlot = (-650 : 1050); %time from stimulus (ms)
+tPlot = (-600 : 1200); %time from stimulus (ms)
 
 for uu = 1:nUnit
   fprintf('%s \n', unitTest.ID{uu})
@@ -38,7 +38,7 @@ for uu = 1:nUnit
   %parse trials by task condition
   trialAcc = find(behavData.Condition{kk} == 1);
   trialFast = find(behavData.Condition{kk} == 3);
-  trialNeut = find(behavData.Condition{kk} == 4);
+  trialNeut = find(behavData.Condition{kk} == 2);
   
   %sort spikes by task condition
   idxAcc = ismember(jjSpike, trialAcc);
@@ -49,12 +49,13 @@ for uu = 1:nUnit
   jjSpikeNeut = jjSpike(idxNeut);   tSpikeMatNeut = spikesMat(idxNeut);
   
   %% Plotting
-  PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - Raster-X-Trial - SAT\SEF\';
+  FACEALPHA = 0.3;
+  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figs - Raster-X-Trial - SAT\FEF\';
   figure('visible','off'); hold on
 
-  scatter(tSpikeMatNeut, jjSpikeNeut, 4, 'k', 'filled', 'MarkerFaceAlpha',0.4)
-  scatter(tSpikeMatAcc,  jjSpikeAcc,  4, 'r', 'filled', 'MarkerFaceAlpha',0.5)
-  scatter(tSpikeMatFast, jjSpikeFast, 4, [0 .7 0], 'filled', 'MarkerFaceAlpha',0.5)
+  scatter(tSpikeMatNeut, jjSpikeNeut, 4, 'k', 'filled', 'MarkerFaceAlpha',FACEALPHA)
+  scatter(tSpikeMatAcc,  jjSpikeAcc,  4, 'r', 'filled', 'MarkerFaceAlpha',FACEALPHA)
+  scatter(tSpikeMatFast, jjSpikeFast, 4, [0 .7 0], 'filled', 'MarkerFaceAlpha',FACEALPHA)
   plot([0 0], [0 nTrial], 'k-', 'LineWidth',1.1)
   
   ylim([0 nTrial+1])
@@ -62,8 +63,10 @@ for uu = 1:nUnit
   xlabel('Time from array (ms)')
   xlim([tPlot(1) tPlot(end)])
   title(unitTest.ID{uu})
-  ppretty([8.5,12]); drawnow
+  ppretty([10,12]); drawnow
 
   print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close()
 
 end % for : unit (uu)
+
+clearvars -except behavData* unitData pairData ROOTDIR*
