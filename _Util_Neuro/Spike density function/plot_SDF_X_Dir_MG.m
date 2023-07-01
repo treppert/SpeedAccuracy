@@ -1,9 +1,10 @@
 %plot_SDF_X_Dir_MG() This script plots activity of single neurons recorded
 %during the memory-guided saccade task. Activity is plotted as a function of
 %target location (8 octants).
+% 
 
-idx_Sess = ismember(unitData.SessionID, 1:16);
-idx_Area = ismember(unitData.Area, {'SEF','FEF','SC'});
+idx_Sess = ismember(unitData.SessionID, 1:49);
+idx_Area = ismember(unitData.Area, {'SC'});
 % idx_Fxn = ~(unitData.FxnType == "None");
 
 unitTest = unitData( idx_Sess & idx_Area , : );
@@ -12,8 +13,8 @@ nUnit = size(unitTest,1);
 EPOCH = {'VR' 'PS' 'PR'}; %within-trial time intervals of interest
 nEpoch = 3;
 tWin.VR = (-300 : 500);
-tWin.PS = (-500 : 300);
-tWin.PR = (-300 : 500);
+tWin.PS = (-400 : 400);
+tWin.PR = (-400 : 400);
 nSamp = length(tWin.VR);
 nDir = 8;
 
@@ -23,7 +24,12 @@ for uu = 1:nUnit
 
   nTrial = behavDataMG.NumTrials(kk); %number of trials
   tResp = behavDataMG.Sacc_RT{kk}; %primary saccade RT
-  tRew = behavDataMG.RewTime{kk}; %time of reward delivery (re saccade)
+
+  if ismember(unitTest.Monkey(uu), {'Q','S'})
+    tRew = 900; %rough estimate (re saccade)
+  else %{'D','E'}
+    tRew = behavDataMG.RewTime{kk}; %time of reward delivery (re saccade)
+  end
   
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitTest.TrialRemoveMG{uu}, nTrial);
@@ -47,7 +53,7 @@ for uu = 1:nUnit
   end % for : epoch (ep)
   
   %% Plotting
-  PRINTDIR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Figs - SDF X Dir - MG\';
+  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figs - SDF X Dir - MG\';
   colorArea = colororder; %colors for shaded areas of interest
   colorArea = colorArea(2:4,:);
   xArea = { [+50 +250] , [0 +200] , [0 +200] };
@@ -88,4 +94,4 @@ for uu = 1:nUnit
   print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close(hFig)
 end % for : unit(uu)
 
-clearvars -except behavData* unitData pairData spkCorr ROOTDIR*
+clearvars -except behavData* unitData pairData ROOTDIR*
