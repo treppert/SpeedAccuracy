@@ -11,6 +11,7 @@ function [ scAcc , scFast , varargout ] = computeSpikeCount_SAT( unitTest , beha
 %   stsc - *single-trial* spike count (condition X direction X epoch)
 % 
 
+MIN_TRIAL_COUNT = 5;
 nDir = 8;
 nEpoch = 4; % Baseline | Visual response | Post-saccade | Post-reward
 nTrial = behavTest.NumTrials;
@@ -39,10 +40,21 @@ stsc.Acc = cell(nDir,1); %single-trial spike counts
 stsc.Fast = stsc.Acc;
 for dd = 1:nDir
   idxDir = (behavTest.Sacc_Octant{1} == dd);
-  stsc.Acc{dd} = sc_uu(idxAcc & idxOutcome & idxDir,:); %single-trial counts
-  stsc.Fast{dd} = sc_uu(idxFast & idxOutcome & idxDir,:);
-  scAcc(dd,:)  = mean(sc_uu(idxAcc & idxOutcome & idxDir,:)); %mean counts
-  scFast(dd,:) = mean(sc_uu(idxFast & idxOutcome & idxDir,:));
+  idxAccDir =  (idxAcc & idxOutcome & idxDir);
+  idxFastDir = (idxFast & idxOutcome & idxDir);
+
+  if (sum(idxAccDir) >= MIN_TRIAL_COUNT)
+    stsc.Acc{dd} = sc_uu(idxAccDir,:); %single-trial counts
+    scAcc(dd,:)  = mean(sc_uu(idxAccDir,:)); %mean counts
+  else %not enough trials for this direction
+    stsc.Acc{dd} = NaN(1,nEpoch);
+  end
+  if (sum(idxFastDir) >= MIN_TRIAL_COUNT)
+    stsc.Fast{dd} = sc_uu(idxFastDir,:);
+    scFast(dd,:) = mean(sc_uu(idxFastDir,:));
+  else %not enough trials for this direction
+    stsc.Fast{dd} = NaN(1,nEpoch);
+  end
 end % for : direction (dd)
 scAcc(nDir+1,:)  = scAcc(1,:); %close the circle for plotting
 scFast(nDir+1,:) = scFast(1,:);
