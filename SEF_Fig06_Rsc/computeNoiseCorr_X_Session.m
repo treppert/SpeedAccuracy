@@ -13,7 +13,7 @@ idx_Area = ismember(unitData.Area, 'FEF');
 idx_Fxn  = ismember(unitData.VR, 1);
 
 epoch = {'BL','VR','PS','PR'};
-nEpoch = numel(epoch);
+nEpoch = 4;
 nDir = 8;
 
 %initialize noise correlation output
@@ -21,6 +21,7 @@ scNoise = new_struct({'Acc','Fast'}, 'dim',[nSess,1]);
 rNoise  = new_struct({'Acc','Fast'}, 'dim',[nSess,1]);
 rNoise(1).Acc = struct('BL',[], 'VR',[], 'PS',[], 'PR',[]);
 rNoise(1).Fast = rNoise(1).Acc;
+rmuNoise = rNoise;
 
 for kk = 1:nSess
   idx_Sess = ismember(unitData.SessionID, sessTest(kk));
@@ -52,17 +53,10 @@ for kk = 1:nSess
   end % for : unit (uu)
   
   %% Subtract direction-specific mean activation (i.e., the signal)
-  % for ep = 1:nEpoch
-  %   scAccMAT(:,:,ep)  = cell2mat( cellfun( @(x) x - mean(x,1) , scAcc.(epoch{ep}) , "UniformOutput",false ) );
-  %   scFastMAT(:,:,ep) = cell2mat( cellfun( @(x) x - mean(x,1) , scFast.(epoch{ep}) , "UniformOutput",false ) );
-  % end
-  
-  %% Compute mean noise correlation across all directions
-  % for ep = 1:nEpoch
-  %   rNoise(kk).Acc.(epoch{ep})  = corr(scAccMAT(:,:,ep),  "type","Pearson");
-  %   rNoise(kk).Fast.(epoch{ep}) = corr(scFastMAT(:,:,ep), "type","Pearson");
-  % end
-  % clear scAccMAT scFastMAT
+  for ep = 1:nEpoch
+    scNoise(kk).Acc.(epoch{ep})  = cellfun( @(x) x - mean(x,1) , scNoise(kk).Acc.(epoch{ep}) ,  "UniformOutput",false );
+    scNoise(kk).Fast.(epoch{ep}) = cellfun( @(x) x - mean(x,1) , scNoise(kk).Fast.(epoch{ep}) , "UniformOutput",false );
+  end
   
   %% Compute noise correlation vs saccade direction
   for ep = 1:nEpoch
@@ -72,6 +66,12 @@ for kk = 1:nSess
     rNoise(kk).Fast.(epoch{ep}) = reshape(rFastMAT.(epoch{ep})', nUnit,nUnit,nDir);
   end
   
+  %% Compute mean noise correlation across all directions
+  for ep = 1:nEpoch
+    rmuNoise(kk).Acc.(epoch{ep})  = mean(rNoise(kk).Acc.(epoch{ep}), 3, "omitnan");
+    rmuNoise(kk).Fast.(epoch{ep}) = mean(rNoise(kk).Fast.(epoch{ep}), 3, "omitnan");
+  end
+  
 end % for : session (kk)
 
-clearvars -except ROOTDIR* behavData unitData pairData rNoise* rSignal* scNoise
+clearvars -except ROOTDIR* behavData unitData pairData *Noise* *Signal*
