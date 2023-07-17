@@ -6,18 +6,27 @@ function [ scAcc , scFast , varargout ] = computeSpikeCount_SAT( unitTest , beha
 %   outcome - 'Correct' 'ErrChoice' 'ErrTime' 'ErrChoiceOnly' 'ErrTimeOnly'
 % 
 %   Output
-%   scAcc(8x4)  - single neuron spike count (direction X epoch) - Accurate
-%   scFast(8x4) - single neuron spike count (direction X epoch) - Fast
+%   scAcc(9x4)  - single neuron spike count (direction X epoch) - Accurate
+%   scFast(9x4) - single neuron spike count (direction X epoch) - Fast
 %   stsc - *single-trial* spike count (condition X direction X epoch)
 % 
 
 MIN_TRIAL_COUNT = 5;
 nDir = 8;
-nEpoch = 4; % Baseline | Visual response | Post-saccade | Post-reward
+nEpoch = 4; % Baseline | Post-array | Peri-saccade | Peri-reward
 nTrial = behavTest.NumTrials;
 
+TWIN.BL = [-300 -200]; %[-300,-100]; % baseline (re array)
+TWIN.VR = [ +50 +150]; %[+50, +250]; % post-array (re array)
+TWIN.PS = [ -50  +50]; %[0,   +200]; % peri-saccade (re saccade)
+TWIN.PR = [ -50  +50]; %[0,   +200]; % peri-reward (re reward)
+
+%% Check for valid input
+nRow = size(unitTest,1);
+if (nRow ~= 1); error('Input to computeSpikeCount_SAT() should be a single unit'); end
+
 %% Compute spike counts by epoch
-sc_uu = computeSpikeCount(unitTest, behavTest);
+sc_uu = computeSpikeCount(unitTest, behavTest, TWIN);
 
 %% Index by isolation quality
 if (nargin > 3) %if desired, specify trials with poor isolation
@@ -66,24 +75,20 @@ end
 end % fxn : computeSpikeCount_SAT()
 
 
-function [ spikeCount ] = computeSpikeCount( unitTest , behavTest )
+function [ spikeCount ] = computeSpikeCount( unitTest , behavTest , tWin )
 %computeSpikeCount This function computes trial-by-trial spike counts
 %for the SAT data set, separately for Fast and Accurate conditions.
 % 
 %   Input
-%   unitData_ -- Physiology data for a single unit
-%   behavData_ -- Behavioral data for single session
+%   unitTest -- Physiology data for a single unit
+%   behavTest -- Behavioral data for single session
+%   tWin  -- Time windows for computing counts
 % 
 %   Output
 %   spikeCount -- Spike counts for epochs [BL,VR,PS,PR]
 % 
 
 spikeCount = NaN(behavTest.NumTrials,4); %[BL,VR,PS,PR]
-
-tWin_BL = [-300,-100]; % baseline (re array)
-tWin_VR = [+50, +250]; % visual response (re array)
-tWin_PS = [0,   +200]; % post-saccade (re saccade)
-tWin_PR = [0,   +200]; % post-reward (re reward)
 
 %load raw spike times
 spikeTimes = load_spikes_SAT(unitTest.Unit);
@@ -92,22 +97,22 @@ spikeTimes = load_spikes_SAT(unitTest.Unit);
 spikeTimes = cellfun(@(x) x-3500, spikeTimes, 'UniformOutput',false);
 
 %compute baseline spike counts
-spikeCount(:,1) = cellfun(@(x) sum((x > tWin_BL(1)) & (x < tWin_BL(2))), spikeTimes);
+spikeCount(:,1) = cellfun(@(x) sum((x > tWin.BL(1)) & (x < tWin.BL(2))), spikeTimes);
 %compute visual response spike counts
-spikeCount(:,2) = cellfun(@(x) sum((x > tWin_VR(1)) & (x < tWin_VR(2))), spikeTimes);
+spikeCount(:,2) = cellfun(@(x) sum((x > tWin.VR(1)) & (x < tWin.VR(2))), spikeTimes);
 
 %align spike times to saccade
 RT = num2cell(behavTest.Sacc_RT{1});
 spikeTimes = cellfun(@(x,y) x-y, spikeTimes, RT, 'UniformOutput',false);
 
 %compute post-saccade spike counts
-spikeCount(:,3) = cellfun(@(x) sum((x > tWin_PS(1)) & (x < tWin_PS(2))), spikeTimes);
+spikeCount(:,3) = cellfun(@(x) sum((x > tWin.PS(1)) & (x < tWin.PS(2))), spikeTimes);
 
 %align spike times to reward
 tRew = behavTest.RewTime;
 spikeTimes = cellfun(@(x) x-tRew, spikeTimes, 'UniformOutput',false);
 
 %compute post-reward spike counts
-spikeCount(:,4) = cellfun(@(x) sum((x > tWin_PR(1)) & (x < tWin_PR(2))), spikeTimes);
+spikeCount(:,4) = cellfun(@(x) sum((x > tWin.PR(1)) & (x < tWin.PR(2))), spikeTimes);
 
 end % fxn : computeSpikeCount()
