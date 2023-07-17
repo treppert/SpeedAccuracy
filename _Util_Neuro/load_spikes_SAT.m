@@ -7,7 +7,7 @@ function [ spikes ] = load_spikes_SAT( uNum , varargin )
 %   task - SAT (search), MG (mem-guided), DET (detection)
 % 
 
-args = getopt(varargin, {{'user=','thoma'}, {'task=','SAT'}});
+args = getopt(varargin, {{'user=','thoma'}, {'task=','Search'}});
 
 if isempty(args.user)
   user = 'Thomas Reppert';
@@ -24,13 +24,16 @@ elseif (uNum < 100)
   str_uu = ['0', str_uu];
 end
 
-if strcmp(args.task, 'MG')
-  spikes = load([dataDir, 'spikesMG_', str_uu, '.mat'], ['spikesMG',str_uu]);
-  spikes = spikes.(['spikesMG',str_uu]);
-else
-  spikes = load([dataDir, 'spikes', str_uu, '.mat'], 'spikes');
-  spikes = spikes.spikes;
-end
+switch (args.task)
+  case 'Search'
+    spikes = load([dataDir, 'spikes', str_uu, '.mat'], 'spikes');
+    spikes = spikes.spikes;
+
+  case 'MG'
+    spikes = load([dataDir, 'spikesMG_', str_uu, '.mat'], ['spikesMG',str_uu]);
+    spikes = spikes.(['spikesMG',str_uu]);
+
+end % switch : (args.task)
 
 end % util : load_spikes_SAT()
 
