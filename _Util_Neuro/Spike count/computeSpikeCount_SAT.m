@@ -1,4 +1,4 @@
-function [ spikeCount ] = computeSpikeCount_SAT( unitTest , behavTest , tWin)
+function [ spikeCount ] = computeSpikeCount_SAT( unitTest , behavTest , tWin , varargin )
 %computeSpikeCount This function computes trial-by-trial spike counts
 %for the SAT data set, separately for Fast and Accurate conditions.
 % 
@@ -11,12 +11,14 @@ function [ spikeCount ] = computeSpikeCount_SAT( unitTest , behavTest , tWin)
 %   spikeCount -- Spike counts for epochs [BL,VR,PS,PR]
 % 
 
+args = getopt(varargin, {{'task=','Search'}});
+
 if (size(unitTest,1) ~= 1); error('Input to computeSpikeCount_SAT() should be a single unit'); end
 
 spikeCount = NaN(behavTest.NumTrials,4); %[BL,VR,PS,PR]
 
 %load raw spike times
-spikeTimes = load_spikes_SAT(unitTest.Unit);
+spikeTimes = load_spikes_SAT(unitTest.Unit, 'task',args.task);
 
 %align spike times to array appearance
 spikeTimes = cellfun(@(x) x-3500, spikeTimes, 'UniformOutput',false);

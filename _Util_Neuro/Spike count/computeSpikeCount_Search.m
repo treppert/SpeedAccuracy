@@ -29,7 +29,7 @@ tWin.PS = [ -50  +50]; %[0,   +200]; % peri-saccade (re saccade)
 tWin.PR = [ -50  +50]; %[0,   +200]; % peri-reward (re reward)
 
 %% Compute single-trial spike counts for each epoch
-scSingleTrial = computeSpikeCount_SAT(unitTest, behavTest, tWin);
+scSingleTrial = computeSpikeCount_SAT(unitTest, behavTest, tWin, 'task','Search');
 
 %% Prepare to index spike counts by trial condition and outcome
 %index by recording (isolation) quality
