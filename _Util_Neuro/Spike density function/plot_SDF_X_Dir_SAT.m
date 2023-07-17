@@ -9,7 +9,7 @@
 % load([ROOTDIR_SAT, 'spkCorr.mat'])
 
 idx_Sess = ismember(unitData.SessionID, 1:49);
-idx_Area = ismember(unitData.Area, {'SC'});
+idx_Area = ismember(unitData.Area, {'SEF'});
 % idx_Fxn = ~(unitData.FxnType == "None");
 
 unitTest = unitData( idx_Sess & idx_Area , : );
@@ -41,7 +41,7 @@ for uu = 1:nUnit
   
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.TrialRemoveSAT{uu}, nTrial);
+  idxIso = removeTrials_Isolation(unitTest.isoSAT{uu}, nTrial);
   %index by condition
   idxAcc = ((behavData.Condition{kk} == 1) & ~idxIso);
   idxFast = ((behavData.Condition{kk} == 3) & ~idxIso);
@@ -50,7 +50,7 @@ for uu = 1:nUnit
   idxCorr = behavData.Correct{kk};
   
   %% Compute spike density function and align to epochs of interest
-  spikes = load_spikes_SAT(unitTest.Index(uu)); %load spike times
+  spikes = load_spikes_SAT(unitTest.Unit(uu)); %load spike times
   sdf.VR = compute_SDF_SAT(spikes);
   sdf.PS = align_signal_on_response(sdf.VR, tResp);
   sdf.REW = align_signal_on_response(sdf.VR, tResp+tRew);

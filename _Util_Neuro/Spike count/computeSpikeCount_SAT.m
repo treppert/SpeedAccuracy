@@ -21,7 +21,7 @@ sc_uu = computeSpikeCount(unitTest, behavTest);
 
 %% Index by isolation quality
 if (nargin > 3) %if desired, specify trials with poor isolation
-  idxIso = varargin{1};
+  idxIso = removeTrials_Isolation(varargin{1}, nTrial);
 else
   idxIso = removeTrials_Isolation(unitTest.isoSAT{1}, nTrial);
 end

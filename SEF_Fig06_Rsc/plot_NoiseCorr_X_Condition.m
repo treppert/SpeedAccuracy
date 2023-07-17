@@ -10,6 +10,7 @@ rRR = rLL; %right-right hemi
 rLR = rLL; %left-right hemi
 
 for kk = 1:nSess
+  if isempty(rNoise(kk).Unit); continue; end
   nUnit = numel(rNoise(kk).Unit);
   nPair = nUnit*(nUnit-1) / 2;
   
@@ -72,4 +73,4 @@ ytickformat('%3.2f')
 
 ppretty([3,2])
 
-clearvars -except ROOTDIR* behavData unitData pairData *Noise* *Signal* rLL rRR rLR
+clearvars -except ROOTDIR* behavData unitData pairData *Noise* *Signal* rLL rRR rLR trialRemove

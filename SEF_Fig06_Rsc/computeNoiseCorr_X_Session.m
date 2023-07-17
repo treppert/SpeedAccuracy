@@ -4,12 +4,12 @@
 % 
 
 %index behavioral data
-sessTest = find(ismember(behavData.Monkey, 'S'));
+sessTest = find(ismember(behavData.Monkey, {'D','E'}));
 behavTest = behavData(sessTest,:);
 nSess = numel(sessTest);
 
 %index unit data
-idx_Area = ismember(unitData.Area, 'FEF');
+idx_Area = ismember(unitData.Area, 'SEF');
 idx_Fxn  = ismember(unitData.VR, 1);
 
 epoch = {'BL','VR','PS','PR'};
@@ -27,6 +27,8 @@ for kk = 1:nSess
   idx_Sess = ismember(unitData.SessionID, sessTest(kk));
   unitTest = unitData( idx_Sess & idx_Area & idx_Fxn , : );
   nUnit = size(unitTest,1);
+
+  if (nUnit < 2); continue; end
   
   %Save indexing information on session and units
   rNoise(kk).Session = sessTest(kk);
@@ -41,7 +43,7 @@ for kk = 1:nSess
   
   for uu = 1:nUnit
     %Compute single-trial spike counts by condition, direction, and epoch
-    [~,~,scst] = computeSpikeCount_SAT(unitTest(uu,:), behavTest(kk,:), 'Correct');
+    [~,~,scst] = computeSpikeCount_SAT(unitTest(uu,:), behavTest(kk,:), 'Correct', trialRemove{sessTest(kk)});
     
     %Organize spike counts for correlation across neurons
     for dd = 1:nDir
@@ -74,4 +76,4 @@ for kk = 1:nSess
   
 end % for : session (kk)
 
-clearvars -except ROOTDIR* behavData unitData pairData *Noise* *Signal*
+clearvars -except ROOTDIR* behavData unitData pairData *Noise* *Signal* trialRemove
