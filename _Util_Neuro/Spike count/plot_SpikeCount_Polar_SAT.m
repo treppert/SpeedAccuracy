@@ -1,4 +1,15 @@
-%compute_VisMoveIndex_SAT.m
+% plot_SpikeCount_Polar_SAT.m
+% This script plots spike count by target direction for specified recording
+% session(s) of interest. Data for all neurons recorded in that session are
+% plotted in the same file. These plots show differences in activation for
+% the memory-guided (MG) and visual search (SAT) tasks. Some neurons fired
+% much more for MG, with others firing much more for SAT of search.
+% 
+% Polar snapshots of spike counts are plotted for four epochs:
+% 1. Baseline (pre-array)
+% 2. Visual response (post-array)
+% 3. Peri-saccade
+% 4. Peri-reward
 % 
 
 PRINTDIR = "C:\Users\thoma\Dropbox\SAT-Local\";
@@ -6,7 +17,7 @@ VECDIR = deg2rad(linspace(0, 360, 9));
 EPOCH = {'BL [-300,-200]','VR [+50,+150]','PS [-50,+50]','PR [-50,+50]'};
 nEpoch = 4;
 
-for kk = 34:49
+for kk = 49:49
   fprintf('%s \n', behavData.Session{kk})
 
   %index units by session, area, etc.
@@ -57,4 +68,4 @@ for kk = 34:49
 
 end % for : session (sess)
 
-clearvars -except ROOTDIR* behavData* unitData pairData *Noise* *Signal*
+clearvars -except ROOTDIR* behavData* unitData* pairData* *Noise* *Signal*
