@@ -3,7 +3,7 @@
 %target location (8 octants).
 % 
 
-idx_Sess = ismember(unitData.SessionID, 1:49);
+idx_Sess = ismember(unitData.SessionID, 13:13);
 idx_Area = ismember(unitData.Area, {'SC'});
 % idx_Fxn = ~(unitData.FxnType == "None");
 
@@ -28,16 +28,16 @@ for uu = 1:nUnit
   if ismember(unitTest.Monkey(uu), {'Q','S'})
     tRew = 900; %rough estimate (re saccade)
   else %{'D','E'}
-    tRew = behavDataMG.RewTime{kk}; %time of reward delivery (re saccade)
+    tRew = behavDataMG.RewTime(kk); %time of reward delivery (re saccade)
   end
   
   %index by isolation quality
-  idxIso = removeTrials_Isolation(unitTest.TrialRemoveMG{uu}, nTrial);
+  idxIso = removeTrials_Isolation(unitTest.isoMG{uu}, nTrial);
   %index by trial outcome
   idxCorr = ~(behavDataMG.ErrChoice{kk} | behavDataMG.ErrHold{kk} | behavDataMG.ErrNoSacc{kk} | idxIso);
   
   %% Compute spike density function and align to epochs of interest
-  spikes = load_spikes_SAT(unitTest.Index(uu), 'task','MG'); %load spike times
+  spikes = load_spikes_SAT(unitTest.Unit(uu), 'task','MG'); %load spike times
   sdf.VR = compute_SDF_SAT(spikes);
   sdf.PS = align_signal_on_response(sdf.VR, tResp);
   sdf.PR = align_signal_on_response(sdf.VR, tResp+tRew);
@@ -53,7 +53,7 @@ for uu = 1:nUnit
   end % for : epoch (ep)
   
   %% Plotting
-  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figs - SDF X Dir - MG\';
+  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figures\';
   colorArea = colororder; %colors for shaded areas of interest
   colorArea = colorArea(2:4,:);
   xArea = { [+50 +250] , [0 +200] , [0 +200] };
@@ -91,7 +91,7 @@ for uu = 1:nUnit
   ppretty([12,4], 'YColor','none'); drawnow
   set(h_ax{6,1}, 'YColor','k')
   
-  print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close(hFig)
+  print(PRINTDIR + unitTest.ID(uu) + "-MG.tif", '-dtiff'); close(hFig)
 end % for : unit(uu)
 
 clearvars -except behavData* unitData pairData ROOTDIR*

@@ -8,8 +8,8 @@
 % load([ROOTDIR_SAT, 'pairData.mat'])
 % load([ROOTDIR_SAT, 'spkCorr.mat'])
 
-idx_Sess = ismember(unitData.SessionID, 1:49);
-idx_Area = ismember(unitData.Area, {'SEF'});
+idx_Sess = ismember(unitData.SessionID, 13:13);
+idx_Area = ismember(unitData.Area, {'SC'});
 % idx_Fxn = ~(unitData.FxnType == "None");
 
 unitTest = unitData( idx_Sess & idx_Area , : );
@@ -17,6 +17,7 @@ nUnit = size(unitTest,1);
 
 EPOCH = {'VR' 'PS' 'REW'}; %within-trial time intervals of interest
 nEpoch = 3;
+
 tWin.VR.Acc  = (-200 : +400);   nSamp.VR.Acc   = length(tWin.VR.Acc);
 tWin.VR.Fast = (-200 : +200);   nSamp.VR.Fast  = length(tWin.VR.Fast);
 tWin.PS.Acc = (-200 : +400);    nSamp.PS.Acc   = length(tWin.PS.Acc);
@@ -39,7 +40,6 @@ for uu = 1:nUnit
     tRew = behavData.RewTime(kk); %time of reward delivery (re saccade)
   end
   
-  
   %index by isolation quality
   idxIso = removeTrials_Isolation(unitTest.isoSAT{uu}, nTrial);
   %index by condition
@@ -50,7 +50,7 @@ for uu = 1:nUnit
   idxCorr = behavData.Correct{kk};
   
   %% Compute spike density function and align to epochs of interest
-  spikes = load_spikes_SAT(unitTest.Unit(uu)); %load spike times
+  spikes = load_spikes_SAT(unitTest.Unit(uu), 'task','Search'); %load spike times
   sdf.VR = compute_SDF_SAT(spikes);
   sdf.PS = align_signal_on_response(sdf.VR, tResp);
   sdf.REW = align_signal_on_response(sdf.VR, tResp+tRew);
@@ -72,7 +72,7 @@ for uu = 1:nUnit
   end % for : epoch (ep)
   
   %% Plotting
-  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figs - SDF X Dir - SAT\';
+  PRINTDIR = 'C:\Users\thoma\Dropbox\SAT-Local\Figures\';
   colorArea = colororder; %colors for shaded areas of interest
   colorArea = colorArea(2:4,:);
   xArea = { [+50 +250] , [0 +200] , [0 +200] };
@@ -112,7 +112,7 @@ for uu = 1:nUnit
   ppretty([12,4], 'YColor','none'); drawnow
   set(h_ax{6,1}, 'YColor','k')
   
-  print(PRINTDIR + unitTest.ID(uu) + ".tif", '-dtiff'); close(hFig)
+  print(PRINTDIR + unitTest.ID(uu) + "-SAT.tif", '-dtiff'); close(hFig)
 end % for : unit(uu)
 
 clearvars -except behavData* unitData pairData ROOTDIR*
