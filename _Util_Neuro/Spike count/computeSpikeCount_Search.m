@@ -31,12 +31,14 @@ tWin.PR = [ -50  +50]; %[0,   +200]; % peri-reward (re reward)
 %% Compute single-trial spike counts for each epoch
 scSingleTrial = computeSpikeCount_SAT(unitTest, behavTest, tWin, 'task','Search');
 
-%% Prepare to index spike counts by trial condition and outcome
-%index by recording (isolation) quality
+%% Account for recording (isolation) quality
 idxIso = removeTrials_Isolation(unitTest.isoSAT{1}, behavTest.NumTrials);
+scSingleTrial(idxIso) = NaN;
+
+%% Prepare to index spike counts by trial condition and outcome
 %index by condition
-idxAcc = ((behavTest.Condition{1} == 1) & ~idxIso);
-idxFast = ((behavTest.Condition{1} == 3) & ~idxIso);
+idxAcc  = (behavTest.Condition{1} == 1);
+idxFast = (behavTest.Condition{1} == 3);
 %index by trial outcome
 idxOutcome = behavTest.(args.Outcome){1};
 
@@ -54,16 +56,16 @@ for dd = 1:nDir
 
   %Accurate condition
   if (sum(idxDirAcc) >= MIN_TRIAL_COUNT)
-    stsc.Acc{dd} = scSingleTrial(idxDirAcc,:); %save single-trial counts
-    scAcc(dd,:)  = mean(scSingleTrial(idxDirAcc,:)); %mean count
+    stsc.Acc{dd} = scSingleTrial(idxDirAcc,:); %single-trial counts
+    scAcc(dd,:)  = mean(scSingleTrial(idxDirAcc,:), "omitnan");
   else %not enough trials for this direction
     stsc.Acc{dd} = NaN(1,nEpoch);
   end
 
   %Fast condition
   if (sum(idxDirFast) >= MIN_TRIAL_COUNT)
-    stsc.Fast{dd} = scSingleTrial(idxDirFast,:);
-    scFast(dd,:) = mean(scSingleTrial(idxDirFast,:));
+    stsc.Fast{dd} = scSingleTrial(idxDirFast,:); %single-trial counts
+    scFast(dd,:) = mean(scSingleTrial(idxDirFast,:), "omitnan");
   else
     stsc.Fast{dd} = NaN(1,nEpoch);
   end
