@@ -6,12 +6,12 @@
 
 %index recording sessions
 sessTest = find(ismember(behavData.Monkey, {'D'}));
-behavTest = behavData(sessTest,:);
 nSess = numel(sessTest);
 
 %index unit data
 idxArea = ismember(unitData.Area, 'FEF');
-idxFxn  = ismember(unitData.VR, +1);
+% idxFxn  = ismember(unitData.VR, +1) | ismember(unitData.MV, +1) | ismember(unitData.PS, +1) | ismember(unitData.REW, +1);
+idxFxn  = ismember(unitData.REW, +1);
 
 %% Initialize pairData output table
 nPair = 0;
@@ -116,18 +116,19 @@ rFEC = rAC; %Fast error choice
 
 %% Loop over pairs and compute noise correlations
 for pp = 1:nPair
+  fprintf('Pair %d out of %d ...\n', pp,nPair)
 
   kk = pairData.SID(pp);
   uX = pairData.XUnit(pp);
   uY = pairData.YUnit(pp);
 
   %compute single-trial spike counts
-  [~,~,scX_Corr] = computeSpikeCount_Search(unitData(uX,:), behavTest(kk,:), 'Outcome','Correct');
-  [~,~,scY_Corr] = computeSpikeCount_Search(unitData(uY,:), behavTest(kk,:), 'Outcome','Correct');
-  [~,~,scX_ErrC] = computeSpikeCount_Search(unitData(uX,:), behavTest(kk,:), 'Outcome','ErrChoice');
-  [~,~,scY_ErrC] = computeSpikeCount_Search(unitData(uY,:), behavTest(kk,:), 'Outcome','ErrChoice');
-  [~,~,scX_ErrT] = computeSpikeCount_Search(unitData(uX,:), behavTest(kk,:), 'Outcome','ErrTime');
-  [~,~,scY_ErrT] = computeSpikeCount_Search(unitData(uY,:), behavTest(kk,:), 'Outcome','ErrTime');
+  [~,~,scX_Corr] = computeSpikeCount_Search(unitData(uX,:), behavData(kk,:), 'Outcome','Correct');
+  [~,~,scY_Corr] = computeSpikeCount_Search(unitData(uY,:), behavData(kk,:), 'Outcome','Correct');
+  [~,~,scX_ErrC] = computeSpikeCount_Search(unitData(uX,:), behavData(kk,:), 'Outcome','ErrChoice');
+  [~,~,scY_ErrC] = computeSpikeCount_Search(unitData(uY,:), behavData(kk,:), 'Outcome','ErrChoice');
+  [~,~,scX_ErrT] = computeSpikeCount_Search(unitData(uX,:), behavData(kk,:), 'Outcome','ErrTime');
+  [~,~,scY_ErrT] = computeSpikeCount_Search(unitData(uY,:), behavData(kk,:), 'Outcome','ErrTime');
 
   %subtract direction-specific mean activity (i.e., the signal)
   scX_Corr.Acc = cellfun(  @(x) x - mean(x,1,"omitnan") , scX_Corr.Acc , "UniformOutput",false );
@@ -164,11 +165,17 @@ for pp = 1:nPair
   rFEC_X_Dir = cellfun(@(x) x(1,2), rFEC_X_Dir);
 
   %compute mean correlation across directions
-  rAC(pp,:)   = mean(rAC_X_Dir,1);
-  rFC(pp,:)   = mean(rFC_X_Dir,1);
-  rAET(pp,:)  = mean(rAET_X_Dir,1);
-  rFEC(pp,:)  = mean(rFEC_X_Dir,1);
+  rAC(pp,:)   = mean(rAC_X_Dir,1, "omitnan");
+  rFC(pp,:)   = mean(rFC_X_Dir,1, "omitnan");
+  rAET(pp,:)  = mean(rAET_X_Dir,1, "omitnan");
+  rFEC(pp,:)  = mean(rFEC_X_Dir,1, "omitnan");
 
 end % for : pair (pp)
 
-clearvars -except ROOTDIR* behavData* unitData* pairData rAC rFC rAET rFEC
+%% Save correlation values in pairData
+pairData.rAC  = rAC;
+pairData.rAET = rAET;
+pairData.rFC  = rFC;
+pairData.rFEC = rFEC;
+
+clearvars -except ROOTDIR* behavData* unitData* pairData*
