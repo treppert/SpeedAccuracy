@@ -2,84 +2,48 @@
 % Visualize noise correlations vs functional classification of neurons in SEF, FEF, and SC.
 % 
 
-MONKEY = 'Eu';
-XAREA = 'SEF';
-YAREA = 'SC';
-
-%% Post-processing of pairwise correlations
-pairData = pairDataALL.(MONKEY);
-
-%index pair data
-idxXArea = ismember(pairData.XArea, XAREA);
-idxYArea = ismember(pairData.YArea, YAREA);
-idxXFxn  = ismember(pairData.X_VR, +1);
-idxYFxn  = ismember(pairData.Y_VR, +1);
-
-pairData = pairData(idxXArea & idxYArea & idxXFxn & idxYFxn, :);
-% pairData = pairData(idxXArea & idxYArea, :);
-nPair = size(pairData,1);
-
-% %retrieve RF information
-% for pp = 1:nPair
-%   uX = pairData.XUnit(pp);
-%   uY = pairData.YUnit(pp);
-%   pairData.X_VRF(pp) = unitData.VRF(uX);
-%   pairData.Y_VRF(pp) = unitData.VRF(uY);
-% 
-%   %determine whether RFs overlap
-%   if any(ismember(pairData.X_VRF{pp}, pairData.Y_VRF{pp}))
-%     pairData.RFoverlap(pp) = true;
-%   else
-%     pairData.RFoverlap(pp) = false;
-%   end
-% end
-% 
-% %index by RF overlap
-% idxOverlap = pairData.RFoverlap;
-% pairData(~idxOverlap, :) = [];
-% nPair = size(pairData,1);
-
 GREEN = [0 .7 0];
 BARWIDTH = 0.6;
 LINEWIDTH = 1.4;
 
 %% Plotting - Mean correlation
-%average across epochs
-rAC = mean(pairData.rAC,2);
-rFC = mean(pairData.rFC,2);
-rAE = mean(pairData.rAET,2, "omitnan");
-rFE = mean(pairData.rFEC,2, "omitnan");
-
-%average across pairs
-rACmu = mean(rAC,1);  seAC = std(rAC,0,1) / sqrt(nPair);
-rAEmu = mean(rAE,1);  seAE = std(rAE,0,1) / sqrt(nPair);
-rFCmu = mean(rFC,1);  seFC = std(rFC,0,1) / sqrt(nPair);
-rFEmu = mean(rFE,1);  seFE = std(rFE,0,1) / sqrt(nPair);
-
-%stats
-rNoise = mean([rAC rFC rAE rFE], 2);
+% %average across epochs
+% rAC = mean(pairData.rAC,2);
+% rFC = mean(pairData.rFC,2);
+% rAE = mean(pairData.rAET,2, "omitnan");
+% rFE = mean(pairData.rFEC,2, "omitnan");
+% 
+% %average across pairs
+% rACmu = mean(rAC,1);  seAC = std(rAC,0,1) / sqrt(nPair);
+% rAEmu = mean(rAE,1);  seAE = std(rAE,0,1) / sqrt(nPair);
+% rFCmu = mean(rFC,1);  seFC = std(rFC,0,1) / sqrt(nPair);
+% rFEmu = mean(rFE,1);  seFE = std(rFE,0,1) / sqrt(nPair);
+% 
+% %stats
+% % rNoise = mean([rAC rFC rAE rFE], 2);
 % rNoise = [rAC; rAE; rFC; rFE];
 % Condition = [ones(2*nPair,1); 2*ones(2*nPair,1)];
 % Outcome = [ones(nPair,1); 2*ones(nPair,1); ones(nPair,1); 2*ones(nPair,1)];
 % pNoise = anovan(rNoise,{Condition,Outcome}, 'display','on', 'model','interaction', ...
 %   'varnames',{'Condition','Outcome'});
-
-%plotting only correct trials
-% hFig = figure("Visible","on"); hold on %only correct trials
-% bar(1, rACmu, BARWIDTH, 'FaceColor','r',   'EdgeColor','none', 'FaceAlpha',0.5)
-% bar(2, rFCmu, BARWIDTH, 'FaceColor',GREEN, 'EdgeColor','none', 'FaceAlpha',0.5)
-% errorbar([1 2], [rACmu rFCmu], [seAC seFC], 'LineWidth',LINEWIDTH, 'Color','k', 'CapSize',0)
-
-%plotting correct and error trials
+% 
+% %plotting only correct trials
+% % hFig = figure("Visible","on"); hold on
+% % bar(1, rACmu, BARWIDTH, 'FaceColor','r',   'EdgeColor','none', 'FaceAlpha',0.5)
+% % bar(2, rFCmu, BARWIDTH, 'FaceColor',GREEN, 'EdgeColor','none', 'FaceAlpha',0.5)
+% % errorbar([1 2], [rACmu rFCmu], [seAC seFC], 'LineWidth',LINEWIDTH, 'Color','k', 'CapSize',0)
+% 
+% %plotting correct and error trials
+% hFig = figure("Visible","on"); hold on
 % bar(1:2, [rACmu rAEmu], BARWIDTH, 'FaceColor','r', 'EdgeColor','none', 'FaceAlpha',0.5)
 % errorbar(1:2, [rACmu rAEmu], [seAC seAE], 'LineWidth',LINEWIDTH, 'Color','k', 'CapSize',0)
 % bar(3:4, [rFCmu rFEmu], BARWIDTH, 'FaceColor',GREEN, 'EdgeColor','none', 'FaceAlpha',0.5)
 % errorbar(3:4, [rFCmu rFEmu], [seFC seFE], 'LineWidth',LINEWIDTH, 'Color','k', 'CapSize',0)
-
+% 
 % xticks(1:4); xticklabels([]); xlim([0.3 4.7])
 % ytickformat('%3.2f'); %ylabel('Noise correlation');
-fprintf(MONKEY + "   " + XAREA + "-" + YAREA + "   FXN-FXN   n = " + num2str(nPair) + "\n")
-
+% fprintf(MONKEY + "   " + XAREA + "-" + YAREA + "   FXN-FXN   n = " + num2str(nPair) + "\n")
+% 
 % ppretty([2.6,2]); drawnow
 % set(gca, 'XMinorTick','off')
 

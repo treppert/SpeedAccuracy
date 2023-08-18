@@ -1,6 +1,6 @@
 % plot_Correlation_SAT.m
 % 
-ROOTDIR_CORR = 'C:\Users\thoma\Dropbox\SAT-Local\Analysis - Correlation SEF-SC SEF-FEF\';
+ROOTDIR_CORR = 'C:\Users\Thomas Reppert\Dropbox\SAT-Local\Correlation analysis\';
 
 %load signal correlation values
 rSignal.SC = readmatrix(ROOTDIR_CORR+"Correlation-SAT-Mat.xlsx", "Sheet","SEF-SC", "Range","D5:G49");
@@ -68,48 +68,33 @@ TXTFORMAT = "%2.1f";
 % ylabel("Noise corr - Fast"); ytickformat(TXTFORMAT)
 % ppretty([2.4,2]); drawnow
 
-%% Plot - Scatter - Signal vs noise correlation
-% figure()
-% subplot(2,2,3); title("Accurate"); hold on
-% scatter(rSignal.SC(:,2),  rNoiseSC_Acc,  20, "magenta", "filled", "o", "MarkerFaceAlpha",FACEALPHA)
-% scatter(rSignal.FEF(:,2), rNoiseFEF_Acc, 20, "blue", "filled", "o", "MarkerFaceAlpha",FACEALPHA)
-% xlabel("Signal corr - PS"); xtickformat(TXTFORMAT)
-% ylabel("Noise corr"); ytickformat(TXTFORMAT)
-% 
-% subplot(2,2,4); title("Fast"); hold on
-% scatter(rSignal.SC(:,4),  rNoiseSC_Fast,  20, "magenta", "filled", "o", "MarkerFaceAlpha",FACEALPHA)
-% scatter(rSignal.FEF(:,4), rNoiseFEF_Fast, 20, "blue", "filled", "o", "MarkerFaceAlpha",FACEALPHA)
-% xlabel("Signal corr - PS"); xtickformat(TXTFORMAT)
-% ytickformat(TXTFORMAT)
-% ppretty([5.4,4.8]); drawnow
-
 %% Plot - Fraction positive (signal correlation)
-figure()
-subplot(1,2,1); title("SEF-SC"); hold on % SEF-SC
-bar(frPosSignal.SC, 0.6, "c", "EdgeColor","none"); yline(0.5, 'k')
-xticks(1:4); xticklabels({'VR','PS','VR','PS'})
-ylabel('Frac. positive signal corr.'); ytickformat('%2.1f')
-
-subplot(1,2,2); title("SEF-FEF"); hold on % SEF-FEF
-bar(frPosSignal.FEF, 0.6, "c", "EdgeColor","none"); yline(0.5, 'k')
-xticks(1:4); xticklabels({'VR','PS','VR','PS'})
-ytickformat('%2.1f')
-
-ppretty([5,1.2]); drawnow
+% figure()
+% subplot(1,2,1); title("SEF-SC"); hold on % SEF-SC
+% bar(frPosSignal.SC, 0.6, "c", "EdgeColor","none"); yline(0.5, 'k')
+% xticks(1:4); xticklabels({'VR','PS','VR','PS'})
+% ylabel('Frac. positive signal corr.'); ytickformat('%2.1f')
+% 
+% subplot(1,2,2); title("SEF-FEF"); hold on % SEF-FEF
+% bar(frPosSignal.FEF, 0.6, "c", "EdgeColor","none"); yline(0.5, 'k')
+% xticks(1:4); xticklabels({'VR','PS','VR','PS'})
+% ytickformat('%2.1f')
+% 
+% ppretty([5,1.2]); drawnow
 
 %% Plot - Fraction positive (noise correlation)
-figure()
-subplot(1,2,1); title("SEF-SC"); hold on % SEF-SC
-bar(frPosNoise.SC, 0.5, "m", "EdgeColor","none"); yline(0.5, 'k')
-xticks(1:8); xticklabels({'BL','VR','PS','PR','BL','VR','PS','PR'})
-ylabel('Frac. positive signal corr.'); ytickformat('%2.1f')
-
-subplot(1,2,2); title("SEF-FEF"); hold on % SEF-FEF
-bar(frPosNoise.FEF, 0.5, "m", "EdgeColor","none"); yline(0.5, 'k')
-xticks(1:8); xticklabels({'BL','VR','PS','PR','BL','VR','PS','PR'})
-ytickformat('%2.1f')
-
-ppretty([5,1.2]); drawnow
+% figure()
+% subplot(1,2,1); title("SEF-SC"); hold on % SEF-SC
+% bar(frPosNoise.SC, 0.5, "m", "EdgeColor","none"); yline(0.5, 'k')
+% xticks(1:8); xticklabels({'BL','VR','PS','PR','BL','VR','PS','PR'})
+% ylabel('Frac. positive signal corr.'); ytickformat('%2.1f')
+% 
+% subplot(1,2,2); title("SEF-FEF"); hold on % SEF-FEF
+% bar(frPosNoise.FEF, 0.5, "m", "EdgeColor","none"); yline(0.5, 'k')
+% xticks(1:8); xticklabels({'BL','VR','PS','PR','BL','VR','PS','PR'})
+% ytickformat('%2.1f')
+% 
+% ppretty([5,1.2]); drawnow
 
 %% Plot - Absolute value of signal correlation
 % figure()
