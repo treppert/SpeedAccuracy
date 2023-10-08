@@ -20,7 +20,6 @@ BARWIDTH = 0.6;
 
 hFig = figure("Visible","on");
 
-
 %% Plotting - Correlation x epoch
 subplot(1,3, [1 2]); hold on
 
@@ -48,7 +47,6 @@ yline(0, 'Color','k')
 xlim([0.5 8.5]); xticks([])
 yLim = get(gca, 'YLim'); ytickformat('%3.2f')
 title(XAREA + "-" + YAREA + "    Fxn-Fxn    n = " + num2str(nPair))
-
 
 %% Plotting - Mean correlation
 subplot(1,3,3); hold on
@@ -79,11 +77,9 @@ yline(0, 'Color','k')
 xticks([]); xlim([0.3 4.7])
 ylim(yLim)
 
-
 ppretty([6,2]); drawnow
 subplot(1,3,[1 2]); set(gca, 'XColor','none') 
 subplot(1,3,3); set(gca, 'YColor','none'); set(gca, 'XColor','none')
-
 
 %% Stats - Two-way ANOVA with factors Condition and Trial Outcome
 rNoise = [rAC; rAE; rFC; rFE];
@@ -92,4 +88,25 @@ Outcome = [ones(nPair,1); 2*ones(nPair,1); ones(nPair,1); 2*ones(nPair,1)];
 [pval,tabstat] = anovan(rNoise,{Condition,Outcome}, 'display','off', 'model','interaction', ...
   'varnames',{'Condition','Outcome'});
 
-clearvars -except ROOTDIR* behavData* unitData* pairData* nPair *AREA tabstat
+%% Stats - Three-way ANOVA with factors Condition, Trial Outcome, and Epoch
+rAC_1 = pairData.rAC(:,1); rAE_1 = pairData.rAET(:,1); %Accurate condition
+rAC_2 = pairData.rAC(:,2); rAE_2 = pairData.rAET(:,2);
+rAC_3 = pairData.rAC(:,3); rAE_3 = pairData.rAET(:,3);
+rAC_4 = pairData.rAC(:,4); rAE_4 = pairData.rAET(:,4);
+
+rFC_1 = pairData.rFC(:,1); rFE_1 = pairData.rFEC(:,1); %Fast condition
+rFC_2 = pairData.rFC(:,2); rFE_2 = pairData.rFEC(:,2);
+rFC_3 = pairData.rFC(:,3); rFE_3 = pairData.rFEC(:,3);
+rFC_4 = pairData.rFC(:,4); rFE_4 = pairData.rFEC(:,4);
+
+rNoise = [rAC_1; rAC_2; rAC_3; rAC_4; rAE_1; rAE_2; rAE_3; rAE_4; ...
+          rFC_1; rFC_2; rFC_3; rFC_4; rFE_1; rFE_2; rFE_3; rFE_4];
+Condition = [ones(8*nPair,1); 2*ones(8*nPair,1)];
+Outcome = [ones(4*nPair,1); 2*ones(4*nPair,1); ones(4*nPair,1); 2*ones(4*nPair,1)];
+Epoch = [ones(nPair,1); 2*ones(nPair,1); 3*ones(nPair,1); 4*ones(nPair,1)];
+Epoch = [Epoch; Epoch; Epoch; Epoch];
+[pval_3,tabstat_3] = anovan(rNoise,{Condition,Outcome,Epoch}, 'display','off', 'model','interaction', ...
+  'varnames',{'Condition','Outcome','Epoch'});
+
+%% Clear variables
+clearvars -except ROOTDIR* behavData* unitData* pairData* nPair *AREA tabstat* pval* rAC rAE
