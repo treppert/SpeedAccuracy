@@ -18,11 +18,11 @@
 %% Prepare for post-processing of pairwise correlations
 % Load pairDataALL.mat
 
-XAREA = 'SEF';
-YAREA = 'SC';
+XAREA = 'FEF';
+YAREA = 'SEF';
 
-pairData = pairDataALL.Eu;
-% pairData = [pairDataALL.Da ; pairDataALL.Eu];
+% pairData = pairDataALL.Eu;
+pairData = [pairDataALL.Da ; pairDataALL.Eu];
 
 %index pair data
 idxXArea = ismember(pairData.XArea, XAREA);
@@ -30,8 +30,8 @@ idxYArea = ismember(pairData.YArea, YAREA);
 idxXFxn  = ismember(pairData.X_VR, +1);
 idxYFxn  = ismember(pairData.Y_VR, +1);
 
-% pairData = pairData(idxXArea & idxYArea & idxXFxn & idxYFxn, :);
-pairData = pairData(idxXArea & idxYArea, :);
+pairData = pairData(idxXArea & idxYArea & idxXFxn & idxYFxn, :);
+% pairData = pairData(idxXArea & idxYArea, :);
 nPair = size(pairData,1);
 
 % %retrieve RF information
@@ -60,6 +60,28 @@ nPair = size(pairData,1);
 % plot_SignalCorr_SAT_Fig6B
 % plot_NoiseCorr_SAT_Fig6B
 
+%% Figure 6A
+%retrieve signal correlations and p-values from pairData
+sigAC = pairData.sigAC; nAC = length(sigAC);
+sigFC = pairData.sigFC; nFC = length(sigFC);
+psigAC = pairData.psig(:,1);
+psigFC = pairData.psig(:,3);
+
+iposAC = (sigAC < 0);   iposFC = (sigFC > 0); %indexes of positive correlations
+inegAC = (sigAC > 0);   inegFC = (sigFC < 0); %indexes of negative correlations
+nposAC = sum(iposAC);   nposFC = sum(iposFC); %counts
+nnegAC = sum(inegAC);   nnegFC = sum(inegFC);
+fposAC = nposAC / nAC;  fposFC = nposFC / nFC; %fractions
+fnegAC = nnegAC / nAC;  fnegFC = nnegFC / nFC;
+
+pvalposAC = psigAC(iposAC); %significance (p-values) of positive correlations
+pvalnegAC = psigAC(inegAC); %significance (p-values) of negative correlations
+pvalposFC = psigFC(iposFC);
+pvalnegFC = psigFC(inegFC);
+nsigposAC = sum(pvalposAC < .05);   nsigposFC = sum(pvalposFC < .05); %counts of significance
+nsignegAC = sum(pvalnegAC < .05);   nsignegFC = sum(pvalnegFC < .05);
+fsigposAC = nsigposAC / nposAC;   fsigposFC = nsigposFC / nposFC; %fractions of significance
+fsignegAC = nsignegAC / nnegAC;   fsignegFC = nsignegFC / nnegFC;
 
 %% Prior analysis of SAT correlations
 % Compute signal correlation by session
